@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "O6ABmBVr5Rl6qtwSmablWINPrbvSliTDacUYmJdTHSg=",
+  "Source": "CreateEventTicket",
+  "BasePath": "_content/CreateEventTicket",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

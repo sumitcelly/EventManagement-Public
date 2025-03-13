@@ -1,0 +1,44 @@
+Event List:
+
+Event Name
+Event Date
+Event ID
+Event Desription
+
+db.Events.insertOne({ "EventName": "2025 COS Food Festival", "EventDate": new ISODate("2025-08-05T15:00:00Z"), "EventDescription": "COS Food Festival",
+ "Organizer Name": "Polka Dots And Curry" })
+
+Event Ticket Entitlements:
+
+Entitlement ID
+Event ID
+Entitlement Description
+Cost
+
+db.EventEntitlements.insertOne({"EventId":ObjectId("67b4f6f9ab45711cf0a4cb55"),"EntitlementDescription":"Chai","Cost":4})
+
+Event Tickets Schema:
+
+EventId
+TicketId
+User Full Name
+User Email
+User Phone Number
+Ticket Used (bool)
+Ticket Entitlements (array of entitlements)
+PArty Count (not used) since each ticket will be individual. Remove later
+
+db.EventTickets.insertOne({ "EventId": ObjectId("67b4f6f9ab45711cf0a4cb55"), "AttendeeName":"Sumit Celly", 
+"AttendeeSms": "7192315110", "AttendeeEmail": "cellysumit@hotmail.com","TicketUsed":false,"TicketEntitlements":[],
+"PartyCount":4})
+
+Payment:
+
+PaymentID
+TicketID
+Payment Code
+Paid Amount
+
+//remove a field
+db.EventTickets.updateOne({ },{ $unset: { PartyCount:0}})
+//omgo

@@ -1,0 +1,62 @@
+Two types of apps:
+
+One for ordering tickets.  Used at infrequent to steady rates, used more towards the event.
+
+The app or page will take in customer info (name, email), store it in some kind of db, maybe show event
+options/ add ons from DB. It will also take in payment info if needed.
+Once all processing is done, will generate QR code , sent to email or phone (?) and displayed on screen.
+The customer ordering info will be stored in that DB.
+
+
+Scanning app: Used on day of events. Heavy use on day of event. Scalability important.
+
+The scanning app or page will scan the QR code, run a check against  a service to verify 
+info, display customer name and entitlements for the event and check off their ticket as used.
+
+Basic Architecture:
+
+One is we can have .net core app  with 2 .net core services pointing to a mongo db.
+All of this can be hosted on an EC2 instance. Does not seem scalable unless we spin up another instance.
+
+Another options is to host both backend services in containers/ lambdas and the site also in a container?
+Maybe the site can be on a EC2 instance. What about mongo instance? WIll it be the Document DB service or 
+will I need an EC2 to host the mongo anyway?
+
+
+For sending notifications (email and or SMS), we need a way to queue the notifications
+and say a worker container or maybe even lambda can simply  pick it up from the queue.
+
+
+Front End: Need to host site. Site needs web server. Maybe or should go in a container which is hosted in the
+	container service or  on a EC2 box.
+
+Backend: Micro services in .net core go in containers  or are Lambda functions that can be invoked via urls
+		 or just go on a EC2 box.
+
+DB:  Document DB service or Mongo on EC2 box.  Maybe Dynamo DB.
+
+
+
+FE					BE			DB
+EC2					EC2			Mongo on EC2
+Container Service Container		Document DB Service Mongo.
+					Lambda
+					
+Looked at Lightsail quite a bit and that has a prety good deal going with 3 months free.
+Its basically ec2 but probably with less flexibility. THe fact that we need a DB, means we need a box.
+Use the document DB service is fairly expensive (about 7 cents a hour just for the box t3 box).
+I could look at dyname db pricing?
+
+ That was the other option I looked at as explained by this article.
+ https://aws.amazon.com/blogs/architecture/create-dynamic-contact-forms-for-s3-static-websites-using-aws-lambda-amazon-api-gateway-and-amazon-ses/
+ Essentially a the html, js goes on Aws S3, and Lambda has the backend logic . For storage, we would need dynamo DB.
+  This seems too many pieces and higher learning curve but truly cloud development here :).
+  Dynamo db does seem really inexpensive for the amount of data we are storing.
+
+Queue
+SQS which triggers Lambda for notification
+DB based queue where  Lambda or EC2 / Container worker picks it up.
+ 
+
+
+

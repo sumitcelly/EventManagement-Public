@@ -1,0 +1,16 @@
+Single Event specific to PDAC. What does the site/ app need?
+
+Link takes you to site to buy tickets.
+
+Link describes event, cost, add ons..
+
+Way to pay. 
+
+GEnerate ticket with QR code and send email.
+
+
+Customer brings QR code to event.
+
+Either app or maybe site, scans code and validates what the QRcode supports
+
+User is allowed and QR code invalidated.
