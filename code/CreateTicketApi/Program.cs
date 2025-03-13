@@ -14,6 +14,8 @@ builder.Services.Add(new ServiceDescriptor(typeof(EventContext), new EventContex
 
 var app = builder.Build();
 
+
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
