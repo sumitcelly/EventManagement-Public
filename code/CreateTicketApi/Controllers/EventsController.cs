@@ -15,10 +15,13 @@ public class EventsController : ControllerBase
 
     private readonly ILogger<EventsController> _logger;
     private readonly EventContext _eventContext;
-    public EventsController(ILogger<EventsController> logger, EventContext eventContext)
+
+    private readonly TicketAccess _ticketContext;
+    public EventsController(ILogger<EventsController> logger, EventContext eventContext, TicketAccess ticketContext)
     {
         _logger = logger;
         _eventContext = eventContext;
+        _ticketContext = ticketContext;
     }
 
     [HttpGet]
@@ -29,6 +32,20 @@ public class EventsController : ControllerBase
         List<Event> events = _eventContext.GetAllEvents();
         _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(events));
         return events;
+    }
+
+       [HttpGet]
+    [Route("/Tickets/Add")]
+    public bool AddTicket()
+    {
+        //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
+            return _ticketContext.AddEventTicket(new EventTicket(){
+                EventId = 1,
+                AttendeeEmail="test17@gmail.com",
+                AttendeeName="test77",
+                AttendeeSms="7719898999",
+                    TicketScanned=0
+            });
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
