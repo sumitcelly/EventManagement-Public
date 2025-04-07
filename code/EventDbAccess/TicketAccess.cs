@@ -24,7 +24,7 @@ namespace EventDbAccess
                 using (MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append("INSERT INTO eventmanagement.eventticket (EventId,AttendeeName,AttendeeEmail,AttendeeSms,TicketScanned)");
+                    sb.Append("INSERT INTO eventmanagement.eventticket (EventId,AttendeeName,AttendeeEmail,AttendeeSms,TicketScanned,TicketCode)");
                     sb.Append(" VALUES (");
             
                     sb.Append(ticket.EventId);
@@ -42,6 +42,10 @@ namespace EventDbAccess
                     sb.Append("'");
                     sb.Append(",");
                     sb.Append(ticket.TicketScanned);
+                    sb.Append(",");
+                    sb.Append("'");
+                    sb.Append(ticket.TicketCode);
+                    sb.Append("'");
                     sb.Append(")");
                     
                     Console.WriteLine(sb.ToString());

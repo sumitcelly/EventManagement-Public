@@ -3,6 +3,8 @@ namespace EventDbAccess
 {
     public class EventTicket
     {
+        public string  TicketCode {get;set;}
+
         public int EventId { get; set;}
         public string AttendeeName { get; set;}
 

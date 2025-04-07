@@ -8,10 +8,10 @@ namespace CreateTicketApi.Controllers;
 [Route("[controller]")]
 public class EventsController : ControllerBase
 {
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+    // private static readonly string[] Summaries = new[]
+    // {
+    //     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    // };
 
     private readonly ILogger<EventsController> _logger;
     private readonly EventContext _eventContext;
@@ -34,31 +34,19 @@ public class EventsController : ControllerBase
         return events;
     }
 
-       [HttpGet]
-    [Route("/Tickets/Add")]
-    public bool AddTicket()
-    {
-        //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
-            return _ticketContext.AddEventTicket(new EventTicket(){
-                EventId = 1,
-                AttendeeEmail="test17@gmail.com",
-                AttendeeName="test77",
-                AttendeeSms="7719898999",
-                    TicketScanned=0
-            });
-    }
+   
 
-    [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
-    {
+    // [HttpGet(Name = "GetWeatherForecast")]
+    // public IEnumerable<WeatherForecast> Get()
+    // {
         
-        return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        })
-        .ToArray();
-    }
+    //     return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+    //     {
+    //         Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+    //         TemperatureC = Random.Shared.Next(-20, 55),
+    //         Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+    //     })
+    //     .ToArray();
+    // }
 
 }

@@ -7,6 +7,20 @@ options/ add ons from DB. It will also take in payment info if needed.
 Once all processing is done, will generate QR code , sent to email or phone (?) and displayed on screen.
 The customer ordering info will be stored in that DB.
 
+QR Code:
+ For this first , we need to generate a unique  code like a sms validation code and store it in DB.
+ The code can be generated based on this validation code. This and the QR can be sent in SMS/Email.
+ To generate QR a few options:
+ This is one and is free: https://github.com/manuelbl/QrCodeGenerator
+ Another is this https://github.com/micjahn/ZXing.Net
+ Look at this stack overflow article as well for the above.
+ 	https://stackoverflow.com/questions/17424360/qr-code-webcam-scanner-c-sharp
+https://www.codeproject.com/Articles/5357944/Create-Your-Own-QR-Codes-with-ZXing-NET
+
+Generating is easy but for scanning we would need to first send the image to the server from  a camera
+and then scan it. Maybe for now just have the admins enter the 6 digit code in th UI for validation.
+
+
 
 Scanning app: Used on day of events. Heavy use on day of event. Scalability important.
 
