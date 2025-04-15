@@ -1,0 +1,11 @@
+Started with Ticket/Event API.
+Creating tickets and events.
+Ability to parse QR code and generate one.
+
+Big pieces.
+Payment mechanism (backend setup). Strip account etc.
+UI to accept that and also send it to the backend.
+Also UI to accept customer info.
+
+Notification Mechanism to customers as expanded in SendNotification.txt
+

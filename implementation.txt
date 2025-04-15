@@ -15,7 +15,7 @@ QR Code:
  Another is this https://github.com/micjahn/ZXing.Net
  Look at this stack overflow article as well for the above.
  	https://stackoverflow.com/questions/17424360/qr-code-webcam-scanner-c-sharp
-https://www.codeproject.com/Articles/5357944/Create-Your-Own-QR-Codes-with-ZXing-NET
+	https://www.codeproject.com/Articles/5357944/Create-Your-Own-QR-Codes-with-ZXing-NET
 
 Generating is easy but for scanning we would need to first send the image to the server from  a camera
 and then scan it. Maybe for now just have the admins enter the 6 digit code in th UI for validation.

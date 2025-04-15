@@ -23,6 +23,8 @@ public class PasswordGenerator
             throw new ArgumentException("characterSet must not be empty", "characterSet");
 
         var bytes = new byte[length * 8];
+      
+        
         System.Security.Cryptography.RandomNumberGenerator.Create().GetBytes(bytes);
         var result = new char[length];
         for (int i = 0; i < length; i++)

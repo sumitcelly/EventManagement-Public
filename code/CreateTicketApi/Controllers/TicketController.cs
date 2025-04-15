@@ -17,15 +17,27 @@ public class TicketController : ControllerBase
         _ticketContext = ticketContext;
     }
 
+
+    [HttpPost("GetTicketCodeByQR")]
+    public string GetTicketCodeByQR(byte[] qrCode)
+    {
+        return QRCodeUtils.GetQRText(qrCode);
+    }
+
     [HttpPost]
    
-    public string AddTicket(EventTicket ticket)
+    public FileContentResult AddTicket(EventTicket ticket)
     {
+        Console.WriteLine(JsonSerializer.Serialize(ticket));
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();
+        Console.WriteLine(ticket.TicketCode);
         if ( _ticketContext.AddEventTicket(ticket))
-            return ticket.TicketCode;
+            return File(QRCodeUtils.GetQRCodes(ticket.TicketCode),"image/jpeg",ticket.TicketCode);
+            //return QRCodeUtils.GetQRCodes(ticket.TicketCode);
         else
-            return "FAIL";
+        {
+            return File(System.IO.File.ReadAllBytes("notfound.png"), "image/jpeg");
+        }
         //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
             // return _ticketContext.AddEventTicket(new EventTicket(){
             //     EventId = 1,

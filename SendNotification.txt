@@ -1,0 +1,22 @@
+This is to plan how to send notification to customers when they purchase a ticket.
+customer info received and added to DB with AddTicket call.
+
+We would need to a notificatio table where when the ticket is added to the DB, the worker scans the notifcation 
+table for tickets to send notification to and updates the record when done.
+So essentially a DB queue. Notifications can be send by AWS SMS and AWS Email.
+
+Or maybe utilize the AWS infra somehow. Where we can add the records directly to an AWS event queue.
+And a subscriber can pick it up to send emails and messages. That way we are not maintaining a db queue.
+For that one option is to add the SMS or email notifications to a Amazon SQS queue. And trigger a lambda to 
+send emails using aWS SES or AWS SNS for texts. So 2 queues one for email and one for SMS.
+The queue would need the qr code or multiple QR codes (?) for multiple users to send to. Or maybe just the text of
+the QR and it can generate and send the qr if possible from Lambda (not sure since the library had a windows restriction).
+
+Looks like message size allowed is 256 Kib and one QR file is 22 kb. So should be ok.
+One issue is how to create an audit log for emails sent and sms so we can track reports and failures.
+Ideally the transaction should add a log to the mysql db or we need to find out some other way.
+
+
+
+
+
