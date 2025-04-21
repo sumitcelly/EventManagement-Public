@@ -1,0 +1,19 @@
+@model EventTicket.CustomerTicket
+@{
+    ViewData["Title"] = "Your Ticket";
+} 
+
+
+<div class="text-center">
+    <h1 class="display-4">Congrats @Model.CustomerName</h1>
+    <p>Here is ticket QR code for the event</p>
+    <label>TicketCode</label><br/>
+    <input name="TicketCode" value="@Model.TicketCode   "></input><br/>
+      
+    
+    <img src="data:image;base64,@System.Convert.ToBase64String(Model.QRCode)" width="180" height="180"/>     
+
+</div>
+@* <script>
+    document.getElementById("QRCode").src = "data:image/png;base64," + @Model.QRCode;
+</script> *@

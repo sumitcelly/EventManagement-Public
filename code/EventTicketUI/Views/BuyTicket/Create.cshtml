@@ -41,5 +41,15 @@
         </form>
     </div>
 </div>
-  
+
+@if (Model !=null)
+{
+    <div name="QRCode">
+        <h1 class="display-4">Congrats @Model.AttendeeName</h1>
+        <p>Here is ticket QR code for the event</p>
+        <label>TicketCode</label><br/>
+        <input name="TicketCode" value="@Model.TicketCode"></input><br/>
+        <img src="data:image;base64,@System.Convert.ToBase64String(Model.QRCode)" width="180" height="180"/>     
+    </div>
+}
 </div>

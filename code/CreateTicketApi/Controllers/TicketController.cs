@@ -31,6 +31,7 @@ public class TicketController : ControllerBase
         Console.WriteLine(JsonSerializer.Serialize(ticket));
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();
         Console.WriteLine(ticket.TicketCode);
+        
         if ( _ticketContext.AddEventTicket(ticket))
             return File(QRCodeUtils.GetQRCodes(ticket.TicketCode),"image/jpeg",ticket.TicketCode);
             //return QRCodeUtils.GetQRCodes(ticket.TicketCode);

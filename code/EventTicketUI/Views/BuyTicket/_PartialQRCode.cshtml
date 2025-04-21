@@ -1,0 +1,10 @@
+@using EventTicket
+@model CustomerTicket
+
+@if (Model != null)
+{   <div>
+        Your TicketCode is:<h3>@Model.TicketCode</h3>
+    
+        <img src="data:image;base64,@System.Convert.ToBase64String(Model.QRCode)" width="180" height="180"/>     
+    </div>
+}    
