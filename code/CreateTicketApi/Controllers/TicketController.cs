@@ -24,6 +24,20 @@ public class TicketController : ControllerBase
         return QRCodeUtils.GetQRText(qrCode);
     }
 
+
+    [HttpGet]
+    public async Task<EventTicket> GetTicketByQRCode(string qrCode, int eventId=1)
+    {
+        return await _ticketContext.GetEventTicketByQRCode(qrCode, eventId);
+    }
+
+    [HttpPost]
+    [Route("/TIcket/Validate")]
+    public async Task<bool> ValidateTicket(string qrCode, int eventId=1)
+    {
+        return await _ticketContext.ValidateTicket(qrCode, eventId);
+    }
+
     [HttpPost]
    
     public FileContentResult AddTicket(EventTicket ticket)

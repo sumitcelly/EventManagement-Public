@@ -51,7 +51,7 @@ public class BuyTicketController : Controller
             {             
                 Console.WriteLine(response.StatusCode);
                 Console.WriteLine(response.Content.Headers);
-                fileName = response.Content.Headers.ContentDisposition.FileName;
+                fileName = response.Content.Headers?.ContentDisposition?.FileName;
                 imageBytes = await response.Content.ReadAsByteArrayAsync();
            
                 result = File(imageBytes, "image/jpeg");
@@ -63,11 +63,7 @@ public class BuyTicketController : Controller
        customerInfo.TicketCode = fileName;
 
        return View(customerInfo);
-    //    return View("Index",new Customer(){ AttendeeName = customerInfo.AttendeeName,
-    //                                         QRCode = imageBytes,
-    //                                         TicketCode = fileName,
-    //                                         FileResult = result});
-      
+
 
     }
 }

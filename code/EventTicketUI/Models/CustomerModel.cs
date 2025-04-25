@@ -12,8 +12,10 @@ namespace EventTicket
         
         public int EventId {get; set;}  =1;
         
-        public string TicketCode { get; set; }
+        public string TicketCode { get; set; }="";
 
-        public byte[] QRCode {get; set;}
+        public byte[] QRCode {get; set;} 
+
+        
     }
 }
