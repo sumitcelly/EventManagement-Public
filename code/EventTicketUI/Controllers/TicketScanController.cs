@@ -41,6 +41,13 @@ public class TicketScanController : Controller
                     string resp = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Response: {resp}");
                     JObject obj = JObject.Parse(resp);
+                    if (obj["ticketScanned"].ToString() =="1")
+                    {
+                        ModelState.Clear();
+                        ModelState.AddModelError("",$"Ticket with code {customer.TicketCode} has already been scanned");
+                        return View(customer1);
+                    }
+        
                     customer1 = new Customer(){
                         TicketCode =  customer.TicketCode,
                          AttendeeEmail = obj["attendeeEmail"].ToString(),

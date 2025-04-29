@@ -9,3 +9,11 @@ Also UI to accept customer info.
 
 Notification Mechanism to customers as expanded in SendNotification.txt
 
+--Update as of 4/28
+ Need to get the event id in the application. Right now it defaults to One.
+ How will event id feed to the UI? Is it through branding url?
+
+ Get event entitlements from dn and show on UI?
+ 
+
+
