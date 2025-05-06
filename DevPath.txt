@@ -14,6 +14,15 @@ Notification Mechanism to customers as expanded in SendNotification.txt
  How will event id feed to the UI? Is it through branding url?
 
  Get event entitlements from dn and show on UI?
+
+ --update as of 4/6
+ Looked at ticketleap.customer
+
+ Need to change the sale mechanism. Havd to generate a sales receipt for order and link it to tickets.
+ So need a sale table with a confirmation ID generated.
+
+ Need to change the url to buy tickets to include event and org. So maybe need an  org table also
+ So the url would be something like https://www.ticketleap.events/tickets/polkadots/evetn-firs
  
 
 
