@@ -20,3 +20,17 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+ /* fieldset {
+  background-color: #eeeeee;
+  padding: 15px;
+  border-width: 2px;
+  border-color: #258cfb;
+} */
+
+/*legend {
+  background-color: gray;
+  color: white;
+  padding: 5px 5px;
+  text-align: center;
+} */

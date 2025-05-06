@@ -62,7 +62,7 @@ public class BuyTicketController : Controller
        customerInfo.QRCode = imageBytes;
        customerInfo.TicketCode = fileName;
 
-       return View(customerInfo);
+       return View("TicketDetails", customerInfo);
 
 
     }

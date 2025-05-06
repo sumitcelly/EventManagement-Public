@@ -1,0 +1,26 @@
+@model EventTicket.Customer
+@{
+    ViewData["Title"] = "Ticket Details";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Here are your ticket details!</h1>
+</div>
+
+ <div class="row">
+    <div class="col-md-3 border border-3 border-secondary rounded"> 
+        <h4 class="mt-3 text-center">Congrats <span class="badge bg-secondary">@Model.AttendeeName</span></h4>
+        <div class="mb-3">
+             <label>Here is your ticket code <span class="badge bg-secondary">@Model.TicketCode</span></label>
+        </div> 
+        <div class="mb-3">
+            <img src="data:image;base64,@System.Convert.ToBase64String(Model.QRCode)" width="180" height="180"/>    
+        </div>
+        <div class="mb-3">
+            <label>Please save this information and bring it on the day of the event.</label>
+        </div>
+        <div class="mb-3">
+           <a href="/BuyTicket/Create" class="link-underline-primary">Buy more!</a>
+        </div>
+    </div>
+ </div>
