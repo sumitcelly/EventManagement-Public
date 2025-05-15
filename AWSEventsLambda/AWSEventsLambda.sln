@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventNotifier", "EventNotifier", "{A61F3044-D754-3557-19CA-2F0673824E0B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{CC3E2FAF-C281-D3E9-960C-ACF44BBE976D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchLambda", "EventNotifier\src\ScratchLambda\ScratchLambda.csproj", "{93AAAD15-8163-6834-4D2F-638F4F3197FF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{793D7AB3-8229-56EB-4827-3FEDC12EB4B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScratchLambda.Tests", "EventNotifier\test\ScratchLambda.Tests\ScratchLambda.Tests.csproj", "{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93AAAD15-8163-6834-4D2F-638F4F3197FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93AAAD15-8163-6834-4D2F-638F4F3197FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93AAAD15-8163-6834-4D2F-638F4F3197FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93AAAD15-8163-6834-4D2F-638F4F3197FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CC3E2FAF-C281-D3E9-960C-ACF44BBE976D} = {A61F3044-D754-3557-19CA-2F0673824E0B}
+		{93AAAD15-8163-6834-4D2F-638F4F3197FF} = {CC3E2FAF-C281-D3E9-960C-ACF44BBE976D}
+		{793D7AB3-8229-56EB-4827-3FEDC12EB4B0} = {A61F3044-D754-3557-19CA-2F0673824E0B}
+		{C770F879-DD19-F2C0-4EEA-D7EEA09A3B5E} = {793D7AB3-8229-56EB-4827-3FEDC12EB4B0}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D16CE98-C316-4753-802A-7F0C41113914}
+	EndGlobalSection
+EndGlobal

@@ -23,6 +23,27 @@ Notification Mechanism to customers as expanded in SendNotification.txt
 
  Need to change the url to buy tickets to include event and org. So maybe need an  org table also
  So the url would be something like https://www.ticketleap.events/tickets/polkadots/evetn-firs
+
+ --Update as of 5/12
+ Big pieces to work on:
+
+ Change database struct based on product research.
+
+ Change/ add calls to API to incorporate new structure.
+
+ Email/ Notification sending mechanism.
+
+ --Analyzing SV notification engine
+ We create a notification queue class for each service (AWS, Mandarill ,Twilio Etc).
+ Each queue class has a list of notifications orderd by priority 
+ Each queue has a Task or worker function.
+ The worker/Task processes notifications by priority. Each Notification Queue is processed in its own Task
+ and each notification is also sent in its own task.
+
+ --Action: Look at SQS queues and see how we can split queues by priorty of objects,
+  Cost and do we pair Queues with lambda or just a home grown worker?
+
+
  
 
 
