@@ -25,8 +25,7 @@ public class Function
         {
             await ProcessMessageAsync(message, context);
         }
-
-        context.Logger.LogInformation("done");
+        
     }
     private async Task ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
     {
