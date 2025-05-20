@@ -29,46 +29,57 @@ public class NotificationSender
     /// <param name="fromAddress"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static async Task<Tuple<string, bool>> SendEmail(string toAddress, string subject, string bodyText, string fromAddress)
+    public static async Task<NotificationResponse> SendEmail(string toAddress, string subject, string bodyText, string fromAddress)
     {
         if (string.IsNullOrWhiteSpace(toAddress) ||
             string.IsNullOrWhiteSpace(subject) ||
             string.IsNullOrWhiteSpace(fromAddress) ||
-            string.IsNullOrWhiteSpace(bodyText) ||
-            string.IsNullOrWhiteSpace(fromAddress))
+            string.IsNullOrWhiteSpace(bodyText) )
         {
             throw new ArgumentNullException("Invalid args sent for Send Email. One of them must be null.");
         }
 
- 
-        //"<html><body><h2>Hello from Amazon SES</h2><ul><li>I'm a list item</li><li>So am I!</li></body></html>")
-        var sendRequest = new SendEmailRequest
-        {
-            Source = fromAddress,
-            Destination = new Destination { ToAddresses = new List<string>() { toAddress } },
-            Message = new Message
-            {
-                Subject = new Content(subject),
-                Body = new Body
-                {
-                    Html = new Content { Charset = "UTF-8", Data = bodyText },
-                    Text = new Content { Charset = "UTF-8", Data = "Text content for message" }
-                }
-            },
-            ConfigurationSetName = "EventsProSender"
-        };
 
-        bool stopSending = false;
-        string responseId = string.Empty;
+        //"<html><body><h2>Hello from Amazon SES</h2><ul><li>I'm a list item</li><li>So am I!</li></body></html>")
+
+
+        NotificationResponse response = new NotificationResponse();
+
         try
         {
+            var sendRequest = new SendEmailRequest
+            {
+                Source = fromAddress,
+                Destination = new Destination { ToAddresses = new List<string>() { toAddress } },
+                Message = new Message
+                {
+                    Subject = new Content(subject),
+                    Body = new Body
+                    {
+                        Html = new Content { Charset = "UTF-8", Data = bodyText },
+                        Text = new Content { Charset = "UTF-8", Data = "Text content for message" }
+                    }
+                },
+                ConfigurationSetName = "EventsProSender"
+            };
+
             var sendResponse = await _emailClient.SendEmailAsync(sendRequest);
-            responseId = sendResponse.MessageId;
+            response.MessageId = sendResponse.MessageId;
+        }
+        catch (MessageRejectedException exc)
+        {
+            string errorMessage = $"Amazon SES exception: {exc.Message}";
+            _logger.LogError(errorMessage);
+            response.ErrorMessage = errorMessage;
+            response.ErrorCode = exc.ErrorCode;
+            response.RetryOnError = false;
         }
         catch (AmazonSimpleEmailServiceException ex)
         {
             string errorMessage = $"Amazon SES exception: {ex.Message}";
             _logger.LogError(errorMessage);
+            response.ErrorMessage = errorMessage;
+            response.ErrorCode = ex.ErrorCode;
         }
         catch (Amazon.Runtime.AmazonServiceException ex)
         {
@@ -81,14 +92,16 @@ public class NotificationSender
             {
                 _logger.Log($"Amazon service failure: {ex.Message}");
             }
-            stopSending = true;
+            response.ErrorMessage = ex.Message;
+            response.ErrorCode = ex.ErrorCode;
         }
         catch (Exception ex)
         {
             _logger.Log($"Amazon Sending failure: {ex.Message}");
+            response.ErrorMessage = ex.Message;
         }
 
-        return new Tuple<string, bool>(responseId, stopSending);
+        return response;
 
     }
 
