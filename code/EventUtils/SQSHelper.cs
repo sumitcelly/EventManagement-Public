@@ -4,19 +4,20 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Configuration;
 public class SQSHelper
 {
-    private static readonly AmazonSQSClient _amazonSQSClient;
-    private static readonly string _queueUrl = "https://sqs.us-west-2.amazonaws.com/975050117852/NotificationEventPr0";
+    private  readonly AmazonSQSClient _amazonSQSClient;
+    private  readonly string _queueUrl = "https://sqs.us-west-2.amazonaws.com/975050117852/NotificationEventPr0";
 
 
-    static SQSHelper()
+    public SQSHelper(IConfiguration configuration)
     {
-        _amazonSQSClient = new AmazonSQSClient("REDACTED_AWS_KEY", "REDACTED_AWS_KEY");
+        _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"]);
         
-        
+      
     }
-    public static async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name)
+    public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name)
     {
         Email tempObj = new Email()
         {

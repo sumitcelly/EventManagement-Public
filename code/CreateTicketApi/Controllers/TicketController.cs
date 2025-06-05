@@ -13,11 +13,14 @@ public class TicketController : ControllerBase
 
     private readonly TicketAccess _ticketContext;
     private readonly NotificationTemplateAccess _templateAccess;
-    public TicketController(ILogger<TicketController> logger, TicketAccess ticketContext, NotificationTemplateAccess templateAccess)
+
+    private readonly SQSHelper _sqsClient  =  null;
+    public TicketController(IConfiguration config, ILogger<TicketController> logger, TicketAccess ticketContext, NotificationTemplateAccess templateAccess)
     {
         _logger = logger;
         _ticketContext = ticketContext;
-        _templateAccess = templateAccess;   
+        _templateAccess = templateAccess;
+        _sqsClient = new SQSHelper(config);
     }
 
 
@@ -52,7 +55,7 @@ public class TicketController : ControllerBase
         if (_ticketContext.AddEventTicket(ticket))
         {
             string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew");
-            await SQSHelper.QueueEmailMessage("support@polkadotsandcurry.com","info@polkadotsandcurry.com","Test Hello",emailContent, ticket.AttendeeName);
+            await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com","info@polkadotsandcurry.com","Test Hello",emailContent, ticket.AttendeeName);
             return File(QRCodeUtils.GetQRCodes(ticket.TicketCode), "image/jpeg", ticket.TicketCode);
         }
         //return QRCodeUtils.GetQRCodes(ticket.TicketCode);
