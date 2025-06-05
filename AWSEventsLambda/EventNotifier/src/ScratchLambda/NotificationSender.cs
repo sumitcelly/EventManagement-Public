@@ -12,9 +12,10 @@ public class NotificationSender
     private static ILambdaLogger _logger = null;
     public static void Init(ILambdaLogger logger)
     {
-        _emailClient = new AmazonSimpleEmailServiceClient(new
-                            AmazonSimpleEmailServiceConfig()
-        { Profile = new Amazon.Profile("SC") });
+        // _emailClient = new AmazonSimpleEmailServiceClient(new
+        //                     AmazonSimpleEmailServiceConfig()
+        // { Profile = new Amazon.Profile("profile") });
+        _emailClient = new AmazonSimpleEmailServiceClient("REDACTED_AWS_KEY", "REDACTED_AWS_KEY");
         _logger = logger;
     }
 
@@ -59,8 +60,8 @@ public class NotificationSender
                         Html = new Content { Charset = "UTF-8", Data = bodyText },
                         Text = new Content { Charset = "UTF-8", Data = "Text content for message" }
                     }
-                },
-                ConfigurationSetName = "EventsProSender"
+                }
+                
             };
 
             var sendResponse = await _emailClient.SendEmailAsync(sendRequest);

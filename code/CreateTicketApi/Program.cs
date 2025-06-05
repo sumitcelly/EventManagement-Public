@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Add(new ServiceDescriptor(typeof(EventContext), new EventContext(builder.Configuration.GetConnectionString("Default"))));
 builder.Services.Add(new ServiceDescriptor(typeof(TicketAccess), new TicketAccess(builder.Configuration.GetConnectionString("Default"))));
+builder.Services.Add(new ServiceDescriptor(typeof(NotificationTemplateAccess), new NotificationTemplateAccess(builder.Configuration.GetConnectionString("Default"))));
 
 var app = builder.Build();
 

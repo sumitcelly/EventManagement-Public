@@ -2,6 +2,7 @@ using EventDbAccess;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 namespace CreateTicketApi.Controllers;
 
 [ApiController]
@@ -11,10 +12,12 @@ public class TicketController : ControllerBase
     private readonly ILogger<TicketController> _logger;
 
     private readonly TicketAccess _ticketContext;
-    public TicketController(ILogger<TicketController> logger, TicketAccess ticketContext)
+    private readonly NotificationTemplateAccess _templateAccess;
+    public TicketController(ILogger<TicketController> logger, TicketAccess ticketContext, NotificationTemplateAccess templateAccess)
     {
         _logger = logger;
         _ticketContext = ticketContext;
+        _templateAccess = templateAccess;   
     }
 
 
@@ -40,15 +43,19 @@ public class TicketController : ControllerBase
 
     [HttpPost]
    
-    public FileContentResult AddTicket(EventTicket ticket)
+    public async Task<FileContentResult> AddTicket(EventTicket ticket)
     {
         Console.WriteLine(JsonSerializer.Serialize(ticket));
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();
         Console.WriteLine(ticket.TicketCode);
-        
-        if ( _ticketContext.AddEventTicket(ticket))
-            return File(QRCodeUtils.GetQRCodes(ticket.TicketCode),"image/jpeg",ticket.TicketCode);
-            //return QRCodeUtils.GetQRCodes(ticket.TicketCode);
+
+        if (_ticketContext.AddEventTicket(ticket))
+        {
+            string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew");
+            await SQSHelper.QueueEmailMessage("support@polkadotsandcurry.com","info@polkadotsandcurry.com","Test Hello",emailContent, ticket.AttendeeName);
+            return File(QRCodeUtils.GetQRCodes(ticket.TicketCode), "image/jpeg", ticket.TicketCode);
+        }
+        //return QRCodeUtils.GetQRCodes(ticket.TicketCode);
         else
         {
             return File(System.IO.File.ReadAllBytes("notfound.png"), "image/jpeg");
