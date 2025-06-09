@@ -1,4 +1,6 @@
 using EventDbAccess;
+using EventUtils;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -54,26 +56,49 @@ public class TicketController : ControllerBase
 
         if (_ticketContext.AddEventTicket(ticket))
         {
-            string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew");
-            await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com","info@polkadotsandcurry.com","Test Hello",emailContent, ticket.AttendeeName);
-            return File(QRCodeUtils.GetQRCodes(ticket.TicketCode), "image/jpeg", ticket.TicketCode);
+            var tokenReplacer = new EmailTokenReplacement();
+            var values = new Dictionary<string, string>();
+            // Fetch the email template
+            string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew1");
+            byte[] qrBytes = QRCodeUtils.GetQRCodes(ticket.TicketCode);
+            // Set values for supported tokens
+            if (!string.IsNullOrWhiteSpace(emailContent))
+            {
+                foreach (var token in EmailTokenReplacement._supportedTokens)
+                {
+                    switch (token)
+                    {
+                        case "QRCode":
+                            values[token] = ticket.TicketCode;
+                            break;
+                        case "QRCodeImage":
+                            values[token] = System.Convert.ToBase64String(qrBytes);
+                            break;
+                        case "EventName":
+                            values[token] = "Name";
+                            break;
+
+                        case "Attendee":
+                            values[token] = ticket.AttendeeName;
+                            break;
+
+
+
+                            // ... set other tokens as needed
+                    }
+                }
+                emailContent = tokenReplacer.ReplaceTokens( System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent)), values);
+            }
+
+            await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com", "info@polkadotsandcurry.com", "Test Hello", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailContent)), ticket.AttendeeName);
+            return File(qrBytes, "image/jpeg", ticket.TicketCode);
         }
         //return QRCodeUtils.GetQRCodes(ticket.TicketCode);
         else
         {
             return File(System.IO.File.ReadAllBytes("notfound.png"), "image/jpeg");
         }
-        //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
-            // return _ticketContext.AddEventTicket(new EventTicket(){
-            //     EventId = 1,
-            //     AttendeeEmail="test17@gmail.com",
-            //     AttendeeName="test77",
-            //     AttendeeSms="7719898999",
-            //         TicketScanned=0
-            // });
+        
     }
-
-
-
 
 }
