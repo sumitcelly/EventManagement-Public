@@ -15,13 +15,23 @@ public class TicketController : ControllerBase
 
     private readonly TicketAccess _ticketContext;
     private readonly NotificationTemplateAccess _templateAccess;
-
+    private readonly EventOrganizerDBAccess _eventOrganizerDBAccess;
+    private EventContext _event;
     private readonly SQSHelper _sqsClient  =  null;
-    public TicketController(IConfiguration config, ILogger<TicketController> logger, TicketAccess ticketContext, NotificationTemplateAccess templateAccess)
+    public TicketController(IConfiguration config, ILogger<TicketController> logger,
+                            TicketAccess ticketContext, NotificationTemplateAccess templateAccess,
+                            EventOrganizerDBAccess eventOrganizerDBAccess,
+                            EventContext eventObject)
     {
         _logger = logger;
         _ticketContext = ticketContext;
         _templateAccess = templateAccess;
+        _eventOrganizerDBAccess = eventOrganizerDBAccess;
+        _event =  eventObject;
+        if (config == null)
+        {
+            throw new ArgumentNullException(nameof(config));
+        }
         _sqsClient = new SQSHelper(config);
     }
 
@@ -48,7 +58,7 @@ public class TicketController : ControllerBase
 
     [HttpPost]
    
-    public async Task<FileContentResult> AddTicket(EventTicket ticket)
+    public async Task<FileContentResult> AddTicket(EventTicket ticket, string eventOrganizerName="PDAC")
     {
         Console.WriteLine(JsonSerializer.Serialize(ticket));
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();
@@ -61,6 +71,17 @@ public class TicketController : ControllerBase
             // Fetch the email template
             string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew1");
             byte[] qrBytes = QRCodeUtils.GetQRCodes(ticket.TicketCode);
+            
+            EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerByName(eventOrganizerName);
+            if (eventOrganizer == null)
+            {
+                throw new Exception($"Organizer with name {eventOrganizerName} not found.");
+            }
+            Event eventContext = await  _event.GetEventById(ticket.EventId);
+            if (eventContext == null)
+            {
+                throw new Exception($"Event with ID {ticket.EventId} not found.");
+            }
             // Set values for supported tokens
             if (!string.IsNullOrWhiteSpace(emailContent))
             {
@@ -77,17 +98,27 @@ public class TicketController : ControllerBase
                         case "EventName":
                             values[token] = "Name";
                             break;
-
                         case "Attendee":
                             values[token] = ticket.AttendeeName;
                             break;
-
-
-
-                            // ... set other tokens as needed
+                        case "EventDate":
+                            values[token] = eventContext.EventDate.ToString("yyyy-MM-dd");
+                            break;
+                        case "EventLocation":
+                            values[token] = eventContext.EventLocation ?? "Not specified";
+                            break;
+                        case "OrganizerName":
+                            values[token] = eventOrganizer.OrganizerName ?? "Not specified";
+                            break;
+                        case "EventOrganizerHelpLine":
+                            values[token] = eventOrganizer.OrganizerPhone ?? "Not specified";
+                            break;
+                        default:
+                            break;
+                           
                     }
                 }
-                emailContent = tokenReplacer.ReplaceTokens( System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent)), values);
+                emailContent = tokenReplacer.ReplaceTokens(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent)), values);
             }
 
             await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com", "info@polkadotsandcurry.com", "Test Hello", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailContent)), ticket.AttendeeName);

@@ -24,7 +24,7 @@ namespace EventDbAccess
         {
             if (string.IsNullOrEmpty(code))
             {
-                throw new ArgumentNullException("code");
+                throw new ArgumentNullException(nameof(code));
             }
             bool retVal= false;
             try
