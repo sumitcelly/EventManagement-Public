@@ -107,7 +107,7 @@ public class TicketController : ControllerBase
                         case "EventLocation":
                             values[token] = eventContext.EventLocation ?? "Not specified";
                             break;
-                        case "OrganizerName":
+                        case "EventOrganizerName":
                             values[token] = eventOrganizer.OrganizerName ?? "Not specified";
                             break;
                         case "EventOrganizerHelpLine":

@@ -71,7 +71,7 @@ namespace EventDbAccess
               EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
               EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventLocation")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventLocation"))
+              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
             };
         }
         return null;

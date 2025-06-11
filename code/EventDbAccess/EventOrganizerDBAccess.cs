@@ -41,7 +41,7 @@ namespace EventDbAccess
                     OrganizerInstagram,
                     OrganizerFacebook
                 FROM eventorganizer 
-                WHERE OrganizerName = '@organizerName'";
+                WHERE OrganizerName = @organizerName";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@organizerName", organizerName);
