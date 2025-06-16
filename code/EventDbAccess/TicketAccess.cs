@@ -31,7 +31,7 @@ namespace EventDbAccess
             {    
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$" Update eventmanagement.eventticket set TicketScanned=1  where
+                    string sql = @$" Update eventmanagement.eventsalesitem set TicketScanned=1  where
                                     EventId='{eventId}' and TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
@@ -60,7 +60,7 @@ namespace EventDbAccess
             {    
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$"Select AttendeeName, AttendeeEmail, AttendeeSms,TicketScanned from eventmanagement.eventticket where
+                    string sql = @$"Select AttendeeName, AttendeeEmail, AttendeeSms,TicketScanned from eventmanagement.eventsalesitem where
                                     EventId='{eventId}' and TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
@@ -94,7 +94,7 @@ namespace EventDbAccess
                 using (MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append("INSERT INTO eventmanagement.eventticket (EventId,AttendeeName,AttendeeEmail,AttendeeSms,TicketScanned,TicketCode)");
+                    sb.Append("INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeName,AttendeeEmail,AttendeeSms,TicketScanned,TicketCode,SalesOrderId,TicketTypeId)");
                     sb.Append(" VALUES (");
             
                     sb.Append(ticket.EventId);
@@ -115,6 +115,14 @@ namespace EventDbAccess
                     sb.Append(",");
                     sb.Append("'");
                     sb.Append(ticket.TicketCode);
+                    sb.Append("'");
+                    sb.Append(",");
+                    sb.Append("'");
+                    sb.Append(ticket.SalesOrderId);
+                    sb.Append("'");
+                    sb.Append(",");
+                    sb.Append("'");
+                    sb.Append(ticket.TicketTypeId);
                     sb.Append("'");
                     sb.Append(")");
                     
