@@ -44,7 +44,7 @@ public class TicketController : ControllerBase
 
 
     [HttpGet]
-    public async Task<EventTicket> GetTicketByQRCode(string qrCode, int eventId=1)
+    public async Task<EventSalesItem> GetTicketByQRCode(string qrCode, int eventId=1)
     {
         return await _ticketContext.GetEventTicketByQRCode(qrCode, eventId);
     }
@@ -58,7 +58,7 @@ public class TicketController : ControllerBase
 
     [HttpPost]
    
-    public async Task<FileContentResult> AddTicket(EventTicket ticket, string eventOrganizerName="PDAC")
+    public async Task<FileContentResult> AddTicket(EventSalesItem ticket, string eventOrganizerName="PDAC")
     {
         Console.WriteLine(JsonSerializer.Serialize(ticket));
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();

@@ -48,33 +48,47 @@ namespace EventDbAccess
             return retVal;
         }
 
-        public async Task<EventTicket> GetEventTicketByQRCode(string code, int eventId =1)
+        public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId =1)
         {
             if (string.IsNullOrEmpty(code))
             {
                 throw new ArgumentNullException("code");
             }
 
-            EventTicket ticket = new EventTicket();
+            //Todo: Need a UI model here to return data for attendee plus ticket
+            EventSalesItem ticket = new EventSalesItem();
             try
             {    
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$"Select AttendeeName, AttendeeEmail, AttendeeSms,TicketScanned from eventmanagement.eventsalesitem where
-                                    EventId='{eventId}' and TicketCode='{code}'";
+                    string sql = @$"Select a.Name, a.Email, a.Sms, 
+                                    b.CreatedAt, b.ModifiedAt, 
+                                    b.TicketCode b.TicketScanned 
+                                    from eventmanagement.Attendee a, 
+                                    eventmanagement.EventSalesItem b where
+                                    a.AttendeeId=b.AttendeeId and
+                                    b.EventId='{eventId}' and b.TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader.RecordsAffected >1)
                             throw new Exception("More than one record returned for ticket code"+code);
-                      
+
                         while (await reader.ReadAsync())
                         {
-                            ticket.AttendeeName = reader.GetString(0);
-                            ticket.AttendeeEmail = reader.GetString(1);
-                            ticket.AttendeeSms = reader.GetString(2);
-                            ticket.TicketScanned = reader.GetInt16(3);
+                            ticket.Attendee = new Attendee()
+                            {
+                                Name = reader.GetString(0),
+                                Email = reader.GetString(1),
+                                Sms = reader.GetString(2)
+                            };
+
+                            ticket.CreatedAt = reader.GetDateTime(3);
+                            ticket.ModifiedAt = reader.GetDateTime(4);
+                            ticket.TicketCode = reader.GetString(5);
+                            ticket.TicketScanned = reader.GetInt32(6);
+                            
                         }
                     }
                 }
@@ -84,31 +98,25 @@ namespace EventDbAccess
             {
                 Console.WriteLine(ex.Message);
             }
-            return ticket;
+            return attendee; 
         }
 
-        public bool AddEventTicket(EventTicket ticket)
+        public bool AddEventTicket(EventSalesItem ticket)
         {
             try
             {
                 using (MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString))
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append("INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeName,AttendeeEmail,AttendeeSms,TicketScanned,TicketCode,SalesOrderId,TicketTypeId)");
+                    sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId
+                                TicketScanned,TicketCode,SalesOrderId,TicketTypeId,
+                                CreatedAt,ModifiedAt) ");
                     sb.Append(" VALUES (");
             
                     sb.Append(ticket.EventId);
                     sb.Append(",");
                     sb.Append("'");
-                    sb.Append(ticket.AttendeeName);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.AttendeeEmail);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.AttendeeSms);
+                    sb.Append(ticket.Attendee.AttendeeId);
                     sb.Append("'");
                     sb.Append(",");
                     sb.Append(ticket.TicketScanned);
@@ -123,6 +131,14 @@ namespace EventDbAccess
                     sb.Append(",");
                     sb.Append("'");
                     sb.Append(ticket.TicketTypeId);
+                    sb.Append("'");
+                    sb.Append(",");
+                    sb.Append("'");
+                    sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));    
+                    sb.Append("'");
+                    sb.Append(",");
+                    sb.Append("'");     
+                    sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
                     sb.Append("'");
                     sb.Append(")");
                     
