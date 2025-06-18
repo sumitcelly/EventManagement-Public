@@ -96,10 +96,10 @@ public class TicketController : ControllerBase
                             values[token] = System.Convert.ToBase64String(qrBytes);
                             break;
                         case "EventName":
-                            values[token] = "Name";
+                            values[token] = eventContext.EventName; 
                             break;
                         case "Attendee":
-                            values[token] = ticket.AttendeeName;
+                            values[token] = ticket.Attendee.Name;
                             break;
                         case "EventDate":
                             values[token] = eventContext.EventDate.ToString("yyyy-MM-dd");
@@ -121,7 +121,7 @@ public class TicketController : ControllerBase
                 emailContent = tokenReplacer.ReplaceTokens(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent)), values);
             }
 
-            await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com", "info@polkadotsandcurry.com", "Test Hello", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailContent)), ticket.AttendeeName);
+            await _sqsClient.QueueEmailMessage("support@polkadotsandcurry.com", "info@polkadotsandcurry.com", "Test Hello", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailContent)), ticket.Attendee.Name);
             return File(qrBytes, "image/jpeg", ticket.TicketCode);
         }
         //return QRCodeUtils.GetQRCodes(ticket.TicketCode);

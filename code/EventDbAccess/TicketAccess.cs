@@ -98,7 +98,7 @@ namespace EventDbAccess
             {
                 Console.WriteLine(ex.Message);
             }
-            return attendee; 
+            return ticket; 
         }
 
         public bool AddEventTicket(EventSalesItem ticket)
