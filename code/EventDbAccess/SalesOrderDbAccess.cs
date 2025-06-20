@@ -13,7 +13,7 @@ namespace EventDbAccess
             _connectionString = connectionString
                 ?? throw new ArgumentNullException(nameof(connectionString));}
 
-        public async Task<bool> CreateSalesOrder(SalesOrder order)
+        public async Task<int> CreateSalesOrder(SalesOrder order)
         {
             if (order == null)
                 throw new ArgumentNullException(nameof(order));
@@ -24,20 +24,29 @@ namespace EventDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO salesorder 
-                    (CustomerId, EventId, AttendeeeId, CreatedAt, ModifiedAt) 
+                    (CustomerId, EventId, AttendeeId, CreatedAt, ModifiedAt) 
                     VALUES 
                     (@customerId, @eventId, @attendeeId, @createdAt, @modifiedAt)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@customerId", order.CustomerId);
                 cmd.Parameters.AddWithValue("@eventId", order.EventId);
-                cmd.Parameters.AddWithValue("@attendeeId", order.AttendeeeId);
-                cmd.Parameters.AddWithValue("@createdAt", order.CreatedAt);
-                cmd.Parameters.AddWithValue("@modifiedAt", order.ModifiedAt);
+                cmd.Parameters.AddWithValue("@attendeeId", order.AttendeeId);
+                cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
-             
-                return rowsAffected > 0;
+
+                if (rowsAffected == 0)
+                {
+                    throw new Exception("Failed to create sales order.");
+                }
+                else
+                {
+                    // Get the last inserted ID
+                    return cmd.LastInsertedId >0 ? Convert.ToInt32(cmd.LastInsertedId) :0;
+                }
+               
             }
             catch (Exception ex)
             {
@@ -66,7 +75,7 @@ namespace EventDbAccess
                         OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
                         CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-                        AttendeeeId = reader.GetInt32(reader.GetOrdinal("AttendeeeId")),
+                        AttendeeId = reader.GetInt32(reader.GetOrdinal("AttendeeId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
                     };

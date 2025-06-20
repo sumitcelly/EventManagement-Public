@@ -13,7 +13,7 @@ namespace EventDbAccess
             _connectionString = connectionString;
         }
 
-        public async Task<bool> CreateAttendee(Attendee attendee)
+        public async Task<int> CreateAttendee(Attendee attendee)
         {
             if (attendee == null)
                 throw new ArgumentNullException(nameof(attendee));
@@ -34,7 +34,7 @@ namespace EventDbAccess
                 )";
 
                 using var cmd = new MySqlCommand(query, connection);
-                
+
                 cmd.Parameters.AddWithValue("@name", attendee.Name);
                 cmd.Parameters.AddWithValue("@email", attendee.Email);
                 cmd.Parameters.AddWithValue("@sms", attendee.Sms);
@@ -48,7 +48,15 @@ namespace EventDbAccess
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
-                return rowsAffected > 0;
+                if (rowsAffected > 0)
+                {
+                    return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
+                    // Get the last inserted ID
+                }
+                else
+                {
+                    throw new Exception("Failed to create attendee.");
+                }
             }
             catch (Exception ex)
             {

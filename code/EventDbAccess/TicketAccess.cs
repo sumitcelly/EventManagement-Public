@@ -101,59 +101,71 @@ namespace EventDbAccess
             return ticket; 
         }
 
-        public bool AddEventTicket(EventSalesItem ticket)
+        public async Task<int> AddEventTicket(EventSalesItem ticket)
         {
+            if (ticket == null)
+            {
+                throw new ArgumentNullException(nameof(ticket));
+            }
+
             try
             {
-                using (MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString))
+                using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
+
+                StringBuilder sb = new StringBuilder();
+                sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId,
+                            TicketScanned,TicketCode,SalesOrderId,TicketTypeId,
+                            CreatedAt,ModifiedAt) ");
+                sb.Append(" VALUES (");
+
+                sb.Append(ticket.EventId);
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.Attendee.AttendeeId);
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append(ticket.TicketScanned);
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.TicketCode);
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.SalesOrderId);
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.TicketTypeId);
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+                sb.Append("'");
+                sb.Append(")");
+
+                Console.WriteLine(sb.ToString());
+                mySqlConnection.Open();
+                MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
+                int i = await cmd.ExecuteNonQueryAsync();
+                if (i == 1)
                 {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId
-                                TicketScanned,TicketCode,SalesOrderId,TicketTypeId,
-                                CreatedAt,ModifiedAt) ");
-                    sb.Append(" VALUES (");
-            
-                    sb.Append(ticket.EventId);
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.Attendee.AttendeeId);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append(ticket.TicketScanned);
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.TicketCode);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.SalesOrderId);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.TicketTypeId);
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");
-                    sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));    
-                    sb.Append("'");
-                    sb.Append(",");
-                    sb.Append("'");     
-                    sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
-                    sb.Append("'");
-                    sb.Append(")");
-                    
-                    Console.WriteLine(sb.ToString());
-                    mySqlConnection.Open();
-                    MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
-                    int i =cmd.ExecuteNonQuery();
-                    return i ==1;
+                    return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
                 }
+                else
+                {
+                    throw new Exception("Failed to create ticket.");
+                }
+
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                throw;
             }
-            return false;
         }
     }
 }

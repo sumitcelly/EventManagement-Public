@@ -2,7 +2,12 @@ using System.Configuration;
 using EventDbAccess;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+});
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -16,7 +21,14 @@ builder.Services.Add(new ServiceDescriptor(typeof(NotificationTemplateAccess), n
 builder.Services.Add(new ServiceDescriptor(typeof(EventOrganizerDBAccess), new EventOrganizerDBAccess(builder.Configuration.GetConnectionString("Default"))));
 builder.Services.Add(new ServiceDescriptor(typeof(AttendeeDbAccess), new AttendeeDbAccess(builder.Configuration.GetConnectionString("Default"))));
 builder.Services.Add(new ServiceDescriptor(typeof(SalesOrderDbAccess), new SalesOrderDbAccess(builder.Configuration.GetConnectionString("Default"))));
-
+builder.Services.Add(new ServiceDescriptor(typeof(SQSHelper), new SQSHelper(builder.Configuration)));
+builder.Services.Add(new ServiceDescriptor(typeof(SalesOrderConductor), new SalesOrderConductor(
+    builder.Services.BuildServiceProvider().GetRequiredService<ILogger<SalesOrderConductor>>(),
+    builder.Services.BuildServiceProvider().GetRequiredService<SalesOrderDbAccess>(),
+    builder.Services.BuildServiceProvider().GetRequiredService<TicketAccess>(),
+    builder.Services.BuildServiceProvider().GetRequiredService<EventOrganizerDBAccess>(),
+    builder.Services.BuildServiceProvider().GetRequiredService<AttendeeDbAccess>()
+)));
 var app = builder.Build();
 
 

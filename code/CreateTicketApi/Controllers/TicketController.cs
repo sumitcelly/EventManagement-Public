@@ -64,7 +64,7 @@ public class TicketController : ControllerBase
         ticket.TicketCode = EventUtils.PasswordGenerator.GetPassword();
         Console.WriteLine(ticket.TicketCode);
 
-        if (_ticketContext.AddEventTicket(ticket))
+        if (await _ticketContext.AddEventTicket(ticket) >0)
         {
             var tokenReplacer = new EmailTokenReplacement();
             var values = new Dictionary<string, string>();
