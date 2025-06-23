@@ -8,17 +8,30 @@ using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using System.Threading.Tasks;
 using System.Data.Common;
 using System.Security;
+using Microsoft.Extensions.Logging;
 namespace EventDbAccess
 {
     public class TicketAccess
     {
         
         private readonly string ConnectionString;
-        public TicketAccess(string connectionString)
+        private readonly ILogger<TicketAccess> _logger;
+        public TicketAccess(string connectionString, ILogger<TicketAccess> logger)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new ArgumentNullException(nameof(connectionString));
+            }
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             this.ConnectionString = connectionString;
-            
+            this._logger = logger;
+            _logger.LogInformation("TicketAccess initialized.");
         }
+       
 
         public async Task<bool> ValidateTicket(string code, int eventId=1)
         {
@@ -114,7 +127,7 @@ namespace EventDbAccess
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId,
-                            TicketScanned,TicketCode,SalesOrderId,TicketTypeId,
+                            TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
                             CreatedAt,ModifiedAt) ");
                 sb.Append(" VALUES (");
 
@@ -135,7 +148,7 @@ namespace EventDbAccess
                 sb.Append("'");
                 sb.Append(",");
                 sb.Append("'");
-                sb.Append(ticket.TicketTypeId);
+                sb.Append(ticket.EventItemType.EventItemTypeId);
                 sb.Append("'");
                 sb.Append(",");
                 sb.Append("'");
@@ -166,6 +179,76 @@ namespace EventDbAccess
                 Console.WriteLine(ex.Message);
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderId(int salesOrderId, int eventId)
+        {
+            if (salesOrderId <= 0 || eventId <= 0)
+                throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
+
+            List<EventSalesItem> ticketList = new List<EventSalesItem>();
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
+                {
+                    string sql = @"SELECT a.Name, a.Email, a.Sms, c.Description,
+                                    c.EventItemTypeId,c.Name as ItemName, c.Cost,
+                                  b.CreatedAt, b.ModifiedAt, 
+                                  b.TicketCode, b.TicketScanned 
+                                  from eventmanagement.Attendee a, 
+                                  eventmanagement.EventSalesItem b,
+                                  eventmanagement.EventItemType c
+                                 where a.attendeeid=b.attendeeid
+                                   AND b.EventItemTypeId = c.EventItemTypeId
+                                   And b.EventId = c.EventId
+                                   AND b.SalesOrderId = @salesOrderId 
+                                   AND b.EventId = @eventId";
+                    await connection.OpenAsync();
+                    using var cmd = new MySqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
+                    cmd.Parameters.AddWithValue("@eventId", eventId);
+
+                    using (DbDataReader reader = await cmd.ExecuteReaderAsync())
+                    {
+                        _logger.LogInformation($"Records affected: {reader.RecordsAffected}");
+                        // if (reader.re < 1)
+                        //     throw new Exception("No records found for salesorder " + salesOrderId);
+                        
+
+                        
+
+                        while (await reader.ReadAsync())
+                        {
+                            EventSalesItem ticket = new EventSalesItem();
+                            ticket.Attendee = new Attendee()
+                            {
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Email = reader.GetString(reader.GetOrdinal("Email")),
+                                Sms = reader.GetString(reader.GetOrdinal("Sms"))
+                            };
+
+                            ticket.CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"));
+                            ticket.ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"));
+                            ticket.TicketCode = reader.GetString(reader.GetOrdinal("TicketCode"));
+                            ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
+                            ticket.EventItemType = new EventItemType()
+                            {
+                                Description = reader.GetString(reader.GetOrdinal("Description")),
+                                Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
+                                EventItemTypeId = reader.GetInt32(reader.GetOrdinal("EventItemTypeId")),
+                                Name = reader.GetString(reader.GetOrdinal("ItemName"))
+                            };  
+                            ticketList.Add(ticket);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+            return ticketList;
         }
     }
 }

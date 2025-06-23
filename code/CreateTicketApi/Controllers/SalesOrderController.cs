@@ -27,14 +27,16 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to create sales order.");
         }
 
-        // [HttpGet("{id}")]
-        // public async Task<IActionResult> Get(int id)
-        // {
-        //     var order = await _dbAccess.GetSalesOrderById(id);
-        //     if (order == null)
-        //         return NotFound();
-        //     return Ok(order);
-        // }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id)
+        {
+             if (id == null)
+                return BadRequest("Id is null.");
+            var order = await _salesOrderConductor.GetSalesOrderById(id);
+            if (order == null)
+                return NotFound();
+            return Ok(order);
+        }
 
         // [HttpPut("{id}")]
         // public async Task<IActionResult> Update(int id, [FromBody] SalesOrder order)

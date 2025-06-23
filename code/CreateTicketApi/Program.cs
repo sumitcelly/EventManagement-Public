@@ -16,7 +16,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Add(new ServiceDescriptor(typeof(EventContext), new EventContext(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(TicketAccess), new TicketAccess(builder.Configuration.GetConnectionString("Default"))));
+builder.Services.Add(new ServiceDescriptor(typeof(TicketAccess), new TicketAccess(builder.Configuration.GetConnectionString("Default"),
+                                                                    builder.Services.BuildServiceProvider().GetRequiredService<ILogger<TicketAccess>>())));
 builder.Services.Add(new ServiceDescriptor(typeof(NotificationTemplateAccess), new NotificationTemplateAccess(builder.Configuration.GetConnectionString("Default"))));
 builder.Services.Add(new ServiceDescriptor(typeof(EventOrganizerDBAccess), new EventOrganizerDBAccess(builder.Configuration.GetConnectionString("Default"))));
 builder.Services.Add(new ServiceDescriptor(typeof(AttendeeDbAccess), new AttendeeDbAccess(builder.Configuration.GetConnectionString("Default"))));

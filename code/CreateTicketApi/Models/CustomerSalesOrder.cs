@@ -9,12 +9,12 @@ public class CustomerSalesOrder
     public string Name { get; set; } = string.Empty;
     public string DeliveryType { get; set; } = "Email"; // Default to Email"
 
-    public List<SalerOrderItems> SalerOrderItems { get; set; } = new List<SalerOrderItems>();
+    public List<SalesOrderItems> SalesOrderItems { get; set; } = new List<SalesOrderItems>();
 
     // Additional properties can be added as needed
 }
 
-public class SalerOrderItems
+public class SalesOrderItems
 {
     public int EventTicketTypeId { get; set; }
     public int Quantity { get; set; } = 1; // Default to 1

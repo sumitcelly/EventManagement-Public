@@ -31,6 +31,25 @@ public class SalesOrderConductor
 
 
 
+    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderById(int orderId)
+    {
+        if (orderId <= 0)
+            throw new ArgumentException("OrderId cannot be null or empty.", nameof(orderId));
+
+        var salesOrder = await _dbAccess.GetSalesOrderById(orderId);
+        if (salesOrder == null)
+            throw new Exception($"Sales order with ID {orderId} not found.");
+        // Fetch the event sales items associated with the sales order
+        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBySalesOrderId(salesOrder.OrderId, salesOrder.EventId);
+        if (eventSalesItems == null || !eventSalesItems.Any())
+            throw new Exception($"No event sales items found for sales order ID {orderId}.");
+        eventSalesItems.ToList().ForEach(item =>
+        {
+            item.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(item.TicketCode));
+            item.TicketCode = string.Empty; // Clear the ticket code for security reasons
+        });
+        return eventSalesItems;
+    }
     public async Task<string> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
     {
         if (customerSalesOrder == null)
@@ -39,8 +58,8 @@ public class SalesOrderConductor
             throw new ArgumentException("CustomerId cannot be null or empty.", nameof(customerSalesOrder.CustomerId));
         if (customerSalesOrder.EventId <= 0)
             throw new ArgumentException("EventId cannot be null or empty.", nameof(customerSalesOrder.EventId));
-        if (customerSalesOrder.SalerOrderItems == null || customerSalesOrder.SalerOrderItems.Count == 0)
-            throw new ArgumentException("SalerOrderItems cannot be null or empty.", nameof(customerSalesOrder.SalerOrderItems));
+        if (customerSalesOrder.SalesOrderItems == null || customerSalesOrder.SalesOrderItems.Count == 0)
+            throw new ArgumentException("SalesOrderItems cannot be null or empty.", nameof(customerSalesOrder.SalesOrderItems));
         if ((string.IsNullOrEmpty(customerSalesOrder.EmailAddress) ||
                 string.IsNullOrWhiteSpace(customerSalesOrder.Name)) && customerSalesOrder.AttendeeId <= 0)
             throw new ArgumentException("EmailAddress  and Name should be provided if there is no signed in Attendee", nameof(customerSalesOrder.EmailAddress));
@@ -70,7 +89,7 @@ public class SalesOrderConductor
         {
             // If AttendeeId is provided, fetch the existing attendee
 
-             attendee = new Attendee(){ AttendeeId = customerSalesOrder.AttendeeId };
+            attendee = new Attendee() { AttendeeId = customerSalesOrder.AttendeeId };
             _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.AttendeeId}");
         }
 
@@ -88,7 +107,7 @@ public class SalesOrderConductor
         if (orderId <= 0)
             throw new Exception("Failed to create sales order.");
         //Create event sales items
-        foreach (var item in customerSalesOrder.SalerOrderItems)
+        foreach (var item in customerSalesOrder.SalesOrderItems)
         {
             if (item.EventTicketTypeId <= 0)
                 throw new ArgumentException("EventTicketTypeId cannot be null or empty.", nameof(item.EventTicketTypeId));
@@ -103,15 +122,19 @@ public class SalesOrderConductor
                     TicketScanned = 0, // Assuming ticket is not scanned initially
                     EventId = customerSalesOrder.EventId,
                     Attendee = attendee,
-                    TicketTypeId = item.EventTicketTypeId,
+                    EventItemType = new EventItemType
+                    {
+                        EventItemTypeId = item.EventTicketTypeId,
+                       
+                    },
                     TicketCode = EventUtils.PasswordGenerator.GetPassword()// Generate a unique ticket code
                 };
                 await _ticketDbAccess.AddEventTicket(salesItem);
                 _logger.LogInformation($"Event sales item created with TicketCode: {salesItem.TicketCode}");
             }
         }
-        
+
         return $"Sales order created successfully with Order ID: {orderId}";
-       
+
     }
 }
