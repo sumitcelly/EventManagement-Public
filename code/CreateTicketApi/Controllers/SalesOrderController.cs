@@ -30,7 +30,7 @@ namespace CreateTicketApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-             if (id == null)
+             if (id <=0)
                 return BadRequest("Id is null.");
             var order = await _salesOrderConductor.GetSalesOrderById(id);
             if (order == null)

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -5,76 +7,70 @@ using System.Threading.Tasks;
 
 namespace EventDbAccess
 {
-  public class EventContext
+  public class EventContext :BaseDbAccess
   {
-    public string ConnectionString { get; set; }
-
-    private MySqlConnection mySqlConnection {get;}
-    public EventContext(string connectionString)
+    public EventContext(IConfiguration configuration, ILogger<EventContext> logger) :base(configuration, logger)
     {
-      this.ConnectionString = connectionString;
-      this.mySqlConnection = new MySqlConnection(connectionString); 
+      
     }
+   
 
-    private MySqlConnection GetConnection()
-    {
-      if (mySqlConnection.State != System.Data.ConnectionState.Open)
-          mySqlConnection.Open();
-        
-      return mySqlConnection;
-    
-    }
-
-    public List<Event> GetAllEvents()
+    public async Task<List<Event>> GetAllEvents()
     {
       List<Event> list = new List<Event>();
 
-      MySqlConnection conn = GetConnection();
+      using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
       {
-    
-        MySqlCommand cmd = new MySqlCommand("SELECT * FROM Events", conn);
-        using (MySqlDataReader reader = cmd.ExecuteReader())
+        await connection.OpenAsync();
         {
-          while (reader.Read())
+          _logger.LogInformation("Connection to database established successfully.");
+          MySqlCommand cmd = new MySqlCommand("SELECT * FROM Events", connection);
+          using (MySqlDataReader reader = cmd.ExecuteReader())
           {
-            list.Add(new Event()
+            while (reader.Read())
             {
-              EventId = reader.GetInt32("EventId"),
-              EventName = reader.GetString("EventName"),
-              EventDescription = reader.GetString("EventDescription"),
-              EventDate = reader.GetDateTime("EventDate"),
-              EventOrganizer = reader.GetInt32("EventOrganizer"),
-              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventLocation")) ? string.Empty : reader.GetString("EventLocation")
-            });
+              list.Add(new Event()
+              {
+                EventId = reader.GetInt32("EventId"),
+                EventName = reader.GetString("EventName"),
+                EventDescription = reader.GetString("EventDescription"),
+                EventDate = reader.GetDateTime("EventDate"),
+                EventOrganizer = reader.GetInt32("EventOrganizer"),
+                EventLocation = reader.IsDBNull(reader.GetOrdinal("EventLocation")) ? string.Empty : reader.GetString("EventLocation")
+              });
+            }
           }
         }
       }
-
       return list;
     }
   
     public async Task<Event> GetEventById(int eventId)
     {
-        using var conn = GetConnection();
+      using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
+      {
+        await conn.OpenAsync();
+
         var query = "SELECT * FROM Events WHERE EventId = @eventId";
-        
+
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventId", eventId);
 
         using var reader = await cmd.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
-            return new Event
-            {
-              EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-              EventName = reader.GetString(reader.GetOrdinal("EventName")),
-              EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
-              EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-              EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
-            };
+          return new Event
+          {
+            EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+            EventName = reader.GetString(reader.GetOrdinal("EventName")),
+            EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
+            EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+            EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+            EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
+          };
         }
-        return null;
+      }
+      return null;
     }
 
     public async Task<Event> GetEventByName(string eventName)
@@ -82,7 +78,8 @@ namespace EventDbAccess
         if (string.IsNullOrEmpty(eventName))
             throw new ArgumentNullException(nameof(eventName));
 
-        using var conn = GetConnection();
+        using var conn = new MySqlConnection(this.ConnectionString);
+        await conn.OpenAsync();
         var query = "SELECT * FROM Events WHERE EventName = @eventName";
         
         using var cmd = new MySqlCommand(query, conn);

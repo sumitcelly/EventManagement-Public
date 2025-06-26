@@ -1,16 +1,16 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
 
 namespace EventDbAccess
 {
-    public class AttendeeDbAccess
+    public class AttendeeDbAccess :BaseDbAccess
     {
-        private readonly string _connectionString;
 
-        public AttendeeDbAccess(string connectionString)
+        public AttendeeDbAccess(IConfiguration config, ILogger<AttendeeDbAccess> logger) : base(config, logger)
         {
-            _connectionString = connectionString;
         }
 
         public async Task<int> CreateAttendee(Attendee attendee)
@@ -20,7 +20,7 @@ namespace EventDbAccess
 
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO attendee (
@@ -72,7 +72,7 @@ namespace EventDbAccess
 
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"SELECT 

@@ -1,5 +1,6 @@
 using System.Configuration;
 using EventDbAccess;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(logging =>
@@ -14,22 +15,21 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Services.Add(new ServiceDescriptor(typeof(EventContext), new EventContext(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(TicketAccess), new TicketAccess(builder.Configuration.GetConnectionString("Default"),
-                                                                    builder.Services.BuildServiceProvider().GetRequiredService<ILogger<TicketAccess>>())));
-builder.Services.Add(new ServiceDescriptor(typeof(NotificationTemplateAccess), new NotificationTemplateAccess(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(EventOrganizerDBAccess), new EventOrganizerDBAccess(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(AttendeeDbAccess), new AttendeeDbAccess(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(SalesOrderDbAccess), new SalesOrderDbAccess(builder.Configuration.GetConnectionString("Default"))));
-builder.Services.Add(new ServiceDescriptor(typeof(SQSHelper), new SQSHelper(builder.Configuration)));
-builder.Services.Add(new ServiceDescriptor(typeof(SalesOrderConductor), new SalesOrderConductor(
-    builder.Services.BuildServiceProvider().GetRequiredService<ILogger<SalesOrderConductor>>(),
-    builder.Services.BuildServiceProvider().GetRequiredService<SalesOrderDbAccess>(),
-    builder.Services.BuildServiceProvider().GetRequiredService<TicketAccess>(),
-    builder.Services.BuildServiceProvider().GetRequiredService<EventOrganizerDBAccess>(),
-    builder.Services.BuildServiceProvider().GetRequiredService<AttendeeDbAccess>()
-)));
+builder.Services.AddScoped(typeof(TicketAccess));
+builder.Services.AddScoped(typeof(EventContext));
+builder.Services.AddScoped(typeof(NotificationTemplateAccess));
+builder.Services.AddScoped(typeof(EventOrganizerDBAccess));
+builder.Services.AddScoped(typeof(AttendeeDbAccess));
+builder.Services.AddScoped(typeof(SalesOrderDbAccess));
+builder.Services.AddSingleton(typeof(SQSHelper));
+builder.Services.AddScoped(typeof(SalesOrderConductor));
+// builder.Services.Add(new ServiceDescriptor(typeof(SalesOrderConductor), new SalesOrderConductor(
+//     builder.Services.BuildServiceProvider().GetRequiredService<ILogger<SalesOrderConductor>>(),
+//     builder.Services.BuildServiceProvider().GetRequiredService<SalesOrderDbAccess>(),
+//     builder.Services.BuildServiceProvider().GetRequiredService<TicketAccess>(),
+//     builder.Services.BuildServiceProvider().GetRequiredService<EventOrganizerDBAccess>(),
+//     builder.Services.BuildServiceProvider().GetRequiredService<AttendeeDbAccess>()
+// )));
 var app = builder.Build();
 
 

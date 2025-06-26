@@ -26,10 +26,10 @@ public class EventsController : ControllerBase
 
     [HttpGet]
     [Route("/Events/All")]
-    public List<Event> GetEvents()
+    public  async Task<List<Event>> GetEvents()
     {
         //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
-        List<Event> events = _eventContext.GetAllEvents();
+        List<Event> events = await _eventContext.GetAllEvents();
         _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(events));
         return events;
     }

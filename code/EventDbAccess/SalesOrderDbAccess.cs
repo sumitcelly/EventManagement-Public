@@ -1,17 +1,16 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
 
 namespace EventDbAccess
 {
-    public class SalesOrderDbAccess
+    public class SalesOrderDbAccess :BaseDbAccess
     {
-        private readonly string _connectionString;
-
-        public SalesOrderDbAccess(string connectionString)
+        public SalesOrderDbAccess(IConfiguration connectionString, ILogger<SalesOrderDbAccess> logger) : base(connectionString, logger)
         {
-            _connectionString = connectionString
-                ?? throw new ArgumentNullException(nameof(connectionString));}
+        }
 
         public async Task<int> CreateSalesOrder(SalesOrder order)
         {
@@ -20,7 +19,7 @@ namespace EventDbAccess
 
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO salesorder 
@@ -59,7 +58,7 @@ namespace EventDbAccess
         {
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
                 string query = "SELECT * FROM salesorder WHERE OrderId = @orderId";

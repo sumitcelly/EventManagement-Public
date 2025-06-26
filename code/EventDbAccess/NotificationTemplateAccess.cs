@@ -8,15 +8,17 @@ using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 using System.Threading.Tasks;
 using System.Data.Common;
 using System.Security;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 namespace EventDbAccess
 {
-    public class NotificationTemplateAccess
+    public class NotificationTemplateAccess :BaseDbAccess
     {
         
-        private readonly string ConnectionString;
-        public NotificationTemplateAccess(string connectionString)
+
+        public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger) :base (connectionString, logger) 
         {
-            this.ConnectionString = connectionString;
+          
             
         }
 

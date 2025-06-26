@@ -3,65 +3,48 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-
-using Org.BouncyCastle.Tls.Crypto.Impl.BC;
-using System.Threading.Tasks;
 using System.Data.Common;
 using System.Security;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 namespace EventDbAccess
 {
-    public class TicketAccess
+
+    public class TicketAccess :BaseDbAccess
     {
-        
-        private readonly string ConnectionString;
-        private readonly ILogger<TicketAccess> _logger;
-        public TicketAccess(string connectionString, ILogger<TicketAccess> logger)
+        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger) :base(config, logger)
         {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                throw new ArgumentNullException(nameof(connectionString));
-            }
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
-            this.ConnectionString = connectionString;
-            this._logger = logger;
-            _logger.LogInformation("TicketAccess initialized.");
+            
         }
-       
-
-        public async Task<bool> ValidateTicket(string code, int eventId=1)
+        public async Task<bool> ValidateTicket(string code, int eventId = 1)
         {
             if (string.IsNullOrEmpty(code))
             {
                 throw new ArgumentNullException(nameof(code));
             }
-            bool retVal= false;
+            bool retVal = false;
             try
-            {    
+            {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @$" Update eventmanagement.eventsalesitem set TicketScanned=1  where
-                                    EventId='{eventId}' and TicketCode='{code}'";
+                                EventId='{eventId}' and TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
-                    int val =await cmd.ExecuteNonQueryAsync() ;
+                    int val = await cmd.ExecuteNonQueryAsync();
                     Console.WriteLine($"Records update for {code} is {val}");
                     retVal = val == 1 ? true : false;
                 }
-              
+
             }
-            catch (Exception ex)   
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
             return retVal;
         }
 
-        public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId =1)
+        public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId = 1)
         {
             if (string.IsNullOrEmpty(code))
             {
@@ -71,22 +54,22 @@ namespace EventDbAccess
             //Todo: Need a UI model here to return data for attendee plus ticket
             EventSalesItem ticket = new EventSalesItem();
             try
-            {    
+            {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @$"Select a.Name, a.Email, a.Sms, 
-                                    b.CreatedAt, b.ModifiedAt, 
-                                    b.TicketCode b.TicketScanned 
-                                    from eventmanagement.Attendee a, 
-                                    eventmanagement.EventSalesItem b where
-                                    a.AttendeeId=b.AttendeeId and
-                                    b.EventId='{eventId}' and b.TicketCode='{code}'";
+                                b.CreatedAt, b.ModifiedAt, 
+                                b.TicketCode b.TicketScanned 
+                                from eventmanagement.Attendee a, 
+                                eventmanagement.EventSalesItem b where
+                                a.AttendeeId=b.AttendeeId and
+                                b.EventId='{eventId}' and b.TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        if (reader.RecordsAffected >1)
-                            throw new Exception("More than one record returned for ticket code"+code);
+                        if (reader.RecordsAffected > 1)
+                            throw new Exception("More than one record returned for ticket code" + code);
 
                         while (await reader.ReadAsync())
                         {
@@ -101,17 +84,17 @@ namespace EventDbAccess
                             ticket.ModifiedAt = reader.GetDateTime(4);
                             ticket.TicketCode = reader.GetString(5);
                             ticket.TicketScanned = reader.GetInt32(6);
-                            
+
                         }
                     }
                 }
-              
+
             }
-            catch (Exception ex)   
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
-            return ticket; 
+            return ticket;
         }
 
         public async Task<int> AddEventTicket(EventSalesItem ticket)
@@ -127,8 +110,8 @@ namespace EventDbAccess
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId,
-                            TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
-                            CreatedAt,ModifiedAt) ");
+                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
+                        CreatedAt,ModifiedAt) ");
                 sb.Append(" VALUES (");
 
                 sb.Append(ticket.EventId);
@@ -192,17 +175,17 @@ namespace EventDbAccess
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @"SELECT a.Name, a.Email, a.Sms, c.Description,
-                                    c.EventItemTypeId,c.Name as ItemName, c.Cost,
-                                  b.CreatedAt, b.ModifiedAt, 
-                                  b.TicketCode, b.TicketScanned 
-                                  from eventmanagement.Attendee a, 
-                                  eventmanagement.EventSalesItem b,
-                                  eventmanagement.EventItemType c
-                                 where a.attendeeid=b.attendeeid
-                                   AND b.EventItemTypeId = c.EventItemTypeId
-                                   And b.EventId = c.EventId
-                                   AND b.SalesOrderId = @salesOrderId 
-                                   AND b.EventId = @eventId";
+                                c.EventItemTypeId,c.Name as ItemName, c.Cost,
+                                b.CreatedAt, b.ModifiedAt, 
+                                b.TicketCode, b.TicketScanned 
+                                from eventmanagement.Attendee a, 
+                                eventmanagement.EventSalesItem b,
+                                eventmanagement.EventItemType c
+                                where a.attendeeid=b.attendeeid
+                                AND b.EventItemTypeId = c.EventItemTypeId
+                                And b.EventId = c.EventId
+                                AND b.SalesOrderId = @salesOrderId 
+                                AND b.EventId = @eventId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);
                     cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
@@ -211,13 +194,7 @@ namespace EventDbAccess
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         _logger.LogInformation($"Records affected: {reader.RecordsAffected}");
-                        // if (reader.re < 1)
-                        //     throw new Exception("No records found for salesorder " + salesOrderId);
-                        
-
-                        
-
-                        while (await reader.ReadAsync())
+                            while (await reader.ReadAsync())
                         {
                             EventSalesItem ticket = new EventSalesItem();
                             ticket.Attendee = new Attendee()
@@ -237,7 +214,7 @@ namespace EventDbAccess
                                 Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
                                 EventItemTypeId = reader.GetInt32(reader.GetOrdinal("EventItemTypeId")),
                                 Name = reader.GetString(reader.GetOrdinal("ItemName"))
-                            };  
+                            };
                             ticketList.Add(ticket);
                         }
                     }

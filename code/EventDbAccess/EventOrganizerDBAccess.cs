@@ -1,18 +1,18 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
 
 namespace EventDbAccess
 {
-    public class EventOrganizerDBAccess
+    public class EventOrganizerDBAccess : BaseDbAccess
     {
-        private readonly string _connectionString;
 
-        public EventOrganizerDBAccess(string connectionString)
+
+        public EventOrganizerDBAccess(IConfiguration connectionString, ILogger<EventOrganizerDBAccess> logger) : base(connectionString, logger) 
         {
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException(nameof(connectionString));
-            _connectionString = connectionString;
+
          }
 
         public async Task<EventOrganizer> GetOrganizerByName(string organizerName)
@@ -22,7 +22,7 @@ namespace EventDbAccess
 
             try
             {
-                using var connection = new MySqlConnection(_connectionString);
+                using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
                 string query = @"SELECT 
