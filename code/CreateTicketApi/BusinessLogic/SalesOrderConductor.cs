@@ -1,16 +1,19 @@
 using System;
-using EventDbAccess;
-
+using EventManagementDbAccess;
+using EventUtils;
+namespace CreateTicketApi.BusinessLogic;
 public class SalesOrderConductor
 {
     private readonly SalesOrderDbAccess _dbAccess;
     private readonly TicketAccess _ticketDbAccess;
-    private readonly EventOrganizerDBAccess _eventOrganizerDbAccess;
     private readonly AttendeeDbAccess attendeeDbAccess;
 
     private readonly ILogger<SalesOrderConductor> _logger;
+
+    private readonly EmailUtils _emailUtils;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
-                    EventOrganizerDBAccess eventOrganizerDbAccess, AttendeeDbAccess attendeeDbAccess)
+                    EventOrganizerDBAccess eventOrganizerDbAccess, AttendeeDbAccess attendeeDbAccess,
+                    EmailUtils emailUtils)
     {
         if (dbAccess == null)
             throw new ArgumentNullException(nameof(dbAccess));
@@ -21,10 +24,12 @@ public class SalesOrderConductor
         if (attendeeDbAccess == null)
             throw new ArgumentNullException(nameof(attendeeDbAccess));
 
+        if (emailUtils == null)
+            throw new ArgumentNullException(nameof(emailUtils));
         _dbAccess = dbAccess;
         _ticketDbAccess = ticketAccess;
-        _eventOrganizerDbAccess = eventOrganizerDbAccess;
         this.attendeeDbAccess = attendeeDbAccess;
+        _emailUtils = emailUtils;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
     }
@@ -50,7 +55,7 @@ public class SalesOrderConductor
         });
         return eventSalesItems;
     }
-    public async Task<string> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
+    public async Task<CustomerSalesOrder> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
     {
         if (customerSalesOrder == null)
             throw new ArgumentNullException(nameof(customerSalesOrder));
@@ -100,6 +105,7 @@ public class SalesOrderConductor
             EventId = customerSalesOrder.EventId,
             AttendeeId = customerSalesOrder.AttendeeId,
             DeliveryType = customerSalesOrder.DeliveryType,
+            SalesOrderCode = PasswordGenerator.GetPassword(), // Generate a unique sales order code
         };
         // Save the sales order to the database
         int orderId = await _dbAccess.CreateSalesOrder(salesOrder);
@@ -125,7 +131,7 @@ public class SalesOrderConductor
                     EventItemType = new EventItemType
                     {
                         EventItemTypeId = item.EventTicketTypeId,
-                       
+
                     },
                     TicketCode = EventUtils.PasswordGenerator.GetPassword()// Generate a unique ticket code
                 };
@@ -133,8 +139,13 @@ public class SalesOrderConductor
                 _logger.LogInformation($"Event sales item created with TicketCode: {salesItem.TicketCode}");
             }
         }
-
-        return $"Sales order created successfully with Order ID: {orderId}";
-
+        await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
+        return new CustomerSalesOrder()
+        {
+            SalesOrderCode = salesOrder.SalesOrderCode,
+            SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode))
+        };
     }
+    
+    
 }

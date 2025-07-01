@@ -7,7 +7,7 @@ using System.Data.Common;
 using System.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-namespace EventDbAccess
+namespace EventManagementDbAccess
 {
 
     public class TicketAccess :BaseDbAccess

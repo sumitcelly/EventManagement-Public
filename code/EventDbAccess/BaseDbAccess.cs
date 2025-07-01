@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace EventDbAccess
+ namespace EventManagementDbAccess
+
 {
     public class BaseDbAccess
     {

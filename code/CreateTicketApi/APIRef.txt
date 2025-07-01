@@ -1,0 +1,24 @@
+SalesOrder:
+	Create: HP: Creates the SalesOrder and related event Sales Items (tickets/add ons).
+			On creation , should also contain SalesOrderCode used to generate QRCode for SalesOrder itself.
+			(Model object:CustomerSalesOrder) contains list of SalesOrderItems.
+			Generates email with SalesOrder QRCode.
+	
+	Delete: LP:  Send OrderId and should simply delete salesorder  and associated tickets
+	
+	Get: HP: Should return the master sales order(CustomerSalesOrder) with QRCode image. Does not need to return child items unless
+			user asks for it.
+			
+	Update:LP: Maybe just change the email address and send email to new address.
+	
+SalesOrderItems:
+	Create:  ZP: Given a Sales Order Id, and number of addtl tickets,  create new ticket(s). Alternative for the user
+			is to just create a new sales order with addtl tickets.
+	Delete:  LP: Remove SalesORderItems from an order. Issue REfund.
+	
+	Get:HP: Get SalesOrderItems given a OrderID so PDF or HTML cab be generated.
+	
+
+	
+	
+	

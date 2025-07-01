@@ -1,4 +1,4 @@
-using EventDbAccess;
+using EventManagementDbAccess;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,13 +14,13 @@ public class EventsController : ControllerBase
     // };
 
     private readonly ILogger<EventsController> _logger;
-    private readonly EventContext _eventContext;
+    private readonly EventDbAccess _EventDbAccess;
 
     private readonly TicketAccess _ticketContext;
-    public EventsController(ILogger<EventsController> logger, EventContext eventContext, TicketAccess ticketContext)
+    public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess, TicketAccess ticketContext)
     {
         _logger = logger;
-        _eventContext = eventContext;
+        _EventDbAccess = EventDbAccess;
         _ticketContext = ticketContext;
     }
 
@@ -28,8 +28,8 @@ public class EventsController : ControllerBase
     [Route("/Events/All")]
     public  async Task<List<Event>> GetEvents()
     {
-        //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventContext)) as EventContext;
-        List<Event> events = await _eventContext.GetAllEvents();
+        //var eventCtxt = HttpContext.RequestServices.GetService(typeof(EventDbAccess)) as EventDbAccess;
+        List<Event> events = await _EventDbAccess.GetAllEvents();
         _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(events));
         return events;
     }

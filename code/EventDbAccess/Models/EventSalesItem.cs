@@ -1,5 +1,5 @@
 using System;
-namespace EventDbAccess
+namespace EventManagementDbAccess
 {
     public class EventItemType
     {

@@ -13,10 +13,9 @@ public class SQSHelper
 
     public SQSHelper(IConfiguration configuration)
     {
-        _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"]);
-        
-      
+        _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"]);     
     }
+    
     public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name)
     {
         Email tempObj = new Email()
@@ -28,7 +27,7 @@ public class SQSHelper
             Name = name
         };
 
-        
+
         SendMessageResponse response = await _amazonSQSClient.SendMessageAsync(new SendMessageRequest() { QueueUrl = _queueUrl, MessageBody = JsonSerializer.Serialize(tempObj) });
         Console.WriteLine($"Response from queueing message is:{response.HttpStatusCode}");
         return response.HttpStatusCode == System.Net.HttpStatusCode.OK;

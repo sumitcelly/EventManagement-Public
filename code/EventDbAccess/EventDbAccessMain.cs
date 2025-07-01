@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace EventDbAccess
+ namespace EventManagementDbAccess
 {
-  public class EventContext :BaseDbAccess
+  public class EventDbAccess :BaseDbAccess
   {
-    public EventContext(IConfiguration configuration, ILogger<EventContext> logger) :base(configuration, logger)
+    public EventDbAccess(IConfiguration configuration, ILogger<EventDbAccess> logger) :base(configuration, logger)
     {
       
     }

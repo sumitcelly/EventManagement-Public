@@ -4,7 +4,7 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
 
-namespace EventDbAccess
+namespace EventManagementDbAccess
 {
     public class AttendeeDbAccess :BaseDbAccess
     {

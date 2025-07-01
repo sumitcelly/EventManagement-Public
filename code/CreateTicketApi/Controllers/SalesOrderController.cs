@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using EventDbAccess;
+using CreateTicketApi.BusinessLogic;
 
 namespace CreateTicketApi.Controllers
 {
@@ -22,9 +21,10 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("Order is null.");
 
             var result = await _salesOrderConductor.CreateSalesOrder(order);
-            if (!string.IsNullOrEmpty(result))
-                return Ok("Sales order created.");
-            return StatusCode(500, "Failed to create sales order.");
+            if (result == null || result.SalesOrderCode == null)
+                return StatusCode(500, "Failed to create sales order.");
+            else
+                return Ok(result);
         }
 
         [HttpGet("{id}")]

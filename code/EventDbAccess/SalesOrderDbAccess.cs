@@ -4,7 +4,7 @@ using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
 
-namespace EventDbAccess
+namespace EventManagementDbAccess
 {
     public class SalesOrderDbAccess :BaseDbAccess
     {
@@ -23,9 +23,9 @@ namespace EventDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO salesorder 
-                    (CustomerId, EventId, AttendeeId, CreatedAt, ModifiedAt) 
+                    (CustomerId, EventId, AttendeeId, CreatedAt, ModifiedAt,SalesOrderCode) 
                     VALUES 
-                    (@customerId, @eventId, @attendeeId, @createdAt, @modifiedAt)";
+                    (@customerId, @eventId, @attendeeId, @createdAt, @modifiedAt,@salesOrderCode)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@customerId", order.CustomerId);
@@ -33,6 +33,7 @@ namespace EventDbAccess
                 cmd.Parameters.AddWithValue("@attendeeId", order.AttendeeId);
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@salesOrderCode", order.SalesOrderCode); // Ensure SalesOrderCode is not null
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
 

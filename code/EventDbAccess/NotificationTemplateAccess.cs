@@ -10,7 +10,7 @@ using System.Data.Common;
 using System.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-namespace EventDbAccess
+namespace EventManagementDbAccess
 {
     public class NotificationTemplateAccess :BaseDbAccess
     {

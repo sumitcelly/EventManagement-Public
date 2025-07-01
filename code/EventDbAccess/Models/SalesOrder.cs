@@ -9,6 +9,8 @@ public class SalesOrder
 
     public int AttendeeId { get; set; } 
 
+    public string SalesOrderCode { get; set; } = string.Empty;
+
     public string DeliveryType { get; set; } = "Email"; // Default to Email
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
