@@ -1,0 +1,10 @@
+To run the API in docker container,
+run this from the Code directory eventmgmt\code
+docker build -f CreateTicketApi/Dockerfile -t createticketapi .
+and then 
+docker run -p 8091:8080 createticketapi
+
+Open http://localhost:8091/swagger
+
+delete all containers
+docker rm $(docker ps -a -q)
