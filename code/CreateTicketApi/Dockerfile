@@ -14,7 +14,7 @@ COPY ../EventDbAccess ../EventDbAccess
 COPY ../EventUtils ../EventUtils
 #COPY . .
 COPY ../CreateTicketApi ../CreateTicketApi
-WORKDIR /src/CreateTicketApi
+
 RUN dotnet publish -c Release -o /app/publish
 
 # Build runtime image
