@@ -59,7 +59,7 @@ namespace EventManagementDbAccess
                 {
                     string sql = @$"Select a.Name, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
-                                b.TicketCode b.TicketScanned 
+                                b.TicketCode, b.TicketScanned 
                                 from eventmanagement.Attendee a, 
                                 eventmanagement.EventSalesItem b where
                                 a.AttendeeId=b.AttendeeId and

@@ -52,6 +52,7 @@ public class SalesOrderConductor
         {
             item.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(item.TicketCode));
             item.TicketCode = string.Empty; // Clear the ticket code for security reasons
+            //var t= QRCodeUtils.GetQRText(Convert.FromBase64String(item.QRBase64Image)); // Decode the QR code to ensure it's valid
         });
         return eventSalesItems;
     }

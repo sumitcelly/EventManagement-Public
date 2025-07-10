@@ -8,3 +8,10 @@ Open http://localhost:8091/swagger
 
 delete all containers
 docker rm $(docker ps -a -q)
+
+Had to use SkiSharp to get it to work in container on Linux and also had to add the package reference below
+only for container.
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
+Also AWS SQSHelper needed the region specified since it cannot pick up default region from local C:\ configurationfile
+
+Also neeed to change development json config file from localhost to host.docker.internal

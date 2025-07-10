@@ -25,10 +25,11 @@ public class TicketController : ControllerBase
     }
 
 
-    [HttpPost("GetTicketCodeByQR")]
-    public string GetTicketCodeByQR(byte[] qrCode)
+    [HttpPost("GetTicketCodeByBase64QR")]
+    public string GetTicketCodeByBase64QR([FromBody]string qrCode)
     {
-        return QRCodeUtils.GetQRText(qrCode);
+
+        return QRCodeUtils.GetQRText(Convert.FromBase64String(qrCode));
     }
 
 

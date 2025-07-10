@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Drawing;
+
 using ZXing;
 using ZXing.Common;
 using ZXing.QrCode;
-using ZXing.Windows.Compatibility;
+using SkiaSharp;
+using ZXing.SkiaSharp;
+
+
 public class QRCodeUtils
 {
 
@@ -18,12 +18,14 @@ public class QRCodeUtils
         };
 
         string result = string.Empty;
-        using (MemoryStream ms = new MemoryStream(byteQR)){
-           Bitmap readQRCodeBitmap = new(ms);
-            BarcodeReader reader = new() {
-            Options = readOptions
-        };
-            Result qrCodeResult = reader.Decode(readQRCodeBitmap);
+        // Convert byte array to SKBitmap
+        using (var ms = new MemoryStream(byteQR))
+        using (var skStream = new SKManagedStream(ms))
+        using (var skBitmap = SKBitmap.Decode(skStream))
+        {
+            // Use skBitmap with ZXing.SkiaSharp
+            var reader = new BarcodeReader();
+            var qrCodeResult = reader.Decode(skBitmap);
             result = qrCodeResult.Text;
         }
         
@@ -46,13 +48,23 @@ public class QRCodeUtils
             Format = BarcodeFormat.QR_CODE,
             Options = options
         };
-        Bitmap bm =  writer.Write(text);
-        byte[] bytes;
-        using (var ms = new MemoryStream()) 
-        {
-               bm.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg); 
-               bytes = ms.ToArray();
-        }
+        // Generate QR code as SKBitmap
+
+        SKBitmap skBitmap = writer.Write(text);
+
+        // Convert SKBitmap to byte array (JPEG)
+        using var image = SKImage.FromBitmap(skBitmap);
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 100);
+        byte[] bytes = data.ToArray();
+        // Bitmap bm =  writer.Write(text);
+        // byte[] bytes;
+        // using (var ms = new MemoryStream()) 
+        // {
+        //        bm.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg); 
+        //        bytes = ms.ToArray();
+        // }
+
+       // File.WriteAllBytes("C:\\temp\\qrcode.jpg", bytes); // Save to file for debugging
         return bytes;
     }
 }
