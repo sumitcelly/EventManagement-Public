@@ -227,6 +227,58 @@ namespace EventManagementDbAccess
             }
             return ticketList;
         }
+
+        public async Task<int> GetEventTicketCountBySalesOrderId(int salesOrderId)
+        {
+            if (salesOrderId <= 0)
+                throw new ArgumentException("SalesOrderId must be greater than zero.");
+
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
+                {
+                    string sql = @"SELECT COUNT(*) FROM eventmanagement.EventSalesItem WHERE SalesOrderId = @salesOrderId";
+                    await connection.OpenAsync();
+                    using var cmd = new MySqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
+
+                    object result = await cmd.ExecuteScalarAsync();
+                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+        public async Task<bool> RemoveEventTickets(int salesOrderId, int attendeeId)
+        {
+            if (salesOrderId <= 0 || attendeeId <= 0)
+                throw new ArgumentException("SalesOrderId and AttendeeId must be greater than zero.");
+
+            try
+            {
+                using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
+                {
+                    string sql = @"DELETE FROM eventmanagement.EventSalesItem 
+                                   WHERE SalesOrderId = @salesOrderId AND AttendeeId = @attendeeId";
+                    await connection.OpenAsync();
+                    using var cmd = new MySqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
+                    cmd.Parameters.AddWithValue("@attendeeId", attendeeId);
+
+                    int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
     }
     
     

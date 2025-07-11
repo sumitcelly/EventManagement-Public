@@ -38,6 +38,19 @@ namespace CreateTicketApi.Controllers
             return Ok(order);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] CustomerSalesOrder order)
+        {
+            if (order == null || id <= 0)
+                return BadRequest("Invalid order data.");
+
+            var result = await _salesOrderConductor.UpdateSalesOrder(id,order);
+            if (result == null || result.SalesOrderCode == null)
+                return StatusCode(500, "Failed to create sales order.");
+            else
+                return Ok(result);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

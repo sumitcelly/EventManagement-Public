@@ -48,6 +48,33 @@ public class SalesOrderConductor
         return true;
     }
 
+    public async Task<CustomerSalesOrder> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
+    {
+        if (order == null)
+            throw new ArgumentNullException(nameof(order));
+        if (salesOrderId <= 0)
+            throw new ArgumentException("OrderId cannot be null or empty.", nameof(salesOrderId));
+
+        // Update the sales order
+        var previousTicketCount = await _ticketDbAccess.GetEventTicketCountBySalesOrderId(salesOrderId);
+        if (previousTicketCount == 0)
+            throw new Exception($"Failed to retrieve tickts for previous order with ID {salesOrderId}.");
+
+        //Todo: ORder count can be same if they changed the type of ticket but not the count
+        // int newTicketCount = order.SalesOrderItems.Count();
+        // if (previousTicketCount == newTicketCount)
+        //     throw new Exception("Nothing to update since number of tickets in new and existing order are same.");
+
+        bool result = await _dbAccess.DeleteSalesOrder(salesOrderId);
+        if (!result)
+        {
+            throw new Exception($"Failed to delete sales order with ID {salesOrderId}. Cannot proceed with update.");
+        }
+        _logger.LogInformation($"Sales order {salesOrderId} deleted successfully. Proceeding to create new order with updated ticket count.");
+        // Create a new sales order with updated ticket count
+        return await CreateSalesOrder(order);      
+    }
+
     public async Task<IEnumerable<EventSalesItem>> GetSalesOrderById(int orderId)
     {
         if (orderId <= 0)
