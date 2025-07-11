@@ -10,11 +10,11 @@ using Microsoft.Extensions.Configuration;
 namespace EventManagementDbAccess
 {
 
-    public class TicketAccess :BaseDbAccess
+    public class TicketAccess : BaseDbAccess
     {
-        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger) :base(config, logger)
+        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger) : base(config, logger)
         {
-            
+
         }
         public async Task<bool> ValidateTicket(string code, int eventId = 1)
         {
@@ -194,7 +194,7 @@ namespace EventManagementDbAccess
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         _logger.LogInformation($"Records affected: {reader.RecordsAffected}");
-                            while (await reader.ReadAsync())
+                        while (await reader.ReadAsync())
                         {
                             EventSalesItem ticket = new EventSalesItem();
                             ticket.Attendee = new Attendee()
@@ -228,4 +228,6 @@ namespace EventManagementDbAccess
             return ticketList;
         }
     }
+    
+    
 }

@@ -55,6 +55,7 @@ namespace EventManagementDbAccess
             }
         }
 
+        
         public async Task<SalesOrder> GetSalesOrderById(int orderId)
         {
             try
@@ -85,6 +86,31 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving sales order: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteSalesOrder(int orderId)
+        {
+            if (orderId <= 0)
+                throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "DELETE FROM salesorder WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+                //should delete all related records in Ticket table if necessary due to foreign key cascade delete
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting sales order: {ex.Message}");
                 throw;
             }
         }

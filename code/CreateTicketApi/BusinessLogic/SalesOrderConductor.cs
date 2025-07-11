@@ -36,6 +36,18 @@ public class SalesOrderConductor
 
 
 
+    public async Task<bool> DeleteSalesOrder(int orderId)
+    {
+        if (orderId <= 0)
+            throw new ArgumentException("OrderId cannot be null or empty.", nameof(orderId));
+      
+        // Delete the sales order
+        bool result = await _dbAccess.DeleteSalesOrder(orderId);
+        if (!result)
+            throw new Exception($"Failed to delete sales order with ID {orderId}.");
+        return true;
+    }
+
     public async Task<IEnumerable<EventSalesItem>> GetSalesOrderById(int orderId)
     {
         if (orderId <= 0)

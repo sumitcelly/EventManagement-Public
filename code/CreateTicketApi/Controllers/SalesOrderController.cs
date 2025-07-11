@@ -30,12 +30,26 @@ namespace CreateTicketApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-             if (id <=0)
+            if (id <= 0)
                 return BadRequest("Id is null.");
             var order = await _salesOrderConductor.GetSalesOrderById(id);
             if (order == null)
                 return NotFound();
             return Ok(order);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            if (id <= 0)
+                return BadRequest("Id is null.");
+            var result = await _salesOrderConductor.DeleteSalesOrder(id);
+            if (result)
+                return Ok("Sales order deleted.");
+            else
+                return StatusCode(500, "Failed to delete sales order.");
+            // Implement delete logic here if needed
+      
         }
 
         // [HttpPut("{id}")]
