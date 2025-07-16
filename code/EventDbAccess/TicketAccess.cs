@@ -60,9 +60,9 @@ namespace EventManagementDbAccess
                     string sql = @$"Select a.Name, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketScanned 
-                                from eventmanagement.Attendee a, 
+                                from eventmanagement.EventUser a, 
                                 eventmanagement.EventSalesItem b where
-                                a.AttendeeId=b.AttendeeId and
+                                a.UserId=b.UserId and
                                 b.EventId='{eventId}' and b.TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
@@ -73,7 +73,7 @@ namespace EventManagementDbAccess
 
                         while (await reader.ReadAsync())
                         {
-                            ticket.Attendee = new Attendee()
+                            ticket.User = new EventUser()
                             {
                                 Name = reader.GetString(0),
                                 Email = reader.GetString(1),
@@ -109,7 +109,7 @@ namespace EventManagementDbAccess
                 using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
 
                 StringBuilder sb = new StringBuilder();
-                sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId,
+                sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                         TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
                         CreatedAt,ModifiedAt) ");
                 sb.Append(" VALUES (");
@@ -117,7 +117,7 @@ namespace EventManagementDbAccess
                 sb.Append(ticket.EventId);
                 sb.Append(",");
                 sb.Append("'");
-                sb.Append(ticket.Attendee.AttendeeId);
+                sb.Append(ticket.User.UserId);
                 sb.Append("'");
                 sb.Append(",");
                 sb.Append(ticket.TicketScanned);
@@ -174,14 +174,14 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT a.Name, a.Email, a.Sms, c.Description,
+                    string sql = @"SELECT a.FullName, a.Email, a.Sms, c.Description,
                                 c.EventItemTypeId,c.Name as ItemName, c.Cost,
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketScanned 
-                                from eventmanagement.Attendee a, 
+                                from eventmanagement.EventUser a, 
                                 eventmanagement.EventSalesItem b,
                                 eventmanagement.EventItemType c
-                                where a.attendeeid=b.attendeeid
+                                where a.userid=b.userid
                                 AND b.EventItemTypeId = c.EventItemTypeId
                                 And b.EventId = c.EventId
                                 AND b.SalesOrderId = @salesOrderId 
@@ -197,9 +197,9 @@ namespace EventManagementDbAccess
                         while (await reader.ReadAsync())
                         {
                             EventSalesItem ticket = new EventSalesItem();
-                            ticket.Attendee = new Attendee()
+                            ticket.User = new EventUser()
                             {
-                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                Name = reader.GetString(reader.GetOrdinal("FullName")),
                                 Email = reader.GetString(reader.GetOrdinal("Email")),
                                 Sms = reader.GetString(reader.GetOrdinal("Sms"))
                             };
@@ -253,21 +253,21 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> RemoveEventTickets(int salesOrderId, int attendeeId)
+        public async Task<bool> RemoveEventTickets(int salesOrderId, int userId)
         {
-            if (salesOrderId <= 0 || attendeeId <= 0)
-                throw new ArgumentException("SalesOrderId and AttendeeId must be greater than zero.");
+            if (salesOrderId <= 0 || userId <= 0)
+                throw new ArgumentException("SalesOrderId and UserId must be greater than zero.");
 
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @"DELETE FROM eventmanagement.EventSalesItem 
-                                   WHERE SalesOrderId = @salesOrderId AND AttendeeId = @attendeeId";
+                                   WHERE SalesOrderId = @salesOrderId AND UserId = @userId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);
                     cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
-                    cmd.Parameters.AddWithValue("@attendeeId", attendeeId);
+                    cmd.Parameters.AddWithValue("@userId", userId);
 
                     int rowsAffected = await cmd.ExecuteNonQueryAsync();
                     return rowsAffected > 0;
@@ -280,6 +280,4 @@ namespace EventManagementDbAccess
             }
         }
     }
-    
-    
 }

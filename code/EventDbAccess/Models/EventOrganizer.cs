@@ -25,7 +25,8 @@ namespace EventManagementDbAccess
 
         public string OrgnaizerZipCode { get; set; }
         public string OrganizerInstagram { get; set; }
-        
+
         public string OrganizerFacebook { get; set; }
+        public int UserId { get; set; } = 0;
     }
 }

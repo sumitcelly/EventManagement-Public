@@ -106,36 +106,36 @@ public class SalesOrderConductor
         if (customerSalesOrder.SalesOrderItems == null || customerSalesOrder.SalesOrderItems.Count == 0)
             throw new ArgumentException("SalesOrderItems cannot be null or empty.", nameof(customerSalesOrder.SalesOrderItems));
         if ((string.IsNullOrEmpty(customerSalesOrder.EmailAddress) ||
-                string.IsNullOrWhiteSpace(customerSalesOrder.Name)) && customerSalesOrder.AttendeeId <= 0)
+                string.IsNullOrWhiteSpace(customerSalesOrder.Name)) && customerSalesOrder.UserId <= 0)
             throw new ArgumentException("EmailAddress  and Name should be provided if there is no signed in Attendee", nameof(customerSalesOrder.EmailAddress));
 
-        Attendee attendee;
-        if (customerSalesOrder.AttendeeId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
+        EventUser attendee;
+        if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
             attendee = await attendeeDbAccess.GetAttendeeByEmail(customerSalesOrder.EmailAddress);
             if (attendee == null)
             {
-                attendee = new Attendee
+                attendee = new EventUser
                 {
                     Name = customerSalesOrder.Name,
                     Email = customerSalesOrder.EmailAddress,
                     Sms = string.Empty // Assuming SMS is not provided
                 };
-                customerSalesOrder.AttendeeId = await attendeeDbAccess.CreateAttendee(attendee);
-                _logger.LogInformation($"New attendee created with ID: {customerSalesOrder.AttendeeId}");
+                customerSalesOrder.UserId = await attendeeDbAccess.CreateAttendee(attendee);
+                _logger.LogInformation($"New attendee created with ID: {customerSalesOrder.UserId}");
             }
             else
             {
-                _logger.LogInformation($"Existing attendee found with ID: {attendee.AttendeeId}");
+                _logger.LogInformation($"Existing attendee found with ID: {attendee.UserId}");
             }
-            customerSalesOrder.AttendeeId = attendee.AttendeeId;
+            customerSalesOrder.UserId = attendee.UserId;
         }
         else
         {
             // If AttendeeId is provided, fetch the existing attendee
 
-            attendee = new Attendee() { AttendeeId = customerSalesOrder.AttendeeId };
-            _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.AttendeeId}");
+            attendee = new EventUser() { UserId = customerSalesOrder.UserId };
+            _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
         }
 
         // Create the sales order
@@ -143,7 +143,7 @@ public class SalesOrderConductor
         {
             CustomerId = customerSalesOrder.CustomerId,
             EventId = customerSalesOrder.EventId,
-            AttendeeId = customerSalesOrder.AttendeeId,
+            UserId = customerSalesOrder.UserId,
             DeliveryType = customerSalesOrder.DeliveryType,
             SalesOrderCode = PasswordGenerator.GetPassword(), // Generate a unique sales order code
         };
@@ -167,7 +167,7 @@ public class SalesOrderConductor
                     SalesOrderId = orderId,
                     TicketScanned = 0, // Assuming ticket is not scanned initially
                     EventId = customerSalesOrder.EventId,
-                    Attendee = attendee,
+                    User = attendee,
                     EventItemType = new EventItemType
                     {
                         EventItemTypeId = item.EventTicketTypeId,

@@ -39,7 +39,8 @@ namespace EventManagementDbAccess
                     OrganizerStreetAddress,
                     OrganizerZipCode,
                     OrganizerInstagram,
-                    OrganizerFacebook
+                    OrganizerFacebook,
+                    UserId
                 FROM eventorganizer 
                 WHERE OrganizerName = @organizerName";
 
@@ -64,7 +65,8 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
                         OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
                         OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13)
+                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        UserId = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                     };
                 }
                 return null;
@@ -100,7 +102,8 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress,
                         OrganizerZipCode,
                         OrganizerInstagram,
-                        OrganizerFacebook
+                        OrganizerFacebook,
+                        UserId
                     FROM eventorganizer 
                     WHERE CustomerId = @customerId";
 
@@ -125,7 +128,8 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
                         OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
                         OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13)
+                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        UserId = reader.IsDBNull(14) ? 0 : reader.GetInt32(14)
                     };
                 }
                 return null;

@@ -23,14 +23,14 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO salesorder 
-                    (CustomerId, EventId, AttendeeId, CreatedAt, ModifiedAt,SalesOrderCode) 
+                    (CustomerId, EventId, UserId, CreatedAt, ModifiedAt,SalesOrderCode) 
                     VALUES 
-                    (@customerId, @eventId, @attendeeId, @createdAt, @modifiedAt,@salesOrderCode)";
+                    (@customerId, @eventId, @userId, @createdAt, @modifiedAt,@salesOrderCode)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@customerId", order.CustomerId);
                 cmd.Parameters.AddWithValue("@eventId", order.EventId);
-                cmd.Parameters.AddWithValue("@attendeeId", order.AttendeeId);
+                cmd.Parameters.AddWithValue("@userId", order.UserId);
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@salesOrderCode", order.SalesOrderCode); // Ensure SalesOrderCode is not null
@@ -44,9 +44,8 @@ namespace EventManagementDbAccess
                 else
                 {
                     // Get the last inserted ID
-                    return cmd.LastInsertedId >0 ? Convert.ToInt32(cmd.LastInsertedId) :0;
+                    return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
                 }
-               
             }
             catch (Exception ex)
             {
@@ -76,7 +75,7 @@ namespace EventManagementDbAccess
                         OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
                         CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-                        AttendeeId = reader.GetInt32(reader.GetOrdinal("AttendeeId")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
                     };

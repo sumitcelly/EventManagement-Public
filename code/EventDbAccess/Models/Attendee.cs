@@ -1,6 +1,6 @@
-public class Attendee
+public class EventUser
 {
-    public int AttendeeId { get; set; } = 0;
+    public int UserId { get; set; } = 0;
 
     public string Name { get; set; }
 

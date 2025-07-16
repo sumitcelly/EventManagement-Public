@@ -7,7 +7,7 @@ public class SalesOrder
 
     public int EventId { get; set; }
 
-    public int AttendeeId { get; set; } 
+    public int UserId { get; set; } 
 
     public string SalesOrderCode { get; set; } = string.Empty;
 

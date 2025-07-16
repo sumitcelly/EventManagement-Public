@@ -4,7 +4,7 @@ public class CustomerSalesOrder
 {
     public int CustomerId { get; set; }
     public int EventId { get; set; }
-    public int AttendeeId { get; set; } = 0;
+    public int UserId { get; set; } = 0;
     public string EmailAddress { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string DeliveryType { get; set; } = "Email"; // Default to Email"

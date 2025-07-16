@@ -10,7 +10,7 @@ namespace EventManagementDbAccess
 
         public int EventId { get; set; } = 0;
 
-        public Attendee Attendee { get; set; }
+        public EventUser  User { get; set; }
          
         public EventItemType EventItemType { get; set; } = new EventItemType();
 

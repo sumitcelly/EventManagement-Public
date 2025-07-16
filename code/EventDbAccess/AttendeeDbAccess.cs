@@ -13,7 +13,7 @@ namespace EventManagementDbAccess
         {
         }
 
-        public async Task<int> CreateAttendee(Attendee attendee)
+        public async Task<int> CreateAttendee(EventUser attendee)
         {
             if (attendee == null)
                 throw new ArgumentNullException(nameof(attendee));
@@ -65,7 +65,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<Attendee> GetAttendeeByEmail(string email)
+        public async Task<EventUser> GetAttendeeByEmail(string email)
         {
             if (string.IsNullOrEmpty(email))
                 throw new ArgumentNullException(nameof(email));
@@ -88,9 +88,9 @@ namespace EventManagementDbAccess
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    return new Attendee
+                    return new EventUser
                     {
-                        AttendeeId = reader.GetInt32(reader.GetOrdinal("AttendeeId")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
                         Email = reader.GetString(reader.GetOrdinal("Email")),
                         Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ? 

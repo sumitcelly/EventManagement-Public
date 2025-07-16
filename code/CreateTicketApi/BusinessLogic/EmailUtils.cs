@@ -49,7 +49,7 @@ public class EmailUtils
 
     }
     
-    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,Attendee attendee)
+    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser attendee)
     {
         if (order == null)
         {
