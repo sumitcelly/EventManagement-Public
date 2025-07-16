@@ -1,8 +1,6 @@
 using System.Configuration;
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
-
-
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +21,7 @@ builder.Services.AddScoped(typeof(EventDbAccess));
 builder.Services.AddScoped(typeof(NotificationTemplateAccess));
 builder.Services.AddScoped(typeof(EventOrganizerDBAccess));
 builder.Services.AddScoped(typeof(AttendeeDbAccess));
+builder.Services.AddScoped(typeof(EventItemTypeDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderConductor));
 builder.Services.AddScoped(typeof(EmailUtils));

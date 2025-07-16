@@ -1,16 +1,7 @@
 using System;
 namespace EventManagementDbAccess
 {
-    public class EventItemType
-    {
-        public int EventItemTypeId { get; set; } = 0;
 
-        public string Name { get; set; } = string.Empty;
-
-        public string Description { get; set; } = string.Empty;
-
-        public decimal Cost { get; set; } = 0.0m;
-    }
     public class EventSalesItem
     {
         public string TicketCode { get; set; } = string.Empty;
