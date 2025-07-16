@@ -22,7 +22,14 @@ where a.`AttendeeId`=1 and a.`EventId`=1
 
 
 select * from eventmanagement.events
-select * from eventmanagement.eventorganizer
+select * from eventmanagement.attendee
+update eventmanagement.attendee
+set ModifiedAt= utc_timestamp()
+where AttendeeId>0
+
+INSERT INTO eventmanagement.eventsalesitem (EventId,AttendeeId
+                            TicketScanned,TicketCode,SalesOrderId,TicketTypeId,
+                            CreatedAt,ModifiedAt)  VALUES (1,'3',0,'8JX92LRC','2','1','2025-06-20 20:40:09','2025-06-20 20:40:09')
 
 select AttendeeName, AttendeeEmail, AttendeeSms,TicketScanned from eventmanagement.eventticket where
 EventId='1' and TicketCode='FYHKZYKH'
