@@ -17,7 +17,7 @@ SalesOrderItems:
 	Delete:  LP: Remove SalesORderItems from an order. Issue REfund.
 	
 	Get:HP: Get SalesOrderItems given a OrderID so PDF or HTML cab be generated.
-	
+
 
 	
 	
