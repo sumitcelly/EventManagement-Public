@@ -174,7 +174,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT a.FullName, a.Email, a.Sms, c.Description,
+                    string sql = @"SELECT a.FullName, a.Email, a.Sms,a.UserId, c.Description,
                                 c.EventItemTypeId,c.Name as ItemName, c.Cost,
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketScanned 
@@ -201,7 +201,8 @@ namespace EventManagementDbAccess
                             {
                                 Name = reader.GetString(0),
                                 Email = reader.GetString(1),
-                                Sms = reader.IsDBNull(2) ? "" : reader.GetString(2)
+                                Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ? string.Empty : reader.GetString(reader.GetOrdinal("Sms")),
+                                UserId = reader.GetInt32(3)
                             };
 
                             ticket.CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"));
