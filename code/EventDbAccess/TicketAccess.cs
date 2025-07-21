@@ -199,9 +199,9 @@ namespace EventManagementDbAccess
                             EventSalesItem ticket = new EventSalesItem();
                             ticket.User = new EventUser()
                             {
-                                Name = reader.GetString(reader.GetOrdinal("FullName")),
-                                Email = reader.GetString(reader.GetOrdinal("Email")),
-                                Sms = reader.GetString(reader.GetOrdinal("Sms"))
+                                Name = reader.GetString(0),
+                                Email = reader.GetString(1),
+                                Sms = reader.IsDBNull(2) ? "" : reader.GetString(2)
                             };
 
                             ticket.CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"));

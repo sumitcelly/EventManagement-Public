@@ -6,13 +6,13 @@ public class SalesOrderConductor
 {
     private readonly SalesOrderDbAccess _dbAccess;
     private readonly TicketAccess _ticketDbAccess;
-    private readonly AttendeeDbAccess attendeeDbAccess;
+    private readonly UserDbAccess userDbAccess;
 
     private readonly ILogger<SalesOrderConductor> _logger;
 
     private readonly EmailUtils _emailUtils;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
-                    EventOrganizerDBAccess eventOrganizerDbAccess, AttendeeDbAccess attendeeDbAccess,
+                    EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess,
                     EmailUtils emailUtils)
     {
         if (dbAccess == null)
@@ -28,7 +28,7 @@ public class SalesOrderConductor
             throw new ArgumentNullException(nameof(emailUtils));
         _dbAccess = dbAccess;
         _ticketDbAccess = ticketAccess;
-        this.attendeeDbAccess = attendeeDbAccess;
+        this.userDbAccess = attendeeDbAccess;
         _emailUtils = emailUtils;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
@@ -112,7 +112,7 @@ public class SalesOrderConductor
         EventUser attendee;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
-            attendee = await attendeeDbAccess.GetAttendeeByEmail(customerSalesOrder.EmailAddress);
+            attendee = await userDbAccess.GetAttendeeByEmail(customerSalesOrder.EmailAddress);
             if (attendee == null)
             {
                 attendee = new EventUser
@@ -121,22 +121,22 @@ public class SalesOrderConductor
                     Email = customerSalesOrder.EmailAddress,
                     Sms = string.Empty // Assuming SMS is not provided
                 };
-                customerSalesOrder.UserId = await attendeeDbAccess.CreateAttendee(attendee);
+                customerSalesOrder.UserId = await userDbAccess.CreateUser(attendee);
                 _logger.LogInformation($"New attendee created with ID: {customerSalesOrder.UserId}");
             }
             else
             {
+                customerSalesOrder.UserId = attendee.UserId;
                 _logger.LogInformation($"Existing attendee found with ID: {attendee.UserId}");
             }
-            customerSalesOrder.UserId = attendee.UserId;
+       
         }
-        else
-        {
-            // If AttendeeId is provided, fetch the existing attendee
+        
+          //Create attendee
 
-            attendee = new EventUser() { UserId = customerSalesOrder.UserId };
-            _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
-        }
+        attendee = new EventUser() { UserId = customerSalesOrder.UserId };
+        _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
+        
 
         // Create the sales order
         var salesOrder = new SalesOrder

@@ -1,10 +1,11 @@
 public class EventUser
 {
+   
     public int UserId { get; set; } = 0;
 
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 
-    public string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 
     public string Sms { get; set; } = string.Empty;
 

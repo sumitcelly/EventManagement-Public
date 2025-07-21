@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace EventManagementDbAccess
 {
-    public class AttendeeDbAccess :BaseDbAccess
+    public class UserDbAccess :BaseDbAccess
     {
 
-        public AttendeeDbAccess(IConfiguration config, ILogger<AttendeeDbAccess> logger) : base(config, logger)
+        public UserDbAccess(IConfiguration config, ILogger<UserDbAccess> logger) : base(config, logger)
         {
         }
 
-        public async Task<int> CreateAttendee(EventUser attendee)
+        public async Task<int> CreateUser(EventUser attendee)
         {
             if (attendee == null)
                 throw new ArgumentNullException(nameof(attendee));
@@ -23,13 +23,13 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"INSERT INTO attendee (
-                    Name, Email, Sms, City, Country, 
-                    StreetAddress, ZipCode, Username, 
+                string query = @"INSERT INTO eventuser (
+                    FullName, Email, Sms, City, Country, 
+                    StreetAddress, ZipCode,  
                     Password, CreatedAt, ModifiedAt
                 ) VALUES (
                     @name, @email, @sms, @city, @country,
-                    @streetAddress, @zipCode, @username,
+                    @streetAddress, @zipCode,
                     @password, @createdAt, @modifiedAt
                 )";
 
@@ -42,7 +42,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@country", attendee.Country);
                 cmd.Parameters.AddWithValue("@streetAddress", attendee.StreetAddress);
                 cmd.Parameters.AddWithValue("@zipCode", attendee.ZipCode);
-                cmd.Parameters.AddWithValue("@username", attendee.Username);
+
                 cmd.Parameters.AddWithValue("@password", attendee.Password);
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
@@ -76,10 +76,10 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"SELECT 
-                    AttendeeId, Name, Email, Sms, City, 
-                    Country, StreetAddress, ZipCode, Username,
+                    UserId, FullName, Email, Sms, City, 
+                    Country, StreetAddress, ZipCode,
                     CreatedAt, ModifiedAt 
-                    FROM attendee 
+                    FROM eventuser 
                     WHERE Email = @email";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -91,7 +91,7 @@ namespace EventManagementDbAccess
                     return new EventUser
                     {
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        Name = reader.GetString(reader.GetOrdinal("FullName")),
                         Email = reader.GetString(reader.GetOrdinal("Email")),
                         Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ? 
                               string.Empty : 
@@ -108,9 +108,7 @@ namespace EventManagementDbAccess
                         ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ? 
                                  string.Empty : 
                                  reader.GetString(reader.GetOrdinal("ZipCode")),
-                        Username = reader.IsDBNull(reader.GetOrdinal("Username")) ? 
-                                  string.Empty : 
-                                  reader.GetString(reader.GetOrdinal("Username")),
+                       
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
                     };
@@ -119,7 +117,7 @@ namespace EventManagementDbAccess
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error retrieving attendee: {ex.Message}");
+                Console.WriteLine($"Error retrieving user: {ex.Message}");
                 throw;
             }
         }

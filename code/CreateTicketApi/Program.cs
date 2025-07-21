@@ -13,8 +13,8 @@ builder.Services.AddLogging(logging =>
     logging.AddDebug();
 });
 // Add services to the container.
-
-builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());
+builder.Services.AddControllers();
+//builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -22,7 +22,7 @@ builder.Services.AddScoped(typeof(TicketAccess));
 builder.Services.AddScoped(typeof(EventDbAccess));
 builder.Services.AddScoped(typeof(NotificationTemplateAccess));
 builder.Services.AddScoped(typeof(EventOrganizerDBAccess));
-builder.Services.AddScoped(typeof(AttendeeDbAccess));
+builder.Services.AddScoped(typeof(UserDbAccess));
 builder.Services.AddScoped(typeof(EventItemTypeDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderConductor));
