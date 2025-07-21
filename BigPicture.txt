@@ -5,6 +5,9 @@
 	EventItemType
 	UserLogin
 	Authentication
+	Caching strategy
+	Discounts
+
 
 2. UI.
 	Need CSS, look and feel and basic framework for menu and navigation.
@@ -25,3 +28,4 @@
 5. Mobile apps for Admins at least to scan tickets.
 
 6.Legal. How to guard against copyright etc.
+

@@ -1,0 +1,50 @@
+Feature List: (Weeks of work)
+
+
+Total 24 weeks or 6 months.
+
+Paymemt backend(2)
+
+email backend   (1)
+
+Deployent and scaling (2)
+
+Business aspects registeration etc (1)
+
+Basic form layout, nav and css. (2)
+
+Below is about 16  weeks of work.
+
+Portal:
+Home page: List events and search events (2)
+
+Attendee: (5 weeks)
+	- Click on event page and select ticket (what day of event) and ticket type (3)
+	- Checkout page with basic details. (1)
+	- Payment (5)
+	- CHeckout final with terms and condition. (1)
+	- Order confirmation Page. Shows ticket(s) with QR codes. (1)
+	- Order Confirmation Email.  (2)
+	- Find my ticket page . enter email address and check for login info. (3)
+		- Either ask password or  ask to create an account after validating email.
+		- Take to   dashboard 
+	- Attendee Dashboard (5)
+		-  Shows attendees upcoming orders and events.
+		- Ability to edit orders? (3)
+	
+
+Organizer: ( 3- 5 weeks)
+Lots is missing still
+	Event Page 
+		-  Login (2)
+		- User roles
+		- Event scheduling?
+		- Organizer profile page (2)
+		- Organizer payment  profile page. (2)
+		- Event create with basic details. ()
+		- Ticket type create. (3)
+		- Publish Event. 
+		- Email Attendees (Basic email templates for promotion)	(5)
+		
+Mobile App: (4)
+	Scanning for tickets.
