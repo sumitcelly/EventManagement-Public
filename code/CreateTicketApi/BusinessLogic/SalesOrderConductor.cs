@@ -113,7 +113,7 @@ public class SalesOrderConductor
         EventUser attendee;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
-            attendee = await userDbAccess.GetAttendeeByEmail(customerSalesOrder.EmailAddress);
+            attendee = await userDbAccess.GetUserByEmail(customerSalesOrder.EmailAddress);
             if (attendee == null)
             {
                 attendee = new EventUser

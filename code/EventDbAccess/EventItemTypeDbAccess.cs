@@ -25,8 +25,8 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO EventItemType 
-                    (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder) 
-                    VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder)";
+                    (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder,CreatedAt) 
+                    VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder,@createdAt)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@name", item.Name);
@@ -35,6 +35,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@eventId", item.EventId);
                 cmd.Parameters.AddWithValue("@totalAllowed", item.TotalAllowed);
                 cmd.Parameters.AddWithValue("@maxPerOrder", item.MaxPerOrder);
+                cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
@@ -135,7 +136,8 @@ namespace EventManagementDbAccess
                     Cost = @cost,
                     EventId = @eventId,
                     TotalAllowed = @totalAllowed,
-                    MaxPerOrder = @maxPerOrder
+                    MaxPerOrder = @maxPerOrder,
+                    ModifiedAt = @modifiedAt
                     WHERE EventItemTypeId = @eventItemTypeId";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -146,6 +148,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@totalAllowed", item.TotalAllowed);
                 cmd.Parameters.AddWithValue("@maxPerOrder", item.MaxPerOrder);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", item.EventItemTypeId);
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0;

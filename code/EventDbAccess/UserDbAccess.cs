@@ -65,7 +65,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<EventUser> GetAttendeeByEmail(string email)
+        public async Task<EventUser> GetUserByEmail(string email)
         {
             if (string.IsNullOrEmpty(email))
                 throw new ArgumentNullException(nameof(email));
@@ -118,6 +118,76 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving user: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateUser(EventUser user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventuser SET
+                                    FullName = @name,
+                                    Email = @email,
+                                    Sms = @sms,
+                                    City = @city,
+                                    Country = @country,
+                                    StreetAddress = @streetAddress,
+                                    ZipCode = @zipCode,
+                                    Password = @password,
+                                    ModifiedAt = @modifiedAt
+                                 WHERE UserId = @userId";
+
+                using var cmd = new MySqlCommand(query, connection);
+
+                cmd.Parameters.AddWithValue("@name", user.Name);
+                cmd.Parameters.AddWithValue("@email", user.Email);
+                cmd.Parameters.AddWithValue("@sms", user.Sms);
+                cmd.Parameters.AddWithValue("@city", user.City);
+                cmd.Parameters.AddWithValue("@country", user.Country);
+                cmd.Parameters.AddWithValue("@streetAddress", user.StreetAddress);
+                cmd.Parameters.AddWithValue("@zipCode", user.ZipCode);
+                cmd.Parameters.AddWithValue("@password", user.Password);
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@userId", user.UserId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteUserByEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentNullException(nameof(email));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"DELETE FROM eventuser WHERE Email = @email";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@email", email);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting user by email: {ex.Message}");
                 throw;
             }
         }
