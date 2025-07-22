@@ -11,6 +11,8 @@ Deployent and scaling (2)
 
 Business aspects registeration etc (1)
 
+Content System for event images, documents (1)
+
 Basic form layout, nav and css. (2)
 
 Below is about 16  weeks of work.
