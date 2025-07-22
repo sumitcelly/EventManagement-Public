@@ -1,12 +1,16 @@
 
 1. Complete API
 	Payments.
+	Events
+	Organizer
 	Attendee
 	EventItemType
 	UserLogin
 	Authentication
-	Caching strategy
+	Caching strategy/Impl
+	Content Strategy/Impl
 	Discounts
+	Historical DB for past events
 
 
 2. UI.
