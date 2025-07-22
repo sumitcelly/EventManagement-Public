@@ -36,7 +36,7 @@ using System.Threading.Tasks;
                 EventDescription = reader.GetString("EventDescription"),
                 EventDate = reader.GetDateTime("EventDate"),
                 EventOrganizer = reader.GetInt32("EventOrganizer"),
-                EventLocation = reader.IsDBNull(reader.GetOrdinal("EventLocation")) ? string.Empty : reader.GetString("EventLocation")
+                EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
               });
             }
           }
@@ -95,10 +95,80 @@ using System.Threading.Tasks;
               EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
               EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventLocation")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventLocation"))
+              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
             };
         }
         return null;
+    }
+
+    public async Task<int> CreateEvent(Event evt)
+    {
+        if (evt == null)
+            throw new ArgumentNullException(nameof(evt));
+
+        using var connection = new MySqlConnection(this.ConnectionString);
+        await connection.OpenAsync();
+
+        string query = @"INSERT INTO Events 
+            (EventName, EventDescription, EventDate, EventOrganizer, EventAddress,CreatedAt) 
+            VALUES (@name, @desc, @date, @organizer, @location, @createdAt)";
+
+        using var cmd = new MySqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@name", evt.EventName);
+        cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
+        cmd.Parameters.AddWithValue("@date", evt.EventDate);
+        cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizer);
+        cmd.Parameters.AddWithValue("@location", evt.EventLocation);
+        cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
+    }
+
+    public async Task<bool> DeleteEvent(int eventId)
+    {
+        if (eventId <= 0)
+            throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+
+        using var connection = new MySqlConnection(this.ConnectionString);
+        await connection.OpenAsync();
+
+        string query = "DELETE FROM Events WHERE EventId = @eventId";
+        using var cmd = new MySqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@eventId", eventId);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }
+
+    public async Task<bool> UpdateEvent(Event evt)
+    {
+        if (evt == null)
+            throw new ArgumentNullException(nameof(evt));
+
+        using var connection = new MySqlConnection(this.ConnectionString);
+        await connection.OpenAsync();
+
+        string query = @"UPDATE Events SET 
+            EventName = @name,
+            EventDescription = @desc,
+            EventDate = @date,
+            EventOrganizer = @organizer,
+            EventAddress = @location,
+            ModifiedAt = @modifiedAt
+            WHERE EventId = @eventId";
+
+        using var cmd = new MySqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@name", evt.EventName);
+        cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
+        cmd.Parameters.AddWithValue("@date", evt.EventDate);
+        cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizer);
+        cmd.Parameters.AddWithValue("@location", evt.EventLocation);
+        cmd.Parameters.AddWithValue("@eventId", evt.EventId);
+        cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
     }
 
   }

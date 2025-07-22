@@ -39,7 +39,7 @@ namespace EventManagementDbAccess
                     OrganizerStreetAddress,
                     OrganizerZipCode,
                     OrganizerInstagram,
-                    OrganizerFacebook,
+                    OrganizerFacebook
                    
                     
                 FROM eventorganizer 
@@ -137,6 +137,136 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving organizer by CustomerId: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<int> AddOrganizer(EventOrganizer organizer)
+        {
+            if (organizer == null)
+                throw new ArgumentNullException(nameof(organizer));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"INSERT INTO eventorganizer (
+                        OrganizerName,
+                        OrganizerEmail,
+                        OrganizerWebsite,
+                        OrganizerEventBaseUrl,
+                        OrganizerDescription,
+                        OrganizerLogo,
+                        OrganizerCity,
+                        OrganizerCountry,
+                        OrganizerPhone,
+                        OrganizerStreetAddress,
+                        OrganizerZipCode,
+                        OrganizerInstagram,
+                        OrganizerFacebook
+                    ) VALUES (
+                        @name, @email, @website, @eventBaseUrl, @description, @logo, @city, @country,
+                        @phone, @streetAddress, @zipCode, @instagram, @facebook
+                    )";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@name", organizer.OrganizerName);
+                cmd.Parameters.AddWithValue("@email", organizer.OrganizerEmail);
+                cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@description", organizer.OrganizerDescription ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@logo", organizer.OrganizerLogo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@city", organizer.OrganizerCity ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@country", organizer.OrganizerCountry ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@phone", organizer.OrganizerPhone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@streetAddress", organizer.OrganizerStreetAddress ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@zipCode", organizer.OrgnaizerZipCode ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@facebook", organizer.OrganizerFacebook ?? (object)DBNull.Value);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding organizer: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> DeleteOrganizer(int customerId)
+        {
+            if (customerId <= 0)
+                throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "DELETE FROM eventorganizer WHERE CustomerId = @customerId";
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@customerId", customerId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting organizer: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateOrganizer(EventOrganizer organizer)
+        {
+            if (organizer == null)
+                throw new ArgumentNullException(nameof(organizer));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventorganizer SET
+                        OrganizerName = @name,
+                        OrganizerEmail = @email,
+                        OrganizerWebsite = @website,
+                        OrganizerEventBaseUrl = @eventBaseUrl,
+                        OrganizerDescription = @description,
+                        OrganizerLogo = @logo,
+                        OrganizerCity = @city,
+                        OrganizerCountry = @country,
+                        OrganizerPhone = @phone,
+                        OrganizerStreetAddress = @streetAddress,
+                        OrganizerZipCode = @zipCode,
+                        OrganizerInstagram = @instagram,
+                        OrganizerFacebook = @facebook
+                    WHERE CustomerId = @customerId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@name", organizer.OrganizerName);
+                cmd.Parameters.AddWithValue("@email", organizer.OrganizerEmail);
+                cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@description", organizer.OrganizerDescription ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@logo", organizer.OrganizerLogo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@city", organizer.OrganizerCity ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@country", organizer.OrganizerCountry ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@phone", organizer.OrganizerPhone ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@streetAddress", organizer.OrganizerStreetAddress ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@zipCode", organizer.OrgnaizerZipCode ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@facebook", organizer.OrganizerFacebook ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@customerId", organizer.OrganizerId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating organizer: {ex.Message}");
                 throw;
             }
         }
