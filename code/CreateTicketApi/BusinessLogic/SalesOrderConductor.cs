@@ -56,9 +56,9 @@ public class SalesOrderConductor
             throw new ArgumentException("OrderId cannot be null or empty.", nameof(salesOrderId));
 
         // Update the sales order
-        var previousTicketCount = await _ticketDbAccess.GetEventTicketCountBySalesOrderId(salesOrderId);
-        if (previousTicketCount == 0)
-            throw new Exception($"Failed to retrieve tickts for previous order with ID {salesOrderId}.");
+        // var previousTicketCount = await _ticketDbAccess.GetEventTicketCountBySalesOrderId(salesOrderId);
+        // if (previousTicketCount == 0)
+        //     throw new Exception($"Failed to retrieve tickts for previous order with ID {salesOrderId}.");
 
         //Todo: ORder count can be same if they changed the type of ticket but not the count
         // int newTicketCount = order.SalesOrderItems.Count();

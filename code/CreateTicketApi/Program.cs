@@ -2,6 +2,7 @@ using System.Configuration;
 using CreateTicketApi.Authentication;
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
+using EventUtils;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.OpenApi.Models;
 
@@ -29,6 +30,8 @@ builder.Services.AddScoped(typeof(SalesOrderConductor));
 builder.Services.AddScoped(typeof(EmailUtils));
 
 builder.Services.AddSingleton(typeof(SQSHelper));
+
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSwaggerGen();
 //uncomment the following lines to enable API Key authentication in Swagger
 

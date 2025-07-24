@@ -7,12 +7,14 @@ using System.Data.Common;
 using System.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Distributed;
+using EventUtils;
 namespace EventManagementDbAccess
 {
 
     public class TicketAccess : BaseDbAccess
     {
-        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger) : base(config, logger)
+        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger, IDistributedCache cache) : base(config, logger, cache)
         {
 
         }
@@ -34,6 +36,15 @@ namespace EventManagementDbAccess
                     int val = await cmd.ExecuteNonQueryAsync();
                     Console.WriteLine($"Records update for {code} is {val}");
                     retVal = val == 1 ? true : false;
+                    if (retVal)
+                    {
+                        _logger.LogInformation($"Ticket with code {code} validated successfully.");
+                        _cache.Remove(CacheHelper.GetCacheKey<EventSalesItem>($"{eventId}:{code}"));
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Ticket with code {code} could not be validated.");
+                    }
                 }
 
             }
@@ -48,6 +59,18 @@ namespace EventManagementDbAccess
         {
             if (string.IsNullOrEmpty(code))
             {
+                throw new ArgumentNullException(nameof(code));
+            }
+
+            string cacheKey = CacheHelper.GetCacheKey<EventSalesItem>($"{eventId}:{code}");
+            EventSalesItem? cachedTicket = await _cache.GetOrSetAsync(cacheKey, () => GetEventTicketByQRCodeFromDb(code, eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return cachedTicket ?? throw new KeyNotFoundException($"Ticket with code {code} not found.");
+        }
+
+        public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId = 1)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
                 throw new ArgumentNullException("code");
             }
 
@@ -57,7 +80,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$"Select a.Name, a.Email, a.Sms, 
+                    string sql = @$"Select a.FullName, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketScanned 
                                 from eventmanagement.EventUser a, 
@@ -68,6 +91,10 @@ namespace EventManagementDbAccess
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
+                        if (reader == null || !reader.HasRows)
+                        {
+                            throw new KeyNotFoundException($"Ticket with code {code} not found.");
+                        }
                         if (reader.RecordsAffected > 1)
                             throw new Exception("More than one record returned for ticket code" + code);
 
@@ -77,7 +104,7 @@ namespace EventManagementDbAccess
                             {
                                 Name = reader.GetString(0),
                                 Email = reader.GetString(1),
-                                Sms = reader.GetString(2)
+                                Sms =reader.IsDBNull(reader.GetOrdinal("Sms")) ? string.Empty : reader.GetString(reader.GetOrdinal("Sms")),
                             };
 
                             ticket.CreatedAt = reader.GetDateTime(3);
@@ -149,6 +176,10 @@ namespace EventManagementDbAccess
                 int i = await cmd.ExecuteNonQueryAsync();
                 if (i == 1)
                 {
+                    if (cmd.LastInsertedId > 0)
+                    {                     
+                        _cache.AddOrUpdateCache(ticket, $"{ticket.EventId}:{ticket.TicketCode}", TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+                    }
                     return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
                 }
                 else
@@ -164,7 +195,19 @@ namespace EventManagementDbAccess
             }
         }
 
+          
         public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderId(int salesOrderId, int eventId)
+        {
+            if (salesOrderId <= 0 || eventId <= 0)
+                throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
+
+            string cacheKey = CacheHelper.GetCacheKey<IEnumerable<EventSalesItem>>($"{salesOrderId}");
+            IEnumerable<EventSalesItem>? cachedTicket = await _cache.GetOrSetAsync(cacheKey, () => GetEventTicketBySalesOrderIdFromDb(salesOrderId, eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return cachedTicket ?? throw new KeyNotFoundException($"Ticket for Sales Order ID {salesOrderId} and Event ID {eventId} not found.");
+        }
+        
+            
+        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderIdFromDb(int salesOrderId, int eventId)
         {
             if (salesOrderId <= 0 || eventId <= 0)
                 throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
@@ -229,6 +272,12 @@ namespace EventManagementDbAccess
             return ticketList;
         }
 
+        /// <summary>
+        /// Not used yet
+        /// </summary>
+        /// <param name="salesOrderId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<int> GetEventTicketCountBySalesOrderId(int salesOrderId)
         {
             if (salesOrderId <= 0)
@@ -271,6 +320,15 @@ namespace EventManagementDbAccess
                     cmd.Parameters.AddWithValue("@userId", userId);
 
                     int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                    if (rowsAffected > 0)
+                    {
+                        _logger.LogInformation($"Removed {rowsAffected} tickets for Sales Order ID {salesOrderId} and User ID {userId}.");
+                        _cache.Remove(CacheHelper.GetCacheKey<IEnumerable<EventSalesItem>>($"{salesOrderId}"));
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"No tickets found for Sales Order ID {salesOrderId} and User ID {userId}.");
+                    }
                     return rowsAffected > 0;
                 }
             }

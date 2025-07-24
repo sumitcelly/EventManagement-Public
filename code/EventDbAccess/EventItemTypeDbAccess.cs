@@ -1,4 +1,6 @@
 
+using EventUtils;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
@@ -10,7 +12,7 @@ namespace EventManagementDbAccess
 {
     public class EventItemTypeDbAccess : BaseDbAccess
     {
-        public EventItemTypeDbAccess(IConfiguration config, ILogger<EventItemTypeDbAccess> logger) : base(config, logger)
+        public EventItemTypeDbAccess(IConfiguration config, ILogger<EventItemTypeDbAccess> logger, IDistributedCache cache) : base(config, logger, cache)
         {
         }
 
@@ -38,6 +40,11 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    _cache.RemoveCache<List<EventItemType>>(item.EventId.ToString());
+                   // _cache.AddOrUpdateCache(item, item.EventItemTypeId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+                }   
                 return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
             }
             catch (Exception ex)
@@ -46,6 +53,16 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
+
+        // public async Task<EventItemType> GetEventItemTypeById(int eventItemTypeId)
+        // {
+        //     if (eventItemTypeId <= 0)
+        //         throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventItemTypeId));
+
+        //     string cacheKey = CacheHelper.GetCacheKey<EventItemType>(eventItemTypeId.ToString());
+        //     EventItemType? cachedEvent = await _cache.GetOrSetAsync<EventItemType>(cacheKey, () => GetEventItemTypeByIdFromDb(eventItemTypeId), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+        //     return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventItemTypeId} not found.") ;
+        // }
 
         public async Task<EventItemType> GetEventItemTypeById(int eventItemTypeId)
         {
@@ -87,6 +104,16 @@ namespace EventManagementDbAccess
         public async Task<List<EventItemType>> GetAllEventItemTypesByEventId(int eventId)
         {
             if (eventId <= 0)
+                throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventId));
+
+            string cacheKey = CacheHelper.GetCacheKey<List<EventItemType>>(eventId.ToString());
+            List<EventItemType>? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetAllEventItemTypesByEventIdFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventId} not found.") ;
+        }
+
+        public async Task<List<EventItemType>> GetAllEventItemTypesByEventIdFromDb(int eventId)
+        {
+            if (eventId <= 0)
                 throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
             var list = new List<EventItemType>();
             try
@@ -97,7 +124,7 @@ namespace EventManagementDbAccess
                 string query = "SELECT * FROM EventItemType where EventId = @eventId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventId", eventId);
-                
+
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
@@ -151,6 +178,13 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    //remove all event item types from cache for the event. the next request will populate it.
+                    //We could update the event item type in the cache, but it is better to remove it and let the next request populate it.
+                    _cache.RemoveCache<List<EventItemType>>(item.EventId.ToString());
+                    
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -175,6 +209,12 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@eventItemTypeId", eventItemTypeId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+
+                    //remove all event item types from cache for the event. the next request will populate it.
+                    _cache.RemoveCache<List<EventItemType>>(eventItemTypeId.ToString());
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)

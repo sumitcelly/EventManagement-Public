@@ -10,25 +10,40 @@ using System.Data.Common;
 using System.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using EventUtils;
+using Microsoft.Extensions.Caching.Distributed;
 namespace EventManagementDbAccess
 {
     public class NotificationTemplateAccess :BaseDbAccess
     {
         
 
-        public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger) :base (connectionString, logger) 
+        public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger, IDistributedCache cache) :base (connectionString, logger, cache) 
         {
           
             
         }
-
-        public async Task<string> GetTemplateByName(string templateName, int customerId=1)
+        
+         public async Task<string> GetTemplateByName(string  templateName, int customerId = 1)
         {
             if (string.IsNullOrEmpty(templateName))
             {
                 throw new ArgumentNullException("templateName");
             }
-        
+
+            string cacheKey = CacheHelper.GetCacheKey<Event>(customerId+":"+templateName.ToString());
+            string? template = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByNameFromDb(templateName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return template ?? throw new KeyNotFoundException($"template  with name  {templateName} not found.") ;
+        }
+
+
+        public async Task<string> GetTemplateByNameFromDb(string templateName, int customerId = 1)
+        {
+            if (string.IsNullOrEmpty(templateName))
+            {
+                throw new ArgumentNullException("templateName");
+            }
+
             string templateContent = string.Empty;
 
             try
@@ -47,7 +62,7 @@ namespace EventManagementDbAccess
                         while (await reader.ReadAsync())
                         {
                             templateContent = reader.GetString(0);
-                           
+
                         }
                     }
                 }

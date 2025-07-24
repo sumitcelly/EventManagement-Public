@@ -1,15 +1,17 @@
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EventUtils;
 
  namespace EventManagementDbAccess
 {
   public class EventDbAccess :BaseDbAccess
   {
-    public EventDbAccess(IConfiguration configuration, ILogger<EventDbAccess> logger) :base(configuration, logger)
+    public EventDbAccess(IConfiguration configuration, ILogger<EventDbAccess> logger, IDistributedCache cache) :base(configuration, logger, cache)
     {
       
     }
@@ -47,6 +49,19 @@ using System.Threading.Tasks;
   
     public async Task<Event> GetEventById(int eventId)
     {
+      if (eventId <= 0)
+          throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+
+      string cacheKey = CacheHelper.GetCacheKey<Event>(eventId.ToString());
+      Event? cachedEvent = await _cache.GetOrSetAsync<Event>(cacheKey, () => GetEventByIdFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+      return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventId} not found.") ;
+    }
+
+    public async Task<Event> GetEventByIdFromDb(int eventId)
+    {
+      if (eventId <= 0)
+        throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+
       using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
       {
         await conn.OpenAsync();
@@ -73,32 +88,45 @@ using System.Threading.Tasks;
       return null;
     }
 
+    //Cannot cache by name since name can be changed and theb the cache wil retain the old name.
+    //We need to send the old name to the cache and then remove it when the event is updated.
+  
+    // public async Task<Event> GetEventByName(string eventName)
+    // {
+    //   if (string.IsNullOrEmpty(eventName))
+    //     throw new ArgumentNullException(nameof(eventName));
+    //   string cacheKey = CacheHelper.GetCacheKey<Event>(eventName);
+
+    //   Event? cachedEvent = await _cache.GetOrSetAsync<Event>(cacheKey, () => GetEventByNameFromDb(eventName), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+    //   return cachedEvent ?? throw new KeyNotFoundException($"Event with name {eventName} not found.") ;
+    // }
+
     public async Task<Event> GetEventByName(string eventName)
     {
-        if (string.IsNullOrEmpty(eventName))
-            throw new ArgumentNullException(nameof(eventName));
+      if (string.IsNullOrEmpty(eventName))
+        throw new ArgumentNullException(nameof(eventName));
 
-        using var conn = new MySqlConnection(this.ConnectionString);
-        await conn.OpenAsync();
-        var query = "SELECT * FROM Events WHERE EventName = @eventName";
-        
-        using var cmd = new MySqlCommand(query, conn);
-        cmd.Parameters.AddWithValue("@eventName", eventName);
+      using var conn = new MySqlConnection(this.ConnectionString);
+      await conn.OpenAsync();
+      var query = "SELECT * FROM Events WHERE EventName = @eventName";
 
-        using var reader = await cmd.ExecuteReaderAsync();
-        if (await reader.ReadAsync())
+      using var cmd = new MySqlCommand(query, conn);
+      cmd.Parameters.AddWithValue("@eventName", eventName);
+
+      using var reader = await cmd.ExecuteReaderAsync();
+      if (await reader.ReadAsync())
+      {
+        return new Event
         {
-            return new Event
-            {
-              EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-              EventName = reader.GetString(reader.GetOrdinal("EventName")),
-              EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
-              EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-              EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
-            };
-        }
-        return null;
+          EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+          EventName = reader.GetString(reader.GetOrdinal("EventName")),
+          EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
+          EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+          EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+          EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
+        };
+      }
+      return null;
     }
 
     public async Task<int> CreateEvent(Event evt)
@@ -122,6 +150,8 @@ using System.Threading.Tasks;
         cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+ 
         return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
     }
 
@@ -138,6 +168,10 @@ using System.Threading.Tasks;
         cmd.Parameters.AddWithValue("@eventId", eventId);
 
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected > 0)
+        {
+            _cache.RemoveCache<Event>(eventId.ToString());
+        }
         return rowsAffected > 0;
     }
 
@@ -168,6 +202,10 @@ using System.Threading.Tasks;
         cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        if (rowsAffected > 0)
+        { 
+           _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+        }
         return rowsAffected > 0;
     }
 
