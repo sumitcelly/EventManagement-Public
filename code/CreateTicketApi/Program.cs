@@ -30,6 +30,7 @@ builder.Services.AddScoped(typeof(SalesOrderConductor));
 builder.Services.AddScoped(typeof(EmailUtils));
 
 builder.Services.AddSingleton(typeof(SQSHelper));
+builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSwaggerGen();
