@@ -5,6 +5,10 @@ using Stripe;
 using Microsoft.Extensions.Logging;
 
 using Amazon.Runtime.Internal.Util;
+using System.Threading.Tasks;
+using System.Collections;
+using Microsoft.Extensions.Primitives;
+using Stripe.Checkout;
 namespace EventUtils;
 
 public class StripeAccess
@@ -15,9 +19,12 @@ public class StripeAccess
     private readonly string _paymentReturnUrl = "https://yourapp.com/stripe/payment/success";
     private readonly string _cancelUrl = "https://yourapp.com/stripe/payment/cancel";
 
-    private  readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
+    private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
 
     private readonly decimal _fixedTransactionFee = 1.0m; // Example: $0.30 fixed fee per transaction
+   
+    private static string WebhookSecret { get; set; }
+
     public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger logger)
     {
         if (configuration == null)
@@ -37,13 +44,18 @@ public class StripeAccess
         }
 
         StripeConfiguration.ApiKey = configuration["Stripe:ApiKey"];
+        WebhookSecret = configuration["Stripe:WebhookSecret"];
+        if (string.IsNullOrEmpty(WebhookSecret))
+        {
+            throw new ArgumentException("Stripe webhook secret is not configured.");
+        }
         _applicationFeePercentage = Convert.ToDecimal(configuration["Stripe:ApplicationFeePercentage"]);
         logger.LogInformation("Initializing Stripe API with provided configuration.");
     }
 
-    public string CreateStripeAccount(string customerId)
+    public async Task<string> CreateStripeAccount(int customerId)
     {
-        if (string.IsNullOrEmpty(customerId))
+        if (customerId <= 0)
         {
             throw new ArgumentException("Stripe customer ID cannot be null or empty.", nameof(customerId));
         }
@@ -54,10 +66,13 @@ public class StripeAccess
             var service = new AccountService();
 
             var options = new AccountCreateOptions();
-          
-            
+            options.Metadata = new Dictionary<string, string>
+            {
+                { "CustomerId", customerId.ToString() }
+            };
 
-            Account account = service.Create(options);
+
+            Account account = await service.CreateAsync(options);
 
             return account.Id;
         }
@@ -69,7 +84,7 @@ public class StripeAccess
 
     }
 
-    public string InitiateAccountLink(string accountId)
+    public async Task<string> InitiateAccountLink(string accountId)
     {
         if (string.IsNullOrEmpty(accountId))
         {
@@ -85,13 +100,14 @@ public class StripeAccess
             {
                 Account = accountId,
                 RefreshUrl = _connectRefreshUrl,
+                //the url to redirect the client to after they complete the account onboarding process
                 ReturnUrl = _connectReturnUrl,
                 Type = "account_onboarding",
-                
+
             };
 
-            AccountLink accountLink = service.Create(options);
-
+            AccountLink accountLink = await service.CreateAsync(options);
+            //The url to redirect the client to complete the account onboarding process
             return accountLink.Url;
         }
         catch (Exception ex)
@@ -108,10 +124,10 @@ public class StripeAccess
         {
             totalAmount += item.Price * item.Quantity;
         }
-        return (long)(totalAmount *  _applicationFeePercentage + lineItems.Count + _fixedTransactionFee); // Example: 10% application fee
+        return (long)(totalAmount * _applicationFeePercentage + lineItems.Count + _fixedTransactionFee); // Example: 10% application fee
     }
 
-    public string BuySalesItem(string stripeAccountID, List<PaymentLineItemModel> lineItems)
+    public async Task<Tuple<string,string>> BuySalesItem(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
         {
@@ -127,31 +143,19 @@ public class StripeAccess
         {
             SuccessUrl = _paymentReturnUrl,
             CancelUrl = _cancelUrl,
-            LineItems = new List<Stripe.Checkout.SessionLineItemOptions>
-            {
-                new Stripe.Checkout.SessionLineItemOptions
-                {
-                    PriceData = new Stripe.Checkout.SessionLineItemPriceDataOptions
-                    {
-                        Currency = "usd",
-                        ProductData = new Stripe.Checkout.SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = "T-shirt",
-                        },
-                        UnitAmount = 1000,
-                    },
-                    Quantity = 1,
-
-                },
-            },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
                 ApplicationFeeAmount = CalculateApplicationFee(lineItems),
             },
             Mode = "payment",
-            UiMode ="embdedded"
-                      
+            UiMode = "embdedded"
+
         };
+        // options.Metadata = new Dictionary<string, string>
+        // {
+        //     { "SalesOrderId", salesOrderId.ToString() }
+        // };
+        options.ClientReferenceId = salesOrderId.ToString();
         options.LineItems.Clear();
         foreach (var item in lineItems)
         {
@@ -167,20 +171,51 @@ public class StripeAccess
                     UnitAmount = (long)(item.Price * 100), // Convert to cents
                 },
                 Quantity = item.Quantity,
-                
+
             });
         }
 
         var requestOptions = new RequestOptions
         {
             StripeAccount = stripeAccountID,
+            
         };
         var service = new Stripe.Checkout.SessionService();
-        Stripe.Checkout.Session session = service.Create(options, requestOptions);
+        Stripe.Checkout.Session session = await service.CreateAsync(options, requestOptions);
 
         _logger.LogInformation($"Stripe session created with ID: {session.Id}");
-    
-        return session.ClientSecret;
+        ///return the client secret to the frontend to complete the payment
+        return new Tuple<string, string>(session.ClientSecret, session.Id);
+    }
+
+    public static Tuple<string,string> GetWebhookEventAndRefIdReceived(string json, IDictionary<string,StringValues> request)
+    {
+        if (request == null)
+        {
+            throw new ArgumentNullException(nameof(request), "Request cannot be null.");
+        }
+
+        if (!request.ContainsKey("Stripe-Signature"))
+        {
+            throw new ArgumentException("Stripe-Signature header is missing in the request.");
+        }
+
+        var signature = request["Stripe-Signature"].ToString();
+        if (string.IsNullOrEmpty(signature))
+        {
+            throw new ArgumentException("Stripe-Signature header cannot be null or empty.");
+        }
+
+         var stripeEvent = EventUtility.ConstructEvent(
+                json,
+               signature,
+                WebhookSecret
+            );
+
+        //  var session = stripeEvent.Data.Object as Session;
+        //  session.ClientReferenceId
+        return new Tuple<string, string>(stripeEvent.Type, (stripeEvent.Data.Object as Session)?.ClientReferenceId ?? string.Empty);
     }
     
+     
 }
