@@ -123,6 +123,7 @@ public class SalesOrderConductor
                     Sms = string.Empty // Assuming SMS is not provided
                 };
                 customerSalesOrder.UserId = await userDbAccess.CreateUser(attendee);
+                attendee.UserId = customerSalesOrder.UserId;
                 _logger.LogInformation($"New attendee created with ID: {customerSalesOrder.UserId}");
             }
             else
@@ -130,14 +131,16 @@ public class SalesOrderConductor
                 customerSalesOrder.UserId = attendee.UserId;
                 _logger.LogInformation($"Existing attendee found with ID: {attendee.UserId}");
             }
-       
         }
-        
-          //Create attendee
+        else
+        {
+            _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
+            attendee = await userDbAccess.GetUserById(customerSalesOrder.UserId);
+        }
+        //Create attendee
 
-        attendee = new EventUser() { UserId = customerSalesOrder.UserId };
-        _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
-        
+        //attendee = new EventUser() { UserId = customerSalesOrder.UserId };
+
 
         // Create the sales order
         var salesOrder = new SalesOrder
@@ -180,12 +183,23 @@ public class SalesOrderConductor
                 _logger.LogInformation($"Event sales item created with TicketCode: {salesItem.TicketCode}");
             }
         }
-        await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
+        if (!customerSalesOrder.PaymentRequired)
+        {
+            await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
+            await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.OrderCompleted, string.Empty);
+        }
+        else
+        {
+            await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.PaymentPending, string.Empty);
+            _logger.LogInformation($"Sales order {orderId} is pending payment.");
+        }
+        
         return new CustomerSalesOrder()
         {
             SalesOrderCode = salesOrder.SalesOrderCode,
             SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode))
         };
+        
     }
     
     

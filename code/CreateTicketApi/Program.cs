@@ -31,7 +31,7 @@ builder.Services.AddScoped(typeof(EmailUtils));
 
 builder.Services.AddSingleton(typeof(SQSHelper));
 builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
-
+builder.Services.AddSingleton(typeof(StripeAccess));
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSwaggerGen();
 //uncomment the following lines to enable API Key authentication in Swagger

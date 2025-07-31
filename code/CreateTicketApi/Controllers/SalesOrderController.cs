@@ -24,7 +24,7 @@ namespace CreateTicketApi.Controllers
             if (result == null || result.SalesOrderCode == null)
                 return StatusCode(500, "Failed to create sales order.");
             else
-                return Ok(result);
+                return Ok(result);  
         }
 
         [HttpGet("{id}")]

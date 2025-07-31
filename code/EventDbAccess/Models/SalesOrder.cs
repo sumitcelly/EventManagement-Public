@@ -1,19 +1,35 @@
 public class SalesOrder
 {
-    
-    public int OrderId { get; set; } 
 
-    public int CustomerId { get; set; } 
+    public int OrderId { get; set; }
+
+    public int CustomerId { get; set; }
 
     public int EventId { get; set; }
 
-    public int UserId { get; set; } 
+    public int UserId { get; set; }
 
     public string SalesOrderCode { get; set; } = string.Empty;
 
     public string DeliveryType { get; set; } = "Email"; // Default to Email
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    
+
     public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
+
+    public SalesOrderStatus SalesOrderStatus { get; set; } = SalesOrderStatus.InProgress;
+
+    public string  StripeSessionId { get; set; } = string.Empty;
+}
+
+public enum SalesOrderStatus
+{
+    InProgress, // No payment initiated yet
+    PaymentRequired, //s Payment required but not initiated
+    PaymentPending,//Payment session created, awaiting payment from customer
+    PaymentInitiated, // Payment initiated by user, wating for confirmation from Stripe
+    PaymentFailed,
+    PaymentSucceeded,
+    OrderCompleted, // Payment succeeded and order is completed
+    Refunded
 }

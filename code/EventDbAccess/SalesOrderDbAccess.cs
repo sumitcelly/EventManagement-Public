@@ -23,7 +23,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO salesorder 
-                    (CustomerId, EventId, UserId, CreatedAt, ModifiedAt,SalesOrderCode) 
+                    (CustomerId, EventId, UserId, CreatedAt, ModifiedAt,SalesOrderCode, DeliveryType, SalesOrderStatus, StripeSessionId) 
                     VALUES 
                     (@customerId, @eventId, @userId, @createdAt, @modifiedAt,@salesOrderCode)";
 
@@ -34,7 +34,9 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@salesOrderCode", order.SalesOrderCode); // Ensure SalesOrderCode is not null
-
+                cmd.Parameters.AddWithValue("@deliveryType", order.DeliveryType ?? "Email"); // Default to Email if null
+                cmd.Parameters.AddWithValue("@salesOrderStatus", (int)order.SalesOrderStatus);
+                cmd.Parameters.AddWithValue("@stripeSessionId", order.StripeSessionId ?? string.Empty); // Default to empty string if null
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                 if (rowsAffected == 0)
@@ -77,7 +79,11 @@ namespace EventManagementDbAccess
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
+                        SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
+                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
                     };
                 }
                 return null;
@@ -110,6 +116,38 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error deleting sales order: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateSalesOrderStatusAndStripeSessionId(int orderId, SalesOrderStatus status, string stripeSessionId)
+        {
+            if (orderId <= 0)
+                throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE salesorder 
+                                 SET SalesOrderStatus = @status, 
+                                     StripeSessionId = @stripeSessionId, 
+                                     ModifiedAt = @modifiedAt
+                                 WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@status", (int)status);
+                cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId ?? string.Empty);
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating sales order: {ex.Message}");
                 throw;
             }
         }

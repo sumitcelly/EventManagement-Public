@@ -28,5 +28,18 @@ namespace EventManagementDbAccess
 
         public string OrganizerFacebook { get; set; }
         public int UserId { get; set; } = 0;
+
+        public string StripeAccountId { get; set; } = string.Empty;
+
+        public StripeAccountStatus StripeConnectStatus { get; set; }
+    }
+    public enum StripeAccountStatus
+    {
+        IdCreated,
+        LinkInitiated,
+        Completed,
+        Inactive,   
+        Rejected,
+        Deleted
     }
 }

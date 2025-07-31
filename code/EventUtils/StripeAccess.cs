@@ -22,7 +22,7 @@ public class StripeAccess
     private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
 
     private readonly decimal _fixedTransactionFee = 1.0m; // Example: $0.30 fixed fee per transaction
-   
+
     private static string WebhookSecret { get; set; }
 
     public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger logger)
@@ -107,6 +107,7 @@ public class StripeAccess
             };
 
             AccountLink accountLink = await service.CreateAsync(options);
+
             //The url to redirect the client to complete the account onboarding process
             return accountLink.Url;
         }
@@ -127,7 +128,17 @@ public class StripeAccess
         return (long)(totalAmount * _applicationFeePercentage + lineItems.Count + _fixedTransactionFee); // Example: 10% application fee
     }
 
-    public async Task<Tuple<string,string>> BuySalesItem(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
+    /// <summary>
+    /// Processes the purchase of sales items using Stripe Checkout.Initiates a Stripe Checkout session.
+    /// 
+    /// </summary>
+    /// <param name="salesOrderId"></param>
+    /// <param name="stripeAccountID"></param>
+    /// <param name="lineItems"></param>
+    /// <returns>Tuple containing client secret to be used by UI (Item1) and
+    /// SessionId (item2)</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<Tuple<string, string>> BuySalesItem(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
         {
@@ -178,7 +189,7 @@ public class StripeAccess
         var requestOptions = new RequestOptions
         {
             StripeAccount = stripeAccountID,
-            
+
         };
         var service = new Stripe.Checkout.SessionService();
         Stripe.Checkout.Session session = await service.CreateAsync(options, requestOptions);
@@ -188,7 +199,7 @@ public class StripeAccess
         return new Tuple<string, string>(session.ClientSecret, session.Id);
     }
 
-    public static Tuple<string,string> GetWebhookEventAndRefIdReceived(string json, IDictionary<string,StringValues> request)
+    public static StripeWebHookData GetWebhookEventAndRefIdReceived(string json, IDictionary<string, StringValues> request)
     {
         if (request == null)
         {
@@ -206,16 +217,41 @@ public class StripeAccess
             throw new ArgumentException("Stripe-Signature header cannot be null or empty.");
         }
 
-         var stripeEvent = EventUtility.ConstructEvent(
-                json,
-               signature,
-                WebhookSecret
-            );
+        var stripeEvent = EventUtility.ConstructEvent(
+               json,
+              signature,
+               WebhookSecret
+           );
 
-        //  var session = stripeEvent.Data.Object as Session;
+        if (stripeEvent == null)
+        {
+            throw new InvalidOperationException("Failed to construct Stripe event from the request.");
+        }
+        else if (stripeEvent.Data.Object is Session session)
+        {
+            return new StripeWebHookData
+            {
+                EventType = stripeEvent.Type,
+                SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
+                SessionId = session.Id,
+                CustomerId = session.CustomerId
+            };
+        }
+        else
+        {
+            return new StripeWebHookData();
+        }
         //  session.ClientReferenceId
-        return new Tuple<string, string>(stripeEvent.Type, (stripeEvent.Data.Object as Session)?.ClientReferenceId ?? string.Empty);
+        // return new Tuple<string, string>(stripeEvent.Type, (stripeEvent.Data.Object as Session)?.ClientReferenceId ?? string.Empty);
     }
-    
-     
+
+
+}
+
+public class StripeWebHookData
+{
+    public string EventType { get; set; }
+    public int SalesOrderId { get; set; }
+    public string SessionId { get; set; }
+    public string CustomerId { get; set; }
 }

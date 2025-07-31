@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 
 
 namespace  CreateTicketApi.BusinessLogic;
@@ -20,9 +21,10 @@ public class EmailUtils
     private readonly EventDbAccess _eventDbAccess;
     private readonly NotificationTemplateAccess _templateAccess;
     
+    private readonly UserDbAccess _userDbAccess;
     private readonly SQSHelper _sqsClient;
     public EmailUtils(ILogger<EmailUtils> logger, EventOrganizerDBAccess eventOrganizerDBAccess,
-                        EventDbAccess eventDbAccess, NotificationTemplateAccess notificationTemplateAccess
+                        EventDbAccess eventDbAccess, UserDbAccess userDbAccess, NotificationTemplateAccess notificationTemplateAccess
                         , SQSHelper sqsClient)
     {
         if (eventOrganizerDBAccess == null)
@@ -40,6 +42,7 @@ public class EmailUtils
         _eventOrganizerDBAccess = eventOrganizerDBAccess;
         _eventDbAccess = eventDbAccess;
         _templateAccess = notificationTemplateAccess;
+        _userDbAccess = userDbAccess ?? throw new ArgumentNullException(nameof(userDbAccess));
         if (sqsClient == null)
         {
             throw new ArgumentNullException(nameof(sqsClient));
@@ -49,15 +52,15 @@ public class EmailUtils
 
     }
     
-    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser attendee)
+    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser attendee =null)
     {
         if (order == null)
         {
-            throw new ArgumentNullException(nameof(order), "Sales order cannot be null.");
+            throw new ArgumentNullException(nameof(order), "No way to send email without order.");
         }
         if (attendee == null)
         {
-            throw new ArgumentNullException(nameof(attendee), "Attendee cannot be null.");
+           attendee = await _userDbAccess.GetUserById(order.CustomerId);
         }
         var tokenReplacer = new EmailTokenReplacement();
         var values = new Dictionary<string, string>();

@@ -10,6 +10,7 @@ public class CustomerSalesOrder
     public string DeliveryType { get; set; } = "Email"; // Default to Email"
     public string SalesOrderCode { get; set; }=string.Empty;
     public string SalesOrderQrCodeImage { get; set; } = string.Empty;
+    public bool PaymentRequired { get; set; } = false;
     public List<SalesOrderItems> SalesOrderItems { get; set; } = new List<SalesOrderItems>();
 
     // Additional properties can be added as needed

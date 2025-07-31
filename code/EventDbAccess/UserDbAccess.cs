@@ -122,6 +122,62 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<EventUser> GetUserById(int userId)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"SELECT 
+                        UserId, FullName, Email, Sms, City, 
+                        Country, StreetAddress, ZipCode,
+                        CreatedAt, ModifiedAt 
+                    FROM eventuser 
+                    WHERE UserId = @userId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new EventUser
+                    {
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        Name = reader.GetString(reader.GetOrdinal("FullName")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ?
+                              string.Empty :
+                              reader.GetString(reader.GetOrdinal("Sms")),
+                        City = reader.IsDBNull(reader.GetOrdinal("City")) ?
+                               string.Empty :
+                               reader.GetString(reader.GetOrdinal("City")),
+                        Country = reader.IsDBNull(reader.GetOrdinal("Country")) ?
+                                 string.Empty :
+                                 reader.GetString(reader.GetOrdinal("Country")),
+                        StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ?
+                                       string.Empty :
+                                       reader.GetString(reader.GetOrdinal("StreetAddress")),
+                        ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ?
+                                 string.Empty :
+                                 reader.GetString(reader.GetOrdinal("ZipCode")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving user by ID: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> UpdateUser(EventUser user)
         {
             if (user == null)

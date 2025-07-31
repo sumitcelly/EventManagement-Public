@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Threading.Tasks;
+using static EventManagementDbAccess.EventOrganizer;
 
 namespace EventManagementDbAccess
 {
@@ -39,7 +40,9 @@ namespace EventManagementDbAccess
                     OrganizerStreetAddress,
                     OrganizerZipCode,
                     OrganizerInstagram,
-                    OrganizerFacebook
+                    OrganizerFacebook,
+                    StripeAccountId,
+                    StripeConnectAccountStatus
                    
                     
                 FROM eventorganizer 
@@ -66,8 +69,11 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
                         OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
                         OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13)
-                       
+                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        StripeAccountId = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                        StripeConnectStatus = reader.IsDBNull(15) 
+                            ? default 
+                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(15), out var status) ? status : default
                     };
                 }
                 return null;
@@ -103,7 +109,10 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress,
                         OrganizerZipCode,
                         OrganizerInstagram,
-                        OrganizerFacebook
+                        OrganizerFacebook,
+                        StripeAccountId,
+                        StripeConnectAccountStatus
+                        
                     FROM eventorganizer 
                     WHERE CustomerId = @customerId";
 
@@ -128,7 +137,11 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
                         OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
                         OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13)
+                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
+                        StripeAccountId = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                        StripeConnectStatus = reader.IsDBNull(15) 
+                            ? default 
+                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(15), out var status) ? status : default
                        
                     };
                 }
@@ -242,7 +255,9 @@ namespace EventManagementDbAccess
                         OrganizerStreetAddress = @streetAddress,
                         OrganizerZipCode = @zipCode,
                         OrganizerInstagram = @instagram,
-                        OrganizerFacebook = @facebook
+                        OrganizerFacebook = @facebook,
+                        StripeAccountId = @StripeAccountId,
+                        StripeConnectAccountStatus = @stripeConnectStatus
                     WHERE CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -260,13 +275,44 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@facebook", organizer.OrganizerFacebook ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@customerId", organizer.OrganizerId);
-
+                cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@stripeConnectAccountStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating organizer: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateStripeAccountInfo(int organizerId, string stripeAccountId, StripeAccountStatus stripeAccountStatus)
+        {
+            if (organizerId <= 0)
+                throw new ArgumentException("OrganizerId must be greater than zero.", nameof(organizerId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventorganizer 
+                                 SET StripeAccountId = @StripeAccountId, 
+                                     StripeConnectAccountStatus = @StripeAccountStatus 
+                                 WHERE CustomerId = @organizerId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@StripeAccountId", stripeAccountId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@StripeAccountStatus", stripeAccountStatus.ToString() ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@organizerId", organizerId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating Stripe account info: {ex.Message}");
                 throw;
             }
         }
