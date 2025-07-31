@@ -60,7 +60,7 @@ public class EmailUtils
         }
         if (attendee == null)
         {
-           attendee = await _userDbAccess.GetUserById(order.CustomerId);
+           attendee = await _userDbAccess.GetUserById(order.UserId);
         }
         var tokenReplacer = new EmailTokenReplacement();
         var values = new Dictionary<string, string>();
