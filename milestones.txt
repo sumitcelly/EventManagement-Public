@@ -1,6 +1,6 @@
 Important milestones to celebrate:
 
-1. Payment backend complete.
+1. Payment backend complete.  --Done
 
 2. Business registeration done.
 

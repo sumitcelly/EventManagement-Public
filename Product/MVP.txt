@@ -3,7 +3,7 @@ Feature List: (Weeks of work)
 
 Total 24 weeks or 6 months.
 
-Paymemt backend(2)
+Paymemt backend(2) -- Done but subscription based plans charging missing.
 
 email backend   (1)
 
@@ -12,6 +12,9 @@ Deployent and scaling (2)
 Business aspects registeration etc (1)
 
 Content System for event images, documents (1)
+-- Plan user uploads a file/image. Need a controller to process that. Think file limits.
+	File  saved on disk and uploaded to S3(phase2). Upload using code or someutility or a worker process?
+	FIle served from CDN (CloudFront) linked to S3.
 
 Basic form layout, nav and css. (2)
 
