@@ -4,6 +4,7 @@ using EventUtils;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(logging =>
@@ -14,6 +15,8 @@ builder.Services.AddLogging(logging =>
 });
 // Add services to the container.
 builder.Services.AddControllers();
+//not sure if this will work with swagger, but it is needed for JWT authentication
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -31,7 +34,7 @@ builder.Services.AddAuthorization();
 //builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-
+//shoulg these be singletons?
 builder.Services.AddScoped(typeof(TicketAccess));
 builder.Services.AddScoped(typeof(EventDbAccess));
 builder.Services.AddScoped(typeof(NotificationTemplateAccess));
@@ -41,7 +44,10 @@ builder.Services.AddScoped(typeof(EventItemTypeDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderConductor));
 builder.Services.AddScoped(typeof(EmailUtils));
+builder.Services.AddScoped(typeof(EventOrganizerMembersDbAccess));
 
+builder.Services.AddSingleton(typeof(EventUtils.JwtUtils));
+builder.Services.AddSingleton<EncryptionHelper>();
 builder.Services.AddSingleton(typeof(SQSHelper));
 builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
 builder.Services.AddSingleton(typeof(StripeAccess));

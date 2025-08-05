@@ -8,7 +8,7 @@ using EventManagementDbAccess;
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class EventOrganizerMembersController : ControllerBase
     {
         private readonly EventOrganizerMembersDbAccess _dbAccess;

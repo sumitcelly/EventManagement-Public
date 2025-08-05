@@ -13,7 +13,7 @@ namespace EventUtils;
 
 public class StripeAccess
 {
-    private readonly Microsoft.Extensions.Logging.ILogger _logger;
+    private readonly Microsoft.Extensions.Logging.ILogger<StripeAccess> _logger;
     private readonly string _connectReturnUrl = "https://yourapp.com/stripe/connect";
     private readonly string _connectRefreshUrl = "https://yourapp.com/stripe/refresh";
     private readonly string _paymentReturnUrl = "https://yourapp.com/stripe/payment/success";
@@ -25,7 +25,7 @@ public class StripeAccess
 
     private static string WebhookSecret { get; set; }
 
-    public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger logger)
+    public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<StripeAccess> logger)
     {
         if (configuration == null)
         {

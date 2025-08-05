@@ -15,12 +15,15 @@ namespace CreateTicketApi.Controllers
         private readonly UserDbAccess _userDbAccess;
         private readonly EventOrganizerMembersDbAccess _eventOrganizerMembersDbAccess;
 
+        private readonly JwtUtils _tokenUtils;
 
-        public UserController(ILogger<UserController> logger, UserDbAccess userDbAccess, EventOrganizerMembersDbAccess eventOrganizerMembersDbAccess)
+        public UserController(ILogger<UserController> logger, UserDbAccess userDbAccess,
+                EventOrganizerMembersDbAccess eventOrganizerMembersDbAccess, JwtUtils tokenUtils)
         {
             _logger = logger;
             _userDbAccess = userDbAccess;
             _eventOrganizerMembersDbAccess = eventOrganizerMembersDbAccess;
+            _tokenUtils = tokenUtils;
         }
 
         [HttpGet("{email}")]
@@ -50,7 +53,7 @@ namespace CreateTicketApi.Controllers
             string role = orgMember?.Role ?? UserRoles.Attendee.ToString(); // Default to "User" if no organization member found
             _logger.LogInformation($"User {email} logged in with role {role}.");
             //create a JWT token or session here as needed
-            var token =JwtUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            var token =_tokenUtils.GenerateJwtToken( user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
             return Ok(token);
         }
 

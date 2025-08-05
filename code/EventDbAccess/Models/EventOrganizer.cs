@@ -24,12 +24,12 @@ namespace EventManagementDbAccess
         public string OrganizerStreetAddress { get; set; }
 
         public string OrgnaizerZipCode { get; set; }
-        public string OrganizerInstagram { get; set; }
+        public string OrganizerInstagram { get; set; }=string.Empty;
 
-        public string OrganizerFacebook { get; set; }
+        public string OrganizerFacebook { get; set; }=string.Empty;
         public string StripeAccountId { get; set; } = string.Empty;
 
-        public StripeAccountStatus StripeConnectStatus { get; set; }
+        public StripeAccountStatus StripeConnectStatus { get; set; }= StripeAccountStatus.Inactive;
     }
     public enum StripeAccountStatus
     {

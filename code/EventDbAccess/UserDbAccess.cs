@@ -27,11 +27,11 @@ namespace EventManagementDbAccess
                 string query = @"INSERT INTO eventuser (
                     FullName, Email, Sms, City, Country, 
                     StreetAddress, ZipCode,  
-                    Password, CreatedAt, ModifiedAt
+                    Password, PasswordSalt,CreatedAt, ModifiedAt
                 ) VALUES (
                     @name, @email, @sms, @city, @country,
                     @streetAddress, @zipCode,
-                    @password, @createdAt, @modifiedAt
+                    @password,@passwordSalt, @createdAt, @modifiedAt
                 )";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -43,8 +43,9 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@country", attendee.Country);
                 cmd.Parameters.AddWithValue("@streetAddress", attendee.StreetAddress);
                 cmd.Parameters.AddWithValue("@zipCode", attendee.ZipCode);
-
-                cmd.Parameters.AddWithValue("@password", EncryptionHelper.Encrypt(attendee.Password));
+                string hashedPassword = PasswordHelper.HashPassword(attendee.Password,  out string passwordSalt);
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
+                cmd.Parameters.AddWithValue("@passwordSalt", passwordSalt);
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
@@ -190,43 +191,55 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
                 string query = @"SELECT 
-                    UserId, FullName, Email, Sms, City, 
+                    UserId, FullName, Email, Sms, City, Password, PasswordSalt,
                     Country, StreetAddress, ZipCode,
                     CreatedAt, ModifiedAt 
                 FROM eventuser 
-                WHERE Email = @Email AND Password = @Password";
+                WHERE Email = @Email";
                 using var cmd = new MySqlCommand(query, connection);
 
                 cmd.Parameters.AddWithValue("@Email", email);
-                cmd.Parameters.AddWithValue("@Password", EncryptionHelper.Encrypt(password));
+              
                 using var reader = await cmd.ExecuteReaderAsync();
+             
                 if (await reader.ReadAsync())
                 {
-                    return new EventUser
+                    string salt = reader.IsDBNull(reader.GetOrdinal("PasswordSalt")) ? string.Empty : reader.GetString(reader.GetOrdinal("PasswordSalt"));
+                    string hashedPassword = reader.GetString(reader.GetOrdinal("Password"));
+                    if (PasswordHelper.VerifyPassword(password, salt, hashedPassword))
                     {
-                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                        Name = reader.GetString(reader.GetOrdinal("FullName")),
-                        Email = reader.GetString(reader.GetOrdinal("Email")),
-                        Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ?
-                              string.Empty :
-                              reader.GetString(reader.GetOrdinal("Sms")),
-                        City = reader.IsDBNull(reader.GetOrdinal("City")) ?
-                               string.Empty :
-                               reader.GetString(reader.GetOrdinal("City")),
-                        Country = reader.IsDBNull(reader.GetOrdinal("Country")) ?
-                                 string.Empty :
-                                 reader.GetString(reader.GetOrdinal("Country")),
-                        StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ?
-                                       string.Empty :
-                                       reader.GetString(reader.GetOrdinal("StreetAddress")),
-                        ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ?
-                                 string.Empty :
-                                 reader.GetString(reader.GetOrdinal("ZipCode")),
+                        return new EventUser
+                        {
+                            UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                            Name = reader.GetString(reader.GetOrdinal("FullName")),
+                            Email = reader.GetString(reader.GetOrdinal("Email")),
+                            Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ?
+                                  string.Empty :
+                                  reader.GetString(reader.GetOrdinal("Sms")),
+                            City = reader.IsDBNull(reader.GetOrdinal("City")) ?
+                                   string.Empty :
+                                   reader.GetString(reader.GetOrdinal("City")),
+                            Country = reader.IsDBNull(reader.GetOrdinal("Country")) ?
+                                     string.Empty :
+                                     reader.GetString(reader.GetOrdinal("Country")),
+                            StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ?
+                                           string.Empty :
+                                           reader.GetString(reader.GetOrdinal("StreetAddress")),
+                            ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ?
+                                     string.Empty :
+                                     reader.GetString(reader.GetOrdinal("ZipCode")),
 
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
-                    };
-                    _logger.LogInformation($"User found: {email}");
+                            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                            ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                        };
+                        _logger.LogInformation($"User found: {email}");
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Invalid password for user: {email}");
+                        return null; // Password does not match
+                    }
+
                 }
                 return null;
             }
@@ -250,11 +263,12 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
                 string query = @"UPDATE eventuser 
-                                SET Password = @password, ModifiedAt = @modifiedAt 
+                                SET Password = @password, PasswordSalt = @passwordSalt,  ModifiedAt = @modifiedAt 
                                 WHERE UserId = @userId";
                 using var cmd = new MySqlCommand(query, connection);
-
-                cmd.Parameters.AddWithValue("@password", EncryptionHelper.Encrypt(newPassword));
+                string hashedPassword = PasswordHelper.HashPassword(newPassword, out string salt);
+                cmd.Parameters.AddWithValue("@passwordSalt", salt);
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@userId", userId);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -281,10 +295,10 @@ namespace EventManagementDbAccess
                 var user = await GetUserById(userId);
                 if (user == null)
                     throw new Exception("User not found.");
-                if (EncryptionHelper.Decrypt(user.Password) != oldPassword)
+                if (PasswordHelper.VerifyPassword(oldPassword, user.PasswordSalt, user.Password))
                     throw new Exception("Old password is incorrect.");
-                user.Password = EncryptionHelper.Encrypt(password);
-
+                user.Password = password;
+                
                 bool isUpdated = await UpdateUser(user);
                 if (!isUpdated)
                     throw new Exception("Failed to update user password.");
@@ -316,6 +330,7 @@ namespace EventManagementDbAccess
                                     StreetAddress = @streetAddress,
                                     ZipCode = @zipCode,
                                     Password = @password,
+                                    PasswordSalt = @passwordSalt,
                                     ModifiedAt = @modifiedAt
                                  WHERE UserId = @userId";
 
@@ -328,7 +343,9 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@country", user.Country);
                 cmd.Parameters.AddWithValue("@streetAddress", user.StreetAddress);
                 cmd.Parameters.AddWithValue("@zipCode", user.ZipCode);
-                cmd.Parameters.AddWithValue("@password", user.Password);
+                string hashedPassword = PasswordHelper.HashPassword(user.Password, out string passwordSalt);
+                cmd.Parameters.AddWithValue("@passwordSalt", passwordSalt);       
+                cmd.Parameters.AddWithValue("@password", hashedPassword);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@userId", user.UserId);
 

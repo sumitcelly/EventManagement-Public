@@ -111,7 +111,7 @@ namespace EventManagementDbAccess
                         OrganizerInstagram,
                         OrganizerFacebook,
                         StripeAccountId,
-                        StripeConnectAccountStatus
+                        StripeConnectStatus
                         
                     FROM eventorganizer 
                     WHERE CustomerId = @customerId";
@@ -257,7 +257,7 @@ namespace EventManagementDbAccess
                         OrganizerInstagram = @instagram,
                         OrganizerFacebook = @facebook,
                         StripeAccountId = @StripeAccountId,
-                        StripeConnectAccountStatus = @stripeConnectStatus
+                        StripeConnectStatus = @stripeConnectStatus
                     WHERE CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -273,10 +273,10 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@streetAddress", organizer.OrganizerStreetAddress ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@zipCode", organizer.OrgnaizerZipCode ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@facebook", organizer.OrganizerFacebook ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@facebook", (object)organizer.OrganizerFacebook??DBNull.Value);
                 cmd.Parameters.AddWithValue("@customerId", organizer.OrganizerId);
                 cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@stripeConnectAccountStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@stripeConnectStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0;
             }

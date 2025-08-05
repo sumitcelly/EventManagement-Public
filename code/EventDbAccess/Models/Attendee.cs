@@ -21,6 +21,8 @@ public class EventUser
     
     public string Password { get; set; } = string.Empty;
 
+    public string PasswordSalt { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } 
     
     public DateTime ModifiedAt { get; set; } 
