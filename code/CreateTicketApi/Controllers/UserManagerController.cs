@@ -38,8 +38,10 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(string email, string password)
+        public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
+            string email = request.Email;
+            string password = request.Password;
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 return BadRequest("Email or password is null or empty.");
             var user = await _userDbAccess.GetUserByEmailAndPassword(email, password);
@@ -53,7 +55,7 @@ namespace CreateTicketApi.Controllers
             string role = orgMember?.Role ?? UserRoles.Attendee.ToString(); // Default to "User" if no organization member found
             _logger.LogInformation($"User {email} logged in with role {role}.");
             //create a JWT token or session here as needed
-            var token =_tokenUtils.GenerateJwtToken( user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            var token = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
             return Ok(token);
         }
 
@@ -90,5 +92,11 @@ namespace CreateTicketApi.Controllers
                 return Ok();
             return StatusCode(500, "Failed to delete user.");
         }
+    }
+    
+    public class LoginRequest
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }
