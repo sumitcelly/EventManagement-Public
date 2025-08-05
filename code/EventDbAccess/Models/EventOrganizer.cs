@@ -27,8 +27,6 @@ namespace EventManagementDbAccess
         public string OrganizerInstagram { get; set; }
 
         public string OrganizerFacebook { get; set; }
-        public int UserId { get; set; } = 0;
-
         public string StripeAccountId { get; set; } = string.Empty;
 
         public StripeAccountStatus StripeConnectStatus { get; set; }

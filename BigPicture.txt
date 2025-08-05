@@ -10,6 +10,7 @@
 	Caching strategy/Impl
 	Content Strategy/Impl
 	Discounts
+	Email Interface for marketing emails
 	Historical DB for past events
 
 
@@ -31,5 +32,5 @@
 
 5. Mobile apps for Admins at least to scan tickets.
 
-6.Legal. How to guard against copyright etc.
+6.  Legal. How to guard against copyright etc.
 

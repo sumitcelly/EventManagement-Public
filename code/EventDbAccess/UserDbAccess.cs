@@ -1,3 +1,4 @@
+using EventUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
@@ -43,7 +44,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@streetAddress", attendee.StreetAddress);
                 cmd.Parameters.AddWithValue("@zipCode", attendee.ZipCode);
 
-                cmd.Parameters.AddWithValue("@password", attendee.Password);
+                cmd.Parameters.AddWithValue("@password", EncryptionHelper.Encrypt(attendee.Password));
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
@@ -174,6 +175,124 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error retrieving user by ID: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<EventUser> GetUserByEmailAndPassword(string email, string password)
+        {
+            if (string.IsNullOrEmpty(email))
+                throw new ArgumentNullException(nameof(email));
+            if (string.IsNullOrEmpty(password))
+                throw new ArgumentNullException(nameof(password));
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+                string query = @"SELECT 
+                    UserId, FullName, Email, Sms, City, 
+                    Country, StreetAddress, ZipCode,
+                    CreatedAt, ModifiedAt 
+                FROM eventuser 
+                WHERE Email = @Email AND Password = @Password";
+                using var cmd = new MySqlCommand(query, connection);
+
+                cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@Password", EncryptionHelper.Encrypt(password));
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new EventUser
+                    {
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        Name = reader.GetString(reader.GetOrdinal("FullName")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ?
+                              string.Empty :
+                              reader.GetString(reader.GetOrdinal("Sms")),
+                        City = reader.IsDBNull(reader.GetOrdinal("City")) ?
+                               string.Empty :
+                               reader.GetString(reader.GetOrdinal("City")),
+                        Country = reader.IsDBNull(reader.GetOrdinal("Country")) ?
+                                 string.Empty :
+                                 reader.GetString(reader.GetOrdinal("Country")),
+                        StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ?
+                                       string.Empty :
+                                       reader.GetString(reader.GetOrdinal("StreetAddress")),
+                        ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ?
+                                 string.Empty :
+                                 reader.GetString(reader.GetOrdinal("ZipCode")),
+
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                    };
+                    _logger.LogInformation($"User found: {email}");
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving user by email and password: {ex.Message}");
+                throw;
+            }
+        }
+
+
+        public async Task<bool> ResetPassword(int userId, string newPassword)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+            if (string.IsNullOrEmpty(newPassword))
+                throw new ArgumentNullException(nameof(newPassword), "New password cannot be null or empty.");
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+                string query = @"UPDATE eventuser 
+                                SET Password = @password, ModifiedAt = @modifiedAt 
+                                WHERE UserId = @userId";
+                using var cmd = new MySqlCommand(query, connection);
+
+                cmd.Parameters.AddWithValue("@password", EncryptionHelper.Encrypt(newPassword));
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@userId", userId);
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating password: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<EventUser> UpdatePassword(int userId, string oldPassword, string password)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("UserId must be greater than zero.", nameof(userId));
+            if (string.IsNullOrEmpty(oldPassword))
+                throw new ArgumentNullException(nameof(oldPassword), "Old password cannot be null or empty.");
+            if (string.IsNullOrEmpty(password))
+                throw new ArgumentNullException(nameof(password), "New password cannot be null or empty.");
+
+            try
+            {
+                var user = await GetUserById(userId);
+                if (user == null)
+                    throw new Exception("User not found.");
+                if (EncryptionHelper.Decrypt(user.Password) != oldPassword)
+                    throw new Exception("Old password is incorrect.");
+                user.Password = EncryptionHelper.Encrypt(password);
+
+                bool isUpdated = await UpdateUser(user);
+                if (!isUpdated)
+                    throw new Exception("Failed to update user password.");
+                return user;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating password: {ex.Message}");
                 throw;
             }
         }

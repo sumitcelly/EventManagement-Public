@@ -1,10 +1,9 @@
-using System.Configuration;
-using CreateTicketApi.Authentication;
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
 using EventUtils;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(logging =>
@@ -15,6 +14,20 @@ builder.Services.AddLogging(logging =>
 });
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured."))),
+        };
+    });
+builder.Services.AddAuthorization();
+
 //builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -82,7 +95,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
