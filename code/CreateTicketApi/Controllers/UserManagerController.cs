@@ -41,6 +41,7 @@ namespace CreateTicketApi.Controllers
         public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
             string email = request.Email;
+            
             string password = request.Password;
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 return BadRequest("Email or password is null or empty.");
