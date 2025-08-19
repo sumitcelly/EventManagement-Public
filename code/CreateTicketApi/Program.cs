@@ -13,6 +13,19 @@ builder.Services.AddLogging(logging =>
     logging.AddConsole();
     logging.AddDebug();
 });
+
+// Add CORS policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // your React dev server
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials(); // needed if sending cookies
+        });
+});
 // Add services to the container.
 builder.Services.AddControllers();
 //not sure if this will work with swagger, but it is needed for JWT authentication
@@ -101,6 +114,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
