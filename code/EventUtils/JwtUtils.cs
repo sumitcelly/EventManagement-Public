@@ -37,7 +37,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString())
             }),
-            Expires = DateTime.UtcNow.AddHours(1),
+            Expires = DateTime.UtcNow.AddMinutes(15),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -89,7 +89,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString())
             }),
-            Expires = DateTime.UtcNow.AddDays(7), // refresh lifetime
+            Expires = DateTime.UtcNow.AddHours(2), // refresh lifetime
             SigningCredentials = new SigningCredentials(
                 //todo: use a different key for refresh tokens if needed
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSymmetricKey)),
