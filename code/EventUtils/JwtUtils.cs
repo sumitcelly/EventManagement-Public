@@ -37,7 +37,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString())
             }),
-            Expires = DateTime.UtcNow.AddMinutes(15),
+                Expires = DateTime.UtcNow.AddMinutes(15),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
