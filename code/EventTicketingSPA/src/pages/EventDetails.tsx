@@ -30,11 +30,13 @@ export default function EventDetails() {
 
       const  testEvent = {
         isFree: false,
+        eventDate: "9/15/2025",
+        eventTime: "18:00",
       eventSummary: "Taste dishes from top chefs and local favorites.   This is a great opportunity to bring your pets and your kids for a fun day at the park. come one, come all. Enjoy the rides. Lots of free music and food.",
-      eventId: 1, eventName: "Food Festival 2025", eventDate: new Date(), 
+      eventId: 1, eventName: "Food Festival 2025",
       eventHeadliner: "Food, fund at the park.  Taste dishes from top chefs and local favorites. And more...",
       eventDescription: "Taste dishes from top chefs and local favorites. And more...",
-       eventOrganizer: 4, eventLocation: "New York"
+       eventOrganizer: "Polka dots and curry", eventLocation: "121 Central Park, New York, NY 10001"
     }
   return (
  
@@ -43,25 +45,37 @@ export default function EventDetails() {
       <div className="text-l text-center font-body mt-3">{testEvent.eventHeadliner}</div>
       <div className="flex flex-row mt-4">
           <img src="/images/concert.jpg"  alt={testEvent.eventName} 
-            className="w-2/3  rounded-lg shadow-md" />
-          <div className="flex flex-col w-1/3">
+            className="rounded-lg shadow-md w-2/3" />
+          <div className="flex flex-col justify-center ml-4">
+    
+         
             {testEvent.isFree &&
-              <div className="align-top text-center text-tertiary-color">Free Event!</div>
+              <div className="text-center text-tertiary-color">Free Event!</div>
               }
             {!testEvent.isFree &&
-              <div className="align-top text-center text-secondary-color">Tickets from $20</div>
+              <div className="text-center text-tertiary-color">Tickets from $20</div>
               }
             <Button
               className="align-bottom mt-auto align-center ml-4"
                     size="xs"
                     onClick={() => navigate(`/event/${testEvent.eventId}`)}>
-                    Buy Tickets
+                    Get your Tickets
             </Button>
           </div>
       </div>
-        <div className="text-sm font-body mt-5 text-primary -color 
-                      border bg-brand-light rounded-lg p-2 shadow-lg">
-          {testEvent.eventSummary}</div>
+    <div className="flex italic font-body mt-4 font-extrabold">
+      <div className="text-l font-headline text-primary-color">
+        {new Date(testEvent.eventDate).toLocaleDateString()} {testEvent.eventTime} 
+      </div>
+
+      <div className="font-headline text-primary-color ml-auto">
+        {testEvent.eventLocation} 
+      </div>
+   </div>
+    <div className="text-sm font-body mt-3 text-primary -color 
+                  border bg-brand-light rounded-lg p-2 shadow-lg">
+      {testEvent.eventSummary}
+    </div>
 
     </div>
   
