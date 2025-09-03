@@ -22,9 +22,10 @@ module.exports = {
       },
       
        textColor: {
-        'primary-text': '#5c6d9aff', // Custom color named 'primary-text'
-        'secondary-text': '#6d3333ff', // Custom color named 'secondary-text'
-        'accent': '#FF5733', // Another custom color
+        'primary-color': '#5c6d9aff', // Custom color named 'primary-text'
+        'secondary-color': '#6d3333ff', // Custom color named 'secondary-text'
+        'tertiary-color': '#195b14ff', // Custom color named 'tertiary-text'
+        'accent-color': '#FF5733', // Another custom color
       },
 
       // ✍️ Fonts

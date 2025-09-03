@@ -46,9 +46,9 @@ export default function EventsPage() {
           >
             <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
                 <div>
-                  <p className="font-heading text-accent">{event.eventName}  </p>
+                  <p className="font-heading text-accent-color">{event.eventName}  </p>
                  
-                  <p className="text-font-heading text-primary-text text-lg">
+                  <p className="text-font-heading text-primary-color text-lg">
                     {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
                   </p>
                   <p className="text-sm text-font-body mt-1">{event.eventDescription} </p> 
