@@ -13,6 +13,8 @@ module.exports = {
           DEFAULT: "#2563EB", // main brand (blue-600)
           light: "#3B82F6",   // lighter hover shade
           dark: "#1E40AF",    // darker for focus/active
+          neutral: "#b6c690ff", // light gray background
+          neutrallight:  "#fffceb" // darker gray for text
         },
         accent: {
           DEFAULT: "#F59E0B", // accent (amber-500)
