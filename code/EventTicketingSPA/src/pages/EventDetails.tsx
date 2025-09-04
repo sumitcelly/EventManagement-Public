@@ -65,7 +65,7 @@ export default function EventDetails() {
             <Button
               className="align-bottom mt-auto align-center ml-4"
                     size="xs"
-                    onClick={() => navigate(`/event/${testEvent.eventId}`)}>
+                    onClick={() => navigate(`/buytickets/${testEvent.eventId}`)}>
                     Get your Tickets
             </Button>
           </div>

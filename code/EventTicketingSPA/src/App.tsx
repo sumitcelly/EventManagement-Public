@@ -10,6 +10,8 @@ import { Reducer } from "@reduxjs/toolkit";
 import AppNavbar from "./components/Navbarnew";
 import SearchEvents from "./pages/SearchEvents";
 import EventDetails from "./pages/EventDetails";
+import BuyTickets  from "./pages/BuyTickets";
+
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
 
@@ -39,6 +41,12 @@ export default function App() {
           path="/eventDetails/:id"
           element={
             <EventDetails /> 
+          }
+        />
+        <Route
+          path="/buytickets/:id"
+          element={
+            <BuyTickets /> 
           }
         />
         {/* Optionally, redirect unknown routes */}
