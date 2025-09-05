@@ -1,14 +1,10 @@
 // src/pages/Login.jsx
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
+import CartTotal from "./CartTotal"
 
-interface CheckoutFormInputs {
-  email: string;
-  fullname: string;
-  quantity:number[];
-}
 
 interface TicketTypes
 {
@@ -17,7 +13,19 @@ interface TicketTypes
   description: string;
   cost: number;
 }
+export type Ticket = {
+  id: number;
+  name: string;
+  description: string;
+  cost: number;
+  quantity: number;
+};
 
+export type FormValues = {
+  tickets: Ticket[];
+  fullname: string;
+  email:string;
+};
 
 const schema = yup.object({
   email: yup.string().required("Email is required"),
@@ -25,15 +33,18 @@ const schema = yup.object({
   tickets: yup
     .array()
     .of(
-    yup.object({
-      type: yup.number().required(),
-      quantity: yup
-        .number()
-        .typeError("Quantity must be a number")
-        .min(0, "Quantity must be at least 0")
-        .required(),   
-      })
-      )
+      yup.object({
+        id: yup.number().required(),
+        cost: yup.number().required(),
+        name: yup.string().required(),
+        description: yup.string().required(),
+        quantity: yup
+          .number()
+          .typeError("Quantity must be a number")
+          .min(0, "Quantity must be at least 0")
+          .required(),   
+        })
+      ).required()
       .test(
           "at-least-one-ticket",
           "Please select at least one ticket",
@@ -56,16 +67,27 @@ export default function BuyTickets() {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.auth);
 
-  const { control, register,handleSubmit,formState: { errors } } = useForm({
+  const { control,register, handleSubmit,formState: { errors } } = useForm<FormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
-        tickets: ticketTypesList.map((t) => ({ type: t.id, quantity: 0 })),
+        tickets: ticketTypesList.map((t) => ({ type: t.id, name:t.name, quantity: 0 , description: t.description, cost:t.cost})),
       },
     });
 
+  
+
+
   const onSubmit = (data :any) => {
+    // console.log(errors);
+    //  console.log(data);
     //dispatch(loginUser(data));
   };
+  
+  // const tickets = watch("tickets"); 
+  // const total = tickets?.reduce(
+  // (sum, t) => sum + (t.quantity || 0) * 20,
+  // 0
+  // );
 
   return (
     <div className="flex flex-row  justifiy-center max-w-3xl mx-auto mt-3 p-6 bg-white shadow rounded h-view">
@@ -79,7 +101,6 @@ export default function BuyTickets() {
                     <div className="text-l text-center text-secondary-color">
 
                      <Controller
-                        
                           name={`tickets.${index}.quantity`}
                           control={control}
                           render={({ field, fieldState }) => (
@@ -142,10 +163,12 @@ export default function BuyTickets() {
            
         </form>
       </div>
-
+      
+  
       <div className="flex flex-col w-1/3 p-4 border-r border-gray-300 ml-4">
         <div className="text-2xl font-bold mb-4 text-primary-color">Order Total</div>
-      </div>
+          <CartTotal control={control}/>
+     </div>
     </div>
   );
 }
