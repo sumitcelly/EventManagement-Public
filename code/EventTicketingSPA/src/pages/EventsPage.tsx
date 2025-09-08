@@ -53,12 +53,14 @@ export default function EventsPage() {
                   </p>
                   <p className="text-sm text-font-body mt-1">{event.eventDescription} </p> 
                 </div>
-              
-                <Button
-                  size="xs"
-                  onClick={() => navigate(`/tickets/${event.eventId}`)}>
-                  View Tickets
-                </Button>
+
+                  <a
+                     href={`/tickets/${event.eventId}`}
+                    className="px-3 py-1 text-sm font-body text-white bg-brand-light rounded"
+                  >
+                    View tickets
+                  </a>
+             
 
             </div>
           </ListGroupItem>

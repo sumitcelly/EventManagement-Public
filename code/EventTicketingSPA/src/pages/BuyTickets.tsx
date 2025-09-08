@@ -1,31 +1,14 @@
 // src/pages/Login.jsx
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import CartTotal from "./CartTotal"
+import { TicketFormValues, Ticket } from "../types/Tickets";
+import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
+import { RootState } from "../app/store";
 
 
-interface TicketTypes
-{
-  id: number;
-  name: string;
-  description: string;
-  cost: number;
-}
-export type Ticket = {
-  id: number;
-  name: string;
-  description: string;
-  cost: number;
-  quantity: number;
-};
-
-export type FormValues = {
-  tickets: Ticket[];
-  fullname: string;
-  email:string;
-};
 
 const schema = yup.object({
   email: yup.string().required("Email is required"),
@@ -38,10 +21,9 @@ const schema = yup.object({
         cost: yup.number().required(),
         name: yup.string().required(),
         description: yup.string().required(),
-        quantity: yup
-          .number()
+        quantity: yup.number()
+           .min(0, "Quantity must be at least 0")
           .typeError("Quantity must be a number")
-          .min(0, "Quantity must be at least 0")
           .required(),   
         })
       ).required()
@@ -65,55 +47,47 @@ export default function BuyTickets() {
   
 
   const dispatch = useAppDispatch();
-  const { status, error } = useAppSelector((state) => state.auth);
+  const  cart = useAppSelector((state:RootState) => state.cart);
 
-  const { control,register, handleSubmit,formState: { errors } } = useForm<FormValues>({
+  const { control,register, handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
-        tickets: ticketTypesList.map((t) => ({ type: t.id, name:t.name, quantity: 0 , description: t.description, cost:t.cost})),
+        fullname: cart.fullname,
+        email: cart.email,
+        tickets: cart.tickets.length>0 ? cart.tickets :
+              ticketTypesList.map((t) => ({ id: t.id, name:t.name, quantity: 0 , description: t.description, cost:t.cost})),
       },
     });
 
   
 
 
-  const onSubmit = (data :any) => {
-    // console.log(errors);
-    //  console.log(data);
-    //dispatch(loginUser(data));
+  const onSubmit = (data: TicketFormValues) => {
+    console.log(data);
+    dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
+    dispatch(updatetickets({ tickets: data.tickets }));
+    
   };
-  
-  // const tickets = watch("tickets"); 
-  // const total = tickets?.reduce(
-  // (sum, t) => sum + (t.quantity || 0) * 20,
-  // 0
-  // );
-
-  return (
+return (
     <div className="flex flex-row  justifiy-center max-w-3xl mx-auto mt-3 p-6 bg-white shadow rounded h-view">
       <div className="flex flex-col w-2/3 p-4 border-r border-gray-300 justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
+        {/* <form onSubmit={handleSubmit(
+  (data) => console.log("submit fired!", data),
+  (errors) => console.log("validation errors", errors)
+)}></form> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {ticketTypesList.map((item:TicketTypes, index) => (
+            {ticketTypesList.map((item, index) => (
                 <div key={item.id} className="flex flex-row">
                     <div className="text-l text-secondary-color w-1/2 text-left">{item.name}  {item.description}</div>
                     <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
                     <div className="text-l text-center text-secondary-color">
-
-                     <Controller
-                          name={`tickets.${index}.quantity`}
-                          control={control}
-                          render={({ field, fieldState }) => (
-                            <div>
-                              <input
-                                type="number"
-                                {...field}
-                                className="w-20 border rounded p-1"
-                                min={0}
-                              />
-                             
-                            </div>
-                          )}
+                        <input
+                          key={item.id}
+                          type="number"
+                          {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
+                          className="w-20 border rounded p-1"
+                          min={0}
                         />
                     </div>
                     
@@ -152,12 +126,12 @@ export default function BuyTickets() {
                 )}
 
                 <button
-                    type="submit"
-                    disabled={status === "loading"}
-                    className="mt-3 w-12/ ml-auto bg-brand-dark text-white px-4 py-2 rounded hover:bg-blue-700 
-                    disabled:bg-gray-400"
+                    type="submit"     
+                    
+                    className="mt-3  ml-auto bg-brand-dark text-white px-4 
+                        py-2 rounded hover:bg-blue-700"
                   >
-                    {status === "loading" ? "Logging in..." : "Checkout"}
+                    Checkout
                 </button>
             </div>
            
@@ -167,8 +141,13 @@ export default function BuyTickets() {
   
       <div className="flex flex-col w-1/3 p-4 border-r border-gray-300 ml-4">
         <div className="text-2xl font-bold mb-4 text-primary-color">Order Total</div>
+
           <CartTotal control={control}/>
+          
      </div>
     </div>
+   
+      
+
   );
 }

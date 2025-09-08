@@ -1,8 +1,8 @@
 import { useWatch,Control } from "react-hook-form";
-import { FormValues,Ticket } from "./BuyTickets";
+import { TicketFormValues  ,Ticket } from "../types/Tickets";
 
 type CartTotalProps = {
-  control: Control<FormValues>;
+  control: Control<TicketFormValues>;
 };
 
 
