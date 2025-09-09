@@ -69,8 +69,8 @@ export default function BuyTickets() {
     
   };
 return (
-    <div className="flex flex-row  justifiy-center max-w-3xl mx-auto mt-3 p-6 bg-white shadow rounded h-view">
-      <div className="flex flex-col w-2/3 p-4 border-r border-gray-300 justify-center">
+   
+      <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
         {/* <form onSubmit={handleSubmit(
   (data) => console.log("submit fired!", data),
@@ -100,8 +100,10 @@ return (
                   </p>
                 )}
 
+            <div className="flex flex-row mt-4 space-x-4">
 
-             <div className="md:w-1/2 ml-auto align-left flex flex-col p-4 border-gray-300 justify-center">
+             <div className="w-1/2 flex flex-col border-gray-300 justify-center">
+              {/* Fullname control*/}
               <label className="text-sm font-medium">Full Name</label>
                 <input
                   type="text"
@@ -111,10 +113,8 @@ return (
                 {errors.email && (
                   <p className="text-red-500 text-sm">{errors.email.message}</p>
                 )}
-       
-
-            {/* Password */}
-            
+              
+                {/* Email control*/}
                 <label className="mt-3 block text-sm font-medium">Email</label>
                 <input
                   type="text"
@@ -124,27 +124,22 @@ return (
                 {errors.email && (
                   <p className="text-red-500 text-sm">{errors.email.message}</p>
                 )}
-
+              </div>
+              {/* Cart total and checkout */}
+              <div className="ml-auto mt-auto w-1/2 flex flex-col mt-2 ">
+                <div className="ml-auto"><CartTotal control={control}/></div>
                 <button
-                    type="submit"     
-                    
+                    type="submit"                         
                     className="mt-3  ml-auto bg-brand-dark text-white px-4 
-                        py-2 rounded hover:bg-blue-700"
-                  >
+                        py-2 rounded hover:bg-blue-700">
                     Checkout
                 </button>
+                {/* By clicking "Checkout", you agree to our Terms of Service and Privacy Policy. */}
             </div>
+          </div>
            
         </form>
-      </div>
-      
-  
-      <div className="flex flex-col w-1/3 p-4 border-r border-gray-300 ml-4">
-        <div className="text-2xl font-bold mb-4 text-primary-color">Order Total</div>
-
-          <CartTotal control={control}/>
-          
-     </div>
+    
     </div>
    
       

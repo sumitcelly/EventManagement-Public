@@ -17,7 +17,7 @@ export default function CartTotal({ control }: CartTotalProps) {
   console.log(finalTotal);
   return (<>
             
-              {tickets?.filter(list =>list.quantity>0).map((item) =>
+              {/* {tickets?.filter(list =>list.quantity>0).map((item) =>
                 (
                     <div key={item.id} className = "flex flex-row">
                       <div className="text-l text-secondary-color w-1/2 text-left w-3/4">{item.name}</div>
@@ -25,12 +25,17 @@ export default function CartTotal({ control }: CartTotalProps) {
                       <div className="text-l text-secondary-color w-1/4">${item.quantity*item.cost}</div>
                     </div>
                 ))
-                } 
+                }  */}
+     
+              <div className="grid grid-cols-2 gap-y-1">
+                <div className="text-left">Stripe fees:</div>
+                <div className="text-right">${processingFees}</div>
 
-              <div className="mt-auto">
-                <div className="text-s text-bold text-primary-color">Stripe fees: <span className="mr-auto">${processingFees}</span></div>
-                <div className="text-s text-bold text-primary-color">Platform fees: ${platformFees}</div>
-                <div className="text-l text-bold text-primary-color">Total: ${finalTotal}</div>
+                <div className="text-left">Platform fees:</div>
+                <div className="text-right">${platformFees}</div>
+
+                <div className="text-left font-semibold">Total:</div>
+                <div className="text-right font-semibold">${finalTotal}</div>
               </div>
           </>
   );
