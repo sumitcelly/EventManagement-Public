@@ -7,7 +7,8 @@ import CartTotal from "./CartTotal"
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
-
+import { useNavigate, useParams } from "react-router";
+import { n } from "react-router/dist/development/index-react-server-client-CMphySRb";
 
 
 const schema = yup.object({
@@ -48,7 +49,9 @@ export default function BuyTickets() {
 
   const dispatch = useAppDispatch();
   const  cart = useAppSelector((state:RootState) => state.cart);
-
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
   const { control,register, handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
@@ -66,7 +69,7 @@ export default function BuyTickets() {
     console.log(data);
     dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
     dispatch(updatetickets({ tickets: data.tickets }));
-    
+    navigate(`/ordersummary/${id}`);
   };
 return (
    
@@ -79,7 +82,7 @@ return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {ticketTypesList.map((item, index) => (
                 <div key={item.id} className="flex flex-row">
-                    <div className="text-l text-secondary-color w-1/2 text-left">{item.name}  {item.description}</div>
+                    <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
                     <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
                     <div className="text-l text-center text-secondary-color">
                         <input

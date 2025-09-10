@@ -11,6 +11,7 @@ import AppNavbar from "./components/Navbarnew";
 import SearchEvents from "./pages/SearchEvents";
 import EventDetails from "./pages/EventDetails";
 import BuyTickets  from "./pages/BuyTickets";
+import OrderSummary from "./pages/OrderSummary";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -46,7 +47,14 @@ export default function App() {
         <Route
           path="/buytickets/:id"
           element={
-            <BuyTickets /> 
+               isAuthenticated ? <BuyTickets /> : <Navigate to="/login" />
+          }
+        />
+
+        <Route
+          path="/ordersummary/:id"
+          element={
+               isAuthenticated ? <OrderSummary /> : <Navigate to="/login" />
           }
         />
         {/* Optionally, redirect unknown routes */}
