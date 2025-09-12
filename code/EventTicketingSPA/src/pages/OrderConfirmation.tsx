@@ -8,11 +8,17 @@ import { Button } from "flowbite-react";
 import EventSummary from "./EventSummary";
 import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
+import SalesOrderTicket from "./SalesOrderTicket";
+import { s } from "react-router/dist/development/index-react-server-client-CMphySRb";
+import { Ticket } from "../types/Tickets";
 
    
 export default function OrderConfirmation() {
+  
+
+  const [cartTickets,setCartTickets] = useState<Ticket[]>([]);
+
   const navigate = useNavigate();
   const { eventId, salesOrderCode } = useParams();
   const  event = useAppSelector((state:RootState) => state.event);
@@ -22,11 +28,16 @@ export default function OrderConfirmation() {
  //as it will be called on every render causing infinite loop
  //use useEffect to call it only once when the component mounts
    useEffect(() => {
+    //need to review this logic. Storing cart in local state to avoid issues with cart being reset
+    //before this component is rendered. Need to find a better solution.
+    //
+    setCartTickets([...cart.tickets]);
+   
     dispatch(resetCart());
   }, [dispatch]);
 
   return (
-      <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
+      <div className="flex flex-col max-w-md mx-auto ">
         <EventSummary/>
         <div className="bg-brand-neutral p-4 rounded mb-4 font-body">  
           <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center">Order Confirmation</div>
@@ -36,7 +47,9 @@ export default function OrderConfirmation() {
           <div className="text-center mb-4">
             Your order reference code is <span className="font-bold">{salesOrderCode}</span>
           </div>
-          <div className="text-center mb-4">
+          
+          <SalesOrderTicket eventBasic={event} tickets={cartTickets} salesOrderCode={salesOrderCode || ""} qrBase64String={""}/>
+          <div className="text-center mb-4 mt-2">
             You will receive an email confirmation to {cart.email} shortly with your e-tickets.
           </div>
          </div>
