@@ -32,8 +32,9 @@ module.exports = {
 
       // ✍️ Fonts
       fontFamily: {
-        heading: ["times new roman", "arial", "sans-serif"],
-        body: ["poppins",  "arial", "sans-serif"],
+        heading: ['Montserrat', 'sans-serif'],
+        body: ['Poppins', 'sans-serif'],
+        accent: ['Pacifico', 'cursive'],
       },
 
       // 📏 Spacing (add bigger gaps for hero sections etc.)
@@ -44,7 +45,7 @@ module.exports = {
 
       // ⭕ Border Radius
       borderRadius: {
-        xl: "1rem",
+        xl: "1rem", 
         "2xl": "1.5rem",
       },
 

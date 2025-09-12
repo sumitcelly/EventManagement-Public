@@ -4,19 +4,16 @@ import axiosClient from "../api/axiosClient";
 import { useParams } from "react-router-dom";
 import { Button} from "flowbite-react";
 import { useNavigate,Link } from "react-router-dom";
-interface Event {
-  eventId: number;
-  eventName: string;
-  eventDate: Date;
-  eventDescription: string;
-  eventOrganizer: number;
-  eventLocation: string;
-  eventHeadliner: string;
-  isFree: boolean
-}
+import {EventFullInfo, EventHeader} from "../types/Event";
+import { useAppSelector } from "../app/hook";
+import { RootState } from "../app/store";
+import  { updateEvent} from "../features/auth/eventSlice";
+import { useAppDispatch } from "../app/hook";
+
 
 export default function EventDetails() {
     const navigate = useNavigate();
+
   // const { data, isLoading } = useQuery("ticketdetails", async () => {
   //   const res = await axiosClient.get("/ticketdetails",{userId: "currentUserId",eventId: "hh"});
   //   return res.data;
@@ -25,6 +22,8 @@ export default function EventDetails() {
   //if (isLoading) return <p>Loading...</p>;
     //const location  = useLocation();
     const {id}  = useParams();
+    const event = useAppSelector((state:RootState) => state.event);
+    const dispatch = useAppDispatch();
     //const { id } = location.state || {} ;
     //alert(eventName);
 
@@ -44,6 +43,18 @@ export default function EventDetails() {
        eventOrganizerDescription: "Polka dots and curry is a fun event organizer that loves to bring fun events to the city. We specialize in food, music and art events. Our mission is to bring joy and happiness to everyone through our events.",
         eventAgenda: "- 6:00 PM: Gates Open\n- 7:00 PM: Opening Act\n- 8:00 PM: Headliner Performance\n- 10:00 PM: Event Close"
      
+      }
+
+      const handleGetTickets = () => {
+        const event: EventHeader = {
+          eventId: testEvent.eventId,
+          eventName: testEvent.eventName,
+          eventDate: new Date(testEvent.eventDate),
+          eventLocation: testEvent.eventLocation,
+        }
+
+        dispatch(updateEvent({event}));
+        navigate(`/buytickets/${id}`);
       }
   return (
  
@@ -65,7 +76,7 @@ export default function EventDetails() {
             <Button
               className="align-bottom mt-auto align-center ml-4"
                     size="xs"
-                    onClick={() => navigate(`/buytickets/${id}`)}>
+                    onClick={() => handleGetTickets()}>
                     Get your Tickets
             </Button>
           </div>

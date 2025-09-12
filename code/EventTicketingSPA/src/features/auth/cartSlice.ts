@@ -24,7 +24,8 @@ const cartSlice = createSlice({
       state.tickets = action.payload.tickets;
     },
     resetCart(state) {
-      state =initialState;
+      state.tickets = [];
+      {/* let the user info stay*/}
     },
   },
 

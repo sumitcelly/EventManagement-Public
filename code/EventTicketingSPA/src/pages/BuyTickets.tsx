@@ -8,7 +8,8 @@ import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
 import { useNavigate, useParams } from "react-router";
-import { n } from "react-router/dist/development/index-react-server-client-CMphySRb";
+import OrderSummary from "./OrderSummary";
+import EventSummary from "./EventSummary";
 
 
 const schema = yup.object({
@@ -51,7 +52,7 @@ export default function BuyTickets() {
   const  cart = useAppSelector((state:RootState) => state.cart);
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const { control,register, handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
@@ -75,6 +76,7 @@ return (
    
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
+          <EventSummary/>
         {/* <form onSubmit={handleSubmit(
   (data) => console.log("submit fired!", data),
   (errors) => console.log("validation errors", errors)

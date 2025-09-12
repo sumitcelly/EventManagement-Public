@@ -1,0 +1,26 @@
+import { useWatch,Control } from "react-hook-form";
+import { EventHeader  } from "../types/Event";
+import { useAppSelector } from "../app/hook";
+import { RootState } from "../app/store";
+
+export default function EventSummary() {
+  const  event = useAppSelector((state:RootState) => state.event);
+  if (!event || event.eventId === 0) {
+    return <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">No event selected</div>;
+  }
+  else {
+  return (<>
+            <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">
+              <div className="text-xs font-bold mb-2">{event.eventName}</div>
+              <div className="mb-1 flex justify-between text-xs">
+                <span className="font-body">{new Date(event.eventDate).toLocaleString()}</span>
+                 <span className="font-body">{event.eventLocation} </span>
+              </div>
+              {/* <div className="mb-1">
+               
+              </div>        */}
+            </div>
+          </>
+  );
+  }
+}

@@ -12,6 +12,7 @@ import SearchEvents from "./pages/SearchEvents";
 import EventDetails from "./pages/EventDetails";
 import BuyTickets  from "./pages/BuyTickets";
 import OrderSummary from "./pages/OrderSummary";
+import OrderConfirmation from "./pages/OrderConfirmation";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -55,6 +56,12 @@ export default function App() {
           path="/ordersummary/:id"
           element={
                isAuthenticated ? <OrderSummary /> : <Navigate to="/login" />
+          }
+        />
+         <Route
+          path="/orderconfirmation/event/:eventId/salesOrderCode/:salesOrderCode"
+          element={
+               isAuthenticated ? <OrderConfirmation /> : <Navigate to="/login" />
           }
         />
         {/* Optionally, redirect unknown routes */}

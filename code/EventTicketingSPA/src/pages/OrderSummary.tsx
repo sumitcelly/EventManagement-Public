@@ -6,14 +6,17 @@ import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
 import { useParams } from "react-router";
 import { Button } from "flowbite-react";
+import { useState } from "react";
+import EventSummary from "./EventSummary";
 
    
 export default function OrderSummary() {
   const navigate = useNavigate();
   const { id } = useParams();
-
+  const [error,setError] = useState("");
+  
   const  cart = useAppSelector((state:RootState) => state.cart);
-  const user = useAppSelector((state:RootState) => state.auth);
+  //const user = useAppSelector((state:RootState) => state.auth);
   console.log(cart);
   if (cart.tickets.length === 0) {
     return (
@@ -40,7 +43,8 @@ export default function OrderSummary() {
   console.log("totalAmount", totalAmount);
   console.log("paymentRequired", paymentRequired);
   const handleconfirmOrder = () => {
-    navigate(`/orderconfirmation/${id}`);
+      
+      navigate(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);
     
     // axiosClient.post("/orders", {
     //   userId: user.user?.id, // Replace with actual user ID
@@ -57,12 +61,14 @@ export default function OrderSummary() {
     //   navigate(`/orderconfirmation/${id}`);
     // }).catch((error) => {
     //   console.error("Error creating order:", error);
-      
+    //   setError("Error creating order. Please try again."+error.message);
+    //   //return(<p className="text-red-500">Error creating order. Please try again.</p>)
     //   // Handle error (e.g., show error message to user)
     // });
   }
   return (
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
+        <EventSummary/>
         <div className="bg-brand-neutral p-4 rounded">
           <div className="text-xl font-bold mb-4 text-primary-color text-center">Order Summary</div>
           {
@@ -112,10 +118,11 @@ export default function OrderSummary() {
       <div className="ml-auto mt-4">
         <Button
               className="ml-auto ml-4"
-              onClick={() => handleconfirmOrder()}>
+              onClick={() =>handleconfirmOrder()}>
               {paymentRequired? "Buy Tickets": "Confirm Order"}
         </Button>
       </div>
+      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
     </div>
   );
 }
