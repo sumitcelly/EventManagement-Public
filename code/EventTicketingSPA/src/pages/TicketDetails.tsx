@@ -8,7 +8,8 @@ import { EventHeader } from "../types/Event";
 import { useState } from "react";
 //import AppPagination from "../components/Pagination";
 import SalesOrderTicket from "../components/SalesOrderTicket";
-import { Pagination } from "flowbite-react";
+import App from "../App";
+import AppPagination from "../components/Pagination";
 
 export default function TicketDetails() {
   
@@ -62,8 +63,7 @@ export default function TicketDetails() {
           }
                 
          <div className="ml-auto mb-4">
-              <Pagination layout="table" currentPage={currentPage} itemsPerPage={1}
-               totalItems={totalItems} onPageChange={onPageChange} />
+            <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
           
     </div>
