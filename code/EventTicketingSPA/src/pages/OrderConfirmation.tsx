@@ -5,11 +5,11 @@ import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
 import { useParams } from "react-router";
 import { Button } from "flowbite-react";
-import EventSummary from "./EventSummary";
+import EventSummary from "../components/EventSummary";
 import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
 import { useEffect, useState } from "react";
-import SalesOrderTicket from "./SalesOrderTicket";
+import SalesOrderTicket from "../components/SalesOrderTicket";
 import { s } from "react-router/dist/development/index-react-server-client-CMphySRb";
 import { Ticket } from "../types/Tickets";
 
@@ -54,10 +54,11 @@ export default function OrderConfirmation() {
           </div>
          </div>
          <div>
+          {/*This maybe confusing since we are already showing order receipt with qr code at top*/}
           <Button
                 className="align-bottom ml-auto align-center"
                 size="xs"
-                onClick={() => navigate(`/tickets/${event.eventId}`)}>
+                onClick={() => navigate(`/ticketdetails/${event.eventId}`)}>
                 View your Tickets
           </Button>
         </div>

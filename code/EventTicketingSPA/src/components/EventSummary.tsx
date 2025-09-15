@@ -3,12 +3,17 @@ import { EventHeader  } from "../types/Event";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 
-export default function EventSummary() {
-  const  event = useAppSelector((state:RootState) => state.event);
-  if (!event || event.eventId === 0) {
-    return <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">No event selected</div>;
+export default function EventSummary({eventBasic}: {eventBasic?:EventHeader}) {
+
+  let event:EventHeader | null = eventBasic || null;
+  if (!eventBasic || eventBasic.eventId === 0) {
+    event = useAppSelector((state:RootState) => state.event);
   }
-  else {
+
+  if (!event || event.eventId === 0) {
+      return <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">No event selected</div>;
+    }
+  
   return (<>
             <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">
               <div className="text-xs font-bold mb-2">{event.eventName}</div>
@@ -22,5 +27,4 @@ export default function EventSummary() {
             </div>
           </>
   );
-  }
 }

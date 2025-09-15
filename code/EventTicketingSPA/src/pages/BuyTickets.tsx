@@ -3,13 +3,13 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
-import CartTotal from "./CartTotal"
+import CartTotal from "../components/CartTotal"
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
 import { useNavigate, useParams } from "react-router";
 import OrderSummary from "./OrderSummary";
-import EventSummary from "./EventSummary";
+import EventSummary from "../components/EventSummary";
 
 
 const schema = yup.object({

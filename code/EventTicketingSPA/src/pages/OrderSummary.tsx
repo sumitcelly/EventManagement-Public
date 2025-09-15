@@ -7,7 +7,7 @@ import { useAppSelector } from "../app/hook";
 import { useParams } from "react-router";
 import { Button } from "flowbite-react";
 import { useState } from "react";
-import EventSummary from "./EventSummary";
+import EventSummary from "../components/EventSummary";
 
    
 export default function OrderSummary() {

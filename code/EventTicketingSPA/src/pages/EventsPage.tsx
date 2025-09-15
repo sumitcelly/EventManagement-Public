@@ -55,7 +55,10 @@ export default function EventsPage() {
                 </div>
 
                   <a
-                     href={`/tickets/${event.eventId}`}
+                     href={`/ticketdetails/${event.eventId}`}
+                     onClick={(e) => {
+                      e.stopPropagation(); // Prevent the ListGroupItem onClick from firing
+                    }}
                     className="px-3 py-1 text-sm font-body text-white bg-brand-light rounded"
                   >
                     View tickets

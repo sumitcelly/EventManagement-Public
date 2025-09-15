@@ -1,7 +1,6 @@
 
 import { EventHeader } from "../types/Event";
 import { Ticket } from "../types/Tickets";
-import EventSummary from "./EventSummary";
 
 
 export default function SalesOrderTicket({ eventBasic, tickets, salesOrderCode,qrBase64String }: {eventBasic:EventHeader, tickets:Ticket[], salesOrderCode:string, qrBase64String:string}) {

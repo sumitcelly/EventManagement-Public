@@ -1,25 +1,71 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 
-import { useLocation } from "react-router-dom";
-
+import { useLocation, useParams } from "react-router-dom";
+import { EventTickets } from "../types/Tickets";
+import EventSummary from "../components/EventSummary";
+import { EventHeader } from "../types/Event";
+import { useState } from "react";
+//import AppPagination from "../components/Pagination";
+import SalesOrderTicket from "../components/SalesOrderTicket";
+import { Pagination } from "flowbite-react";
 
 export default function TicketDetails() {
-  // const { data, isLoading } = useQuery("ticketdetails", async () => {
-  //   const res = await axiosClient.get("/ticketdetails",{userId: "currentUserId",eventId: "hh"});
-  //   return res.data;
-  // });
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const onPageChange = (page: number)=>{
+        console.log("onpagechange",page);
+        setCurrentPage(page);
+  }
 
-  //if (isLoading) return <p>Loading...</p>;
-    const location  = useLocation();
-    //const {id}  = useParams();
-    const { id } = location.state || {} ;
-    //alert(eventName);
+  const { eventId } = useParams();
+   const  sampleTickets: EventTickets[] = [
+    { id: 1, name: "General Admission", qrCode: "QR123456" },
+    { id: 2, name: "VIP Pass", qrCode: "QR654321"},
+    { id: 3, name: "Balcony Seat", qrCode: "QR789012" },
+  ];
+
+  const { data, isLoading } = useQuery("ticketdetails", async () => {
+    //const res = await axiosClient.get("/ticketdetails",{userId: "currentUserId",eventId: "hh"});
+    if (currentPage === 1)
+        setTotalItems(sampleTickets.length);
+  
+    return sampleTickets;
+    });
+
+
+  if (isLoading) return <p>Loading...</p>;
+ 
+ 
+ const sampleEvent  = {
+    eventId:   parseInt(eventId || "1"),
+    eventName: "Sample Event",
+    eventDate: new Date(),
+    eventLocation: "Sample Location",
+  };
+
   return (
  
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Ticket Details for event {id}</h2>
+      <div className="flex flex-col max-w-md mx-auto ">
+        
+          <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center">Ticket Details</div>       
+         
+          {/* <EventSummary eventBasic={sampleEvent}/>  */}
       
+          {data && <SalesOrderTicket eventBasic={sampleEvent} 
+              tickets={[{id: data[currentPage-1].id, name:data[currentPage-1].name, 
+                description:"", cost:0, quantity:1}]} 
+              salesOrderCode={data[currentPage-1].qrCode} qrBase64String={""}>
+            
+            </SalesOrderTicket>
+          }
+                
+         <div className="ml-auto mb-4">
+              <Pagination layout="table" currentPage={currentPage} itemsPerPage={1}
+               totalItems={totalItems} onPageChange={onPageChange} />
+         </div>
+          
     </div>
   );
 }
