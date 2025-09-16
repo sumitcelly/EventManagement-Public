@@ -50,7 +50,7 @@ export default function TicketDetails() {
  
       <div className="flex flex-col max-w-md mx-auto ">
         
-          <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center">Ticket Details</div>       
+          <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
          
           {/* <EventSummary eventBasic={sampleEvent}/>  */}
       
