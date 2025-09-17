@@ -22,32 +22,32 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet]
-        [Route("/Events/All")]
-        public async Task<List<Event>> GetEvents()
+        [Route("/Events/Search")]
+        public async Task<List<EventHeader>> SearchEvents(string keyword = null,
+                                                         DateOnly startDate = default,
+                                                         int intervalDay = 0,
+                                                         string city = null,
+                                                         string state = null,
+                                                         string category = null,
+                                                         int limit = 10, int offset = 0)
         {
-            List<Event> events = await _EventDbAccess.GetAllEvents();
+            if (startDate == default)
+                startDate = DateOnly.MinValue;
+            List<EventHeader> events = await _EventDbAccess.SearchEvents(keyword, startDate, intervalDay, city, state, category, limit, offset);
             _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(events));
             return events;
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Event>> GetEventById(int id)
+        public async Task<ActionResult<EventHeader>> GetEventById(int id)
         {
-            var evt = await _EventDbAccess.GetEventById(id);
+            var evt = await _EventDbAccess.GetEventHeaderById(id);
             if (evt == null)
                 return NotFound();
             return evt;
         }
 
-        [HttpGet("ByName/{name}")]
-        public async Task<ActionResult<Event>> GetEventByName(string name)
-        {
-            var evt = await _EventDbAccess.GetEventByName(name);
-            if (evt == null)
-                return NotFound();
-            return evt;
-        }
-
+     
         [HttpPost]
         public async Task<ActionResult<int>> CreateEvent([FromBody] Event evt)
         {

@@ -74,7 +74,7 @@ public class EmailUtils
             throw new Exception($"Organizer with id {order.CustomerId} not found.");
         }
 
-        Event eventObj = await _eventDbAccess.GetEventById(order.EventId);
+        Event eventObj = await _eventDbAccess.GetEventDetailsById(order.EventId);
         if (eventObj == null)
         {
             throw new Exception($"Event with ID {order.EventId} not found.");
