@@ -17,17 +17,17 @@ interface Event {
 export default function EventsPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery("eventsbyname", async () => {
-  const res = await axiosClient.get("/events/byname/new7");
+  //const res = await axiosClient.get("/events/byname/new7");
 
 
   const events: Event[] = [];
-  if (res.data) {
+  //if (res.data) {
     
     events.push({ eventId: 1, eventName: "Food Festival", eventDate: new Date(), eventDescription: "Taste dishes from top chefs and local favorites. And more...", eventOrganizer: 4, eventLocation: "New York" });
     events.push({ eventId: 2, eventName: "Music festival", eventDate: new Date(), eventDescription: "Explore contemporary music from around the world.", eventOrganizer: 2, eventLocation: "New York" });
     events.push({ eventId: 3, eventName: "Art Exhibition", eventDate: new Date(), eventDescription: "Explore contemporary artworks from around the world.", eventOrganizer: 2, eventLocation: "New York" });
     events.push({ eventId: 4, eventName: "Tech Conference", eventDate: new Date(), eventDescription: "Join industry leaders to discuss the latest in technology.", eventOrganizer: 3, eventLocation: "New York" });
-  }
+  //}
 
   return events;
 });

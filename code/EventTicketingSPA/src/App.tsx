@@ -34,7 +34,7 @@ export default function App() {
           }
         />
         <Route
-          path="/searchevents"
+          path="/searchevents/keyword/:keyword/location/:location"
           element={
             <SearchEvents /> 
           }

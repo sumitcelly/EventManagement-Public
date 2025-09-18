@@ -4,7 +4,7 @@ import axiosClient from "../api/axiosClient";
 import { useParams } from "react-router-dom";
 import { Button} from "flowbite-react";
 import { useNavigate,Link } from "react-router-dom";
-import {EventFullInfo, EventHeader} from "../types/Event";
+import { EventHeader} from "../types/Event";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import  { updateEvent} from "../features/auth/eventSlice";

@@ -4,7 +4,6 @@ import axiosClient from "../api/axiosClient";
 import { useLocation, useParams } from "react-router-dom";
 import { EventTickets } from "../types/Tickets";
 import EventSummary from "../components/EventSummary";
-import { EventHeader } from "../types/Event";
 import { useState } from "react";
 //import AppPagination from "../components/Pagination";
 import SalesOrderTicket from "../components/SalesOrderTicket";

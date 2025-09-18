@@ -5,6 +5,7 @@ import { EventCard } from "../components/Card";
 import { AppPagination } from "../components/Pagination";
 import App from "../App";
 import { useState } from "react";
+import{useParams} from "react-router";
 // 
 export interface EventSearchResult {
   eventId: number;
@@ -24,9 +25,11 @@ export default function EventsPage() {
     const [totalItems, setTotalItems] = useState(0);
     const onPageChange = (page: number) =>
       setCurrentPage(page);
+    const { location, keyword } = useParams();
+    console.log("SearchEvents location, keyword", location, keyword);
 
-    const { data, isLoading } = useQuery("eventsbylocation/"+currentPage, async () => {
-    //const res = await axiosClient.get("/events/bylocation/new7");
+    const { data, isLoading } = useQuery(`events/search/${keyword}/${location}/`+currentPage, async () => {
+      const res = await axiosClient.get(`/events/search?keyword=${keyword}&location=${location}&page=${currentPage}&offset=8`);
       if (currentPage === 1)
         setTotalItems(11);
       const events: EventSearchResult[] = [];
