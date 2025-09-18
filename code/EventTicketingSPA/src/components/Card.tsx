@@ -14,20 +14,20 @@ export function EventCard({event}:
       imgSrc={event.eventImageUrl}
       onClick={() => navigate(`/eventDetails/${event.eventId}`)}
     >
-        <h5 className="text-2xl font-heading tracking-tight dark:text-white">
-       {event.eventHeadline}
-       
-      </h5>
-        <div className="flex justify-between mb-2 font-body">
-        <span  className="text-sm dark:text-gray-400">
-            {event.eventDate.toDateString()}
-        </span>
-        <span >
-            {event.eventLocation}
-        </span>   
+      <div className="text-xl font-heading tracking-tight dark:text-white">
+       {event.eventName}   
+      </div>
+      <div className="text-l font-heading tracking-tight dark:text-white">
+       {event.eventHeadline}   
+      </div>
+      <div className="flex flex-row mb-2 font-body text-sm">
+        <div  className="dark:text-gray-400 mr-4">
+            {event.eventDate && new Date(event.eventDate).toLocaleDateString()}
         </div>
-    
-    
+        <div >
+            {event.eventLocation}
+        </div>   
+      </div>
       <p className="font-normal text-gray-700 dark:text-gray-400 font-body">
        {event.eventSummary}
       </p>

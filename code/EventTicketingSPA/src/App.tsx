@@ -39,6 +39,12 @@ export default function App() {
             <SearchEvents /> 
           }
         /> 
+         <Route
+          path="/searchevents"
+          element={
+            <SearchEvents /> 
+          }
+        /> 
         <Route
           path="/eventDetails/:id"
           element={
