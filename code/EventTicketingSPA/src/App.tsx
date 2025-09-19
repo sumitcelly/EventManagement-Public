@@ -34,6 +34,24 @@ export default function App() {
           }
         />
         <Route
+          path="/searchevents/keyword/:keyword?"
+          element={
+            <SearchEvents/> 
+          }
+        /> 
+         <Route
+          path="/searchevents/location/:location?"
+          element={
+            <SearchEvents /> 
+          }
+        /> 
+         <Route
+          path="/searchevents/location/:location/keyword/:keyword"
+          element={
+            <SearchEvents /> 
+          }
+        /> 
+         <Route
           path="/searchevents/keyword/:keyword/location/:location"
           element={
             <SearchEvents /> 
@@ -80,7 +98,7 @@ export default function App() {
         <Route
           path="*"
           element={
-            isAuthenticated ? <Navigate to="/myevents" /> : <Navigate to="/SearchEvents" />
+            isAuthenticated ? <Navigate to="/myevents" /> : <Navigate to="/" />
           }
         />
       </Routes>

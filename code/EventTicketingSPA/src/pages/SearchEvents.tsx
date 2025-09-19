@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 import { EventCard } from "../components/Card";
 import { AppPagination } from "../components/Pagination";
 import App from "../App";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import{useParams} from "react-router";
+import { get } from "react-hook-form";
 // 
 export interface EventSearchResult {
   eventId: number;
@@ -21,7 +22,8 @@ export interface EventSearchResult {
 }
 
 
-   
+console.log("SearchEvents rendered");
+
 export default function EventsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
@@ -29,75 +31,33 @@ export default function EventsPage() {
       setCurrentPage(page);
 
     console.log("SearchEvents currentPage", currentPage);
-    let { location, keyword } = useParams();
-    console.log("SearchEvents location, keyword", location, keyword);
-    location = location ?? "";
-    keyword = keyword ?? "";
-    
-    const { data, isLoading } = useQuery(`events/search/${keyword}/${location}`+currentPage, async () => {
+    const { keyword: paramKeyword, location: paramLocation } = useParams();
+    const keyword = paramKeyword ?? "";
+    const location = paramLocation ?? "";
+    console.log('locaion and keyword',location,keyword);
+
+    const  getData=  async () => {
       const res = await axiosClient.get(`/events/search?keyword=${keyword}&city=${location}&page=${currentPage}&offset=0`);
       console.log("SearchEvents res", res);
     
       if (res.data && res.data.length > 0)
       {
-        res.data.forEach((e: EventSearchResult) => {
+        res.data.forEach((e: EventSearchResult) => 
+        {
           e.eventImageUrl = "/images/concert.jpg";
         });
-        if (currentPage === 1)
-          setTotalItems(res.data.length);
       }
       return res.data;
-    });
-      // if (currentPage === 1)
-      //   setTotalItems(11);
-      // const events: EventSearchResult[] = [];
-      // if (currentPage === 1)
-      // {
-      //     events.push({ eventId: 1, eventName: "Food Festival", eventDate: new Date(), eventHeadline: "Gourmet Food Festival", 
-      //     eventSummary: "Taste dishes from top chefs and local favorites.", eventOrganizer: 4, eventLocation: "New York", 
-      //     eventImageUrl: "/images/concert.jpg" });
-      //     events.push({ eventId: 2, eventName: "Music festival", eventDate: new Date(), eventHeadline: "Modern Music Fest", eventSummary: "Explore contemporary music from around the world.", eventOrganizer: 2, eventLocation: "New York",
-      //     eventImageUrl: "/images/concert.jpg" });
-      //     events.push({ eventId: 3, eventName: "Art Exhibition", eventDate: new Date(), eventHeadline: "Modern Art Exhibition", eventSummary: "Explore contemporary artworks from around the world.", eventOrganizer: 2, eventLocation: "New York",
-      //       eventImageUrl: "/images/concert.jpg" });
-        
-      //     events.push({ eventId: 4, eventName: "Tech Conference", eventDate: new Date(), eventHeadline: "Annual Tech Conference", eventSummary: "Join industry leaders to discuss the latest in technology.", eventOrganizer: 3, eventLocation: "New York", 
-      //       eventImageUrl: "/images/concert.jpg" });
-      //     events.push({ eventId: 5, eventName: "Marathon", eventDate: new Date(), eventHeadline: "City Marathon", eventSummary: "Participate in the annual city marathon and promote fitness.", eventOrganizer: 5, eventLocation: "New York", 
-      //       eventImageUrl: "/images/concert.jpg"});
-      //      events.push({ eventId: 6, eventName: "Book Fair", eventDate: new Date(), eventHeadline: "International Book Fair", eventSummary: "Discover new authors and attend book signings.", eventOrganizer: 6, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
+    };
+    const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
     
-      //  events.push({ eventId: 7, eventName: "Film Festival", eventDate: new Date(), eventHeadline: "International Film Festival", 
-      //     eventSummary: "Watch premieres and meet filmmakers from around the globe.", eventOrganizer: 7, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
-      //  events.push({ eventId: 8, eventName: "Theater Play", eventDate: new Date(), eventHeadline: "Broadway Theater Play", 
-      //     eventSummary: "Experience a captivating performance by renowned actors.", eventOrganizer: 8, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
-      // }
-      // else if (currentPage === 2) {
-
-      
-      //  events.push({ eventId: 9, eventName: "Comedy Show", eventDate: new Date(), eventHeadline: "Stand-Up Comedy Night", 
-      //     eventSummary: "Laugh out loud with top comedians in a fun-filled evening.", eventOrganizer: 9, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
-      //   events.push({ eventId: 10, eventName: "Charity Gala", eventDate: new Date(), eventHeadline: "Annual Charity Gala", 
-      //     eventSummary: "Support a good cause while enjoying an elegant evening.", eventOrganizer: 10, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
-      //           events.push({ eventId: 11, eventName: "Science Expo", eventDate: new Date(), eventHeadline: "National Science Expo", 
-      //     eventSummary: "Explore the latest scientific discoveries and innovations.", eventOrganizer: 11, eventLocation: "New York", 
-      //   eventImageUrl: "/images/concert.jpg" });
-      // }
-      // else if (currentPage === 3)
-      // {
+    useEffect(() => {
+    if (data && data.length > 0 && currentPage === 1) {
+      setTotalItems(data.length);
+    }
+    }, [data, currentPage]);
     
-     
-
-      // }
-      // return events;
-  //});
-
-  if (isLoading) return <p>Loading...</p>;
+    if (isLoading) return <p>Loading...</p>;
 
   return (
     <>
