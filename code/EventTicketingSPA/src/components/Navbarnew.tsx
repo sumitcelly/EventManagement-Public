@@ -139,7 +139,7 @@ export function AppNavbar() {
 
       {/*hidden on small screens, visible on medium and larger*/}
       
-        <form onSubmit={ handleSubmit(onSubmit)} className="relative ml-auto" >
+        <form onSubmit={ handleSubmit(onSubmit)} className="relative w-full md:ml-auto md:w-1/3" >
           {/*desktop version*/}
           <div className="relative hidden md:block ml-auto">
             <div className="flex space-x-2">
@@ -168,7 +168,7 @@ export function AppNavbar() {
           {/*mobile version*/}
           {showSearch && 
           (         
-            <div className="">
+            <div className="w-2/3 ml-auto mr-auto">
             <div className="md:hidden mt-4 flex flex-col">
                   <div className="flex gap-1">
                     <input
