@@ -168,8 +168,8 @@ export function AppNavbar() {
           {/*mobile version*/}
           {showSearch && 
           (         
-            <div className="w-2/3 ml-auto mr-auto">
-            <div className="md:hidden mt-4 flex flex-col">
+            <div className="md:hidden flex flex-col items-center mt-4">
+            <div className="w-2/3">
                   <div className="flex gap-1">
                     <input
                       type="text"
