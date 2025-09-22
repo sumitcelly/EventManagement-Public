@@ -61,8 +61,8 @@ export default function EventsPage() {
         getNextPageParam: (lastPage) => {
         if (lastPage.length < pageSize) return undefined; // no more results
        
-        return lastPage[lastPage.length - 1].eventId; // 👈 use cursor
-      }, staleTime:1000 * 300
+        return lastPage[lastPage.length - 1].eventDate; // 👈 use cursor
+      },staleTime: 1000 * 60 * 5
     });
     //const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
     

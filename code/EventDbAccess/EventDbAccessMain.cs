@@ -19,7 +19,7 @@ using EventUtils;
 
     public async Task<List<EventHeader>> SearchEvents(string keyword, DateOnly startDate, int intervalDays,
                                                 string city, string state, string category,
-                                                int limit=10, int cursor =0)
+                                                int limit=10, DateTime cursor = default(DateTime))
     {
       // Implement search logic based on the provided parameters.
       // This is a placeholder implementation and should be replaced with actual search logic.
@@ -57,12 +57,15 @@ using EventUtils;
           {
             query += " AND EventCategory = @category";
           }
+          //the comparison means that some results maybe repeated.
+          //So if there are multiple events at the same exact date and time, then
+          //search results will show an overlap
           if (cursor != null)
           {
-            query += " AND EventId > @cursor";
+            query += " AND EventDate >= @cursor";
           }
           query += @" AND EventDate >= CURDATE() 
-                                  ORDER BY EventId ASC
+                                  ORDER BY EventDate ASC
                                   LIMIT @limit;";
           Console.WriteLine("Final Query: " + query);
 

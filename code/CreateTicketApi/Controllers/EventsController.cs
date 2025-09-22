@@ -29,7 +29,7 @@ namespace CreateTicketApi.Controllers
                                                          string city = null,
                                                          string state = null,
                                                          string category = null,
-                                                         int limit = 10, int cursor =0)
+                                                         int limit = 10, DateTime cursor =default(DateTime))
         {
             if (startDate == default)
                 startDate = DateOnly.MinValue;
