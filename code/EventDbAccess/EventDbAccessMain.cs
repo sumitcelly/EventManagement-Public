@@ -19,7 +19,7 @@ using EventUtils;
 
     public async Task<List<EventHeader>> SearchEvents(string keyword, DateOnly startDate, int intervalDays,
                                                 string city, string state, string category,
-                                                int limit=10, DateTime cursor = default(DateTime))
+                                                int limit=10, int cursor =0)
     {
       // Implement search logic based on the provided parameters.
       // This is a placeholder implementation and should be replaced with actual search logic.
@@ -59,10 +59,10 @@ using EventUtils;
           }
           if (cursor != null)
           {
-            query += " AND EventDate > @cursor";
+            query += " AND EventId > @cursor";
           }
           query += @" AND EventDate >= CURDATE() 
-                                  ORDER BY EventDate ASC
+                                  ORDER BY EventId ASC
                                   LIMIT @limit;";
           Console.WriteLine("Final Query: " + query);
 

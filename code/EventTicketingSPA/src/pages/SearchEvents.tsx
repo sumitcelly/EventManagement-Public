@@ -23,6 +23,7 @@ export interface EventSearchResult {
 
 console.log("SearchEvents rendered");
 
+const pageSize =5;
 export default function EventsPage() {
    
     const { keyword: paramKeyword, location: paramLocation } = useParams();
@@ -35,7 +36,7 @@ export default function EventsPage() {
         params: {
           keyword,
           city: location,
-          limit: 10,
+          limit: pageSize,
           cursor: pageParam, // null on first load, lastEventDate on subsequent
         },
       });
@@ -58,10 +59,10 @@ export default function EventsPage() {
         isLoading
       } = useInfiniteQuery(["events", keyword, location], fetchEvents, {
         getNextPageParam: (lastPage) => {
-        if (lastPage.length < 10) return undefined; // no more results
+        if (lastPage.length < pageSize) return undefined; // no more results
        
-        return lastPage[lastPage.length - 1].eventDate; // 👈 use cursor
-      },staleTime: 1000 * 60 * 5
+        return lastPage[lastPage.length - 1].eventId; // 👈 use cursor
+      }, staleTime:1000 * 300
     });
     //const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
     
