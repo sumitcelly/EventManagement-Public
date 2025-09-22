@@ -29,13 +29,24 @@ export default function EventsPage() {
     const { keyword: paramKeyword, location: paramLocation } = useParams();
     const keyword = paramKeyword ?? "";
     const location = paramLocation ?? "";
+    let state = "";
+    let city="";
     console.log('location and keyword',location,keyword);
+    if (location.length == 2)
+      state = location;
+    if (location.includes(',')) {
+      city =  location.split(',')[0].trim();
+      state = location.split(',')[1].trim();
+    }
+
+    console.log('city and state',city,state);
 
     const fetchEvents = async ({ pageParam = null }) => {
       const res = await axiosClient.get("/events/search", {
         params: {
           keyword,
-          city: location,
+          city: city,
+          state: state,
           limit: pageSize,
           cursor: pageParam, // null on first load, lastEventDate on subsequent
         },
