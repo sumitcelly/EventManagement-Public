@@ -10,7 +10,7 @@ export function EventCard({event}:
   return (
 
     <Card     
-      className="bg-brand-light max-w-sm cursor-pointer hover:shadow-lg"
+      className="bg-brand-light max-w-xs  cursor-pointer hover:shadow-lg"
       imgAlt="test"
       imgSrc={event.eventImageUrl}
       onClick={() => navigate(`/eventDetails/${event.eventId}`)}
@@ -29,7 +29,7 @@ export function EventCard({event}:
             {event.eventLocation}
         </div>   
       </div>
-      <p className="font-normal text-gray-700 dark:text-gray-400 font-body">
+      <p className="font-normal text-gray-700 dark:text-gray-400 font-body tracking-tight">
        {event.eventSummary}
       </p>
     </Card>
