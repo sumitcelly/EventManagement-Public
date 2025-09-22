@@ -4,7 +4,7 @@ import { useState } from "react";
 export function AppPagination({totalItems, currentPage, onPageChange, itemsPerPage = 10}: { onPageChange: (page:number)=>void,  totalItems: number, currentPage: number,  itemsPerPage?: number,}) {
 
   return (
-    <div className="flex overflow-x-auto sm:justify-center">
+    <div className="flex mb-4 ml-4 overflow-x-auto sm:justify-center">
       <Pagination layout="table" currentPage={currentPage} itemsPerPage={itemsPerPage} totalItems={totalItems} onPageChange={onPageChange} />
     </div>
   );

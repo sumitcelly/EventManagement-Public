@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useInfiniteQuery, useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 import { Link } from "react-router-dom";
 import { EventCard } from "../components/Card";
@@ -21,41 +21,55 @@ export interface EventSearchResult {
   eventImageUrl: string;
 }
 
-
 console.log("SearchEvents rendered");
 
 export default function EventsPage() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const onPageChange = (page: number) =>
-      setCurrentPage(page);
-
-    console.log("SearchEvents currentPage", currentPage);
+   
     const { keyword: paramKeyword, location: paramLocation } = useParams();
     const keyword = paramKeyword ?? "";
     const location = paramLocation ?? "";
-    console.log('locaion and keyword',location,keyword);
+    console.log('location and keyword',location,keyword);
 
-    const  getData=  async () => {
-      const res = await axiosClient.get(`/events/search?keyword=${keyword}&city=${location}&page=${currentPage}&offset=0`);
-      console.log("SearchEvents res", res);
-    
-      if (res.data && res.data.length > 0)
-      {
-        res.data.forEach((e: EventSearchResult) => 
+    const fetchEvents = async ({ pageParam = null }) => {
+      const res = await axiosClient.get("/events/search", {
+        params: {
+          keyword,
+          city: location,
+          limit: 10,
+          cursor: pageParam, // null on first load, lastEventDate on subsequent
+        },
+      });
+        console.log("SearchEvents completed res", res.data);
+        if (res.data && res.data.length > 0)
         {
-          e.eventImageUrl = "/images/concert.jpg";
-        });
-      }
+          res.data.forEach((e: EventSearchResult) => 
+          {
+            e.eventImageUrl = "/images/concert.jpg";
+          });
+        }
       return res.data;
     };
-    const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
+
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+      } = useInfiniteQuery(["events", keyword, location], fetchEvents, {
+        getNextPageParam: (lastPage) => {
+        if (lastPage.length < 10) return undefined; // no more results
+       
+        return lastPage[lastPage.length - 1].eventDate; // 👈 use cursor
+      },staleTime: 1000 * 60 * 5
+    });
+    //const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
     
-    useEffect(() => {
-    if (data && data.length > 0 && currentPage === 1) {
-      setTotalItems(data.length);
-    }
-    }, [data, currentPage]);
+    // useEffect(() => {
+    // if (data && data.length > 0 && currentPage === 1) {
+    //   setTotalItems(data.length);
+    // }
+    // }, [data, currentPage]);
     
     if (isLoading) return <p>Loading...</p>;
 
@@ -63,11 +77,18 @@ export default function EventsPage() {
     <>
     <h4 className="text-xl font-bold m-2 flex justify-center">Events you maybe interested in</h4>
     <div className="grid grid-cols-1 m-6 sm:grid-cols-2 md:grid-cols-5 gap-3 justify-items-center">
-        {data && data.map((e:EventSearchResult) => (
-          <EventCard key ={e.eventId} event={e}/>
-        ))}
+        {data?.pages.map((page) =>
+           page.map((event:EventSearchResult) => <EventCard key={event.eventId} event={event} />)
+        )}
     </div>
-    <AppPagination  totalItems={totalItems} currentPage={currentPage} itemsPerPage={8} onPageChange={onPageChange}/>
+     {/* <AppPagination  totalItems={totalItems} currentPage={currentPage} itemsPerPage={8} onPageChange={onPageChange}/> */}
+      <button className="mb-3  ml-4 bg-brand-dark text-white px-4 
+                        py-2 rounded hover:bg-blue-700"
+          onClick={() => fetchNextPage()}
+          disabled={!hasNextPage || isFetchingNextPage}>
+          {isFetchingNextPage ? "Loading..." : hasNextPage ? "Load More" : "No More Results"}
+      </button>
+
     </>
   );
 }

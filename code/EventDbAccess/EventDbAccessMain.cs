@@ -19,7 +19,7 @@ using EventUtils;
 
     public async Task<List<EventHeader>> SearchEvents(string keyword, DateOnly startDate, int intervalDays,
                                                 string city, string state, string category,
-                                                int limit=10, int offset=0)
+                                                int limit=10, DateTime cursor = default(DateTime))
     {
       // Implement search logic based on the provided parameters.
       // This is a placeholder implementation and should be replaced with actual search logic.
@@ -57,9 +57,13 @@ using EventUtils;
           {
             query += " AND EventCategory = @category";
           }
+          if (cursor != null)
+          {
+            query += " AND EventDate > @cursor";
+          }
           query += @" AND EventDate >= CURDATE() 
-                                  ORDER BY relevance DESC, EventDate ASC
-                                  LIMIT @limit OFFSET @offset;";
+                                  ORDER BY EventDate ASC
+                                  LIMIT @limit;";
           Console.WriteLine("Final Query: " + query);
 
           MySqlCommand cmd = new MySqlCommand(query, connection);
@@ -77,25 +81,28 @@ using EventUtils;
           if (!string.IsNullOrEmpty(category))
             cmd.Parameters.AddWithValue("@category", category);
           cmd.Parameters.AddWithValue("@limit", limit);
-          cmd.Parameters.AddWithValue("@offset", offset);
+          
+          
+           cmd.Parameters.AddWithValue("@cursor", cursor);
+         
 
           using (MySqlDataReader reader = cmd.ExecuteReader())
-          {
-            while (reader.Read())
             {
-              events.Add(new EventHeader()
+              while (reader.Read())
               {
-                EventId = reader.GetInt32("EventId"),
-                EventName = reader.GetString("EventName"),
-                EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty: reader.GetString("EventHeadline"),
-                EventDate = reader.GetDateTime("EventDate"),
-                EventOrganizerId = reader.GetInt32("EventOrganizer"),
-                EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty :reader.GetString("EventSummary"),
-                Free = reader.GetBoolean("Free"),
-                EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
-              });
+                events.Add(new EventHeader()
+                {
+                  EventId = reader.GetInt32("EventId"),
+                  EventName = reader.GetString("EventName"),
+                  EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
+                  EventDate = reader.GetDateTime("EventDate"),
+                  EventOrganizerId = reader.GetInt32("EventOrganizer"),
+                  EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString("EventSummary"),
+                  Free = reader.GetBoolean("Free"),
+                  EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
+                });
+              }
             }
-          }
         }
       }
       return events;

@@ -29,13 +29,13 @@ namespace CreateTicketApi.Controllers
                                                          string city = null,
                                                          string state = null,
                                                          string category = null,
-                                                         int limit = 10, int offset = 0)
+                                                         int limit = 10, DateTime cursor =default(DateTime))
         {
             if (startDate == default)
                 startDate = DateOnly.MinValue;
             Console.WriteLine("SearchEvents called with keyword:{0}, startDate:{1}, intervalDay:{2}, city:{3}, state:{4}, category:{5}, limit:{6}, offset:{7}",
-                                keyword, startDate, intervalDay, city, state, category, limit, offset);
-            List<EventHeader> events = await _EventDbAccess.SearchEvents(keyword, startDate, intervalDay, city, state, category, limit, offset);
+                                keyword, startDate, intervalDay, city, state, category, limit, cursor);
+            List<EventHeader> events = await _EventDbAccess.SearchEvents(keyword, startDate, intervalDay, city, state, category, limit, cursor);
             _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(events));
             return events;
         }

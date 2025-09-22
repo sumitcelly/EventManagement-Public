@@ -6,6 +6,7 @@ import { EventSearchResult } from "../pages/SearchEvents";
 export function EventCard({event}: 
     {event: EventSearchResult}) {
     const navigate = useNavigate();
+    console.log('card data',event);
   return (
 
     <Card     
