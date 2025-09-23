@@ -14,11 +14,15 @@ namespace CreateTicketApi.Controllers
         private readonly EventDbAccess _EventDbAccess;
 
         private readonly TicketAccess _ticketContext;
-        public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess, TicketAccess ticketContext)
+
+
+        public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess,
+                            TicketAccess ticketContext)
         {
             _logger = logger;
             _EventDbAccess = EventDbAccess;
             _ticketContext = ticketContext;
+  
         }
 
         [HttpGet]
@@ -40,8 +44,8 @@ namespace CreateTicketApi.Controllers
             return events;
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<EventHeader>> GetEventById(int id)
+        [HttpGet("/Events/Basics/{id}")]
+        public async Task<ActionResult<EventHeader>> GetEventBasicsById(int id)
         {
             var evt = await _EventDbAccess.GetEventHeaderById(id);
             if (evt == null)
@@ -49,7 +53,15 @@ namespace CreateTicketApi.Controllers
             return evt;
         }
 
-     
+        [HttpGet("/Events/Details/{id}")]
+        public async Task<ActionResult<Event>> GetEventDetailsById(int id)
+        {
+            var evt = await _EventDbAccess.GetEventDetailsById(id);
+            if (evt == null)
+                return NotFound();
+            return evt;
+        }
+
         [HttpPost]
         public async Task<ActionResult<int>> CreateEvent([FromBody] Event evt)
         {

@@ -182,7 +182,7 @@ using EventUtils;
 
         var query = @"select * from events  
                     WHERE
-                    a.EventId = @eventId";
+                    EventId = @eventId";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventId", eventId);
@@ -192,30 +192,29 @@ using EventUtils;
         {
           return new Event
           {
-            EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-            EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-            EventName = reader.GetString(reader.GetOrdinal("EventName")),
-            EventHeadline = reader.GetString(reader.GetOrdinal("EventHeadline")),
-            EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-            EventOrganizer = reader.GetString(reader.GetOrdinal("EventOrganizer")),
-            EventSummary = reader.GetString(reader.GetOrdinal("EventSummary")),
-            Free = reader.GetBoolean(reader.GetOrdinal("Free")),
-            EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress")),
-            EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
-            Category = reader.GetString(reader.GetOrdinal("Category")),
-            SubCategory = reader.GetString(reader.GetOrdinal("SubCategory")),
-            Tags = reader.GetString(reader.GetOrdinal("Tags")),
-            EventAgenda = reader.GetString(reader.GetOrdinal("EventAgenda")),
-            Capacity = reader.GetInt32(reader.GetOrdinal("Capacity")),
-            StreetAddress = reader.GetString(reader.GetOrdinal("StreetAddress")),
-            City = reader.GetString(reader.GetOrdinal("City")),
-            State = reader.GetString(reader.GetOrdinal("State")),
-            ZipCode = reader.GetString(reader.GetOrdinal("ZipCode")),
-            Country = reader.GetString(reader.GetOrdinal("Country")),
-            Latitude = reader.GetDecimal(reader.GetOrdinal("Latitude")),
-            Longitude = reader.GetDecimal(reader.GetOrdinal("Longitude")),
-            CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            UpdatedAt = reader.GetDateTime(reader.GetOrdinal("UpdatedAt"))
+              EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+              EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+              EventName = reader.GetString(reader.GetOrdinal("EventName")),
+              EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
+              EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+              EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
+              Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress")),
+              EventDescription = reader.IsDBNull(reader.GetOrdinal("EventDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventDescription")),
+              Category = reader.IsDBNull(reader.GetOrdinal("EventCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventCategory")),
+              SubCategory = reader.IsDBNull(reader.GetOrdinal("SubCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("SubCategory")),
+              Tags = reader.IsDBNull(reader.GetOrdinal("EventTags")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventTags")),
+              EventAgenda = reader.IsDBNull(reader.GetOrdinal("EventAgenda")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAgenda")),
+              Capacity = reader.IsDBNull(reader.GetOrdinal("Capacity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Capacity")),
+              StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("StreetAddress")),
+              City = reader.IsDBNull(reader.GetOrdinal("City")) ? string.Empty : reader.GetString(reader.GetOrdinal("City")),
+              State = reader.IsDBNull(reader.GetOrdinal("State")) ? string.Empty : reader.GetString(reader.GetOrdinal("State")),
+              ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("ZipCode")),
+              Country = reader.IsDBNull(reader.GetOrdinal("Country")) ? string.Empty : reader.GetString(reader.GetOrdinal("Country")),
+              Latitude = reader.IsDBNull(reader.GetOrdinal("Latitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Latitude")),
+              Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Longitude")),
+              CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+              UpdatedAt = reader.IsDBNull(reader.GetOrdinal("ModifiedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
           };
         }
       }

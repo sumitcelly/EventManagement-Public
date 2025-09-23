@@ -25,6 +25,10 @@ namespace CreateTicketApi.Controllers
             var organizer = await _organizerDbAccess.GetOrganizerById(id);
             if (organizer == null)
                 return NotFound();
+
+            //resetting fields which do not make sense when not authenticated.
+            organizer.StripeAccountId = string.Empty;
+          
             return organizer;
         }
 
