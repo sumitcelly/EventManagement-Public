@@ -54,7 +54,7 @@ export default function TicketDetails() {
           {/* <EventSummary eventBasic={sampleEvent}/>  */}
       
           {data && <SalesOrderTicket eventBasic={sampleEvent} 
-              tickets={[{id: data[currentPage-1].id, name:data[currentPage-1].name, 
+              tickets={[{eventItemTypeId: data[currentPage-1].id, name:data[currentPage-1].name, 
                 description:"", cost:0, quantity:1}]} 
               salesOrderCode={data[currentPage-1].qrCode} qrBase64String={""}>
             

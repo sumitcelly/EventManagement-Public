@@ -1,6 +1,6 @@
 //Types related to tickets and ticket forms
 export type Ticket = {
-  id: number;
+  eventItemTypeId: number;
   name: string;
   description: string;
   cost: number;

@@ -72,7 +72,7 @@ export default function App() {
         <Route
           path="/buytickets/:id"
           element={
-               isAuthenticated ? <BuyTickets /> : <Navigate to="/login" />
+              <BuyTickets /> 
           }
         />
 

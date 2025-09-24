@@ -21,7 +21,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet]
-        [Route("All")]
+        [Route("/eventitemtype/all/{eventId}")]
         public async Task<ActionResult<List<EventItemType>>> GetAll(int eventId)
         {
             if (eventId <= 0)

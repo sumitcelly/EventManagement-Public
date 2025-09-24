@@ -135,7 +135,8 @@ namespace EventManagementDbAccess
                         Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
                         TotalAllowed = reader.GetInt32(reader.GetOrdinal("TotalAllowed")),
-                        MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder"))
+                        MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder")),
+                        Name= reader.GetString(reader.GetOrdinal("Name")),
                     });
                 }
                 return list;

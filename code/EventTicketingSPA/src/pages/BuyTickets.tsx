@@ -10,6 +10,9 @@ import { RootState } from "../app/store";
 import { useNavigate, useParams } from "react-router";
 import OrderSummary from "./OrderSummary";
 import EventSummary from "../components/EventSummary";
+import axiosClient from "../api/axiosClient";
+import { useQuery } from "react-query";
+import { useEffect } from "react";
 
 
 const schema = yup.object({
@@ -19,7 +22,7 @@ const schema = yup.object({
     .array()
     .of(
       yup.object({
-        id: yup.number().required(),
+        eventItemTypeId: yup.number().required(),
         cost: yup.number().required(),
         name: yup.string().required(),
         description: yup.string().required(),
@@ -40,38 +43,81 @@ const schema = yup.object({
     ),
 });
 
-export default function BuyTickets() {
 
-  let ticketTypesList =[];
-  ticketTypesList.push({id:1, name:"Free", description: "Just free entry and access to watch events", cost: 0});
-  ticketTypesList.push({id:2, name:"Basic", description: "Allows one free sample, and access to some premium events", cost: 20});
-  ticketTypesList.push({id:3, name:"Advanced", description: "Upto 5 samples, access to premiun seating, meet the performers backstage.", cost: 40});
-  
+
+export default function BuyTickets() {
 
   const dispatch = useAppDispatch();
   const  cart = useAppSelector((state:RootState) => state.cart);
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { control,register, handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
+  
+  const {
+        data: ticketTypesList = [], // provide default empty array
+        isLoading,
+        error
+  } = 
+  useQuery(
+    ['eventitemtype', id], // structured query key
+    async () => {
+      console.log("in buy tickets calling backend");
+      const res = await axiosClient.get(`/eventitemtype/all/${id}`);
+      console.log('Event ticket type details', res?.data);
+      return res.data;
+    },
+    {
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: false,
+      enabled: !!id // only run query if we have an id
+    }
+  );
+
+  console.log('tickettype is',ticketTypesList)
+  const { control,register, reset,handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
-        fullname: cart.fullname,
-        email: cart.email,
-        tickets: cart.tickets.length>0 ? cart.tickets :
-              ticketTypesList.map((t) => ({ id: t.id, name:t.name, quantity: 0 , description: t.description, cost:t.cost})),
+        fullname: cart.fullname || '',
+        email: cart.email || '',
+        tickets: cart.tickets.length>0 ? cart.tickets : [] 
       },
+       mode: 'onSubmit'
     });
+  // Add useEffect to reset form when ticketTypesList loads
+  useEffect(() => {
+    if (ticketTypesList && ticketTypesList.length > 0) {
+      reset({
+        fullname: cart.fullname || '',
+        email: cart.email || '',
+        tickets: cart.tickets.length > 0 
+          ? cart.tickets 
+          : ticketTypesList.map((t: Ticket) => ({ 
+              eventItemTypeId: t.eventItemTypeId, 
+              name: t.name, 
+              quantity: 0, 
+              description: t.description, 
+              cost: t.cost 
+            }))
+      });
+    }
+  }, [ticketTypesList, cart.tickets, cart.fullname, cart.email, reset]);
+
+
+  if (error) console.error('Error fetching ticket types:', error);
+  if (isLoading) return <p>Loading...</p>;
 
   
-
-
+  
   const onSubmit = (data: TicketFormValues) => {
-    console.log(data);
+    console.log(errors);
+    console.log('submite',data);
     dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
     dispatch(updatetickets({ tickets: data.tickets }));
     navigate(`/ordersummary/${id}`);
   };
+ 
 return (
    
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
@@ -82,13 +128,13 @@ return (
   (errors) => console.log("validation errors", errors)
 )}></form> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {ticketTypesList.map((item, index) => (
-                <div key={item.id} className="flex flex-row">
+            {ticketTypesList.map((item: Ticket, index:number) => (
+                <div key={item.eventItemTypeId} className="flex flex-row">
                     <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
                     <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
                     <div className="text-l text-center text-secondary-color">
                         <input
-                          key={item.id}
+                          key={item.eventItemTypeId}
                           type="number"
                           {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
                           className="w-20 border rounded p-1"
@@ -147,7 +193,5 @@ return (
     
     </div>
    
-      
-
   );
 }

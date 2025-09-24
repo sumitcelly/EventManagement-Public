@@ -8,8 +8,9 @@ type CartTotalProps = {
 
 export default function CartTotal({ control }: CartTotalProps) {
   const tickets = useWatch({ control, name: "tickets" });
-  
+  console.log('tickets is',tickets);
   const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
+  console.log('cart total',total);
   const processingFees = parseFloat((total *.03).toFixed(2));
   const platformFees =1;
   const finalTotal = total + processingFees + platformFees;
