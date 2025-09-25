@@ -27,15 +27,21 @@ const schema = yup.object({
         name: yup.string().required(),
         description: yup.string().required(),
         maxPerOrder:yup.number().optional(),
+        ticketsSold:yup.number().required(),
+        totalAllowed: yup.number().required(),
         quantity: yup.number()
           .min(0, "Quantity must be at least 0")
           .typeError("Quantity must be a number")
           .required()
           .test('less-than-max-count',
-            'Quantity is more than maximum allowed for order.',
+            'Quantity is more than maximum permissible.',
             function(value){
-              const {maxPerOrder}= this.parent;
-              return (maxPerOrder>0 && value <= maxPerOrder) || maxPerOrder === 0;
+              const {maxPerOrder, ticketsSold, totalAllowed}= this.parent;
+              const maxPerOrderOk = (maxPerOrder>0 && value <= maxPerOrder) || maxPerOrder === 0;
+              const totalAllowedOk = value <= (totalAllowed - ticketsSold);
+              console.log('totalAllowedOk',totalAllowedOk);
+                console.log('maxPerOrderOk',maxPerOrderOk);
+              return maxPerOrderOk && totalAllowedOk;
             }
           ),   
         })
@@ -75,8 +81,8 @@ export default function BuyTickets() {
       return res.data;
     },
     {
-      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       enabled: !!id // only run query if we have an id
@@ -108,7 +114,9 @@ export default function BuyTickets() {
               quantity: 0, 
               description: t.description, 
               cost: t.cost ,
-              maxPerOrder: t.maxPerOrder
+              maxPerOrder: t.maxPerOrder,
+              totalAllowed: t.totalAllowed,
+              ticketsSold: t.ticketsSold,
             }))
       });
     }
@@ -144,24 +152,37 @@ return (
                   <div className="flex flex-row">
                       <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
                       <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
-                      <div className="text-l text-center text-secondary-color">
+                      
+                        
+                        <div className="text-l text-center text-secondary-color">
                           <input
                             key={item.eventItemTypeId}
                             type="number"
                             {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
                             className="w-20 border rounded p-1"
                             min={0}
+                            disabled={item.ticketsSold >= item.totalAllowed}
                           />
-                      </div>  
-                    
+                        </div>  
                   </div>
                   
-                  <div className="w-1/3 ml-auto text-right">
-                  {errors?.tickets?.[index]?.quantity?.message && (
-                          <div className="text-left text-red-500 text-sm ">
-                            {errors.tickets[index].quantity.message}
-                          </div>
-                        )}
+                  <div className="w-1/3 ml-auto text-right mr-3">
+                    {item.totalAllowed === item.ticketsSold && (
+                      <div className="text-red-500 text-sm ">
+                          Sold Out!
+                      </div>
+                    )}
+                    {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0 
+                        && (item.totalAllowed - item.ticketsSold) <= 5 && (      
+                      <div className="text-red-500 text-sm ">
+                          Very few left!
+                      </div>                  
+                    )}
+                    {errors?.tickets?.[index]?.quantity?.message && (
+                            <div className="text-red-500 text-sm ">
+                              {errors.tickets[index].quantity.message}
+                            </div>
+                      )}
                   </div>
                 </div>
               ))}

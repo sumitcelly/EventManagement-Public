@@ -79,7 +79,7 @@ export default function App() {
         <Route
           path="/ordersummary/:id"
           element={
-               isAuthenticated ? <OrderSummary /> : <Navigate to="/login" />
+               <OrderSummary /> 
           }
         />
          <Route

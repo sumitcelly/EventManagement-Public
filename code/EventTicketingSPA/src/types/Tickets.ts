@@ -6,6 +6,8 @@ export type Ticket = {
   cost: number;
   quantity: number;
   maxPerOrder?:number;
+  ticketsSold:number;
+  totalAllowed:number;
 };
 
 

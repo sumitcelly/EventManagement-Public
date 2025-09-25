@@ -89,7 +89,8 @@ namespace EventManagementDbAccess
                         Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
                         TotalAllowed = reader.GetInt32(reader.GetOrdinal("TotalAllowed")),
-                        MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder"))
+                        MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder")),
+                        TicketsSold =  reader.IsDBNull(reader.GetOrdinal("TicketsSold"))?0:reader.GetInt32(reader.GetOrdinal("TicketsSold")) ,
                     };
                 }
                 return null;
@@ -136,7 +137,9 @@ namespace EventManagementDbAccess
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
                         TotalAllowed = reader.GetInt32(reader.GetOrdinal("TotalAllowed")),
                         MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder")),
-                        Name= reader.GetString(reader.GetOrdinal("Name")),
+                        Name = reader.GetString(reader.GetOrdinal("Name")),
+                        TicketsSold =  reader.IsDBNull(reader.GetOrdinal("TicketsSold"))?0:reader.GetInt32(reader.GetOrdinal("TicketsSold")) ,
+                  
                     });
                 }
                 return list;

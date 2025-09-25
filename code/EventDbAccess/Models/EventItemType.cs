@@ -4,7 +4,7 @@ namespace EventManagementDbAccess
     public class EventItemType
     {
         public int EventItemTypeId { get; set; }
-        public string Description { get; set; } =string.Empty;
+        public string Description { get; set; } = string.Empty;
 
         public string Name { get; set; } = string.Empty;
         public decimal Cost { get; set; }
@@ -14,5 +14,7 @@ namespace EventManagementDbAccess
         public int TotalAllowed { get; set; }
 
         public int MaxPerOrder { get; set; } 
+        
+        public int TicketsSold { get; set; }
     }
 }
