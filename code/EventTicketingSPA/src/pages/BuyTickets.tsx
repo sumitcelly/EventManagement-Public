@@ -32,7 +32,7 @@ const schema = yup.object({
           .typeError("Quantity must be a number")
           .required()
           .test('less-than-max-count',
-            'Quantity is more than max allowed for order',
+            'Quantity is more than maximum allowed for order.',
             function(value){
               const {maxPerOrder}= this.parent;
               return (maxPerOrder>0 && value <= maxPerOrder) || maxPerOrder === 0;
@@ -75,9 +75,9 @@ export default function BuyTickets() {
       return res.data;
     },
     {
-      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      //refetchOnMount: 'always',
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       enabled: !!id // only run query if we have an id
     }
