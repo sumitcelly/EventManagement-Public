@@ -13,7 +13,7 @@ export default function CartTotal({ control }: CartTotalProps) {
   console.log('cart total',total);
   const processingFees = parseFloat((total *.03).toFixed(2));
   const platformFees =1;
-  const finalTotal = total + processingFees + platformFees;
+  const finalTotal = (total + processingFees + platformFees).toFixed(2);
   console.log(processingFees);
   console.log(finalTotal);
   return (<>

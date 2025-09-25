@@ -5,6 +5,7 @@ export type Ticket = {
   description: string;
   cost: number;
   quantity: number;
+  maxPerOrder?:number;
 };
 
 

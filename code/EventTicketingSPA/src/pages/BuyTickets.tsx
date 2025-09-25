@@ -26,10 +26,18 @@ const schema = yup.object({
         cost: yup.number().required(),
         name: yup.string().required(),
         description: yup.string().required(),
+        maxPerOrder:yup.number().optional(),
         quantity: yup.number()
-           .min(0, "Quantity must be at least 0")
+          .min(0, "Quantity must be at least 0")
           .typeError("Quantity must be a number")
-          .required(),   
+          .required()
+          .test('less-than-max-count',
+            'Quantity is more than max allowed for order',
+            function(value){
+              const {maxPerOrder}= this.parent;
+              return (maxPerOrder>0 && value <= maxPerOrder) || maxPerOrder === 0;
+            }
+          ),   
         })
       ).required()
       .test(
@@ -67,9 +75,9 @@ export default function BuyTickets() {
       return res.data;
     },
     {
-      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      refetchOnMount: 'always',
+      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       enabled: !!id // only run query if we have an id
     }
@@ -85,7 +93,8 @@ export default function BuyTickets() {
       },
        mode: 'onSubmit'
     });
-  // Add useEffect to reset form when ticketTypesList loads
+  // Add useEffect to reset form when ticketTypesList loads.
+  //The ticket type list is not ready when the useform tries to  set default values.
   useEffect(() => {
     if (ticketTypesList && ticketTypesList.length > 0) {
       reset({
@@ -98,7 +107,8 @@ export default function BuyTickets() {
               name: t.name, 
               quantity: 0, 
               description: t.description, 
-              cost: t.cost 
+              cost: t.cost ,
+              maxPerOrder: t.maxPerOrder
             }))
       });
     }
@@ -128,20 +138,31 @@ return (
   (errors) => console.log("validation errors", errors)
 )}></form> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {ticketTypesList.map((item: Ticket, index:number) => (
-                <div key={item.eventItemTypeId} className="flex flex-row">
-                    <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
-                    <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
-                    <div className="text-l text-center text-secondary-color">
-                        <input
-                          key={item.eventItemTypeId}
-                          type="number"
-                          {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
-                          className="w-20 border rounded p-1"
-                          min={0}
-                        />
-                    </div>
+            {ticketTypesList.map((item: Ticket, index:number) => 
+            (
+                <div  key={item.eventItemTypeId} className="flex flex-col">
+                  <div className="flex flex-row">
+                      <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
+                      <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
+                      <div className="text-l text-center text-secondary-color">
+                          <input
+                            key={item.eventItemTypeId}
+                            type="number"
+                            {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
+                            className="w-20 border rounded p-1"
+                            min={0}
+                          />
+                      </div>  
                     
+                  </div>
+                  
+                  <div className="w-1/3 ml-auto text-right">
+                  {errors?.tickets?.[index]?.quantity?.message && (
+                          <div className="text-left text-red-500 text-sm ">
+                            {errors.tickets[index].quantity.message}
+                          </div>
+                        )}
+                  </div>
                 </div>
               ))}
 
