@@ -83,7 +83,7 @@ export default function App() {
           }
         />
          <Route
-          path="/orderconfirmation/event/:eventId/salesOrderCode/:salesOrderCode"
+          path="/orderconfirmation/event/:eventId"
           element={
                isAuthenticated ? <OrderConfirmation /> : <Navigate to="/login" />
           }

@@ -14,5 +14,6 @@ export interface EventHeader {
   eventName: string;
   eventDate: Date;
   eventLocation: string;
+  eventOrganizerId:number;
 
 }

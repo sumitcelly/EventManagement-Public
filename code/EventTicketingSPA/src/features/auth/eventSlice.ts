@@ -12,6 +12,7 @@ const initialState: EventHeader = {
   eventName: "",
   eventDate: new Date(),
   eventLocation: "",
+  eventOrganizerId: 0
 
 };
 

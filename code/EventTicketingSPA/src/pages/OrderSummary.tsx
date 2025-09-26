@@ -16,8 +16,10 @@ export default function OrderSummary() {
   const [error,setError] = useState("");
   
   const  cart = useAppSelector((state:RootState) => state.cart);
-  //const user = useAppSelector((state:RootState) => state.auth);
-  console.log(cart);
+  const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
+  const user = useAppSelector((state:RootState) =>state.auth);
+
+  console.log(cart); 
   if (cart.tickets.length === 0) {
     return (
       <div className="p-4"> 
@@ -42,29 +44,26 @@ export default function OrderSummary() {
   }
   console.log("totalAmount", totalAmount);
   console.log("paymentRequired", paymentRequired);
-  const handleconfirmOrder = () => {
-      
-      navigate(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);
-    
-    // axiosClient.post("/orders", {
-    //   userId: user.user?.id, // Replace with actual user ID
-    //   eventId: id,
-    //   tickets: cart.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ ticketTypeId: t.id, quantity: t.quantity })),
-    //   buyer: {
-    //     fullname: cart.fullname,
-    //     email: cart.email,
-    //   },
-    //   totalAmount: totalAmount,
-    //   paymentRequired: paymentRequired,
-    // }).then((res) => {
-    //   console.log("Order created:", res.data);  
-    //   navigate(`/orderconfirmation/${id}`);
-    // }).catch((error) => {
-    //   console.error("Error creating order:", error);
-    //   setError("Error creating order. Please try again."+error.message);
-    //   //return(<p className="text-red-500">Error creating order. Please try again.</p>)
-    //   // Handle error (e.g., show error message to user)
-    // });
+  const handleconfirmOrder = () => {      
+    //navigate(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);   
+    axiosClient.post("/salesOrder", {
+      userId: user.user?.id, // Replace with actual user ID
+      eventId: id,
+      customerId: eventHeaderInfo.eventOrganizerId,
+      emailAddress: cart.email,
+      name: cart.fullname,
+      deliveryType :"Email",
+      paymentRequired: paymentRequired,
+      salesOrderItems: cart.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity})),
+    }).then((res) => {
+      console.log("Order created:", res.data);  
+      navigate(`/orderconfirmation/event/${id}`, {state: res.data});
+    }).catch((error) => {
+      console.error("Error creating order:", error);
+      setError("Error creating order. Please try again."+error.message);
+      //return(<p className="text-red-500">Error creating order. Please try again.</p>)
+      // Handle error (e.g., show error message to user)
+    });
   }
   return (
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">

@@ -47,6 +47,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       eventName: eventDetails.eventName,
       eventDate: new Date(eventDetails.eventDate),
       eventLocation: eventDetails.eventLocation,
+      eventOrganizerId: eventDetails.eventOrganizerId
     }
 
     if (!event)

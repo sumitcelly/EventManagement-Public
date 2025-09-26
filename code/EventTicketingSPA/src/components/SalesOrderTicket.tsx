@@ -25,7 +25,7 @@ export default function SalesOrderTicket({ eventBasic, tickets, salesOrderCode,q
                     {tickets?.filter(list =>list.quantity>0).map((item) =>
                       (
                         
-                        <div key={item.id}>
+                        <div key={item.eventItemTypeId}>
                             {item.quantity} {item.name}
                         </div>                        
                         
@@ -36,7 +36,7 @@ export default function SalesOrderTicket({ eventBasic, tickets, salesOrderCode,q
                 <div className="w-1/3 ml-auto mr-4">
                 <div className="flex flex-col items-center">
                   {/* <div className="font-bold mb-1 text-xs text-secondary-color">{salesOrderCode}</div> */}
-                  <img src="/images/qr_code.png" alt={salesOrderCode} className="h-auto rounded-lg" />
+                  <img src={"data:image/png;base64, "+qrBase64String} alt={salesOrderCode} className="h-auto rounded-lg" />
                 </div>
               </div>
               </div>

@@ -3,7 +3,7 @@ import axiosClient from "../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
 import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { Button } from "flowbite-react";
 import EventSummary from "../components/EventSummary";
 import { resetCart } from "../features/auth/cartSlice";
@@ -20,7 +20,12 @@ export default function OrderConfirmation() {
   const [cartTickets,setCartTickets] = useState<Ticket[]>([]);
 
   const navigate = useNavigate();
-  const { eventId, salesOrderCode } = useParams();
+  const { eventId } = useParams();
+  
+  const location = useLocation();
+  const salesOrderData = location.state;
+  console.log('salesorder from server', salesOrderData);
+
   const  event = useAppSelector((state:RootState) => state.event);
   const cart  = useAppSelector((state:RootState) => state.cart);
   const dispatch = useAppDispatch();
@@ -45,10 +50,11 @@ export default function OrderConfirmation() {
             Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
           </div>
           <div className="text-center mb-4">
-            Your order reference code is <span className="font-bold">{salesOrderCode}</span>
+            Your order reference code is <span className="font-bold">{salesOrderData.salesOrderCode}</span>
           </div>
           
-          <SalesOrderTicket eventBasic={event} tickets={cartTickets} salesOrderCode={salesOrderCode || ""} qrBase64String={""}/>
+          <SalesOrderTicket eventBasic={event} tickets={cartTickets} salesOrderCode={salesOrderData.salesOrderCode || ""} 
+                            qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
           <div className="text-center mb-4 mt-2">
             You will receive an email confirmation to {cart.email} shortly with your e-tickets.
           </div>

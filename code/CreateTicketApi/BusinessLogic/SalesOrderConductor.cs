@@ -153,7 +153,7 @@ public class SalesOrderConductor
         };
         // Save the sales order to the database
         int orderId = await _dbAccess.CreateSalesOrder(salesOrder);
-        _logger.LogInformation($"Sales order created with ID: {orderId}");
+        _logger.LogInformation($"Sales order created with ID: {orderId} and QRCode {salesOrder.SalesOrderCode}");
         if (orderId <= 0)
             throw new Exception("Failed to create sales order.");
         //Create event sales items

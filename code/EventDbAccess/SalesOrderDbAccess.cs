@@ -25,7 +25,7 @@ namespace EventManagementDbAccess
                 string query = @"INSERT INTO salesorder 
                     (CustomerId, EventId, UserId, CreatedAt, ModifiedAt,SalesOrderCode, DeliveryType, SalesOrderStatus, StripeSessionId) 
                     VALUES 
-                    (@customerId, @eventId, @userId, @createdAt, @modifiedAt,@salesOrderCode)";
+                    (@customerId, @eventId, @userId, @createdAt, @modifiedAt,@salesOrderCode,@deliveryType,@salesOrderStatus,@stripeSessionId)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@customerId", order.CustomerId);
