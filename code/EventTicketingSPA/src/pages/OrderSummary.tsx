@@ -74,7 +74,7 @@ export default function OrderSummary() {
             cart.tickets.filter(t=>t.quantity && t.quantity>0).map((ticket:Ticket) => (
               <div key={ticket.eventItemTypeId} className="flex justify-between mb-2">
                 <span> {ticket.quantity} @ {ticket.name} </span>
-                <span>${ticket.cost}</span>
+                <span>${ticket.quantity*ticket.cost}</span>
               </div>
             ))
           }
