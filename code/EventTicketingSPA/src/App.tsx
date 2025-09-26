@@ -90,7 +90,7 @@ export default function App() {
         />
         {/* Optionally, redirect unknown routes */}
           <Route
-          path="/ticketdetails/:eventId"
+          path="/ticketdetails/:eventId/:salesOrderCode"
           element={
             isAuthenticated ? <TicketDetails/> : <Navigate to="/login" />
           }

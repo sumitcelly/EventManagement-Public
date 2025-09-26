@@ -18,8 +18,8 @@ namespace EventManagementDbAccess
 
         public int SalesOrderId { get; set; } = 0;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.MinValue;
 
-        public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ModifiedAt { get; set; } = DateTime.MinValue;
     }
 }

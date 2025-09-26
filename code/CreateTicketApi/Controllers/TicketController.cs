@@ -1,3 +1,4 @@
+using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -14,13 +15,16 @@ public class TicketController : ControllerBase
     private readonly ILogger<TicketController> _logger;
 
     private readonly TicketAccess _ticketContext;
+    private readonly SalesOrderConductor _salesOrderConductor;
 
 
     public TicketController(ILogger<TicketController> logger,
-                            TicketAccess ticketContext)
+                            TicketAccess ticketContext,
+                            SalesOrderConductor conductor)
     {
         _logger = logger;
         _ticketContext = ticketContext;
+        _salesOrderConductor = conductor;
 
     }
 
@@ -32,6 +36,16 @@ public class TicketController : ControllerBase
         return QRCodeUtils.GetQRText(Convert.FromBase64String(qrCode));
     }
 
+    [HttpGet("ByEventIdAndSalesOrderQrCode/{id}/{salesOrderQrCode}")]
+    public async Task<IActionResult> Get(int id,string salesOrderQrCode)
+    {
+        if (id <= 0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
+            return BadRequest("Id is null.");
+        var order = await _salesOrderConductor.GetSalesOrderByQrCode(id, salesOrderQrCode);
+        if (order == null)
+            return NotFound();
+        return Ok(order);
+    }
 
     [HttpGet]
     public async Task<EventSalesItem> GetTicketByQRCode(string qrCode, int eventId = 1)

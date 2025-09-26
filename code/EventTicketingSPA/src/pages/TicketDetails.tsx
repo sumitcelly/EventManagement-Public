@@ -9,6 +9,8 @@ import { useState } from "react";
 import SalesOrderTicket from "../components/SalesOrderTicket";
 import App from "../App";
 import AppPagination from "../components/Pagination";
+import { useAppSelector } from "../app/hook";
+import { RootState } from "../app/store";
 
 export default function TicketDetails() {
   
@@ -19,31 +21,35 @@ export default function TicketDetails() {
         setCurrentPage(page);
   }
 
-  const { eventId } = useParams();
-   const  sampleTickets: EventTickets[] = [
-    { id: 1, name: "General Admission", qrCode: "QR123456" },
-    { id: 2, name: "VIP Pass", qrCode: "QR654321"},
-    { id: 3, name: "Balcony Seat", qrCode: "QR789012" },
-  ];
+  const { eventId, salesOrderCode } = useParams();
+  const  eventDetails = useAppSelector((state:RootState) => state.event);
+  
+  console.log('sales order code and event id',salesOrderCode, eventId );
+
+  //  const  sampleTickets: EventTickets[] = [
+  //   { id: 1, name: "General Admission", qrCode: "QR123456" },
+  //   { id: 2, name: "VIP Pass", qrCode: "QR654321"},
+  //   { id: 3, name: "Balcony Seat", qrCode: "QR789012" },
+  // ];
 
   const { data, isLoading } = useQuery("ticketdetails", async () => {
-    //const res = await axiosClient.get("/ticketdetails",{userId: "currentUserId",eventId: "hh"});
+    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
     if (currentPage === 1)
-        setTotalItems(sampleTickets.length);
-  
-    return sampleTickets;
+        setTotalItems(res.data?.length);
+    console.log(res.data);
+    return res.data;
     });
 
 
   if (isLoading) return <p>Loading...</p>;
  
  
- const sampleEvent  = {
-    eventId:   parseInt(eventId || "1"),
-    eventName: "Sample Event",
-    eventDate: new Date(),
-    eventLocation: "Sample Location",
-  };
+//  const sampleEvent  = {
+//     eventId:   parseInt(eventId || "1"),
+//     eventName: "Sample Event",
+//     eventDate: new Date(),
+//     eventLocation: "Sample Location",
+//   };
 
   return (
  
@@ -53,10 +59,10 @@ export default function TicketDetails() {
          
           {/* <EventSummary eventBasic={sampleEvent}/>  */}
       
-          {data && <SalesOrderTicket eventBasic={sampleEvent} 
-              tickets={[{eventItemTypeId: data[currentPage-1].id, name:data[currentPage-1].name, 
-                description:"", cost:0, quantity:1}]} 
-              salesOrderCode={data[currentPage-1].qrCode} qrBase64String={""}>
+          {data && <SalesOrderTicket eventBasic={eventDetails} 
+              tickets={[{eventItemTypeId: data[currentPage-1].eventItemType.eventItemTypeId, name: data[currentPage-1].eventItemType.name, 
+                description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]} 
+              salesOrderCode={data[currentPage-1].qrCode} qrBase64String={data[currentPage-1].qrBase64Image}>
             
             </SalesOrderTicket>
           }

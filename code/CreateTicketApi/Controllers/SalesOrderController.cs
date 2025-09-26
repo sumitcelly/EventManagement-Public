@@ -27,16 +27,7 @@ namespace CreateTicketApi.Controllers
                 return Ok(result);  
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
-        {
-            if (id <= 0)
-                return BadRequest("Id is null.");
-            var order = await _salesOrderConductor.GetSalesOrderById(id);
-            if (order == null)
-                return NotFound();
-            return Ok(order);
-        }
+       
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CustomerSalesOrder order)

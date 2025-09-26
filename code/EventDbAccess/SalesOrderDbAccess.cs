@@ -95,6 +95,45 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<SalesOrder> GetSalesOrderByQrCodeAndEventId(int eventId,string qrCode)
+        {
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT * FROM salesorder WHERE EventId = @eventId and SalesOrderCode=@qrCode";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@eventId", eventId);
+                cmd.Parameters.AddWithValue("@qrCode", qrCode);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new SalesOrder
+                    {
+                        OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
+                        SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
+                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving sales order: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> DeleteSalesOrder(int orderId)
         {
             if (orderId <= 0)

@@ -64,7 +64,7 @@ export default function OrderConfirmation() {
           <Button
                 className="align-bottom ml-auto align-center"
                 size="xs"
-                onClick={() => navigate(`/ticketdetails/${event.eventId}`)}>
+                onClick={() => navigate(`/ticketdetails/${event.eventId}/${salesOrderData.salesOrderCode}`)}>
                 View your Tickets
           </Button>
         </div>

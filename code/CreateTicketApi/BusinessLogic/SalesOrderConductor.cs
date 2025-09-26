@@ -1,6 +1,7 @@
 using System;
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.SignalR.Protocol;
 namespace CreateTicketApi.BusinessLogic;
 public class SalesOrderConductor
 {
@@ -75,23 +76,24 @@ public class SalesOrderConductor
         return await CreateSalesOrder(order);      
     }
 
-    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderById(int orderId)
+    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderByQrCode(int id,string salesOrderQrCode)
     {
-        if (orderId <= 0)
-            throw new ArgumentException("OrderId cannot be null or empty.", nameof(orderId));
+        if (id <= 0)
+            throw new ArgumentException("Event id cannot be null or empty.", nameof(id));
 
-        var salesOrder = await _dbAccess.GetSalesOrderById(orderId);
-        if (salesOrder == null)
-            throw new Exception($"Sales order with ID {orderId} not found.");
         // Fetch the event sales items associated with the sales order
-        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBySalesOrderId(salesOrder.OrderId, salesOrder.EventId);
+        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBasicsBySalesOrderQrCodeFromDb(salesOrderQrCode,id);
         if (eventSalesItems == null || !eventSalesItems.Any())
-            throw new Exception($"No event sales items found for sales order ID {orderId}.");
+            throw new Exception($"No event sales items found for sales order ID {salesOrderQrCode}.");
         eventSalesItems.ToList().ForEach(item =>
         {
-            item.SalesOrderId = salesOrder.OrderId;
+            //item.SalesOrderId = salesOrder.OrderId;
             item.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(item.TicketCode));
-            item.TicketCode = string.Empty; // Clear the ticket code for security reasons
+            item.TicketCode = item.TicketCode;
+            item.TicketScanned = item.TicketScanned;
+            item.EventItemType.Name = item.EventItemType.Name;
+            item.EventItemType.EventItemTypeId = item.EventItemType.EventItemTypeId;
+             // Clear the ticket code for security reasons
             //var t= QRCodeUtils.GetQRText(Convert.FromBase64String(item.QRBase64Image)); // Decode the QR code to ensure it's valid
         });
         return eventSalesItems;
