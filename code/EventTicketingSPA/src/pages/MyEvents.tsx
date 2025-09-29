@@ -18,7 +18,7 @@ interface UserSalesOrder {
 
 
   
-export default function EventsPage() {
+export default function MyEvents() {
   const navigate = useNavigate();
   const  user = useAppSelector((state:RootState) => state.auth);
   const userId= user.user?.id;

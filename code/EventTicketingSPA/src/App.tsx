@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import LoginPage from "./pages/Login";
-import EventsPage from "./pages/EventsPage";
+import MyEvents from "./pages/MyEvents";
 import TicketDetails from "./pages/TicketDetails";
 import { useSelector } from "react-redux";
 
@@ -30,7 +30,7 @@ export default function App() {
         <Route
           path="/myevents"
           element={
-            isAuthenticated ? <EventsPage /> : <Navigate to="/login" />
+            isAuthenticated ? <MyEvents /> : <Navigate to="/login" />
           }
         />
         <Route
