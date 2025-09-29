@@ -34,31 +34,32 @@ export default function TicketDetails() {
   useQuery(
     ['eventDetails', eventId], // structured query key
     async () => {
-      console.log("in eventdetails backend");
+    
       const res = await axiosClient.get(`/events/details/${eventId}`);
-      console.log('Event id details', res?.data);
+      console.log('Event id details from backend', res?.data);
       return res.data;
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
       //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      //refetchOnMount: 'always',
+      refetchOnMount: false,
       refetchOnWindowFocus: false,
       enabled: !!eventId //  only run query if we have an id
     }
   );
 
-  const { data, isLoading } = useQuery( ['ticketDetauls', eventId,salesOrderCode], async () => {
+  const { data, isLoading } = useQuery( ['ticketDetails', eventId,salesOrderCode], async () => {
     const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
+    console.log('user tickets from backend', res?.data);
     if (currentPage === 1)
         setTotalItems(res.data?.length);
-    console.log(res.data);
+   
     return res.data;
     },
   {
      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      refetchOnMount: 'always',
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
       enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
   });
@@ -69,9 +70,7 @@ export default function TicketDetails() {
       <div className="flex flex-col max-w-md mx-auto ">
         
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
-         
-          {/* <EventSummary eventBasic={sampleEvent}/>  */}
-      
+        
           {data && <SalesOrderTicket eventBasic={eventDetails} 
               tickets={[{eventItemTypeId: data[currentPage-1].eventItemType.eventItemTypeId, name: data[currentPage-1].eventItemType.name, 
                 description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]} 

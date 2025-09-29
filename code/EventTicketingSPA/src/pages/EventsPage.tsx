@@ -9,10 +9,11 @@ interface UserSalesOrder {
   eventId: number;
   eventName: string;
   eventDate: Date;
-  eventDescription: string;
+  eventSummary: string;
   eventOrganizer: number;
   eventLocation: string;
   salesOrderCode: string;
+  eventHeadline:string;
 }
 
 
@@ -23,24 +24,24 @@ export default function EventsPage() {
   const userId= user.user?.id;
 
   const { data, isLoading } = 
-  useQuery( ['eventsByUserId', userId], async () => {
-     console.log("Fetching orders for user", user.user?.id);
+  useQuery( `eventsbyuserid/${userId}`, async () => {
+     console.log("Fetching orders for user", userId);
       const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
-      console.log('orders fetched from backebend',res.data);
+      console.log('orders fetched from backend',res.data);
       return res.data;
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      refetchOnMount: false,      // don’t always re-fetch on mount
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      // cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      // refetchOnMount: false,      // don’t always re-fetch on mount
+      // refetchOnWindowFocus: false,
+      // refetchOnReconnect: false,
       enabled: !!userId //  only run query if we have an id
     }
   );
 
   if (isLoading) return <p>Loading...</p>;
-   console.log("Fetching orders for user", user.user?.id);
+  //console.log("Fetching orders for user",userId);
   return (
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
@@ -58,9 +59,9 @@ export default function EventsPage() {
                   <p className="text-font-heading text-primary-color text-lg">
                     {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
                   </p>
-                  <p className="text-sm text-font-body mt-1">{event.eventDescription} </p> 
+                  <p className="text-sm text-font-body mt-1">{event.eventHeadline} </p> 
                 </div>
-
+                
                   <a
                      href={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
                      onClick={(e) => {

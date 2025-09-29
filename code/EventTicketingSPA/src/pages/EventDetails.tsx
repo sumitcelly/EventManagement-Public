@@ -17,12 +17,15 @@ export default function EventDetails() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
-    const res = await axiosClient.get(`/events/details/${id}`);
-    console.log('Event details', res?.data);
+  const { data:eventDetails, isLoading } = useQuery(`events/basics/${id}`, async () => {
+    const res = await axiosClient.get(`/events/basics/${id}`);
+    console.log('Event details from backend', res?.data);
     return res.data;
   },
-  {staleTime: 1000 * 60 * 5}
+  {
+    staleTime: 1000 * 60 * 5,
+    enabled: !!id
+  }
 );
 
 
@@ -113,6 +116,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       </div>
     )}
 
+  {eventDetails.eventDescription &&( 
     <div className=" bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
               border rounded-lg p-2 shadow-lg">
         <div className="text-lg font-bold mb-2 text-center text-primary-color">More Info ...</div>
@@ -120,6 +124,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
           <p key={index} className="mb-2">{line}</p>
         ))}
     </div>
+  )}
 
     {!isOrganizerLoading && (
       <div className="flex flex-row mt-4 items-center
