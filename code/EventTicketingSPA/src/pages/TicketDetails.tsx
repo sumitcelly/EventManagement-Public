@@ -4,7 +4,7 @@ import axiosClient from "../api/axiosClient";
 import { useLocation, useParams } from "react-router-dom";
 import { EventTickets } from "../types/Tickets";
 import EventSummary from "../components/EventSummary";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 //import AppPagination from "../components/Pagination";
 import SalesOrderTicket from "../components/SalesOrderTicket";
 import App from "../App";
@@ -61,11 +61,17 @@ export default function TicketDetails() {
       cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
-      enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
+      //enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
   });
-
-  if (isLoading) return <p>Loading...</p>;
+   
+  useEffect(() => {
+     if (currentPage === 1)
+        setTotalItems(data?.length);
+   
  
+  }, []);
+  if (isLoading) return <p>Loading...</p>;
+
   return ( 
       <div className="flex flex-col max-w-md mx-auto ">
         

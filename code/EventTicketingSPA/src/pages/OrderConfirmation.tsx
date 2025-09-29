@@ -24,7 +24,6 @@ export default function OrderConfirmation() {
   
   const location = useLocation();
   const salesOrderData = location.state;
-  console.log('salesorder from server', salesOrderData);
 
   const  event = useAppSelector((state:RootState) => state.event);
   const cart  = useAppSelector((state:RootState) => state.cart);
