@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using CreateTicketApi.BusinessLogic;
+using EventManagementDbAccess;
 
 namespace CreateTicketApi.Controllers
 {
@@ -8,10 +9,12 @@ namespace CreateTicketApi.Controllers
     public class SalesOrderController : ControllerBase
     {
         private readonly SalesOrderConductor _salesOrderConductor;
+        private readonly SalesOrderDbAccess _dbAccess;
 
-        public SalesOrderController(SalesOrderConductor salesOrderConductor)
+        public SalesOrderController(SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess)
         {
             _salesOrderConductor = salesOrderConductor;
+            _dbAccess = dbAccess;
         }
 
         [HttpPost]
@@ -24,10 +27,10 @@ namespace CreateTicketApi.Controllers
             if (result == null || result.SalesOrderCode == null)
                 return StatusCode(500, "Failed to create sales order.");
             else
-                return Ok(result);  
+                return Ok(result);
         }
 
-       
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CustomerSalesOrder order)
@@ -35,7 +38,7 @@ namespace CreateTicketApi.Controllers
             if (order == null || id <= 0)
                 return BadRequest("Invalid order data.");
 
-            var result = await _salesOrderConductor.UpdateSalesOrder(id,order);
+            var result = await _salesOrderConductor.UpdateSalesOrder(id, order);
             if (result == null || result.SalesOrderCode == null)
                 return StatusCode(500, "Failed to create sales order.");
             else
@@ -53,9 +56,24 @@ namespace CreateTicketApi.Controllers
             else
                 return StatusCode(500, "Failed to delete sales order.");
             // Implement delete logic here if needed
-      
+
         }
 
+        [HttpGet]
+        [Route("/SalesOrder/ByUserId/{id}")]
+        public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int id)
+        {
+            if (id <= 0)
+                return BadRequest();
+            var result = await _dbAccess.GetUpcomingSalesOrdersForUser(id);
+            if (result != null)
+            {
+                Console.WriteLine("retrieved orders");
+                return result;
+            }
+            else
+                return StatusCode(500, "Failed to delete sales order.");
+        }
         // [HttpPut("{id}")]
         // public async Task<IActionResult> Update(int id, [FromBody] SalesOrder order)
         // {

@@ -7,7 +7,7 @@ VALUES
 (
 'scelly1@securevideo.com');
 
-select * from `eventmanagement`.`eventitemtype`
+select * from `eventmanagement`.`salesorder`
 
 select * from `eventmanagement`.`salesorder`
 
@@ -28,3 +28,10 @@ SELECT a.Name, a.Email, a.Sms, c.Description,
                                    And b.EventId = c.EventId
                                    AND b.SalesOrderId = 1
                                    AND b.EventId = 1
+                                   
+SELECT a.OrderId, b.TicketCode,b.TicketScanned, c.EventItemTypeId,c.Name 
+                                    from SalesOrder a, EventSalesItem b, EventItemType c
+                                    where a.OrderId=b.SalesOrderId and
+                                    b.EventItemTypeId=c.EventItemTypeId and
+                                    a.SalesOrderCode='MEQL0EOF' and 
+                                    a.eventId=1

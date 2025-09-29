@@ -134,6 +134,53 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<List<UserSalesOrders>> GetUpcomingSalesOrdersForUser(int userId)
+        {
+            try
+            {
+                if (userId < 0)
+                    throw new ArgumentException("User id is invalid");
+
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"select a.EventId, a.SalesOrderCode,b.EventName,
+                                b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
+                                b.EventSummary,b.Free
+                                from SalesOrder a, Events b
+                                where a.EventId = b.EventId and
+                                a.UserId=@userId and b.eventDate>UTC_DATE()";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@userId", userId);
+                List<UserSalesOrders> events = new List<UserSalesOrders>();
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        events.Add(new UserSalesOrders()
+                        {
+                            SalesOrderCode =  reader.GetString("SalesOrderCode"),
+                            EventId = reader.GetInt32("EventId"),
+                            EventName = reader.GetString("EventName"),
+                            EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
+                            EventDate = reader.GetDateTime("EventDate"),
+                            EventOrganizerId = reader.GetInt32("EventOrganizer"),
+                            EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString("EventSummary"),
+                            Free = reader.GetBoolean("Free"),
+                            EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
+                        });
+                    }
+                }
+                return events;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving sales order: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> DeleteSalesOrder(int orderId)
         {
             if (orderId <= 0)

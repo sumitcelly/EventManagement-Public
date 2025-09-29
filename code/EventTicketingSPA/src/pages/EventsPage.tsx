@@ -2,45 +2,52 @@ import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
+import { useAppSelector } from "../app/hook";
+import { RootState } from "../app/store";
 // 
-interface Event {
+interface UserSalesOrder {
   eventId: number;
   eventName: string;
   eventDate: Date;
   eventDescription: string;
   eventOrganizer: number;
   eventLocation: string;
+  salesOrderCode: string;
 }
 
 
-   
+  
 export default function EventsPage() {
   const navigate = useNavigate();
-  const { data, isLoading } = useQuery("eventsbyname", async () => {
-  //const res = await axiosClient.get("/events/byname/new7");
+  const  user = useAppSelector((state:RootState) => state.auth);
+  const userId= user.user?.id;
 
-
-  const events: Event[] = [];
-  //if (res.data) {
-    
-    events.push({ eventId: 1, eventName: "Food Festival", eventDate: new Date(), eventDescription: "Taste dishes from top chefs and local favorites. And more...", eventOrganizer: 4, eventLocation: "New York" });
-    events.push({ eventId: 2, eventName: "Music festival", eventDate: new Date(), eventDescription: "Explore contemporary music from around the world.", eventOrganizer: 2, eventLocation: "New York" });
-    events.push({ eventId: 3, eventName: "Art Exhibition", eventDate: new Date(), eventDescription: "Explore contemporary artworks from around the world.", eventOrganizer: 2, eventLocation: "New York" });
-    events.push({ eventId: 4, eventName: "Tech Conference", eventDate: new Date(), eventDescription: "Join industry leaders to discuss the latest in technology.", eventOrganizer: 3, eventLocation: "New York" });
-  //}
-
-  return events;
-});
+  const { data, isLoading } = 
+  useQuery( ['eventsByUserId', userId], async () => {
+     console.log("Fetching orders for user", user.user?.id);
+      const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
+      console.log('orders fetched from backebend',res.data);
+      return res.data;
+    },
+    {
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: false,      // don’t always re-fetch on mount
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      enabled: !!userId //  only run query if we have an id
+    }
+  );
 
   if (isLoading) return <p>Loading...</p>;
-
+   console.log("Fetching orders for user", user.user?.id);
   return (
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
       <ListGroup>
-        {data && data.map((event:Event) => (
+        {data && data.map((event:UserSalesOrder) => (
             <ListGroupItem
-            key={event.eventId}
+            key={event.salesOrderCode}
             onClick={() => navigate(`/eventdetails/${event.eventId}`)}
             className="cursor-pointer"
           >
@@ -55,7 +62,7 @@ export default function EventsPage() {
                 </div>
 
                   <a
-                     href={`/ticketdetails/${event.eventId}`}
+                     href={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
                      onClick={(e) => {
                       e.stopPropagation(); // Prevent the ListGroupItem onClick from firing
                     }}

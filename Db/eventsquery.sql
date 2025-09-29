@@ -15,9 +15,8 @@ select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventOrganizer, a.Ev
                     a.EventId = 1
 
 update  events
-set City="Colorado Springs",
-State="TX"
-where eventid=3 
+set City="Colorado Springs"
+where eventid>0
 
 
 
@@ -28,6 +27,8 @@ INSERT INTO `eventmanagement`.`events`
 `EventOrganizer`,
 `EventDescription`,
 `EventAddress`,
+`State`,
+`City`,
 `EventCategory`,
 `EventTags`,
 `EventDuration`,
@@ -38,11 +39,13 @@ INSERT INTO `eventmanagement`.`events`
 `ImageReel`)
 VALUES
 (
-'Food Festival 2026',
-'2026-08-29 11:00:00',
+'Music Festival NY',
+'2026-09-29 11:00:00',
 1,
 'Many vendors, food stall, cultural, live music, fun, dances, culture, and much much more',
-'123 Lewis Palmer School, Monument, Colorado - 80920',
+'123 Lewis Palmer School, Colorado Springs, CO - 80920',
+'Colorado Springs',
+'CO',
 'Food Festivals',
 'Food, Outdoors, Live music',
 4,
@@ -58,6 +61,8 @@ AGAINST ('festival' IN NATURAL LANGUAGE MODE);
 
 SELECT 
         EventId,
+        City,
+        EventDate,
         eventheadline,
         EventDescription,
         EventTags,
@@ -65,17 +70,20 @@ SELECT
         EventAddress,
         EventCategory 
 		FROM events
-        WHERE MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
-        AGAINST ("Food" IN NATURAL LANGUAGE MODE) 
-  
+        WHERE
+        city='Colorado Springs'
+        and eventdate >'9/29/2026 12:00:00 AM'
+        order by EventDate asc
+   
+   MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
     
 CALL search_events(
     NULL,                   -- p_keyword
     NULL,                 -- p_start_date
-    NULL, -- p_end_date
-    'CO',                  -- p_state
-    'Colorado Springs',					-- p_city
-    'Food Festivals',                      -- p_category
+    NULL, 					-- p_end_date
+    NULL,                  -- p_state
+   'Colorado Springs',			-- p_city
+    NULL,                      -- p_category
     10,                        -- p_limit
     0                          -- p_offset
 );

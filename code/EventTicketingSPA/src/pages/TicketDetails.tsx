@@ -22,37 +22,50 @@ export default function TicketDetails() {
   }
 
   const { eventId, salesOrderCode } = useParams();
-  const  eventDetails = useAppSelector((state:RootState) => state.event);
+  //const  eventDetails = useAppSelector((state:RootState) => state.event);
   
   console.log('sales order code and event id',salesOrderCode, eventId );
 
-  //  const  sampleTickets: EventTickets[] = [
-  //   { id: 1, name: "General Admission", qrCode: "QR123456" },
-  //   { id: 2, name: "VIP Pass", qrCode: "QR654321"},
-  //   { id: 3, name: "Balcony Seat", qrCode: "QR789012" },
-  // ];
+  const {
+        data: eventDetails, // provide default empty array
+        isLoading:eventLoading,
+        error
+  } = 
+  useQuery(
+    ['eventDetails', eventId], // structured query key
+    async () => {
+      console.log("in eventdetails backend");
+      const res = await axiosClient.get(`/events/details/${eventId}`);
+      console.log('Event id details', res?.data);
+      return res.data;
+    },
+    {
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //refetchOnMount: 'always',
+      refetchOnWindowFocus: false,
+      enabled: !!eventId //  only run query if we have an id
+    }
+  );
 
-  const { data, isLoading } = useQuery("ticketdetails", async () => {
+  const { data, isLoading } = useQuery( ['ticketDetauls', eventId,salesOrderCode], async () => {
     const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
     if (currentPage === 1)
         setTotalItems(res.data?.length);
     console.log(res.data);
     return res.data;
-    });
-
+    },
+  {
+     staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: false,
+      enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
+  });
 
   if (isLoading) return <p>Loading...</p>;
  
- 
-//  const sampleEvent  = {
-//     eventId:   parseInt(eventId || "1"),
-//     eventName: "Sample Event",
-//     eventDate: new Date(),
-//     eventLocation: "Sample Location",
-//   };
-
-  return (
- 
+  return ( 
       <div className="flex flex-col max-w-md mx-auto ">
         
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       

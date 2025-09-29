@@ -11,10 +11,10 @@ VALUES
 '7192315111',
 0);
 
-UPDATE `eventmanagement`.`salesorder`
+UPDATE `eventmanagement`.`eventorganizer`
 SET
-`CreatedAt` = UTC_DATE()
-WHERE `orderid`  > 0;
+`UserId` = 1
+WHERE `customerid`>   0;
 
 select  a.ticketcode from `eventmanagement`.`eventsalesitem` a
 where a.`AttendeeId`=1 and a.`EventId`=1

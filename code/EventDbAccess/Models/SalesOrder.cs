@@ -1,3 +1,5 @@
+using EventManagementDbAccess;
+
 public class SalesOrder
 {
 
@@ -20,6 +22,12 @@ public class SalesOrder
     public SalesOrderStatus SalesOrderStatus { get; set; } = SalesOrderStatus.InProgress;
 
     public string  StripeSessionId { get; set; } = string.Empty;
+}
+
+public class UserSalesOrders : EventHeader
+{
+    public required string SalesOrderCode { get; set; }
+    public int SalesOrdeId { get; set; }
 }
 
 public enum SalesOrderStatus
