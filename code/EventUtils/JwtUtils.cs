@@ -67,8 +67,8 @@ public class JwtUtils
             throw new ArgumentException("Token cannot be null or empty.", nameof(token));
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwtToken = tokenHandler.ReadJwtToken(token);
-        var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+        var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
         var customerIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "CustomerId");
         if (userIdClaim == null || roleClaim == null)
             throw new ArgumentException("Token does not contain required claims.");
@@ -78,7 +78,7 @@ public class JwtUtils
             customerIdClaim?.Value ?? "0");
     }
 
-    public string GenerateRefreshToken(string userId, string role, string customerId = "0")
+    public string GenerateRefreshToken(string userId, string role, int customerId = 0)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var refreshTokenDescriptor = new SecurityTokenDescriptor

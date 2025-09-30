@@ -62,7 +62,7 @@ namespace CreateTicketApi.Controllers
 
             //create a JWT token or session here as needed
             var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId.ToString()??"0");
+            string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
             Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
@@ -97,7 +97,7 @@ namespace CreateTicketApi.Controllers
             string customerId = claims.Item3;
             
             //when stored in db, no need to store userId, role, customerId in token
-            var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), role, customerId);
+            var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
             //RefreshTokens.Remove(refreshToken);
             //RefreshTokens[newRefreshToken] = userId;
 
@@ -109,7 +109,7 @@ namespace CreateTicketApi.Controllers
                 Expires = DateTime.UtcNow.AddDays(7)
             });
 
-            var newAccessToken = _tokenUtils.GenerateJwtToken(userId, "test@example.com");
+            var newAccessToken = _tokenUtils.GenerateJwtToken(userId, role, Convert.ToInt16(customerId));
 
             return Ok(new { accessToken = newAccessToken });
         }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CreateTicketApi.Controllers
 {
@@ -59,6 +60,7 @@ namespace CreateTicketApi.Controllers
 
         }
 
+        [Authorize] 
         [HttpGet]
         [Route("/SalesOrder/ByUserId/{id}")]
         public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int id)

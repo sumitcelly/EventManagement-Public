@@ -24,7 +24,7 @@ export default function TicketDetails() {
   const { eventId, salesOrderCode } = useParams();
   //const  eventDetails = useAppSelector((state:RootState) => state.event);
   
-  console.log('sales order code and event id',salesOrderCode, eventId );
+  //console.log('sales order code and event id',salesOrderCode, eventId );
 
   const {
         data: eventDetails, // provide default empty array

@@ -24,7 +24,7 @@ export default function App() {
         <Route
           path="/login"
           element={
-            isAuthenticated ? <Navigate to="/events" /> : <LoginPage />
+            isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
           }
         />
         <Route
@@ -98,7 +98,7 @@ export default function App() {
         <Route
           path="*"
           element={
-            isAuthenticated ? <Navigate to="/myevents" /> : <Navigate to="/" />
+            isAuthenticated ? <MyEvents/> : <Navigate to="/" />
           }
         />
       </Routes>

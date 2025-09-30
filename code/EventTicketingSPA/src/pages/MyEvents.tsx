@@ -24,7 +24,7 @@ export default function MyEvents() {
   const userId= user.user?.id;
 
   const { data, isLoading } = 
-  useQuery( `eventsbyuserid/${userId}`, async () => {
+  useQuery(['SalesOrderByUserId',userId], async () => {
      console.log("Fetching orders for user", userId);
       const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
       console.log('orders fetched from backend',res.data);
@@ -32,10 +32,10 @@ export default function MyEvents() {
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      // cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      // refetchOnMount: false,      // don’t always re-fetch on mount
-      // refetchOnWindowFocus: false,
-      // refetchOnReconnect: false,
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: false,      // don’t always re-fetch on mount
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       enabled: !!userId //  only run query if we have an id
     }
   );
@@ -52,28 +52,23 @@ export default function MyEvents() {
             onClick={() => navigate(`/eventdetails/${event.eventId}`)}
             className="cursor-pointer"
           >
-            <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
-                <div>
-                  <p className="font-heading text-accent-color">{event.eventName}  </p>
-                 
-                  <p className="text-font-heading text-primary-color text-lg">
-                    {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
-                  </p>
-                  <p className="text-sm text-font-body mt-1">{event.eventHeadline} </p> 
-                </div>
-                
-                  <a
-                     href={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
-                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent the ListGroupItem onClick from firing
-                    }}
-                    className="px-3 py-1 text-sm font-body text-white bg-brand-light rounded"
-                  >
-                    View tickets
-                  </a>
-             
-
+          <div className="flex items-center justify-between gap-4 w-full">
+            <div className="min-w-0">
+              <p className="font-heading text-accent-color">{event.eventName}</p>
+              <p className="text-font-heading text-primary-color text-lg">
+                {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
+              </p>
+              <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
             </div>
+            {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
+            <Link
+              to={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
+              onClick={(e) => e.stopPropagation()}
+              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
+            >
+              View tickets
+            </Link>
+        </div>
           </ListGroupItem>
       
         ))}
