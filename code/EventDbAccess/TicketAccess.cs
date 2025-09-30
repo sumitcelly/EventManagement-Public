@@ -177,7 +177,7 @@ namespace EventManagementDbAccess
                 if (i == 1)
                 {
                     if (cmd.LastInsertedId > 0)
-                    {                     
+                    {
                         _cache.AddOrUpdateCache(ticket, $"{ticket.EventId}:{ticket.TicketCode}", TimeSpan.FromMinutes(base._cacheDurationInMinutes));
                     }
                     return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
@@ -195,7 +195,118 @@ namespace EventManagementDbAccess
             }
         }
 
-          
+
+        public async Task<string> AddMultipleEventTickets(List<EventSalesItem> tickets)
+        {
+            string retVal = string.Empty;
+            if (tickets == null)
+            {
+                throw new ArgumentNullException(nameof(tickets));
+            }
+            if (tickets.Count == 0)
+            {
+                throw new ArgumentNullException("No tickets provided to add");
+            }
+
+
+            int? eventId = tickets.First()?.EventId;
+            if (!eventId.HasValue || eventId <= 0)
+                throw new InvalidDataException($"Invalid event id received for adding tickets with value: {eventId}");
+            int? itemType = tickets.First()?.EventItemType?.EventItemTypeId;
+            if (!itemType.HasValue || itemType <= 0)
+                throw new InvalidDataException($"Invalid event item type id received for adding tickets with value: {eventId}");
+
+            using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
+            mySqlConnection.Open();
+
+            using (var transaction = mySqlConnection.BeginTransaction())
+            {
+                try
+                {
+                    StringBuilder sb = new StringBuilder();
+                    //update count
+                    sb.Append(@"update eventmanagement.eventitemtype 
+                        set ticketssold=ticketssold+@quantity
+                        where ticketssold+@quantity <= totalallowed and
+                        eventitemtypeid=@itemType");
+                    Console.WriteLine($"query for update count is:{sb}");
+
+                    MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
+                    cmd.Parameters.AddWithValue("@quantity", tickets.Count());
+                    cmd.Parameters.AddWithValue("@itemType", itemType);
+
+                    int i = await cmd.ExecuteNonQueryAsync();
+                    if (i <= 0)
+                    {
+                        _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
+                        throw new Exception($"Not enough tickets available for {itemType}");
+                    }
+                    sb.Clear();
+                    
+                    tickets.ForEach(async ticket =>
+                    {
+                        sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
+                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
+                        CreatedAt,ModifiedAt) ");
+                        sb.Append(" VALUES (");
+
+                        sb.Append(ticket.EventId);
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.User.UserId);
+                        sb.Append("'");
+                        sb.Append(",");
+                        sb.Append(ticket.TicketScanned);
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.TicketCode);
+                        sb.Append("'");
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.SalesOrderId);
+                        sb.Append("'");
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.EventItemType.EventItemTypeId);
+                        sb.Append("'");
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+                        sb.Append("'");
+                        sb.Append(",");
+                        sb.Append("'");
+                        sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+                        sb.Append("'");
+                        sb.Append(")");
+
+                        Console.WriteLine(sb.ToString());
+
+                        MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
+                        int i = await cmd.ExecuteNonQueryAsync();
+                        if (i == 1)
+                        {
+                            _logger.LogInformation($@"Successfully inserted ticket with code {ticket.TicketCode}. 
+                                                Return value for ticket id is{cmd.LastInsertedId}");
+                        }
+                        else
+                        {
+                            throw new Exception("Unable to insert ticketrecord");
+
+                        }
+                    });
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    retVal = ex.Message;
+                    Console.WriteLine(ex.Message);
+                }
+                return retVal;
+            }
+        }
+
+
         public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderId(int salesOrderId, int eventId)
         {
             if (salesOrderId <= 0 || eventId <= 0)

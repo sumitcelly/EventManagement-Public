@@ -49,6 +49,42 @@ public static class CacheHelper
         return value;
     }
 
+    public static async Task<T?> GetOnlyAsync<T>(this IDistributedCache cache, string key, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
+    {
+        _logger = logger ?? _logger;
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentNullException(nameof(key), "Cache key cannot be null or empty.");
+        }
+
+
+        _logger?.LogInformation($"Attempting to get cache for key: {key}");
+    
+        var cachedValue = await cache.GetStringAsync(key);
+        if (cachedValue != null)
+        {
+            _logger?.LogInformation($"Cache hit for key: {key}");
+            return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
+        }
+        else
+            return null;
+    }
+
+    public static async Task<bool> SetOnlyAsync<T>(this IDistributedCache cache, string key, T data, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
+    {
+        _logger = logger ?? _logger;
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentNullException(nameof(key), "Cache key cannot be null or empty.");
+        }
+        var options = new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
+        };
+        await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(data), options);
+        return true;
+    }
+
   
     public static string GetCacheKey<T>(string primaryKey)
     {
@@ -65,7 +101,6 @@ public static class CacheHelper
         return $"{customPrefix}:{primaryKey}";
     }   
 
-    
 
     public static void AddOrUpdateCache<T>(this IDistributedCache cache, T item, string primaryKey, TimeSpan? absoluteExpiration = null)
     {

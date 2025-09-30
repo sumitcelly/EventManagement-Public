@@ -165,6 +165,7 @@ public class SalesOrderConductor
                 throw new ArgumentException("EventTicketTypeId cannot be null or empty.", nameof(item.EventTicketTypeId));
             if (item.Quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than zero.", nameof(item.Quantity));
+            List<EventSalesItem> itemList = new List<EventSalesItem>();
 
             for (int i = 0; i < item.Quantity; i++)
             {
@@ -181,10 +182,12 @@ public class SalesOrderConductor
                     },
                     TicketCode = EventUtils.PasswordGenerator.GetPassword()// Generate a unique ticket code
                 };
-                await _ticketDbAccess.AddEventTicket(salesItem);
-                _logger.LogInformation($"Event sales item created with TicketCode: {salesItem.TicketCode}");
+                itemList.Add(salesItem);
             }
+            string result = await _ticketDbAccess.AddMultipleEventTickets(itemList);
+            _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");
         }
+        
         if (!customerSalesOrder.PaymentRequired)
         {
             await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
