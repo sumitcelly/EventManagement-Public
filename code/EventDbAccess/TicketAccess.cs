@@ -196,9 +196,9 @@ namespace EventManagementDbAccess
         }
 
 
-        public async Task<string> AddMultipleEventTickets(List<EventSalesItem> tickets)
+        public async Task<int> AddEventTickets(List<EventSalesItem> tickets)
         {
-            string retVal = string.Empty;
+            int retVal =0;
             if (tickets == null)
             {
                 throw new ArgumentNullException(nameof(tickets));
@@ -295,7 +295,7 @@ namespace EventManagementDbAccess
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    retVal = ex.Message;
+                    retVal = ex.Message.ToLower().Contains("not enough") ? -1:-2;
                     Console.WriteLine(ex.Message + ex.InnerException);
                     _logger.LogCritical(ex.Message);
                 }

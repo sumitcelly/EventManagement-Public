@@ -159,6 +159,8 @@ public class SalesOrderConductor
         if (orderId <= 0)
             throw new Exception("Failed to create sales order.");
         //Create event sales items
+
+        List<ErrorResponseSalesOrderItems> errorItems = new List<ErrorResponseSalesOrderItems>();
         foreach (var item in customerSalesOrder.SalesOrderItems)
         {
             if (item.EventTicketTypeId <= 0)
@@ -166,7 +168,6 @@ public class SalesOrderConductor
             if (item.Quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than zero.", nameof(item.Quantity));
             List<EventSalesItem> itemList = new List<EventSalesItem>();
-            Dictionary<int, string> failedAdds = new Dictionary<int, string>();
 
             for (int i = 0; i < item.Quantity; i++)
             {
@@ -185,32 +186,42 @@ public class SalesOrderConductor
                 };
                 itemList.Add(salesItem);
             }
-            string result = await _ticketDbAccess.AddMultipleEventTickets(itemList);
-            if (!String.IsNullOrWhiteSpace(result))
+            int result = await _ticketDbAccess.AddEventTickets(itemList);
+            if (result <0)
             {
-                string error = result.ToLower().Contains("not enough") ? result : "An error occurred while adding your ticket to db";
-                failedAdds.Add(item.EventTicketTypeId, error);
+                string error = result == -1 ? "Ticket are sold out for this item." : "An error occurred while creating ticket.";
+                errorItems.Add(new  ErrorResponseSalesOrderItems
+                            {EventItemTypeId=  item.EventTicketTypeId,
+                                Error= error });
             }
             _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");
         }
 
-        if (!customerSalesOrder.PaymentRequired)
+        CustomerSalesOrder salesOrderReturn = new();
+
+        if (errorItems.Count == customerSalesOrder.SalesOrderItems.Count)
         {
-            await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
-            await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.OrderCompleted, string.Empty);
+            _logger.LogInformation($"All ticket types failed to be added...Deleting sales order");
+            await _dbAccess.DeleteSalesOrder(orderId);
         }
         else
         {
-            await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.PaymentPending, string.Empty);
-            _logger.LogInformation($"Sales order {orderId} is pending payment.");
+            if (!customerSalesOrder.PaymentRequired)
+            {
+                await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
+                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.OrderCompleted, string.Empty);
+            }
+            else
+            {
+                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.PaymentPending, string.Empty);
+                _logger.LogInformation($"Sales order {orderId} is pending payment.");
+            }
+            salesOrderReturn.SalesOrderCode = salesOrder.SalesOrderCode;
+            salesOrderReturn.SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode));
+            
         }
-        
-        return new CustomerSalesOrder()
-        {
-            SalesOrderCode = salesOrder.SalesOrderCode,
-            SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode))
-        };
-        
+        salesOrderReturn.SalesOrderItemsError = errorItems;
+        return salesOrderReturn;
     }
     
     
