@@ -226,7 +226,8 @@ namespace EventManagementDbAccess
                     StringBuilder sb = new StringBuilder();
                     //update count
                     sb.Append(@"update eventmanagement.eventitemtype 
-                        set ticketssold=ticketssold+@quantity
+                        set ticketssold=ticketssold+@quantity,
+                        ModifiedAt=@modifiedAt
                         where ticketssold+@quantity <= totalallowed and
                         eventitemtypeid=@itemType");
                     Console.WriteLine($"query for update count is:{sb}");
@@ -235,6 +236,7 @@ namespace EventManagementDbAccess
                     {
                         cmd.Parameters.AddWithValue("@quantity", tickets.Count());
                         cmd.Parameters.AddWithValue("@itemType", itemType);
+                        cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                         int i = await cmd.ExecuteNonQueryAsync();
                         if (i <= 0)
@@ -244,68 +246,57 @@ namespace EventManagementDbAccess
                         }
                     }
                    
-                   
-                    tickets.ForEach(ticket =>
+                    sb.Clear();
+                    sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
+                    TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
+                    CreatedAt,ModifiedAt) VALUES ");
+                    int index = 0;
+                    var parameters = new List<MySqlParameter>();
+                    foreach (var ticket in tickets)
                     {
-                        sb.Clear();
-                        sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
-                        CreatedAt,ModifiedAt) ");
-                        sb.Append(" VALUES (");
+                        if (index > 0) sb.Append(","); // comma between VALUES
+                        sb.Append($@"(@EventId{index}, @UserId{index}, @TicketScanned{index},@TicketCode{index},
+                                        @SalesOrderId{index}, @EventItemTypeId{index},@CreatedAt{index},@ModifiedAt{index})");
 
-                        sb.Append(ticket.EventId);
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.User.UserId);
-                        sb.Append("'");
-                        sb.Append(",");
-                        sb.Append(ticket.TicketScanned);
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.TicketCode);
-                        sb.Append("'");
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.SalesOrderId);
-                        sb.Append("'");
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.EventItemType.EventItemTypeId);
-                        sb.Append("'");
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
-                        sb.Append("'");
-                        sb.Append(",");
-                        sb.Append("'");
-                        sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
-                        sb.Append("'");
-                        sb.Append(")");
+                        parameters.Add(new MySqlParameter($"@EventId{index}", ticket.EventId));
+                        parameters.Add(new MySqlParameter($"@UserId{index}", ticket.User.UserId));
+                        parameters.Add(new MySqlParameter($"@TicketScanned{index}", ticket.TicketScanned));
+                        parameters.Add(new MySqlParameter($"@TicketCode{index}", ticket.TicketCode));
+                        parameters.Add(new MySqlParameter($"@SalesOrderId{index}", ticket.SalesOrderId));
+                        parameters.Add(new MySqlParameter($"@EventItemTypeId{index}", ticket.EventItemType.EventItemTypeId));
+                        parameters.Add(new MySqlParameter($"@CreatedAt{index}", DateTime.UtcNow));
+                        parameters.Add(new MySqlParameter($"@ModifiedAt{index}", DateTime.UtcNow));
 
-                        Console.WriteLine(sb.ToString());
+                        index++;
+                    }
+                
 
-                        using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
+                    Console.WriteLine(sb.ToString());
+
+                    using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
+                    {
+                        cmd.Parameters.AddRange(parameters.ToArray());
+                        int i = cmd.ExecuteNonQuery();
+                        if (i == tickets.Count)
                         {
-                            int i = cmd.ExecuteNonQuery();
-                            if (i == 1)
-                            {
-                                _logger.LogInformation($@"Successfully inserted ticket with code {ticket.TicketCode}. 
-                                            Return value for ticket id is{cmd.LastInsertedId}");
+                            _logger.LogInformation($@"Successfully inserted {tickets.Count()} tickets  for sales Order {tickets.First().SalesOrderId} 
+                                        Return value for last ticket id is{cmd.LastInsertedId}");
 
-                            }
-                            else
-                            {
-                                throw new Exception("Unable to insert ticketrecord");
-
-                            }
                         }
-                    });
+                        else
+                        {
+                            throw new Exception("Unable to insert ticketrecord");
+
+                        }
+                    }
+                
                     await transaction.CommitAsync();
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
                     retVal = ex.Message;
+                    Console.WriteLine(ex.Message + ex.InnerException);
                     _logger.LogCritical(ex.Message);
                 }
                 return retVal;
