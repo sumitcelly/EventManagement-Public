@@ -1,9 +1,11 @@
 
 import { EventHeader } from "../types/Event";
+import { SalesOrderErrors } from "../types/Order";
 import { Ticket } from "../types/Tickets";
 
 
-export default function SalesOrderTicket({ eventBasic, tickets, salesOrderCode,qrBase64String }: {eventBasic:EventHeader, tickets:Ticket[], salesOrderCode:string, qrBase64String:string}) {
+export default function SalesOrderTicket({ eventBasic, tickets, errorTicketList, salesOrderCode,qrBase64String }: {eventBasic:EventHeader, tickets:Ticket[], 
+          errorTicketList:SalesOrderErrors[], salesOrderCode:string, qrBase64String:string}) {
 
   return (<>
   
@@ -22,7 +24,9 @@ export default function SalesOrderTicket({ eventBasic, tickets, salesOrderCode,q
         
                 
                   <div className="mt-1 text-xs text-secondary-color">
-                    {tickets?.filter(list =>list.quantity>0).map((item) =>
+                    { tickets?.filter(list =>list.quantity>0).
+                      filter(list=>!errorTicketList.some(e=>e.eventItemTypeId === list.eventItemTypeId))
+                      .map((item) =>
                       (
                         
                         <div key={item.eventItemTypeId}>

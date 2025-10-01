@@ -54,6 +54,7 @@ export default function OrderSummary() {
       name: cart.fullname,
       deliveryType :"Email",
       paymentRequired: paymentRequired,
+      salesOrderItemsError:[],
       salesOrderItems: cart.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity})),
     }).then((res) => {
       console.log("Order created:", res.data);  

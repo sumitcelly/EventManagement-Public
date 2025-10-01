@@ -79,7 +79,8 @@ export default function TicketDetails() {
         
           {data && <SalesOrderTicket eventBasic={eventDetails} 
               tickets={[{eventItemTypeId: data[currentPage-1].eventItemType.eventItemTypeId, name: data[currentPage-1].eventItemType.name, 
-                description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]} 
+                description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]}
+              errorTicketList={[]} 
               salesOrderCode={data[currentPage-1].qrCode} qrBase64String={data[currentPage-1].qrBase64Image}>
             
             </SalesOrderTicket>

@@ -17,8 +17,8 @@ export default function EventDetails() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const { data:eventDetails, isLoading } = useQuery(`events/basics/${id}`, async () => {
-    const res = await axiosClient.get(`/events/basics/${id}`);
+  const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
+    const res = await axiosClient.get(`/events/details/${id}`);
     console.log('Event details from backend', res?.data);
     return res.data;
   },

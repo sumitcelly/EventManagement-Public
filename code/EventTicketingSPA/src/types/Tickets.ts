@@ -24,3 +24,5 @@ export type EventTickets = {
   qrCode: string;
   quantity?: number;
 };
+
+
