@@ -231,20 +231,23 @@ namespace EventManagementDbAccess
                         eventitemtypeid=@itemType");
                     Console.WriteLine($"query for update count is:{sb}");
 
-                    MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
-                    cmd.Parameters.AddWithValue("@quantity", tickets.Count());
-                    cmd.Parameters.AddWithValue("@itemType", itemType);
+                    using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@quantity", tickets.Count());
+                        cmd.Parameters.AddWithValue("@itemType", itemType);
 
-                    int i = await cmd.ExecuteNonQueryAsync();
-                    if (i <= 0)
-                    {
-                        _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
-                        throw new Exception($"Not enough tickets available for {itemType}");
+                        int i = await cmd.ExecuteNonQueryAsync();
+                        if (i <= 0)
+                        {
+                            _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
+                            throw new Exception($"Not enough tickets available for {itemType}");
+                        }
                     }
-                    sb.Clear();
-                    
-                    tickets.ForEach(async ticket =>
+                   
+                   
+                    tickets.ForEach(ticket =>
                     {
+                        sb.Clear();
                         sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                         TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
                         CreatedAt,ModifiedAt) ");
@@ -281,17 +284,20 @@ namespace EventManagementDbAccess
 
                         Console.WriteLine(sb.ToString());
 
-                        MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
-                        int i = await cmd.ExecuteNonQueryAsync();
-                        if (i == 1)
+                        using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
                         {
-                            _logger.LogInformation($@"Successfully inserted ticket with code {ticket.TicketCode}. 
-                                                Return value for ticket id is{cmd.LastInsertedId}");
-                        }
-                        else
-                        {
-                            throw new Exception("Unable to insert ticketrecord");
+                            int i = cmd.ExecuteNonQuery();
+                            if (i == 1)
+                            {
+                                _logger.LogInformation($@"Successfully inserted ticket with code {ticket.TicketCode}. 
+                                            Return value for ticket id is{cmd.LastInsertedId}");
 
+                            }
+                            else
+                            {
+                                throw new Exception("Unable to insert ticketrecord");
+
+                            }
                         }
                     });
                     await transaction.CommitAsync();
@@ -300,7 +306,7 @@ namespace EventManagementDbAccess
                 {
                     transaction.Rollback();
                     retVal = ex.Message;
-                    Console.WriteLine(ex.Message);
+                    _logger.LogCritical(ex.Message);
                 }
                 return retVal;
             }

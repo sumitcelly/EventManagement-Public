@@ -166,6 +166,7 @@ public class SalesOrderConductor
             if (item.Quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than zero.", nameof(item.Quantity));
             List<EventSalesItem> itemList = new List<EventSalesItem>();
+            Dictionary<int, string> failedAdds = new Dictionary<int, string>();
 
             for (int i = 0; i < item.Quantity; i++)
             {
@@ -185,9 +186,14 @@ public class SalesOrderConductor
                 itemList.Add(salesItem);
             }
             string result = await _ticketDbAccess.AddMultipleEventTickets(itemList);
+            if (!String.IsNullOrWhiteSpace(result))
+            {
+                string error = result.ToLower().Contains("not enough") ? result : "An error occurred while adding your ticket to db";
+                failedAdds.Add(item.EventTicketTypeId, error);
+            }
             _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");
         }
-        
+
         if (!customerSalesOrder.PaymentRequired)
         {
             await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
