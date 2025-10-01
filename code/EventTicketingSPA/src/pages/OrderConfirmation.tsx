@@ -38,7 +38,8 @@ export default function OrderConfirmation() {
     //before this component is rendered. Need to find a better solution.
     //
     setCartTickets([...cart.tickets]);
-   
+   //this resets the cart and any reliance on the cart to show tickets details fails.
+   //maybe needs to be another redux for order but need not persist it.
     dispatch(resetCart());
   }, [dispatch]);
   console.log('carttickets',cartTickets);

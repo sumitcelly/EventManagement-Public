@@ -167,7 +167,7 @@ return (
                   </div>
                   
                   <div className="w-1/3 ml-auto text-right mr-3">
-                    {item.totalAllowed === item.ticketsSold && (
+                    {item.ticketsSold >=item.totalAllowed && (
                       <div className="text-red-500 text-sm ">
                           Sold Out!
                       </div>

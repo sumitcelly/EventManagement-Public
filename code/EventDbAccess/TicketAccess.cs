@@ -14,9 +14,10 @@ namespace EventManagementDbAccess
 
     public class TicketAccess : BaseDbAccess
     {
-        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger, IDistributedCache cache) : base(config, logger, cache)
+        private EventItemTypeDbAccess _eventTypeAccess;
+        public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger, EventItemTypeDbAccess itemTypeDbAccess, IDistributedCache cache) : base(config, logger, cache)
         {
-
+            _eventTypeAccess = itemTypeDbAccess;
         }
         public async Task<bool> ValidateTicket(string code, int eventId = 1)
         {
@@ -234,7 +235,7 @@ namespace EventManagementDbAccess
 
                     using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
                     {
-                        cmd.Parameters.AddWithValue("@quantity", tickets.Count());
+                        cmd.Parameters.AddWithValue("@quantity", tickets.Count);
                         cmd.Parameters.AddWithValue("@itemType", itemType);
                         cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
@@ -244,8 +245,9 @@ namespace EventManagementDbAccess
                             _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
                             throw new Exception($"Not enough tickets available for {itemType}");
                         }
+                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
                     }
-                   
+
                     sb.Clear();
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
@@ -269,7 +271,7 @@ namespace EventManagementDbAccess
 
                         index++;
                     }
-                
+
 
                     Console.WriteLine(sb.ToString());
 
@@ -289,15 +291,18 @@ namespace EventManagementDbAccess
 
                         }
                     }
-                
+
                     await transaction.CommitAsync();
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    retVal = ex.Message.ToLower().Contains("not enough") ? -1:-2;
+                    retVal = ex.Message.ToLower().Contains("not enough") ? -1 : -2;
                     Console.WriteLine(ex.Message + ex.InnerException);
                     _logger.LogCritical(ex.Message);
+                    //set the cache back only if the error was due to a reason different than count being exceeded
+                    if (retVal == -2)
+                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, -tickets.Count);
                 }
                 return retVal;
             }

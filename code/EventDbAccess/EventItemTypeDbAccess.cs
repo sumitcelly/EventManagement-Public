@@ -68,52 +68,32 @@ namespace EventManagementDbAccess
         // }
 
         
-        public async Task<bool> UpdateTicketSoldCount(int eventId, int eventItemTypeId, int quantity)
+        public async Task<bool> UpdateTicketSoldCountInCache(int eventId, int eventItemTypeId, int quantity)
         {
             bool success = false;
-            if (eventId<=0 || eventItemTypeId <= 0 || quantity <= 0)
+            if (eventId<=0 || eventItemTypeId <= 0)
             {
                 throw new ArgumentException($"Argument(s) are invalid");
             }
             try
-            {
-                using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
-
-                StringBuilder sb = new StringBuilder();
-                sb.Append(@"update eventmanagement.eventitemtype 
-                        set ticketssold=ticketssold+@quantity
-                        where ticketssold+@quantity <= totalallowed");
-                Console.WriteLine($"query for update count is:{sb}");
-
-                await mySqlConnection.OpenAsync();
-                MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
-                cmd.Parameters.AddWithValue("@quantity", quantity);
-                int i = await cmd.ExecuteNonQueryAsync();
-                success = i > 0;
-
-                if (success)
+            {               
+                _logger.LogInformation($"{quantity} is available for evenitemtype {eventItemTypeId}.");
+                string cacheKey = CacheHelper.GetCacheKey<List<EventItemType>>(eventId.ToString());
+                _logger.LogInformation($"Found cache key{cacheKey}. Incrementing ticket sold by {quantity}");
+                var data = await _cache.GetOnlyAsync<List<EventItemType>>(cacheKey);
+                if (data != null)
                 {
-                    _logger.LogInformation($"{quantity} is available for evenitemtype {eventItemTypeId}.");
-                    string cacheKey = CacheHelper.GetCacheKey<List<EventItemType>>(eventId.ToString());
-                    _logger.LogInformation($"Found cache key{cacheKey}. Incrementing ticket sold by {quantity}");
-                    var data = await _cache.GetOnlyAsync<List<EventItemType>>(cacheKey);
-                    if (data != null)
+                    _logger.LogInformation($"Found item in cache with eventid {eventId}");
+                    var itemType = data.FirstOrDefault(i => i.EventItemTypeId == eventItemTypeId);
+                    if (itemType != null)
                     {
-                        _logger.LogInformation($"Found item in cache with eventid {eventId}");
-                        var itemType = data.FirstOrDefault(i => i.EventItemTypeId == eventItemTypeId);
-                        if (itemType != null)
-                        {
-                            itemType.TicketsSold = itemType.TicketsSold + quantity;
-                            await _cache.SetOnlyAsync(cacheKey, data);
-                            _logger.LogInformation($"Updated tickets sold in cache to {itemType.TicketsSold} for event itemid {eventItemTypeId}");
-                        }
-                    }                    
+                        itemType.TicketsSold+=quantity;
+                        await _cache.SetOnlyAsync(cacheKey, data);
+                        _logger.LogInformation($"Updated tickets sold in cache to {itemType.TicketsSold} for event itemid {eventItemTypeId}");
+                    }
+                }                    
                     //_cache.RemoveCache<List<EventItemType>>(eventId.ToString());
-                }
-                else
-                {
-                    _logger.LogWarning($"{quantity} is available for evenitemtype {eventItemTypeId}.");
-                }
+              
             }
             catch (Exception exc)
             {
