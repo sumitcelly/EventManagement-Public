@@ -1,0 +1,14 @@
+Costs
+
+ec2: m5 xlarge linux is 140 per month at 100% capacity on demand
+Windows doubles in cost
+
+rds RDS t3.micro for mysql good to start out. 
+cost is $25 per month for 100 gb storage.
+Skip rds proxy at first.
+
+Start with t3.small for app server with 100 gb storage.
+linux. Cost about 23 per month.
+
+
+

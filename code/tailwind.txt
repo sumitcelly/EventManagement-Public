@@ -1,0 +1,103 @@
+
+Perfect 👍 Let’s make a Tailwind CSS Quick Cheat Sheet — the ~20 classes you’ll use most of the time.
+
+🎯 Tailwind CSS Cheat Sheet (Beginner-Friendly)
+1. Layout & Box Model
+
+container → centers content with responsive padding
+
+flex → enable flexbox
+
+grid → enable CSS grid
+
+w-full → full width
+
+h-screen → full viewport height
+
+min-h-screen → always at least full height
+
+2. Spacing
+
+p-4 → padding (1rem)
+
+px-4 → horizontal padding
+
+py-2 → vertical padding
+
+m-4 → margin
+
+mt-6 → margin-top
+
+3. Typography
+
+text-sm | text-base | text-lg | text-xl | text-2xl → font size
+
+font-light | font-normal | font-semibold | font-bold → font weight
+
+text-gray-500 → gray text
+
+text-indigo-600 → indigo text
+
+4. Colors & Backgrounds
+
+bg-white → white background
+
+bg-gray-100 → light gray background
+
+bg-indigo-600 → indigo background
+
+bg-gradient-to-r from-indigo-500 to-purple-500 → gradient
+
+5. Borders & Radius
+
+border → thin border
+
+border-gray-300 → gray border
+
+rounded | rounded-lg | rounded-full → rounded corners
+
+6. Shadows
+
+shadow | shadow-md | shadow-lg → drop shadows
+
+7. Buttons & Interactions
+
+hover:bg-indigo-700 → darker background on hover
+
+focus:ring-2 → focus outline effect
+
+cursor-pointer → hand cursor
+
+8. Responsive Utilities
+
+sm: → small screens (≥640px)
+
+md: → medium screens (≥768px)
+
+lg: → large screens (≥1024px)
+
+Example:
+
+<div class="text-base md:text-lg lg:text-2xl">
+  Responsive text sizes
+</div>
+
+✅ Putting It Together (Example Button)
+<button class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700">
+  Buy Ticket
+</button>
+
+
+This uses:
+
+bg-indigo-600 (background color)
+
+text-white (text color)
+
+px-4 py-2 (padding)
+
+rounded-lg (rounded corners)
+
+shadow (drop shadow)
+
+hover:bg-indigo-700 (hover state)

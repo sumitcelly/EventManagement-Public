@@ -41,7 +41,7 @@ Attendee: (5 weeks)
 Organizer: ( 3- 5 weeks)
 Lots is missing still
 	Event Page 
-		-  Login (2)
+		- Login (2)
 		- User roles
 		- Event scheduling?
 		- Organizer profile page (2)
