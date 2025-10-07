@@ -1,0 +1,6 @@
+Event REcurrence:
+
+For now , we can just give them the ability to copy an event.
+But adding reccurrence later will require us to have a recurrence table where we
+store the schedule and link it to the main event table with a recurrence ID.
+The UI will need the ability to do the same.
