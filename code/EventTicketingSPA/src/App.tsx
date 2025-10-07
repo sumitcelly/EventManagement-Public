@@ -14,6 +14,8 @@ import BuyTickets  from "./pages/BuyTickets";
 import OrderSummary from "./pages/OrderSummary";
 import OrderConfirmation from "./pages/OrderConfirmation";
 
+import Dashboard  from "./pages/Organizer/Dashboard";
+
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
 
@@ -27,6 +29,11 @@ export default function App() {
             isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
           }
         />
+        <Route 
+         path="/Dashboard"
+         element={<Dashboard/>}
+         ></Route>
+        
         <Route
           path="/myevents"
           element={
