@@ -7,7 +7,7 @@ export interface ListMenuData{
     editLink:string
 }
 
-export default function ListMenu({linkData}:{linkData:ListMenuData}) {
+export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
     const navigate = useNavigate();
 
   return (

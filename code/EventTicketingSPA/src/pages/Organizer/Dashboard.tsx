@@ -58,48 +58,40 @@ export default function Dashboard() {
   return (
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
-      <ListGroup>
-        {data && data.map((event:EventHeader) => (
-            <ListGroupItem
+      <div className="divide-y">
+        {data && data.map((event) => (
+          <div
             key={event.eventId}
-            // onClick={() => navigate(`/eventdetails/${event.eventId}`)}
-            className="cursor-pointer"
+            onClick={() => navigate(`/eventdetails/${event.eventId}`)}
+            className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
-          <div className="flex items-center justify-between gap-4 w-full">
-            <div className="min-w-0">
+            <div>
               <p className="font-heading text-accent-color">{event.eventName}</p>
-              <div className="text-font-heading text-primary-color text-lg">
-                <div>
-                  {new Date(event.eventDate).toLocaleDateString()} 
-                </div>
-                <div>
-                  {event.eventLocation}
-                </div>
+              <div className="text-primary-color text-lg">
+                <div>{new Date(event.eventDate).toLocaleDateString()}</div>
+                <div>{event.eventLocation}</div>
               </div>
-              
             </div>
+
             <div className="flex flex-col gap-5">
-            {event.isLive? (<div className="text-2xl font-accent text-go-color">
-              Live
-            </div>):(
-              <div className="text-xl font-accent text-accent-color">
-                Draft
+              {event.isLive ? (
+                <div className="text-2xl font-accent text-go-color">Live</div>
+              ) : (
+                <div className="text-xl font-accent text-accent-color">Draft</div>
+              )}
+              <div onClick={(e)=>e.stopPropagation()}>
+                <ListMenu
+                  linkData={{
+                    viewLink: `/eventdetails/${event.eventId}`,
+                    editLink: `/ManageEvent/${event.eventId}`,
+                  }}
+                />
               </div>
-            )
-            
-            }
-            <ListMenu 
-                linkData={{viewLink:`/eventdetails/${event.eventId}`,editLink:`/ManageEvent/${event.eventId}`}}>
-
-            </ListMenu>
             </div>
-        </div>
-          </ListGroupItem>
-      
-        ))}
-                      
+      </div>
+  ))}
+</div>
 
-    </ListGroup>
     </div>
   );
 }
