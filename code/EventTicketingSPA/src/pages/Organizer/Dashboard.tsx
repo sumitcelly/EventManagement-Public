@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import axiosClient from "../../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
@@ -7,16 +7,40 @@ import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
+import { useEffect } from "react";
 // 
 
 
   
 export default function Dashboard() {
   const navigate = useNavigate();
-  const  user = useAppSelector((state:RootState) => state.auth);
-  const userId= user.user?.id;
+  const user = useAppSelector((state: RootState) => state.auth);
+  const userId = user.user?.id;
+  const queryClient = useQueryClient();
   
- 
+const deleteEvent = async (eventId: number) => {
+  try {
+
+    console.log('Deleting event', eventId);
+    // 1. Optimistically update UI
+    queryClient.setQueryData(['EventsByOrganizer', userId], (oldData: EventHeader[] | undefined) => {
+      if (!oldData) return [];
+      return oldData.filter(event => event.eventId !== eventId);
+    });
+
+    // 2. Make API call
+    //await axiosClient.delete(`/events/${eventId}`);
+
+    // 3. Invalidate to verify our optimistic update
+    // This ensures our cache matches the server state
+    await queryClient.invalidateQueries(['EventsByOrganizer', userId]);
+
+  } catch (error) {
+    console.error('Failed to delete event:', error);
+    // On error, refetch to restore correct state
+    await queryClient.invalidateQueries(['EventsByOrganizer', userId]);
+  }
+}
 
   const { data, isLoading } = 
   useQuery(['EventsByOrganizer',userId], async () => {
@@ -44,14 +68,17 @@ export default function Dashboard() {
       return data;
     },
     {
-      // staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      // cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+
       // refetchOnMount: false,      // don’t always re-fetch on mount
       // refetchOnWindowFocus: false,
       // refetchOnReconnect: false,
-      enabled: !!userId //  only run query if we have an id
+      //enabled: !!userId //  only run query if we have an id
     }
   );
+
+
 
   if (isLoading) return <p>Loading...</p>;
   //console.log("Fetching orders for user",userId);
@@ -84,6 +111,7 @@ export default function Dashboard() {
                   linkData={{
                     viewLink: `/eventdetails/${event.eventId}`,
                     editLink: `/ManageEvent/${event.eventId}`,
+                    deleteEvent:()=>deleteEvent(event.eventId)
                   }}
                 />
               </div>
