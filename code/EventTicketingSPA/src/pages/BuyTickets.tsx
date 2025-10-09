@@ -97,7 +97,8 @@ export default function BuyTickets() {
         email: cart.email || '',
         tickets: cart.tickets.length>0 ? cart.tickets : [] 
       },
-       mode: 'onSubmit'
+        mode: "onChange",          // 👈 validates as user types or changes field
+        reValidateMode: "onChange"
     });
   // Add useEffect to reset form when ticketTypesList loads.
   //The ticket type list is not ready when the useform tries to  set default values.
