@@ -1,11 +1,9 @@
 import { useEditor, EditorContent,Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
 import { useEffect } from 'react'
-import { Extension } from '@tiptap/core'
 
 interface Props {
   value?: string
@@ -18,7 +16,6 @@ export default function RichTextEditor({ value = '', onChange }: Props) {
     extensions: [
       StarterKit,
       Underline,
-      Link.configure({ openOnClick: false }),
       Image,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],

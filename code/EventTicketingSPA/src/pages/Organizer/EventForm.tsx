@@ -1,14 +1,20 @@
 // EventForm.tsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
-
+import FileUpload from "../../components/FileUpload";
+import axiosClient from "../../api/axiosClient";
+import { useQuery } from "react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAppDispatch } from "../../app/hook";
+import { EventHeader } from "../../types/Event";
 
 const eventSchema = yup.object({
-  title: yup.string().required("Title is required"),
-  eventDate: yup.string().required("Event date is required"),
+  eventName: yup.string().required("Event name is required"),
+  eventStartDate: yup.string().required("Event date is required"),
+  eventDuration: yup.number().required("Event duration is required"),
   description: yup
     .string()
     .test("not-empty", "Description is required", (value) => {
@@ -16,23 +22,42 @@ const eventSchema = yup.object({
       return !!stripped;
     })
     .required("Description is required"),
-  terms: yup
-    .string()
-    .test("not-empty", "Terms are required", (value) => {
-      const stripped = value?.replace(/<[^>]+>/g, "").trim();
-      return !!stripped;
-    })
-    .required("Terms are required"),
+    //important to allow default (null) here if we want to allow null values. This ensures field is never undefined
+   agenda: yup.string().nullable().default(null) // <-- allow null or undefined,
 });
 
 type FormValues = {
-  title: string;
+  eventName: string;
+  eventStartDate: string;
+  eventDuration: number;
   description: string;
-  terms: string;
-  eventDate: string;
+  agenda: string | null; // <-- allow undefined
 };
 
 export default function EventForm() {
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (imagePreview) {
+      console.log("Image preview available:", imagePreview)
+    }
+  }, [imagePreview]) // 
+
+    const {id}  = useParams();
+    const navigate = useNavigate();
+
+    const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
+      const res = await axiosClient.get(`/events/details/${id}`);
+      console.log('Event details from backend', res?.data);
+      return res.data;
+    },
+    {
+      staleTime: 1000 * 60 * 5,
+      enabled: !!id
+    }
+    );
+
+
   const {
     control,
     handleSubmit,
@@ -41,10 +66,11 @@ export default function EventForm() {
   } = useForm<FormValues>({
     resolver: yupResolver(eventSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      terms: "",
-      eventDate: "",
+      eventName:  eventDetails?.eventName || "",
+      description:  eventDetails?.description || "",
+      eventDuration: eventDetails?.duration || 0,
+      agenda: eventDetails?.agenda || null,
+      eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
     },
   });
 
@@ -60,27 +86,53 @@ export default function EventForm() {
       <div>
         <label className="block font-semibold mb-1">Event Title</label>
         <input
-          {...register("title")}
+          type="text"
+          {...register("eventName")}
           className="w-full border rounded p-2"
           placeholder="Enter event title"
         />
-        {errors.title && (
-          <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>
+        {errors.eventName && (
+          <p className="text-red-600 text-sm mt-1">{errors.eventName.message}</p>
         )}
       </div>
-
-      <div>
-        <label className="block font-semibold mb-1">Event Date</label>
-        <input
-          {...register("eventDate")}
-          type="date"
-          className="w-full border rounded p-2"
-        />
-        {errors.eventDate && (
-          <p className="text-red-600 text-sm mt-1">{errors.eventDate.message}</p>
-        )}
+      
+      <FileUpload 
+        imagePreview={imagePreview} 
+        setImagePreview={setImagePreview} 
+      />
+      <div className="flex flex-row items-center justify-between">
+        <div>
+          <label className="block font-semibold mb-1">Event Date</label>
+          <input
+            type="datetime-local"
+            {...register("eventStartDate")}
+            className="border rounded p-2"
+            placeholder="Select event date and time"
+          />
+          {errors.eventStartDate && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.eventStartDate.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Event duration (hrs)</label>
+          <input 
+            type="number"
+            {...register("eventDuration")}
+            className="ml-auto w-1/4 border rounded p-2"
+            placeholder="Duration (hours)"
+            min={0}
+          />
+          {errors.eventDuration && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.eventDuration.message}
+            </p>
+          )}
+        </div>
       </div>
-
+     
+      
       {/* Rich Text Field 1 */}
       <div>
         <label className="block font-semibold mb-1">Description</label>
@@ -100,16 +152,16 @@ export default function EventForm() {
 
       {/* Rich Text Field 2 */}
       <div>
-        <label className="block font-semibold mb-1">Terms & Conditions</label>
+        <label className="block font-semibold mb-1">Agenda</label>
         <Controller
-          name="terms"
+          name="agenda"
           control={control}
           render={({ field }) => (
-            <RichTextEditor value={field.value} onChange={field.onChange} />
+            <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
           )}
         />
-        {errors.terms && (
-          <p className="text-red-600 text-sm mt-1">{errors.terms.message}</p>
+        {errors.agenda && (
+          <p className="text-red-600 text-sm mt-1">{errors.agenda.message}</p>
         )}
       </div>
 
