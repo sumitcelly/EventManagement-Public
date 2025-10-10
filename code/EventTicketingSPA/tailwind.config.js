@@ -3,7 +3,8 @@ const flowbiteReact = require("flowbite-react/plugin/tailwindcss");
 // tailwind.config.js
 module.exports = {
   // content: ["./src/**/*.{js,jsx,ts,tsx}", ".flowbite-react\\class-list.json"],
-  content: ["./src/**/*.{js,jsx,ts,tsx}", ".flowbite-react\\class-list.json"],
+  content: ["./src/**/*.{js,jsx,ts,tsx}", ".flowbite-react\\class-list.json", 
+            "node_modules/flowbite-typography/**/*.{js,jsx,ts,tsx}",],
 
   theme: {
     extend: {
@@ -65,5 +66,6 @@ module.exports = {
   },
 
   // plugins: [flowbiteReact],
-    plugins: [require('flowbite/plugin'), flowbiteReact],
+    plugins: [require('flowbite/plugin'), flowbiteReact, require("flowbite-typography"),],
+    
 }

@@ -15,6 +15,7 @@ import OrderSummary from "./pages/OrderSummary";
 import OrderConfirmation from "./pages/OrderConfirmation";
 
 import Dashboard  from "./pages/Organizer/Dashboard";
+import EventForm from "./pages/Organizer/EventForm";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -32,6 +33,10 @@ export default function App() {
         <Route 
          path="/Dashboard"
          element={<Dashboard/>}
+         ></Route>
+         <Route 
+         path="/CreateEvent"
+         element={<EventForm/>}
          ></Route>
         
         <Route
