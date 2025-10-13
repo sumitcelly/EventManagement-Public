@@ -8,12 +8,12 @@ import FileUpload from "../../components/FileUpload";
 import axiosClient from "../../api/axiosClient";
 import { useQuery } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../app/hook";
-import { EventHeader } from "../../types/Event";
+import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   eventStartDate: yup.string().required("Event date is required"),
+  fullAddress: yup.string().required("Event address is required"),
   eventDuration: yup.number().required("Event duration is required"),
   description: yup
     .string()
@@ -32,7 +32,15 @@ type FormValues = {
   eventDuration: number;
   description: string;
   agenda: string | null; // <-- allow undefined
+  fullAddress: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  lat?: number;
+  lng?: number;
 };
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function EventForm() {
 
@@ -60,6 +68,7 @@ export default function EventForm() {
 
   const {
     control,
+    setValue,
     handleSubmit,
     register,
     formState: { errors },
@@ -130,6 +139,30 @@ export default function EventForm() {
             </p>
           )}
         </div>
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Address</label>
+        <Controller
+          name="fullAddress"
+          control={control}
+          render={({ field }) => (
+            <MapboxAddressField
+              token={MAPBOX_TOKEN}
+              value={field.value}
+              onSelect={(data: AddressData) => {
+                field.onChange(data.fullAddress);
+                field.onChange(data.city);
+                setValue("street", data.street);
+                setValue("city", data.city);
+                setValue("state", data.state);
+                setValue("zip", data.zip);
+                setValue("lat", data.lat);
+                setValue("lng", data.lng);
+              }}
+            />
+          )}
+        />
       </div>
      
       
