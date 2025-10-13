@@ -58,7 +58,9 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
   };
 
   return (
-    <AddressAutofillFixed accessToken={MAPBOX_TOKEN} onRetrieve={handleRetrieve} options={{ types: "address" }}>
+    <AddressAutofillFixed accessToken={MAPBOX_TOKEN}  
+      onClick={(e:any)=>{e.stopPropagation();}}
+     onRetrieve= {handleRetrieve} options={{ types: "address" }}>
       <input
        ref={inputRef}
         name="address"
@@ -67,6 +69,7 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
         autoComplete="street-address"
         className="border rounded w-full p-2"
         defaultValue={value}
+       
         
       />
     </AddressAutofillFixed>
