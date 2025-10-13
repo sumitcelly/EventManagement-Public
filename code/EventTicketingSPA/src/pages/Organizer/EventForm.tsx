@@ -152,7 +152,6 @@ export default function EventForm() {
               value={field.value}
               onSelect={(data: AddressData) => {
                 field.onChange(data.fullAddress);
-                field.onChange(data.city);
                 setValue("street", data.street);
                 setValue("city", data.city);
                 setValue("state", data.state);
