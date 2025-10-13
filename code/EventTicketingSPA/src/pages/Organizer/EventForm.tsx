@@ -1,6 +1,6 @@
 // EventForm.tsx
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, set } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
@@ -40,7 +40,7 @@ type FormValues = {
   lat?: number;
   lng?: number;
 };
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+
 
 export default function EventForm() {
 
@@ -148,7 +148,6 @@ export default function EventForm() {
           control={control}
           render={({ field }) => (
             <MapboxAddressField
-              token={MAPBOX_TOKEN}
               value={field.value}
               onSelect={(data: AddressData) => {
                 field.onChange(data.fullAddress);
@@ -158,6 +157,9 @@ export default function EventForm() {
                 setValue("zip", data.zip);
                 setValue("lat", data.lat);
                 setValue("lng", data.lng);
+                //field.value = data.fullAddress;
+                //field.onBlur();
+                console.log("Address selected in form:", data);
               }}
             />
           )}
