@@ -31,6 +31,8 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
       inputRef.current.value = value || "";
     }
   }, [value]);
+
+
   const handleRetrieve = (res: any) => {
     
     const feature = res.features?.[0];
@@ -49,7 +51,9 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
       lng: coords?.[0],
     };
 
-    onSelect(addressData);
+    //onSelect(addressData);
+    setTimeout(() => onSelect(addressData), 0);
+    
    //console.log("Address data:", addressData);
     // if (inputRef.current) {
     //   inputRef.current.value = addressData.fullAddress || "";
@@ -59,11 +63,11 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
 
   return (
     <AddressAutofillFixed accessToken={MAPBOX_TOKEN}  
-      onClick={(e:any)=>{e.stopPropagation();}}
+      //onClick={(e:any)=>{e.stopPropagation();}}
      onRetrieve= {handleRetrieve} options={{ types: "address" }}>
       <input
        ref={inputRef}
-        name="address"
+        name="fullAddress"
         type="text"
         placeholder="Enter an address"
         autoComplete="street-address"

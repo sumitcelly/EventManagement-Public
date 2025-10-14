@@ -157,6 +157,7 @@ export default function EventForm() {
                 setValue("zip", data.zip);
                 setValue("lat", data.lat);
                 setValue("lng", data.lng);
+               // setValue("fullAddress", data.fullAddress)
                 //field.value = data.fullAddress;
                 //field.onBlur();
                 console.log("Address selected in form:", data);
