@@ -9,6 +9,7 @@ import axiosClient from "../../api/axiosClient";
 import { useQuery } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
+import ListInput from "../../components/ListInput";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -31,6 +32,7 @@ type FormValues = {
   eventStartDate: string;
   eventDuration: number;
   description: string;
+  tagList?: string[];
   agenda: string | null; // <-- allow undefined
   fullAddress: string;
   street?: string;
@@ -45,6 +47,8 @@ type FormValues = {
 export default function EventForm() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+
   useEffect(() => {
     if (imagePreview) {
       console.log("Image preview available:", imagePreview)
@@ -75,6 +79,8 @@ export default function EventForm() {
   } = useForm<FormValues>({
     resolver: yupResolver(eventSchema),
     defaultValues: {
+      tagList: eventDetails?.tagList || [],
+      fullAddress: eventDetails?.eventLocation || "",
       eventName:  eventDetails?.eventName || "",
       description:  eventDetails?.description || "",
       eventDuration: eventDetails?.duration || 0,
@@ -151,6 +157,7 @@ export default function EventForm() {
               value={field.value}
               onSelect={(data: AddressData) => {
                 field.onChange(data.fullAddress);
+                
                 setValue("street", data.street);
                 setValue("city", data.city);
                 setValue("state", data.state);
@@ -198,6 +205,22 @@ export default function EventForm() {
         {errors.agenda && (
           <p className="text-red-600 text-sm mt-1">{errors.agenda.message}</p>
         )}
+      </div>
+      <div>
+        <label className="block font-semibold mb-1">Tags</label>
+        <Controller
+          name="tagList"
+          control={control}
+          render={({ field }) => (
+            <ListInput 
+              items={field.value || []} 
+              onChange={(tags: string[]) => {
+                setValue("tagList", tags);    
+                console.log("tags selected in form:", tags);
+              }}/>           
+          )}
+        />
+
       </div>
 
       <button

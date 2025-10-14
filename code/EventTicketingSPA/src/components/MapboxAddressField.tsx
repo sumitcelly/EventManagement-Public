@@ -25,7 +25,8 @@ const AddressAutofillFixed = AddressAutofill as unknown as React.FC<any>;
 export default function MapboxAddressField({ onSelect,  value }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   
-  
+  //this maybe a hack here. Without this for sure, the  full address does not get set.
+  //Only the street address gets set. Not sure why.
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== value) {
       inputRef.current.value = value || "";
@@ -54,7 +55,7 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
     //onSelect(addressData);
     setTimeout(() => onSelect(addressData), 0);
     
-   //console.log("Address data:", addressData);
+    console.log("Address data:", addressData);
     // if (inputRef.current) {
     //   inputRef.current.value = addressData.fullAddress || "";
     // }
@@ -73,7 +74,10 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
         autoComplete="street-address"
         className="border rounded w-full p-2"
         defaultValue={value}
-       
+        //I am not sure if this is needed. For some reason, clicking on the list of addresses does not work or is intermittent.
+        //using the keyboard to select works fine.
+        //Maybe long term fix could be to not use reacthookform. Its colliding with the mapbox component.
+        onClick={(e:any)=>{console.log("clicked",e); e.stopPropagation();}}
         
       />
     </AddressAutofillFixed>
