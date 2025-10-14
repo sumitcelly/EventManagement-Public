@@ -65,7 +65,8 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
   return (
     <AddressAutofillFixed accessToken={MAPBOX_TOKEN}  
       //onClick={(e:any)=>{e.stopPropagation();}}
-     onRetrieve= {handleRetrieve} options={{ types: "address" }}>
+     onRetrieve= {handleRetrieve} options={{ types: "address" }}
+      >
       <input
        ref={inputRef}
         name="fullAddress"
@@ -74,10 +75,11 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
         autoComplete="street-address"
         className="border rounded w-full p-2"
         defaultValue={value}
+        //there maybe a known issues with single click selection of suggestions. For now its OK! Leave it and move on my god!
         //I am not sure if this is needed. For some reason, clicking on the list of addresses does not work or is intermittent.
-        //using the keyboard to select works fine.
-        //Maybe long term fix could be to not use reacthookform. Its colliding with the mapbox component.
-        onClick={(e:any)=>{console.log("clicked",e); e.stopPropagation();}}
+        //using the keyboard to select and double click works fine.
+        
+        // onClick={(e:any)=>{console.log("clicked",e); e.stopPropagation();}}
         
       />
     </AddressAutofillFixed>
