@@ -13,6 +13,7 @@ import ListInput from "../../components/ListInput";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
+  headline: yup.string().nullable().default(null),
   eventStartDate: yup.string().required("Event date is required"),
   fullAddress: yup.string().required("Event address is required"),
   eventDuration: yup.number().required("Event duration is required"),
@@ -32,6 +33,7 @@ type FormValues = {
   eventStartDate: string;
   eventDuration: number;
   description: string;
+  headline: string | null; // <-- allow undefined
   tagList?: string[];
   agenda: string | null; // <-- allow undefined
   fullAddress: string;
@@ -81,12 +83,13 @@ export default function EventForm() {
   } = useForm<FormValues>({
     resolver: yupResolver(eventSchema),
     defaultValues: {
-      tagList: eventDetails?.tagList || [],
+      tagList: eventDetails?.tags || [],
       fullAddress: eventDetails?.eventLocation || "",
       eventName:  eventDetails?.eventName || "",
       description:  eventDetails?.description || "",
       eventDuration: eventDetails?.duration || 0,
       agenda: eventDetails?.agenda || null,
+      headline: eventDetails?.eventHeadline || null,
       eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
     },
   });
@@ -112,7 +115,7 @@ export default function EventForm() {
         description:  eventDetails?.eventDescription || "",
         eventDuration: eventDetails?.eventDuration || 0,
         agenda: eventDetails?.eventAgenda || null,
-       
+        headline: eventDetails?.eventHeadline || null,
         eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
       }
     );
@@ -138,6 +141,19 @@ export default function EventForm() {
         {errors.eventName && (
           <p className="text-red-600 text-sm mt-1">{errors.eventName.message}</p>
         )}
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Event Headline</label>
+        <input
+          type="text"
+          {...register("headline")}
+          className="w-full border rounded p-2"
+          placeholder="Enter event headline to attract attendees"
+        />
+        {/* {errors.eventName && (
+          <p className="text-red-600 text-sm mt-1">{errors.eventName.message}</p>
+        )} */}
       </div>
       
       <FileUpload 
