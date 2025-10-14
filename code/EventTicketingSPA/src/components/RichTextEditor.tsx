@@ -15,7 +15,7 @@ export default function RichTextEditor({ value = '', onChange }: Props) {
     const editorInstance=  useEditor({
     extensions: [
       StarterKit,
-      Underline,
+      //Underline,
       Image,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
