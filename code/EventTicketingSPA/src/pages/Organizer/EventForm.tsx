@@ -110,8 +110,8 @@ export default function EventForm() {
         setImagePreview={setImagePreview} 
       />
       <div className="flex flex-row items-center justify-between">
-        <div>
-          <label className="block font-semibold mb-1">Event Date</label>
+        <div className="flex flex-col">
+          <label className="font-semibold mb-1">Event Date</label>
           <input
             type="datetime-local"
             {...register("eventStartDate")}
@@ -124,8 +124,8 @@ export default function EventForm() {
             </p>
           )}
         </div>
-        <div>
-          <label className="block font-semibold mb-1">Event duration (hrs)</label>
+        <div className="flex flex-col items-end">
+          <label className="font-semibold mb-1">Duration (hrs)</label>
           <input 
             type="number"
             {...register("eventDuration")}
