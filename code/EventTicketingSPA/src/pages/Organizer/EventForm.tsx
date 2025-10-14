@@ -1,5 +1,5 @@
 // EventForm.tsx
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useForm, Controller, set } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -58,16 +58,17 @@ export default function EventForm() {
     const {id}  = useParams();
     const navigate = useNavigate();
 
-    const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
-      const res = await axiosClient.get(`/events/details/${id}`);
-      console.log('Event details from backend', res?.data);
-      return res.data;
-    },
-    {
-      staleTime: 1000 * 60 * 5,
-      enabled: !!id
-    }
-    );
+  const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
+    const res = await axiosClient.get(`/events/details/${id}`);
+    console.log('Event details from backend', res?.data);
+    return res.data;
+  },
+  {
+    //staleTime: 1000 * 60 * 5,
+    enabled: !!id
+  }
+  );
+
 
 
   const {
@@ -75,6 +76,7 @@ export default function EventForm() {
     setValue,
     handleSubmit,
     register,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(eventSchema),
@@ -92,6 +94,33 @@ export default function EventForm() {
   const onSubmit = (data: FormValues) => {
     console.log("✅ Submitted data:", data);
   };
+  
+  useEffect(() => { 
+    if (eventDetails) { 
+      let tagItems: string[] = [];
+      if (eventDetails.tags && eventDetails.tags.length > 0) {
+        tagItems = eventDetails.tags.split(',').map((tag: string) => tag.trim());
+      }
+      if (eventDetails.eventImageUrl) {
+        setImagePreview(eventDetails.eventImageUrl);
+      }
+      reset(
+      {
+        tagList: tagItems,
+        fullAddress: eventDetails?.eventLocation || "",
+        eventName:  eventDetails?.eventName || "",
+        description:  eventDetails?.eventDescription || "",
+        eventDuration: eventDetails?.eventDuration || 0,
+        agenda: eventDetails?.eventAgenda || null,
+       
+        eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
+      }
+    );
+    //setValue("description", eventDetails?.description || "");
+  }
+  }, [eventDetails, reset]);
+
+  if (isLoading) return <p>Loading...</p>;
 
   return (
     <form

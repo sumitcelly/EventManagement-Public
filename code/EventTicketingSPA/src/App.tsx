@@ -34,10 +34,20 @@ export default function App() {
          path="/Dashboard"
          element={<Dashboard/>}
          ></Route>
+        
          <Route 
          path="/CreateEvent"
          element={<EventForm/>}
-         ></Route>
+         >
+
+         </Route>
+
+        <Route 
+         path="/CreateEvent/:id"
+         element={<EventForm/>}
+         >
+
+         </Route>
         
         <Route
           path="/myevents"
