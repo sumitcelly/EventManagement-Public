@@ -14,9 +14,15 @@ import ListInput from "../../components/ListInput";
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   headline: yup.string().nullable().default(null),
-  eventStartDate: yup.string().required("Event date is required"),
+  eventStartDate: yup.string().required("Event date is required")
+  .test("past-date", "Event start date cannot be in the past", (value) => {
+    
+      return  new Date(value) >= new Date();
+      
+    }),
   fullAddress: yup.string().required("Event address is required"),
-  eventDuration: yup.number().required("Event duration is required"),
+  eventDuration: yup.number().required("Event duration is required").
+  min(1, "Duration cannot be 0."),
   description: yup
     .string()
     .test("not-empty", "Description is required", (value) => {
@@ -94,8 +100,9 @@ export default function EventForm() {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
+    console.log("❌ Validation errors:", errors);
   };
   
   useEffect(() => { 
@@ -126,10 +133,15 @@ export default function EventForm() {
   if (isLoading) return <p>Loading...</p>;
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
+//     <form
+//       onSubmit={handleSubmit(
+//         //console.log("address", fullAddress),
+//   (data) => console.log("submit fired!", data),
+//   (errors) => console.log("validation errors", errors)
+// )}>
+    <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-2xl mx-auto p-6 space-y-6"
-    >
+    > 
       <div>
         <label className="block font-semibold mb-1">Event Title</label>
         <input
