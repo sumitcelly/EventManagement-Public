@@ -4,10 +4,16 @@ export type Ticket = {
   name: string;
   description: string;
   cost: number;
+  //number of tickets a user wants to buy
   quantity: number;
   maxPerOrder?:number;
   ticketsSold:number;
+  //upper limit of tickets that can be sold for this ticket type
   totalAllowed:number;
+  tickeSalesStartDate?: Date;
+  ticketSalesEndDate?: Date;
+  ticketValidFromDate?: Date;
+  ticketValidToDate?: Date;
 };
 
 

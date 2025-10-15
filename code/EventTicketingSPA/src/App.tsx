@@ -16,6 +16,8 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 
 import Dashboard  from "./pages/Organizer/Dashboard";
 import EventForm from "./pages/Organizer/EventForm";
+import TicketDashboard from "./pages/Organizer/TicketDashboad";
+import TicketBasics from "./pages/Organizer/TicketBasics";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -46,7 +48,23 @@ export default function App() {
          path="/CreateEvent/:id"
          element={<EventForm/>}
          >
+         </Route>
+         <Route 
+         path="/TicketDashboard/:eventId"
+         element={<TicketDashboard/>}
+         >
+         </Route>
 
+        <Route 
+          path="/TicketBasics/:eventId"
+          element={<TicketBasics/>}
+         >
+         </Route>
+
+          <Route 
+          path="/TicketBasics/:eventId/:ticketId"
+          element={<TicketBasics/>}
+         >
          </Route>
         
         <Route

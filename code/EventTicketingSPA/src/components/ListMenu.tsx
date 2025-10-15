@@ -7,7 +7,7 @@ import { useState } from "react";
 export interface ListMenuData{
     viewLink:string,
     editLink:string,
-    deleteEvent:()=>void
+    delete:()=>void
 }
 
 export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
@@ -15,7 +15,7 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
   const navigate = useNavigate();
   const handleDelete = () => {
       // Handle the actual delete operation here
-      linkData.deleteEvent();
+      linkData.delete();
       console.log('Delete confirmed');
       setOpenModal(false);
   };

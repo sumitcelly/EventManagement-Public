@@ -111,7 +111,7 @@ const deleteEvent = async (eventId: number) => {
                   linkData={{
                     viewLink: `/eventdetails/${event.eventId}`,
                     editLink: `/ManageEvent/${event.eventId}`,
-                    deleteEvent:()=>deleteEvent(event.eventId)
+                    delete:()=>deleteEvent(event.eventId)
                   }}
                 />
               </div>

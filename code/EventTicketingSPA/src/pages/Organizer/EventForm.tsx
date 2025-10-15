@@ -10,6 +10,9 @@ import { useQuery } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
 import ListInput from "../../components/ListInput";
+import { useAppDispatch, useAppSelector } from "../../app/hook";
+import { updateEvent } from "../../features/auth/eventSlice";
+import { RootState } from "../../app/store";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -63,9 +66,11 @@ export default function EventForm() {
     }
   }, [imagePreview]) // 
 
-    const {id}  = useParams();
-    const navigate = useNavigate();
-
+  const {id}  = useParams();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  
   const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
     const res = await axiosClient.get(`/events/details/${id}`);
     console.log('Event details from backend', res?.data);
@@ -97,12 +102,54 @@ export default function EventForm() {
       agenda: eventDetails?.agenda || null,
       headline: eventDetails?.eventHeadline || null,
       eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
-    },
+    },   
+      mode: "onChange",          // 👈 validates as user types or changes field
+      reValidateMode: "onChange"
   });
 
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors);
+    const eventId = 1;
+    if (eventId) {
+      const eventBasicInfo = {
+        eventId: eventId,
+        eventName: data.eventName,
+        eventHeadline: data.headline,
+        eventDate: new Date(data.eventStartDate),
+        eventDuration: data.eventDuration,
+        eventLocation: data.fullAddress,
+        eventOrganizerId: user?.id ||1  // TODO: replace with actual organizer id
+      }
+
+      dispatch(updateEvent({event: eventBasicInfo}));
+      navigate(`/organizer/event/${eventId}/tickets`);
+    }
+  
+      
+    // axiosClient.post('/events/createorupdate',data)
+      //.then(response => {
+      //console.log('Event created/updated successfully:', response.data);
+      // const eventId = response.data.eventId;
+      // if (eventId) {
+      //   navigate(`/organizer/event/${eventId}/tickets`);
+      //   const eventBasicInfo = {
+      //     eventId
+      //     eventName: data.eventName,
+      //     eventHeadline: data.headline,
+      //     eventDate: new Date(data.eventStartDate),
+      //     eventDuration: data.eventDuration,
+      //     eventLocation: data.fullAddress,
+      //   }
+
+      //  dispatch(updateEvent({data}));
+    // })
+    // .catch(error => {
+    //   console.error('Error creating/updating event:', error);
+    //   // Handle error (e.g., show notification to user)
+    // });
+      // Optionally, navigate to another page or show a success message
+    
   };
   
   useEffect(() => { 
