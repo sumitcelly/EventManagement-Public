@@ -148,10 +148,11 @@ using EventUtils;
           {
             EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
             EventName = reader.GetString(reader.GetOrdinal("EventName")),
-            EventHeadline = reader.GetString(reader.GetOrdinal("EventHeadline")),
+            EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline"))?string.Empty: reader.GetString(reader.GetOrdinal("EventHeadline")),
             EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-            EventOrganizer = reader.GetString(reader.GetOrdinal("EventOrganizer")),
-            EventSummary = reader.GetString(reader.GetOrdinal("EventSummary")),
+            //EventOrganizer = reader.GetString(reader.GetOrdinal("EventOrganizer")),
+            EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary"))?string.Empty: reader.GetString(reader.GetOrdinal("EventSummary")),
+
             Free = reader.GetBoolean(reader.GetOrdinal("Free")),
             EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
             EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
