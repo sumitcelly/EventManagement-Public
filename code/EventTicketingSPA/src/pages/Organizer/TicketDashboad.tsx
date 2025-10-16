@@ -125,8 +125,8 @@ export default function TicketDashboard() {
               <div onClick={(e)=>e.stopPropagation()}>
                 <ListMenu
                   linkData={{
-                    viewLink: `/ticketDetails/${ticket.eventItemTypeId}`,
-                    editLink: `/ManageTicket/${ticket.eventItemTypeId}`,
+                    viewLink: `/ticketbasics/${eventId}/${ticket.eventItemTypeId}`,
+                    editLink: `/ticketbasics/${eventId}/${ticket.eventItemTypeId}`,
                     delete:()=>eventId ? deleteTicket(Number(eventId), ticket.eventItemTypeId) : undefined
                   }}
                 />

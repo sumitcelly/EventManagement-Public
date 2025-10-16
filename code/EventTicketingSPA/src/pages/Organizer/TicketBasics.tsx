@@ -115,7 +115,7 @@ export default function TicketBasics() {
 
 
   const { data:ticketDetails, isLoading:ticketLoading } = useQuery(`tickets/details/${eventId}/${ticketId}`, async () => {
-    const res = await axiosClient.get(`/eventitemtype/getbyid/${ticketId}`);
+    const res = await axiosClient.get(`/eventitemtype/${ticketId}`);
     console.log('Event details from backend', res?.data);
     return res.data;
   },
