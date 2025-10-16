@@ -155,8 +155,47 @@ export default function TicketBasics() {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     //make sure to convert date time local to UTC before sending to backend
-   
+    const payload = {
+      eventItemTypeId: ticketDetails?.eventItemTypeId || 0,
+      eventId: Number(eventId),
+      name: data.name,
+      description: data.description,
+      cost: data.cost,
+      maxPerOrder: data.maxPerOrder,
+      totalAllowed: data.totalAllowed,
+      tickeSalesStartDate: toUTCDate(data.tickeSalesStartDate),
+      tickeSalesEndDate: toUTCDate(data.tickeSalesEndDate),
+      tickevalidityStartDate: toUTCDate(data.tickevalidityStartDate),
+      tickevalidityEndtDate: toUTCDate(data.tickevalidityEndtDate),
     }
+    console.log('payload to be sent to backend',payload);
+    if (!user || !user.id) {
+      console.error("User not authenticated");
+      return;
+    }
+    if (ticketDetails) {
+      //update
+      axiosClient.put(`/eventitemtype/update/${ticketDetails.eventItemTypeId}`, payload)
+      .then(response => {
+        console.log('Ticket updated successfully:', response.data);
+        navigate(`/organizer/eventtickets/${eventId}`);
+      })
+      .catch(error => {
+        console.error('Error updating ticket:', error);
+      });
+    }
+    else {
+      //create
+      axiosClient.post(`/eventitemtype/create`, payload)
+      .then(response => {
+        console.log('Ticket created successfully:', response.data);
+        navigate(`/organizer/ticketdashboard/${eventId}`);
+      })
+      .catch(error => {
+        console.error('Error creating ticket:', error);
+      });
+    }
+  }
 
 
 
