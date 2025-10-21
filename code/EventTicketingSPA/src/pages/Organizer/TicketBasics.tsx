@@ -89,9 +89,8 @@ type FormValues = {
   }
 
 
-export default function TicketBasics() {
+export default function TicketBasics({eventId,ticketId}: {eventId?: string, ticketId?:string}) {
 
-  const {eventId,ticketId}  = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
@@ -116,12 +115,12 @@ export default function TicketBasics() {
 
   const { data:ticketDetails, isLoading:ticketLoading } = useQuery(`tickets/details/${eventId}/${ticketId}`, async () => {
     const res = await axiosClient.get(`/eventitemtype/${ticketId}`);
-    console.log('Event details from backend', res?.data);
+    console.log('ticket details from backend', res?.data);
     return res.data;
   },
   {
     //staleTime: 1000 * 60 * 5, //enable only if redux does not have event details
-    enabled: !!ticketId
+    enabled: !!ticketId && ticketId!=="-1"
   }
   );
 
@@ -223,6 +222,7 @@ export default function TicketBasics() {
   if (ticketLoading || eventLoading) return <p>Loading...</p>;
 
   return (
+    
     <form
     className="max-w-2xl mx-auto p-6 space-y-6"
       onSubmit={handleSubmit(
@@ -233,6 +233,10 @@ export default function TicketBasics() {
     {/* // <form onSubmit={handleSubmit(onSubmit)}
     //   className="max-w-2xl mx-auto p-6 space-y-6"
     // >  */}
+      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color">
+          Back to Ticket list
+      </a>
+     
       <div  className="min-h-[80px]">
         <label className="block font-semibold mb-1">Ticket Name</label>
         <input
@@ -397,7 +401,7 @@ export default function TicketBasics() {
           type="submit"
           className="ml-auto bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
         >
-          Submit
+          Save
         </button>
       </div>
     </form>

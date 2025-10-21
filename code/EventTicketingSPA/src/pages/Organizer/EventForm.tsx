@@ -55,7 +55,7 @@ type FormValues = {
 };
 
 
-export default function EventForm() {
+export default function EventForm({id}: {id?: string}) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -66,7 +66,6 @@ export default function EventForm() {
     }
   }, [imagePreview]) // 
 
-  const {id}  = useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);

@@ -18,6 +18,7 @@ import Dashboard  from "./pages/Organizer/Dashboard";
 import EventForm from "./pages/Organizer/EventForm";
 import TicketDashboard from "./pages/Organizer/TicketDashboad";
 import TicketBasics from "./pages/Organizer/TicketBasics";
+import { EventManager } from "./pages/Organizer/EventManager";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -32,47 +33,20 @@ export default function App() {
             isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
           }
         />
-        <Route 
-         path="/Dashboard"
-         element={<Dashboard/>}
-         ></Route>
-        
-         <Route 
-         path="/CreateEvent"
-         element={<EventForm/>}
-         >
 
-         </Route>
+        <Route path="/EventManager/:eventId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode/:ticketId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
 
-        <Route 
-         path="/CreateEvent/:id"
-         element={<EventForm/>}
-         >
-         </Route>
-         <Route 
-         path="/TicketDashboard/:eventId"
-         element={<TicketDashboard/>}
-         >
-         </Route>
-
-        <Route 
-          path="/TicketBasics/:eventId"
-          element={<TicketBasics/>}
-         >
-         </Route>
-
-          <Route 
-          path="/TicketBasics/:eventId/:ticketId"
-          element={<TicketBasics/>}
-         >
-         </Route>
-        
+        <Route path="/Dashboard" element={isAuthenticated?<Dashboard/>:<LoginPage/>}/>
+           
         <Route
           path="/myevents"
           element={
             isAuthenticated ? <MyEvents /> : <Navigate to="/login" />
           }
         />
+
         <Route
           path="/searchevents/keyword/:keyword?"
           element={

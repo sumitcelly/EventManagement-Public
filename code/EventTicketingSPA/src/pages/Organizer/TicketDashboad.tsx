@@ -13,10 +13,10 @@ import { Progress } from "flowbite-react";
 
 
   
-export default function TicketDashboard() {
+export default function TicketDashboard({eventId,isActive}: {eventId?: string, isActive?:boolean}) {
   const navigate = useNavigate();
-  const {eventId} = useParams();
-  console.log('event id from params',eventId);
+ 
+  console.log('event id from props',eventId);
 
   const queryClient = useQueryClient();
   
@@ -49,7 +49,7 @@ export default function TicketDashboard() {
 
   const { data, isLoading } = 
   useQuery(['TicketsbyEvent',eventId], async () => {
-      console.log("Fetching orders for user", eventId);
+      console.log("Fetching tickets for event id:", eventId);
       //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
       //console.log('orders fetched from backend',res.data);
       let data:Ticket[]=[];
@@ -82,18 +82,20 @@ export default function TicketDashboard() {
       // refetchOnMount: false,      // don’t always re-fetch on mount
       // refetchOnWindowFocus: false,
       // refetchOnReconnect: false,
-      //enabled: !!userId //  only run query if we have an id
+      enabled: !!eventId && isActive //  only run query if we have an id
     }
   );
 
 
 
   if (isLoading) return <p>Loading...</p>;
-  //console.log("Fetching orders for user",userId);
+
   return (
-    <div className="max-w-md mx-auto mt-6">
-      <h2 className="text-xl font-semibold mb-4">Tickets for your events</h2>
-      <div className="">
+    <div className="max-w-md mx-auto">
+      
+      <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
+      
+      <div className="mt-6">
         {data && data.map((ticket) => (
           <div
             key={ticket.eventItemTypeId}
@@ -120,22 +122,29 @@ export default function TicketDashboard() {
                     className=""
                 />       
           
-            <div className="flex flex-col gap-5">
-            
+            <div className="flex flex-col gap-5">         
               <div onClick={(e)=>e.stopPropagation()}>
                 <ListMenu
                   linkData={{
-                    viewLink: `/ticketbasics/${eventId}/${ticket.eventItemTypeId}`,
-                    editLink: `/ticketbasics/${eventId}/${ticket.eventItemTypeId}`,
+                    viewLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
+                    editLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
                     delete:()=>eventId ? deleteTicket(Number(eventId), ticket.eventItemTypeId) : undefined
                   }}
                 />
               </div>
             </div>
       </div>
+      
   ))}
-</div>
-
+  </div>
+    <div className="flex flex-row mt-4">
+        <button
+              className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+              onClick={()=> navigate(`/eventmanager/${eventId}/new`)}
+            >
+              New Ticket
+        </button> 
+      </div>
     </div>
   );
 }

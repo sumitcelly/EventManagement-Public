@@ -41,7 +41,7 @@ export default function MyEvents() {
   );
 
   if (isLoading) return <p>Loading...</p>;
-  //console.log("Fetching orders for user",userId);
+
   return (
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>

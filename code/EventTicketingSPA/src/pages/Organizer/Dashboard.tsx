@@ -44,7 +44,7 @@ const deleteEvent = async (eventId: number) => {
 
   const { data, isLoading } = 
   useQuery(['EventsByOrganizer',userId], async () => {
-      console.log("Fetching orders for user", userId);
+      console.log("Fetching events for organizer in", userId);
       //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
       //console.log('orders fetched from backend',res.data);
       let data:EventHeader[]=[];
@@ -81,7 +81,7 @@ const deleteEvent = async (eventId: number) => {
 
 
   if (isLoading) return <p>Loading...</p>;
-  //console.log("Fetching orders for user",userId);
+
   return (
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
@@ -110,7 +110,7 @@ const deleteEvent = async (eventId: number) => {
                 <ListMenu
                   linkData={{
                     viewLink: `/eventdetails/${event.eventId}`,
-                    editLink: `/ManageEvent/${event.eventId}`,
+                    editLink: `/EventManager/${event.eventId}`,
                     delete:()=>deleteEvent(event.eventId)
                   }}
                 />

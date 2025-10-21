@@ -205,7 +205,7 @@ export function AppNavbar() {
       
 
       <NavbarCollapse className="ml-auto mr-5">
-        <NavbarLink href="#" active>
+        <NavbarLink href="/dashboard" active>
           Organize an Event
         </NavbarLink>
         <NavbarLink href="#">Find my tickets</NavbarLink>
