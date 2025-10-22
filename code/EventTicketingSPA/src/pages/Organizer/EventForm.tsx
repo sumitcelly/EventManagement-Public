@@ -13,6 +13,8 @@ import ListInput from "../../components/ListInput";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
+//import  SuccessToast  from "../../components/SuccessToast";
+import toast, { Toaster } from 'react-hot-toast';
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -55,7 +57,7 @@ type FormValues = {
 };
 
 
-export default function EventForm({id}: {id?: string}) {
+export default function EventForm({id, isActive}: {id?: string,isActive:boolean}) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -77,7 +79,7 @@ export default function EventForm({id}: {id?: string}) {
   },
   {
     //staleTime: 1000 * 60 * 5,
-    enabled: !!id
+    enabled: !!id && isActive
   }
   );
 
@@ -109,7 +111,7 @@ export default function EventForm({id}: {id?: string}) {
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors);
-    const eventId = 1;
+    const eventId = 2;
     if (eventId) {
       const eventBasicInfo = {
         eventId: eventId,
@@ -120,9 +122,13 @@ export default function EventForm({id}: {id?: string}) {
         eventLocation: data.fullAddress,
         eventOrganizerId: user?.id ||1  // TODO: replace with actual organizer id
       }
-
+      console.log("success");
       dispatch(updateEvent({event: eventBasicInfo}));
-      navigate(`/organizer/event/${eventId}/tickets`);
+      toast.success('Event saved!');
+     
+      //setTimeout(() =>  window.location.assign(`/EventManager/${eventId}/ticketlist`), 1500);
+      setTimeout(() => navigate(`/EventManager/${eventId}/ticketlist`), 1500);
+
     }
   
       
@@ -179,15 +185,18 @@ export default function EventForm({id}: {id?: string}) {
   if (isLoading) return <p>Loading...</p>;
 
   return (
-//     <form
+    <>
+     <Toaster position="top-right" />
+{/* //     <form
 //       onSubmit={handleSubmit(
-//         //console.log("address", fullAddress),
+//         console.log("address", fullAddress),
 //   (data) => console.log("submit fired!", data),
 //   (errors) => console.log("validation errors", errors)
-// )}>
+// )}> */}
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-2xl mx-auto p-6 space-y-6"
     > 
+         
       <div>
         <label className="block font-semibold mb-1">Event Title</label>
         <input
@@ -335,5 +344,6 @@ export default function EventForm({id}: {id?: string}) {
         </button>
       </div>
     </form>
+    </>
   );
 }
