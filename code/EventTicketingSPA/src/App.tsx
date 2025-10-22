@@ -34,6 +34,7 @@ export default function App() {
           }
         />
 
+        <Route path="/EventManager" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId/:mode" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId/:mode/:ticketId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>

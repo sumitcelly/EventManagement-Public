@@ -116,10 +116,17 @@ const deleteEvent = async (eventId: number) => {
                 />
               </div>
             </div>
-      </div>
-  ))}
-</div>
-
+      </div>))}
     </div>
+    
+    <div className="flex flex-row mt-4">
+        <button
+              className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+              onClick={()=> navigate(`/eventmanager`)}
+            >
+              New Event
+        </button> 
+      </div>
+  </div>
   );
 }

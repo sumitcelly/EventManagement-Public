@@ -325,13 +325,15 @@ export default function EventForm({id}: {id?: string}) {
         />
 
       </div>
-
-      <button
-        type="submit"
-        className="ml-auto bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
+      
+      <div className="flex flex-row items-center justify-between">
+        <button
+          type="submit"
+          className="ml-auto bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Save
+        </button>
+      </div>
     </form>
   );
 }

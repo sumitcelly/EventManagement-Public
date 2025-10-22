@@ -7,10 +7,9 @@ import TicketDashboard from "./TicketDashboad";
 import { useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import TicketBasics from "./TicketBasics";
+import EventPublish from "./EventPublish";
 
 export function EventManager() {
-  const tabsRef = useRef<TabsRef>(null);
-  
   const {eventId,mode,ticketId} = useParams();
 
   //mode valid values are ticketlist,new,edit
@@ -22,7 +21,7 @@ export function EventManager() {
   
   console.log("Event ID in EventManager:", eventId);
   return (  
-    <Tabs aria-label="Tabs with icons" 
+    <Tabs aria-label="Event Manager" 
     
       className="max-w-2xl mx-auto p-6 space-y-6"
       variant="underline" onActiveTabChange={(tab) => setActiveTab(tab)}>
@@ -37,6 +36,10 @@ export function EventManager() {
           ?<TicketDashboard eventId={eventId} isActive={activeTab===1}/>
           :<TicketBasics eventId={eventId} ticketId={ticketId}/>         
         }
+      </TabItem>
+
+      <TabItem  title="Go Online!" icon={HiUserCircle}>
+        <EventPublish eventId={eventId}/>
       </TabItem>
     </Tabs>
   );
