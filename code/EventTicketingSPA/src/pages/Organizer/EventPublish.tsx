@@ -22,14 +22,14 @@ export default function EventPublish({eventId}: {eventId?:string}) {
     // const res = await axiosClient.get(`/events/validate/${eventId}`);
     // console.log('Event validation details from backend', res?.data);
     // return res.data;
-    return {"valid":false,"publishStatus":"Draft","eventStatus":false,"ticketStatus":false, eventUrl:""};
+    return {"valid":true,"publishStatus":"Live","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
     {
       //staleTime: 1000 * 60 * 5,
       enabled: !!eventId
     }
   });
 
-  if (isLoading) return <p>Loading...</p>;
+
   
   const mutation = useMutation({
     mutationFn: () => publishEvent(eventId),
@@ -57,47 +57,49 @@ export default function EventPublish({eventId}: {eventId?:string}) {
        return "There was an issue publishing your event. Please try later!"
     }
     
-
+      if (isLoading) return <p>Loading...</p>;
   }
   
-  return (
-    <div className="max-w-md mx-auto mt-6">
-      <h2 className="text-xl font-semibold mb-4">Go Live!</h2>
+  return (  
+    <div className="max-w-md mx-auto  text-center">
+      <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2>
       <div className="flex flex-col">
        
-         <label className="block font-semibold mt-5">Event Status: {data?.eventStatus}</label>
+         <label className="block font-semibold italic">Event Status: {data?.publishStatus}</label>
          {data && data.publishStatus === "Draft"?(
-          <div className="bg-brand-neutral mt-6">
+          <div className="bg-brand-neutral mt-6 p-3 text-center text-secondary-color rounded">
+       
             {
               data && data.valid && (
-              <p className="text-go-color text-xl">
-                You are ready to go online! All event and ticket details are compelte!
+              <p className="text-l">
+                You are ready to go online! All event and ticket details are complete!
               </p>
             )}
              {
               data && !data.valid && !data.eventStatus && (
-              <p className="text-secondary-color text-xl">
-               Event details are missing. Please complete those before proceeding.
+              <p className=" text-l">
+               Please complete event details.
               </p>
             )}
              {
               data && !data.valid && !data.ticketStatus && (
-              <p className="text-secondary-color text-xl">
-              You must save at least one ticket for your event before proceeding.
+              <p className="text-l mt-2">
+              Please create at least one ticket before publishing.
               </p>
             )}
+
           </div>
           ):
-            <div className="bg-brand-neutral mt-6">
-              <p className="text-go-color text-xl">
-                  You are already online! Any changes you make to your events will be available instantly!
+            <div className="bg-brand-neutral mt-6 rounded p-2 text-center">
+              <p className="text-secondary-color text-l text-center">
+                  You are already online. Any changes you make to your events will be available instantly!
                 </p>
             </div>
         }
 
         {data && data.valid && (
-          <div className="bg-brand-dark">
-            Your event url is {data?.eventUrl}
+          <div className= "mt-3 bg-brand-neutral rounded">
+            Your event url is <a href={data?.eventUrl}>{data?.eventUrl}</a>
           </div>
         )}
         
