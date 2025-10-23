@@ -71,10 +71,24 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
+  //const event = useAppSelector((state: RootState) => state.event);
   
   const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
     const res = await axiosClient.get(`/events/details/${id}`);
     console.log('Event details from backend', res?.data);
+     const eventBasicInfo = {
+        eventId: res.data.eventId,
+        eventName: res.data.eventName,
+        eventHeadline: res.data.headline,
+        eventDate: new Date(res.data.eventStartDate),
+        eventDuration: res.data.eventDuration,
+        eventLocation: res.data.fullAddress,
+        isLive: false,
+        eventOrganizerId: user?.id ||0
+      }
+      console.log("success");
+      dispatch(updateEvent({event: eventBasicInfo}));
+      //console.log('event in redux',event);
     return res.data;
   },
   {

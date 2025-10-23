@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
+import toast, { Toaster } from 'react-hot-toast';
 
 const ticketSchema = (event: EventHeader)=>yup.object({
   name: yup.string().required("Ticket name is required.").typeError('Invalid number.'),
@@ -30,7 +31,7 @@ const ticketSchema = (event: EventHeader)=>yup.object({
       return !!stripped;
     }),
     tickeSalesStartDate: yup.string().default(new Date().toLocaleDateString()).required("Ticket sales start date is required")
-    .test("past-date", "Ticket sales start date cannot be after the end has ended or in the past.", (value) => {  
+    .test("past-date", "Either ticket sales date is in the past or after event has ended.", (value) => {  
            if (!event || !event.eventDate) return false;  
           return  new Date(value) >= new Date() && new Date(value) <= new Date(event.eventDate);      
       }),
@@ -174,25 +175,29 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     }
     if (ticketDetails) {
       //update
-      axiosClient.put(`/eventitemtype/update/${ticketDetails.eventItemTypeId}`, payload)
-      .then(response => {
-        console.log('Ticket updated successfully:', response.data);
-        navigate(`/organizer/eventtickets/${eventId}`);
-      })
-      .catch(error => {
-        console.error('Error updating ticket:', error);
-      });
+        toast.success("Ticket updated!");
+        setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
+      // axiosClient.put(`/eventitemtype/update/${ticketDetails.eventItemTypeId}`, payload)
+      // .then(response => {
+      //   console.log('Ticket updated successfully:', response.data);
+      //   navigate(`/organizer/eventtickets/${eventId}`);
+      // })
+      // .catch(error => {
+      //   console.error('Error updating ticket:', error);
+      // });
     }
     else {
+      toast.success("Ticket created!");
+      setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
       //create
-      axiosClient.post(`/eventitemtype/create`, payload)
-      .then(response => {
-        console.log('Ticket created successfully:', response.data);
-        navigate(`/organizer/ticketdashboard/${eventId}`);
-      })
-      .catch(error => {
-        console.error('Error creating ticket:', error);
-      });
+      // axiosClient.post(`/eventitemtype/create`, payload)
+      // .then(response => {
+      //   console.log('Ticket created successfully:', response.data);
+      //   navigate(`/organizer/ticketdashboard/${eventId}`);
+      // })
+      // .catch(error => {
+      //   console.error('Error creating ticket:', error);
+      // });
     }
   }
 
@@ -223,16 +228,17 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
 
   return (
     
-    <form
-    className="max-w-2xl mx-auto p-6 space-y-6"
-      onSubmit={handleSubmit(
-        //console.log("address", fullAddress),
-      (data) => console.log("submit fired!", data),
-      (errors) => console.log("validation errors", errors)
-    )}>
-    {/* // <form onSubmit={handleSubmit(onSubmit)}
-    //   className="max-w-2xl mx-auto p-6 space-y-6"
-    // >  */}
+    // <form
+    // className="max-w-2xl mx-auto p-6 space-y-6"
+    //   onSubmit={handleSubmit(
+    //     //console.log("address", fullAddress),
+    //   (data) => console.log("submit fired!", data),
+    //   (errors) => console.log("validation errors", errors)
+    // )}>
+    <form onSubmit={handleSubmit(onSubmit)}
+      className="max-w-2xl mx-auto p-6 space-y-6"
+    > 
+     <Toaster position="top-right" />
       <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color">
           Back to Ticket list
       </a>

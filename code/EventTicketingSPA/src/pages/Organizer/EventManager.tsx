@@ -19,38 +19,48 @@ export function EventManager() {
 
   //if we have ticket id or mode, means we are on the ticket tab
  
-  const [activeTab, setActiveTab] = useState((ticketId  || mode) ? 1:0);
-  console.log('active tab in state is',activeTab);
+  const [localActiveTab, setLocalActiveTab] = useState(0);
+  //console.log('active tab in state is',activeTab);
   
 
   useEffect(() => {
-    if (ticketId || mode) {
+    if (mode === "publish")
+    {
+      console.log("tring to publish")
+      tabsRef.current?.setActiveTab(2);
+    }
+    else if (ticketId || (mode ==="new" || mode ==="ticketlist")) 
+    {
       // Switch to 2nd tab programmatically
+      //setLocalActiveTab(1);
+      console.log("ticket list tab");
       tabsRef.current?.setActiveTab(1);
     } else {
+     // setLocalActiveTab(0);
+      console.log("event tab");
       tabsRef.current?.setActiveTab(0);
     }
-  }, [ticketId, mode]);
+  }, [eventId, ticketId, mode]);
 
   return (  
     <Tabs aria-label="Event Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
-      variant="underline" onActiveTabChange={(tab) =>{ console.log("active tab change called",tab); setActiveTab(tab)}}>
+      variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
     
       <TabItem title="Event Details" icon={HiUserCircle}>
-        <EventForm id={eventId} isActive={activeTab===0}/>
+        <EventForm id={eventId} isActive={localActiveTab===0}/>
       </TabItem>
 
-      <TabItem  title="Ticket(s)" icon={MdDashboard}>
+      <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>
         {
-          mode === "ticketlist" || !mode
-          ?<TicketDashboard eventId={eventId} isActive={activeTab===1}/>
+          (mode === "ticketlist" || !mode)
+          ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
           :<TicketBasics eventId={eventId} ticketId={ticketId}/>         
         }
       </TabItem>
 
-      <TabItem   title="Go Online!" icon={HiUserCircle} disabled={eventId ==null}>
+      <TabItem   title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
         <EventPublish eventId={eventId}/>
       </TabItem>
     </Tabs>

@@ -16,10 +16,11 @@ import { Progress } from "flowbite-react";
 export default function TicketDashboard({eventId,isActive}: {eventId?: string, isActive?:boolean}) {
   const navigate = useNavigate();
  
-  console.log('event id from props',eventId);
+  console.log('event id from props and is active',eventId, isActive);
 
   const queryClient = useQueryClient();
-  
+  const event = useAppSelector((state: RootState) => state.event);
+
   const deleteTicket = async (eventId: number,ticketId:number) => 
   {
     try 
@@ -94,7 +95,18 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     <div className="max-w-md mx-auto">
       
       <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
-      
+      {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
+      {event && !event.isLive && (
+        <div className="flex flex-row mt-4">
+          <button
+                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                onClick={()=> navigate(`/eventmanager/${eventId}/publish`)}
+              >
+                Go Live!
+          </button> 
+        </div>
+      )}
+
       <div className="mt-6">
         {data && data.map((ticket) => (
           <div
