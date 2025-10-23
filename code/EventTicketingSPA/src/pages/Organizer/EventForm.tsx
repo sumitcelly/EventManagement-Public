@@ -80,15 +80,15 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventId: res.data.eventId,
         eventName: res.data.eventName,
         eventHeadline: res.data.headline,
-        eventDate: new Date(res.data.eventStartDate),
+        eventDate: new Date(res.data.eventDate),
         eventDuration: res.data.eventDuration,
-        eventLocation: res.data.fullAddress,
+        eventLocation: res.data.eventLocation,
         isLive: false,
         eventOrganizerId: user?.id ||0
       }
       console.log("success");
       dispatch(updateEvent({event: eventBasicInfo}));
-      //console.log('event in redux',event);
+      console.log('event in redux',eventBasicInfo);
     return res.data;
   },
   {

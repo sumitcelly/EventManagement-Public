@@ -75,6 +75,8 @@ type FormValues = {
 };
 
 const toLocalDateTimeInputValue = (date?: Date | string | null) => {
+
+  //console.log(date,"the date passed");
   if (!date) {
     console.warn("⚠️ No date passed to toLocalDateTimeInputValue");
     return "";
@@ -82,7 +84,7 @@ const toLocalDateTimeInputValue = (date?: Date | string | null) => {
 
   const d = new Date(date);
   if (isNaN(d.getTime())) {
-    //console.warn("⚠️ Invalid date passed:", date);
+    //console.log("⚠️ Invalid date passed:", d);
     return "";
   }
 
@@ -154,7 +156,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       totalAllowed: 1 ,
       description: "",
       tickeSalesStartDate: toLocalDateTimeInputValue(addDurationToDate(new Date(),1)), //default to one hour from now
-      tickeSalesEndDate: toLocalDateTimeInputValue(eventBasics.eventDate ? new Date(eventBasics.eventDate) : new Date()),
+      tickeSalesEndDate: toLocalDateTimeInputValue(eventBasics.eventDate ? (eventBasics.eventDate) : addDurationToDate(new Date(),24)),
       tickevalidityStartDate: toLocalDateTimeInputValue(eventBasics.eventDate ? new Date(eventBasics.eventDate) : new Date()),
       tickevalidityEndtDate: toLocalDateTimeInputValue(eventBasics.eventDate ? addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration ||0) : new Date()),
 
@@ -217,6 +219,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
 
   useEffect(() => { 
     if (ticketDetails) { 
+      console.log("Inside reset",ticketDetails);
       reset(
       {
         name: ticketDetails?.name || "",
@@ -224,8 +227,8 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         maxPerOrder: ticketDetails?.maxPerOrder || 0,
         totalAllowed: ticketDetails?.totalAllowed || 0,
         description: ticketDetails?.description || "",
-        tickeSalesStartDate: ticketDetails?.tickeSalesStartDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesStartDate)) : toLocalDateTimeInputValue(new Date()),
-        tickeSalesEndDate: ticketDetails?.tickeSalesEndDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesEndDate)) : toLocalDateTimeInputValue(new Date()),
+        tickeSalesStartDate: ticketDetails?.tickeSalesStartDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesStartDate)) : toLocalDateTimeInputValue(addDurationToDate(new Date(),1)),
+        tickeSalesEndDate: ticketDetails?.tickeSalesEndDate? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesEndDate)) : toLocalDateTimeInputValue(addDurationToDate(new Date(),24)),
         tickevalidityStartDate: ticketDetails?.tickevalidityStartDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityStartDate)) 
                               : toLocalDateTimeInputValue(new Date(eventBasics.eventDate)),
         tickevalidityEndtDate: ticketDetails?.tickevalidityEndtDate
