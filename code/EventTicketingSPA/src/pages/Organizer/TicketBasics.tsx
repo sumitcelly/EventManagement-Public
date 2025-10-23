@@ -74,10 +74,22 @@ type FormValues = {
   tickevalidityEndtDate: string;
 };
 
-  const toLocalDateTimeInputValue = (date: Date) => {
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 16); // "2025-10-16T14:30"
-  };
+const toLocalDateTimeInputValue = (date?: Date | string | null) => {
+  if (!date) {
+    console.warn("⚠️ No date passed to toLocalDateTimeInputValue");
+    return "";
+  }
+
+  const d = new Date(date);
+  if (isNaN(d.getTime())) {
+    //console.warn("⚠️ Invalid date passed:", date);
+    return "";
+  }
+
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
 
   const toUTCDate = (localDateStr: string): Date => {
     const localDate = new Date(localDateStr);

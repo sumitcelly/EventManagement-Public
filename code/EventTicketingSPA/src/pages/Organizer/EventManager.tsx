@@ -21,7 +21,6 @@ export function EventManager() {
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
   //console.log('active tab in state is',activeTab);
-  
 
   useEffect(() => {
     if (mode === "publish")
@@ -40,7 +39,7 @@ export function EventManager() {
       console.log("event tab");
       tabsRef.current?.setActiveTab(0);
     }
-  }, [eventId, ticketId, mode]);
+  }, [mode,ticketId]);
 
   return (  
     <Tabs aria-label="Event Manager" 
