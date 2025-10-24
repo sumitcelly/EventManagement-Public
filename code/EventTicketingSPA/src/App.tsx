@@ -36,7 +36,7 @@ export default function App() {
         />
 
         <Route path="/TeamManager/:organizerId" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>
-        <Route path="/TeamManager/:organizerId/:mode" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/TeamManager/:organizerId/:mode" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>
 
         <Route path="/EventManager" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>

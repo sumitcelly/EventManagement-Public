@@ -7,6 +7,7 @@ import { useState } from "react";
 export interface ListMenuData{
     viewLink:string,
     editLink:string,
+    editData?:any
     delete:()=>void
 }
 
@@ -27,10 +28,12 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
         inline
         label={<HiOutlineDotsVertical className="text-xl cursor-pointer"/>}
       >
-        <DropdownItem onClick={() => navigate(linkData.viewLink)}>
-          View Details
-        </DropdownItem>
-        <DropdownItem onClick={() => navigate(linkData.editLink)}>
+        {linkData.viewLink && (
+          <DropdownItem onClick={() => navigate(linkData.viewLink)}>
+            View Details
+          </DropdownItem>
+        )}
+        <DropdownItem onClick={() => navigate(linkData.editLink, {state:linkData?.editData})}>
           Edit
         </DropdownItem>
         <DropdownItem onClick={() => setOpenModal(true)}>

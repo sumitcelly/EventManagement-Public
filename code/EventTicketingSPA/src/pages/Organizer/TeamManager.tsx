@@ -12,7 +12,7 @@ import MemberAdd from "./MemberAdd";
 export function TeamManager() {
   const tabsRef = useRef<TabsRef>(null);
   const location = useLocation();
-
+  
   const {organizerId,mode} = useParams();
 
   //mode valid values are ticketlist,new,edit
@@ -22,17 +22,18 @@ export function TeamManager() {
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
   //console.log('active tab in state is',activeTab);
-  let memberInfo = location.state;
-  
+  const memberInfo = location.state;
+  console.log('Member Info is ', memberInfo);
+
   // if (!memberInfo)
   // {
   //   memberInfo ={"userId":userId};
   // }
 
   useEffect(() => {
-    if (mode === "newuser" || mode ==="edituser")
+    if (mode === "new" || mode ==="edit")
     {
-      console.log("new user creation")
+      console.log("new user creation/updation")
       tabsRef.current?.setActiveTab(1);
     }
      else {

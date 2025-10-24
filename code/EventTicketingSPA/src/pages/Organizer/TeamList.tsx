@@ -20,7 +20,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
 
   const queryClient = useQueryClient();
 
-  const deleteTicket = async (organizerId: number,userId:number) => 
+  const deleteUser = async (userId:number) => 
   {
     try 
     {
@@ -55,17 +55,17 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       let data:TeamMember[]=[];
       data.push({
         userId: 5,
-        email:"abc@gmail.com",
-        status:"accepted",
+        email:"fgfgfgfgfgfgfgffg@gmail.com",
+        status:"Active",
         permissions:["Admin"],
         name:"member1"
       },
     {
         userId: 7,
-        email:"abc7@gmail.com",
-        status:"pending",
+        email:"sumit.celly@gmail.com",
+        status:"Pending",
         permissions:["Checkin"],
-         name:"member2"
+        name:"member2"
       });
       return data;
     },
@@ -85,14 +85,14 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
   if (isLoading) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-l mx-auto">
       
       <h2 className="text-xl font-semibold mb-4 text-center">Build your team</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
       
       <div className="flex flex-row mt-4">
           <button
-                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 mb-2 rounded hover:bg-blue-700"
                 onClick={()=> navigate(`/teammanager/addmember`)}
               >
                 Add member
@@ -105,6 +105,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       <div>Name</div>
       <div>Status</div>
       <div>Permissions</div>
+      
     </div>
 
     {/* Member Rows */}
@@ -114,7 +115,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
           key={member.userId}
           className="grid grid-cols-1 sm:grid-cols-4 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
         >
-          <div className="truncate">{member.email}</div>
+          <div className="truncate pr-2" title={member.email}>{member.email}</div>
           <div>{member.name}</div>
           <div>
             <span
@@ -129,7 +130,24 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
               {member.status}
             </span>
           </div>
-          <div>{member.permissions?.join(", ")}</div>
+          <div className="flex flex-row justify-between">
+            <div>
+              {member.permissions?.join(", ")}
+            </div>
+            <div onClick={(e)=>e.stopPropagation()}>
+              <ListMenu
+                linkData={{
+                  viewLink: "",
+                  editLink: `/teammanager/${organizerId}/edit`,
+                  delete:()=>deleteUser(Number(member.userId)),
+                  editData: {member}
+                }}
+              />
+            </div>
+          </div>
+                
+          
+       
         </div>
       ))}
     </div>
