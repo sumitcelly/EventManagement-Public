@@ -98,16 +98,16 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
 
   return (
     
-    <form
-    className="max-w-md mx-auto mt-8 p-6"
-      onSubmit={handleSubmit(
-        //console.log("address", fullAddress),
-      (data) => console.log("submit fired!", data),
-      (errors) => console.log("validation errors", errors)
-    )}>
-    {/* <form onSubmit={handleSubmit(onSubmit)}
+    // <form
+    // className="max-w-md mx-auto mt-8 p-6"
+    //   onSubmit={handleSubmit(
+    //     console.log("address", fullAddress),
+    //   (data) => console.log("submit fired!", data),
+    //   (errors) => console.log("validation errors", errors)
+    // )}>
+    <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-8 p-6"
-    >  */}
+    >  
 
     <div className="flex flex-col items-center w-full">
      <Toaster position="top-right" />
