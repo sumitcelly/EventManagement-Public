@@ -1,85 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-function Permissions({permissionsList, onChange}:{permissionsList?:string, onChange:(perms:string)=>void})
-{
-  const tempPerms = permissionsList?.split(',');
-  console.log("tempperms", tempPerms);
-  const [isAdmin, setIsAdmin] = useState(tempPerms?.includes("Admin")?true:false);
-  const [isRestAdmin, setIsRestAdmin] = useState(tempPerms?.includes("RestrictedAdmin")?true:false);
-  const [isCheckin, setIsCheckin] = useState(tempPerms?.includes("Checkin")?true:false);
+interface PermissionsProps {
+  permissionsList?: string;
+  onChange: (perms: string) => void;
+}
 
-  console.log('value for state', isAdmin,isRestAdmin,isCheckin);
-    const buildPermsList =(permList:boolean[])=>{
-    let perms=[];
-    console.log('value for state in build perms', isAdmin,isRestAdmin,isCheckin);
-    if (permList[0])
-    {
-        perms.push("Admin");
+const allPermissions = ["Admin", "RestrictedAdmin", "Checkin"];
+
+export default function Permissions({ permissionsList, onChange }: PermissionsProps) {
+  // Convert the comma-separated string into a Set for easy lookup
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  // Initialize or update state when permissionsList changes
+  useEffect(() => {
+    if (permissionsList) {
+      const perms = permissionsList.split(",").map((p) => p.trim());
+      setSelected(new Set(perms));
     }
-    if (permList[1])
-    {
-        perms.push("RestrictedAdmin");
-    }
-    if (permList[2])
-    {
-        perms.push("Checkin");
-    }
-    console.log("changing perms:",perms.join(","));
-
-    return perms.join(",");
-    
-  }
-  const handleAdminChange = (event:any) => {
-    setIsAdmin(event.target.checked);
-    onChange(buildPermsList([event.target.checked, isRestAdmin, isCheckin]));
-  };
-  const handleRestAdminChange = (event:any) => {
-    setIsRestAdmin(event.target.checked);
-     onChange(buildPermsList([isAdmin, event.target.checked,isCheckin]));
-  };
-  const handleCheckInChange = (event:any) => {
-    setIsCheckin(event.target.checked);
-    onChange(buildPermsList([isAdmin, isRestAdmin, event.target.checked]));
-  };
-
-   useEffect(() => {
-    const tempPerms = permissionsList?.split(',');
-    console.log('value for permissions is', tempPerms);
-    setIsAdmin(tempPerms?.includes("Admin")?true:false);
-    setIsRestAdmin(tempPerms?.includes("RestrictedAdmin")?true:false);
-    setIsCheckin(tempPerms?.includes("Checkin")?true:false);
-
   }, [permissionsList]);
-  
+
+  // Whenever selected changes, send comma-separated list back up
+  useEffect(() => {
+    onChange(Array.from(selected).join(","));
+  }, [selected, onChange]);
+
+  const handleToggle = (perm: string) => {
+    setSelected((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(perm)) {
+        updated.delete(perm);
+      } else {
+        updated.add(perm);
+      }
+      return updated;
+    });
+  };
+
   return (
-    <div className="flex flex-col">
-      <label>
-        <input
-          type="checkbox"
-          checked={isAdmin} // The 'checked' prop makes it a controlled component
-          onChange={handleAdminChange}
-        />
-        Admin
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={isRestAdmin} // The 'checked' prop makes it a controlled component
-          onChange={handleRestAdminChange}
-        />
-        Restricted Admin
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={isCheckin} // The 'checked' prop makes it a controlled component
-          onChange={handleCheckInChange}
-        />
-        Checkin
-     </label>
-      
+    <div className="flex flex-col space-y-2">
+      {allPermissions.map((perm) => (
+        <label key={perm} className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={selected.has(perm)}
+            onChange={() => handleToggle(perm)}
+          />
+          <span>{perm}</span>
+        </label>
+      ))}
     </div>
   );
 }
-
-export default Permissions;
