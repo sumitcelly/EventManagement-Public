@@ -106,20 +106,20 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     //   (errors) => console.log("validation errors", errors)
     // )}>
     <form onSubmit={handleSubmit(onSubmit)}
-      className="max-w-md mx-auto mt-8 p-6"
+      className="max-w-md mx-auto mt-4 p-3"
     >  
 
-    <div className="flex flex-col items-center w-full">
+    <div className="flex flex-col">
      <Toaster position="top-right" />
       <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3">
           Back to member list
       </a>
-      <div className="w-full space-y-1">
+      <div className="space-y-1">
         <label className="block font-semibold mb-1">Name</label>
         <input
           type="text"
           {...register("name")}
-          className="w-1/2 border rounded p-2"
+          className="w-full border rounded p-2"
           placeholder="Enter name"
         />
         <div className="min-h-[20px]">
@@ -128,12 +128,12 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           )}
         </div>
       </div>
-      <div className="w-full space-y-1">
+      <div className="space-y-1">
         <label className="block font-semibold mb-1">Email</label>
         <input
           type="text"
           {...register("email")}
-          className="w-1/2 border rounded p-2"
+          className="w-full border rounded p-2"
           placeholder="Enter email..."
         />
         <div className="min-h-[20px]">
@@ -142,31 +142,31 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           )}
         </div>
       </div>
-      <div className="w-full ">
-        <div className="flex flex-col w-1/5">
-          <label className="block font-semibold mb-1">Permissions</label>
-          <Controller
-            name="permissions"
-            control={control}
-            render={({ field }) => (
-              <Permissions permissionsList={field.value} onChange={field.onChange} />
-            )}
-          />
-          <div className="min-h-[20px]">
-            {errors.permissions && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.permissions.message}
-              </p>
-            )}
-          </div>
+     
+      <div className="flex flex-col">
+        <label className="block font-semibold mb-1">Permissions</label>
+        <Controller
+          name="permissions"
+          control={control}
+          render={({ field }) => (
+            <Permissions permissionsList={field.value} onChange={field.onChange} />
+          )}
+        />
+        <div className="min-h-[20px]">
+          {errors.permissions && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.permissions.message}
+            </p>
+          )}
         </div>
+      
       </div>
       
      
-      <div className="flex flex-row items-center justify-between">
+      <div className="ml-auto">
         <button
           type="submit"
-          className="ml-auto bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
         >
           Save
         </button>
