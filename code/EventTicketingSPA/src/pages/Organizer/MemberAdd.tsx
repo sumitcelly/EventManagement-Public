@@ -38,6 +38,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
   const {
     control,
     handleSubmit,
+    reset,
     register,
     formState: { errors },
   } = useForm<FormValues>({
@@ -45,7 +46,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     defaultValues: {
       name:memberInfo?.name || "",
       email: memberInfo?.email || "",
-      permissions: memberInfo?.permissions.join(",") || "",
+      permissions: memberInfo?.permissions?.join(",") || "",
       },   
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
@@ -82,7 +83,18 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     }
   }
 
-
+   useEffect(() => {
+    console.log('MemberInfo changed:', memberInfo);
+    if (memberInfo) {
+      const values = {
+        name: memberInfo.name || '',
+        email: memberInfo.email || '',
+        permissions: memberInfo.permissions?.join(",") || ''
+      };
+      console.log('Resetting form with:', values);
+      reset(values);
+    }
+  }, [memberInfo]);
 
   return (
     

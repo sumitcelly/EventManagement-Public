@@ -140,7 +140,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
                   viewLink: "",
                   editLink: `/teammanager/${organizerId}/edit`,
                   delete:()=>deleteUser(Number(member.userId)),
-                  editData: {member}
+                  editData: member
                 }}
               />
             </div>
