@@ -93,7 +93,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 mb-2 rounded hover:bg-blue-700"
-                onClick={()=> navigate(`/teammanager/addmember`)}
+                onClick={()=> navigate(`/teammanager/${organizerId}/newmember`)}
               >
                 Add member
           </button> 

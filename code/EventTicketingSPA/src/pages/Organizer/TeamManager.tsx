@@ -31,7 +31,7 @@ export function TeamManager() {
   // }
 
   useEffect(() => {
-    if (mode === "new" || mode ==="edit")
+    if (mode === "newmember" || mode ==="edit")
     {
       console.log("new user creation/updation")
       tabsRef.current?.setActiveTab(1);
