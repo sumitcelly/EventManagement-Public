@@ -113,16 +113,17 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     // <form
     // className="max-w-md mx-auto mt-8 p-6"
     //   onSubmit={handleSubmit(
-    //     console.log("address", fullAddress),
+        
     //   (data) => console.log("submit fired!", data),
     //   (errors) => console.log("validation errors", errors)
     // )}>
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
-    >  
+    >   
+    <Toaster position="top-right" />
 
     <div className="flex flex-col">
-     <Toaster position="top-right" />
+     
       
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organization Name</label>

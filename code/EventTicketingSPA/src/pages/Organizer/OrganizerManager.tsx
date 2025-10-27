@@ -37,7 +37,7 @@ export function OrganizerManager() {
           organizerId: 1,
           organizerName: "Monika C",
           organizationName: "PDAC",
-          organizerWebsite: "www.pdac.com",
+          organizerWebsite: "https://www.pdac.com",
           organizerEmail: "hello@pdac.com",
           organizerDescription: "Premier Dance Academy of Colorado",
           organizerEventBaseUrl: "pdac-events", 
