@@ -20,6 +20,7 @@ import TicketDashboard from "./pages/Organizer/TicketDashboad";
 import TicketBasics from "./pages/Organizer/TicketBasics";
 import { EventManager } from "./pages/Organizer/EventManager";
 import { TeamManager } from "./pages/Organizer/TeamManager";
+import { OrganizerManager } from "./pages/Organizer/OrganizerManager";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -34,6 +35,9 @@ export default function App() {
             isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
           }
         />
+
+        <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
+        
 
         <Route path="/TeamManager/:organizerId" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>
         <Route path="/TeamManager/:organizerId/:mode" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>

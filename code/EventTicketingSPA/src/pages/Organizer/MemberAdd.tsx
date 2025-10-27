@@ -64,9 +64,11 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       axiosClient.post('/user/update',data)
       .then(response => {
       console.log('User updated successfully:', response.data);
+      toast.success("Member update");
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
+         toast.error("Error updating member");
         // Handle error (e.g., show notification to user)
       });
     }
@@ -75,9 +77,11 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       axiosClient.post('/user/add',data)
       .then(response => {
       console.log('User created successfully:', response.data);
+      toast.success("Member created");
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
+        toast.error("Error creating member");
         // Handle error (e.g., show notification to user)
       });
     }
@@ -115,7 +119,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           Back to member list
       </a>
       <div className="space-y-1">
-        <label className="block font-semibold mb-1">Name</label>
+        <label className="font-semibold mb-1">Name</label>
         <input
           type="text"
           {...register("name")}
@@ -129,7 +133,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
         </div>
       </div>
       <div className="space-y-1">
-        <label className="block font-semibold mb-1">Email</label>
+        <label className="font-semibold mb-1">Email</label>
         <input
           type="text"
           {...register("email")}
@@ -144,7 +148,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       </div>
      
       <div className="flex flex-col">
-        <label className="block font-semibold mb-1">Permissions</label>
+        <label className="font-semibold mb-1">Permissions</label>
         <Controller
           name="permissions"
           control={control}
