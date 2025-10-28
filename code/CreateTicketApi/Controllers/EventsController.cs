@@ -76,6 +76,7 @@ namespace CreateTicketApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event evt)
         {
+            Console.WriteLine($"event id {id} and event {evt} received for update");
             if (evt == null || id != evt.EventId)
                 return BadRequest("Invalid event or ID mismatch.");
             var result = await _EventDbAccess.UpdateEvent(evt);

@@ -27,7 +27,7 @@ export default function ListInput({items,onChange}: {items:string[],onChange:(it
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {items.map((item, i) => (
+        {items && items.map((item, i) => (
           <Badge
             key={i}
             color="info"

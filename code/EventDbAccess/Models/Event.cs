@@ -1,4 +1,5 @@
 using System;
+using Org.BouncyCastle.Asn1.Mozilla;
 using Stripe;
 namespace EventManagementDbAccess
 {
@@ -21,7 +22,11 @@ namespace EventManagementDbAccess
 
         public bool Free { get; set; } = false;
 
-        
+        public int Duration { get; set; }
+
+        public bool IsLive { get; set; } = false;
+
+        public bool IsPrivate { get; set; } = false;
     }
     public class Event :EventHeader
     {

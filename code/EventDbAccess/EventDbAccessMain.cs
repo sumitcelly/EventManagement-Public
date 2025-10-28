@@ -272,15 +272,35 @@ using EventUtils;
       await connection.OpenAsync();
 
       string query = @"INSERT INTO Events 
-            (EventName, EventDescription, EventDate, EventOrganizer, EventAddress,CreatedAt) 
-            VALUES (@name, @desc, @date, @organizer, @location, @createdAt)";
+            (EventName,EventHeadline, EventDescription, EventDate, Duration,
+            EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
+            Latitude,Longitude,StreetAddress,City,State,ZipCode,
+            CreatedAt) 
+            VALUES (@name,@headline, @desc, @date, @duration,
+             @organizer, @location, @agenda, @tags, @isLive, @isPrivate,
+             @lat,@long,@streetAddress, @city, @state, @zipCode, @createdAt)";
 
       using var cmd = new MySqlCommand(query, connection);
       cmd.Parameters.AddWithValue("@name", evt.EventName);
+      cmd.Parameters.AddWithValue("@headline", evt.EventHeadline);
       cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
       cmd.Parameters.AddWithValue("@date", evt.EventDate);
-      cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizer);
+      cmd.Parameters.AddWithValue("@duration", evt.Duration);
+
+      cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizerId);
       cmd.Parameters.AddWithValue("@location", evt.EventLocation);
+      cmd.Parameters.AddWithValue("@agenda", evt.EventAgenda);
+      cmd.Parameters.AddWithValue("@tags", evt.Tags);
+      cmd.Parameters.AddWithValue("@isLive", evt.IsLive);
+      cmd.Parameters.AddWithValue("@isPrivate", evt.IsPrivate);
+
+      cmd.Parameters.AddWithValue("@lat", evt.Latitude);
+      cmd.Parameters.AddWithValue("@long", evt.Longitude);
+      cmd.Parameters.AddWithValue("@streetAddress", evt.StreetAddress);
+      cmd.Parameters.AddWithValue("@city", evt.City);
+      cmd.Parameters.AddWithValue("@state", evt.State);
+      cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
+
       cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -319,21 +339,47 @@ using EventUtils;
 
         string query = @"UPDATE Events SET 
             EventName = @name,
+            EventHeadline = @headline,
             EventDescription = @desc,
+            EventAgenda = @agenda,
+            EventTags = @tags,
             EventDate = @date,
-            EventOrganizer = @organizer,
+            Duration =@duration,
             EventAddress = @location,
+            Latitude = @lat,
+            Longitude =@long,
+            StreetAddress = @streetAddress,
+            City = @city,
+            State = @state,
+            ZipCode =@zipCode,
+            IsLive = @isLive,
+            Private = @isPrivate,
             ModifiedAt = @modifiedAt
             WHERE EventId = @eventId";
 
-        using var cmd = new MySqlCommand(query, connection);
-        cmd.Parameters.AddWithValue("@name", evt.EventName);
-        cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
-        cmd.Parameters.AddWithValue("@date", evt.EventDate);
-        cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizer);
-        cmd.Parameters.AddWithValue("@location", evt.EventLocation);
-        cmd.Parameters.AddWithValue("@eventId", evt.EventId);
-        cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+      using var cmd = new MySqlCommand(query, connection);
+ 
+      cmd.Parameters.AddWithValue("@name", evt.EventName);
+      cmd.Parameters.AddWithValue("@headline", evt.EventHeadline);
+      cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
+      cmd.Parameters.AddWithValue("@date", evt.EventDate);
+      cmd.Parameters.AddWithValue("@duration", evt.Duration);
+
+      cmd.Parameters.AddWithValue("@organizer", evt.EventOrganizerId);
+      cmd.Parameters.AddWithValue("@location", evt.EventLocation);
+      cmd.Parameters.AddWithValue("@agenda", evt.EventAgenda);
+      cmd.Parameters.AddWithValue("@tags", evt.Tags);
+      cmd.Parameters.AddWithValue("@isLive", evt.IsLive);
+      cmd.Parameters.AddWithValue("@isPrivate", evt.IsPrivate);
+
+      cmd.Parameters.AddWithValue("@lat", evt.Latitude);
+      cmd.Parameters.AddWithValue("@long", evt.Longitude);
+      cmd.Parameters.AddWithValue("@streetAddress", evt.StreetAddress);
+      cmd.Parameters.AddWithValue("@city", evt.City);
+      cmd.Parameters.AddWithValue("@state", evt.State);
+      cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
+      cmd.Parameters.AddWithValue("@eventId", evt.EventId);
+      cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected > 0)

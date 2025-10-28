@@ -15,6 +15,7 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
+import { EventHeader } from "../../types/Event";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -83,8 +84,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventDate: new Date(res.data.eventDate),
         eventDuration: res.data.eventDuration,
         eventLocation: res.data.eventLocation,
-        isLive: false,
-        eventOrganizerId: user?.id ||0
+        isLive: res.data?.isLive || false,
+        eventOrganizerId: res.data.organizerId
       }
       console.log("success");
       dispatch(updateEvent({event: eventBasicInfo}));
@@ -122,54 +123,95 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       reValidateMode: "onChange"
   });
 
-  const onSubmit = (data: FormValues,errors:any) => {
-    console.log("✅ Submitted data:", data);
-    console.log("❌ Validation errors:", errors);
-    const eventId = 2;
-    if (eventId) {
+  const updateRedux = (data:any, eventId?:number)=>{
+
       const eventBasicInfo = {
-        eventId: eventId,
+        eventId: data.eventId || eventId,
         eventName: data.eventName,
         eventHeadline: data.headline,
         eventDate: new Date(data.eventStartDate),
-        eventDuration: data.eventDuration,
+        eventDuration: data.duration,
         eventLocation: data.fullAddress,
-        eventOrganizerId: user?.id ||1  // TODO: replace with actual organizer id
+        eventOrganizerId: data.organizerId  // TODO: replace with actual organizer id
       }
-      console.log("success");
       dispatch(updateEvent({event: eventBasicInfo}));
-      toast.success('Event saved!');
-     
-      //setTimeout(() =>  window.location.assign(`/EventManager/${eventId}/ticketlist`), 1500);
-      setTimeout(() => navigate(`/EventManager/${eventId}/ticketlist`), 1500);
-
-    }
-  
-      
-    // axiosClient.post('/events/createorupdate',data)
-      //.then(response => {
-      //console.log('Event created/updated successfully:', response.data);
-      // const eventId = response.data.eventId;
-      // if (eventId) {
-      //   navigate(`/organizer/event/${eventId}/tickets`);
-      //   const eventBasicInfo = {
-      //     eventId
-      //     eventName: data.eventName,
-      //     eventHeadline: data.headline,
-      //     eventDate: new Date(data.eventStartDate),
-      //     eventDuration: data.eventDuration,
-      //     eventLocation: data.fullAddress,
-      //   }
-
-      //  dispatch(updateEvent({data}));
-    // })
-    // .catch(error => {
-    //   console.error('Error creating/updating event:', error);
-    //   // Handle error (e.g., show notification to user)
-    // });
-      // Optionally, navigate to another page or show a success message
+      console.log("redux update with even data", eventBasicInfo);
+  }
+  const eventCache = useAppSelector((state: RootState) => state.event);
+  const onSubmit = (data: FormValues,errors:any) => {
+    console.log("✅ Submitted data:", data);
+    console.log("❌ Validation errors:", errors);
+ 
+    const eventApi ={
+      eventId: eventCache.eventId || 0,
+      eventName: data.eventName,
+      eventHeadline: data.headline,
+      eventDate: new Date(data.eventStartDate),
+      duration: data.eventDuration,
+      eventLocation: data.fullAddress,
+      //use the organizer if from redux (for existing event) or user's id for new event
+      eventOrganizerId: eventCache?.eventOrganizerId || user?.id,
+      isLive: eventCache?.isLive || false,
+      eventDescription: data.description,
+      tags: data.tagList,
+      eventAgenda: data.agenda,
+      streetAddress: data.street,
+      state: data.state,
+      zipCode: data.zip,
+      latitude: data.lat,
+      longitude: data.lng,
+     }
     
-  };
+    console.log('event api data',eventApi);
+
+    if (eventCache.eventId) {
+      console.log("event already exists. Updating event for id:",eventCache.eventId);
+      axiosClient.put(`/events/${eventCache.eventId}`,eventApi)
+      .then(response => {
+        console.log('Event updated response:', response.data);
+        if (response.data > 0)
+        {
+          console.log('Event updated succefully for eventid:',eventCache.eventId);
+          toast.success("Event saved successfully");
+          updateRedux(eventApi);
+        }
+        else
+        {
+          console.log('Event update failed for eventid:',eventCache.eventId);
+          toast.error("Event save failed.");
+        }
+      })
+      .catch(error => {
+        console.error('Error updating event:', error);
+        toast.error("Event save failed.");
+      });
+    }
+    else
+    {
+      console.log("Creating new event");
+      axiosClient.post('/event',eventApi)
+      .then(response => {
+        console.log('Event created response:', response.data);
+        if (response.data > 0)
+        {
+          console.log('Event created succefully with eventid:',response.data);
+          toast.success("Event created successfully");
+          updateRedux(eventApi,response.data);
+          setTimeout(() => navigate(`/EventManager/${id}/ticketlist`), 1500);
+        }
+        else
+        {
+          console.log('Event create failed');
+          toast.error("Event create failed.");
+        }
+      })
+      .catch(error => {
+        console.error('Error creating event:', error);
+        toast.error("Event create failed.");
+      });
+    }  
+      //setTimeout(() =>  window.location.assign(`/EventManager/${eventId}/ticketlist`), 1500);
+    }
   
   useEffect(() => { 
     if (eventDetails) { 
