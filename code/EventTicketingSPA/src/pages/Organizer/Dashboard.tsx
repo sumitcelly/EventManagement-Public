@@ -8,6 +8,7 @@ import { EventHeader } from "../../types/Event";
 import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
+import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 // 
 
 
@@ -17,8 +18,9 @@ export default function Dashboard() {
   const user = useAppSelector((state: RootState) => state.auth);
   const userId = user.user?.id;
   const queryClient = useQueryClient();
-  
-const deleteEvent = async (eventId: number) => {
+  const event = useAppSelector((state: RootState) => state.event);
+
+  const deleteEvent = async (eventId: number) => {
   try {
 
     console.log('Deleting event', eventId);
@@ -122,7 +124,7 @@ const deleteEvent = async (eventId: number) => {
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=> navigate(`/eventmanager`)}
+              onClick={()=>{ resetEvent(); navigate(`/eventmanager`);}}
             >
               New Event
         </button> 

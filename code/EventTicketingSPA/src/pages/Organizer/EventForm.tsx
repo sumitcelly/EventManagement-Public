@@ -82,7 +82,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventName: res.data.eventName,
         eventHeadline: res.data.headline,
         eventDate: new Date(res.data.eventDate),
-        eventDuration: res.data.eventDuration,
+        duration: res.data.duration,
         eventLocation: res.data.eventLocation,
         isLive: res.data?.isLive || false,
         eventOrganizerId: res.data.organizerId
@@ -90,7 +90,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       console.log("success");
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log('event in redux',eventBasicInfo);
-    return res.data;
+      return res.data;
   },
   {
     //staleTime: 1000 * 60 * 5,
@@ -130,9 +130,9 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventName: data.eventName,
         eventHeadline: data.headline,
         eventDate: new Date(data.eventStartDate),
-        eventDuration: data.duration,
+        duration: data.duration,
         eventLocation: data.fullAddress,
-        eventOrganizerId: data.organizerId  // TODO: replace with actual organizer id
+        eventOrganizerId: data.organizerId  
       }
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log("redux update with even data", eventBasicInfo);
@@ -150,12 +150,13 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       duration: data.eventDuration,
       eventLocation: data.fullAddress,
       //use the organizer if from redux (for existing event) or user's id for new event
-      eventOrganizerId: eventCache?.eventOrganizerId || user?.id,
+      eventOrganizerId: eventCache?.eventOrganizerId || user?.customerId,
       isLive: eventCache?.isLive || false,
       eventDescription: data.description,
-      tags: data.tagList,
+      tags: data.tagList?.join(','),
       eventAgenda: data.agenda,
       streetAddress: data.street,
+      city:data.city,
       state: data.state,
       zipCode: data.zip,
       latitude: data.lat,
@@ -169,7 +170,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       axiosClient.put(`/events/${eventCache.eventId}`,eventApi)
       .then(response => {
         console.log('Event updated response:', response.data);
-        if (response.data > 0)
+        if (response.status === 200)
         {
           console.log('Event updated succefully for eventid:',eventCache.eventId);
           toast.success("Event saved successfully");
@@ -182,14 +183,14 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         }
       })
       .catch(error => {
-        console.error('Error updating event:', error);
+        console.error('Error updating event exception:', error);
         toast.error("Event save failed.");
       });
     }
     else
     {
       console.log("Creating new event");
-      axiosClient.post('/event',eventApi)
+      axiosClient.post('/events',eventApi)
       .then(response => {
         console.log('Event created response:', response.data);
         if (response.data > 0)
@@ -197,7 +198,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           console.log('Event created succefully with eventid:',response.data);
           toast.success("Event created successfully");
           updateRedux(eventApi,response.data);
-          setTimeout(() => navigate(`/EventManager/${id}/ticketlist`), 1500);
+          setTimeout(() => navigate(`/EventManager/${response.data}/ticketlist`), 1500);
         }
         else
         {
@@ -228,7 +229,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         fullAddress: eventDetails?.eventLocation || "",
         eventName:  eventDetails?.eventName || "",
         description:  eventDetails?.eventDescription || "",
-        eventDuration: eventDetails?.eventDuration || 0,
+        eventDuration: eventDetails?.duration || 0,
         agenda: eventDetails?.eventAgenda || null,
         headline: eventDetails?.eventHeadline || null,
         eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input

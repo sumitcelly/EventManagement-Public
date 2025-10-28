@@ -82,6 +82,7 @@ namespace CreateTicketApi.Controllers
             var result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
                 return Ok();
+                
             return StatusCode(500, "Failed to update event.");
         }
 

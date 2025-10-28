@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using Org.BouncyCastle.Asn1.Mozilla;
 using Stripe;
 namespace EventManagementDbAccess
@@ -9,8 +10,8 @@ namespace EventManagementDbAccess
         public required string EventName { get; set; }
 
         public DateTime EventDate { get; set; }
-
-        public required string EventSummary { get; set; }
+        
+        public string EventSummary { get; set; } = string.Empty;
 
         public string EventOrganizer { get; set; } = string.Empty;
 
@@ -33,8 +34,10 @@ namespace EventManagementDbAccess
       
         public required string EventDescription { get; set; }
 
-        public required string Category { get; set; } = string.Empty;
+       
+        public string Category { get; set; } = string.Empty;
 
+    
         public string SubCategory { get; set; } = string.Empty;
 
         public string Tags { get; set; } = string.Empty;
@@ -50,7 +53,9 @@ namespace EventManagementDbAccess
         public required string State { get; set; }
 
         public required string ZipCode { get; set; }
-        public required string Country { get; set; } = "USA";
+
+        
+        public  string Country { get; set; } = "USA";
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
 

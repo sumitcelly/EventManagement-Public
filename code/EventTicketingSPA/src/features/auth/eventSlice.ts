@@ -12,8 +12,8 @@ const initialState: EventHeader = {
   eventName: "",
   eventDate: new Date(),
   eventLocation: "",
-  eventOrganizerId: 0
-
+  eventOrganizerId: 0,
+  duration:0
 };
 
 // Async login action
