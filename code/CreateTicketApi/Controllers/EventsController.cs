@@ -53,6 +53,14 @@ namespace CreateTicketApi.Controllers
             return evt;
         }
 
+        [HttpGet("/Events/ByCustomer/{customerId}")]
+        public async Task<List<EventHeader>> GetEventsByCustomer(int customerId)
+        {
+            var evtList = await _EventDbAccess.GetEventListByCustomerId(customerId);
+            _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(evtList));
+            return evtList;
+        }
+
         [HttpGet("/Events/Details/{id}")]
         public async Task<ActionResult<Event>> GetEventDetailsById(int id)
         {
@@ -82,7 +90,7 @@ namespace CreateTicketApi.Controllers
             var result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
                 return Ok();
-                
+
             return StatusCode(500, "Failed to update event.");
         }
 

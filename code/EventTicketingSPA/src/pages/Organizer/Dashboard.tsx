@@ -18,7 +18,7 @@ import { resetCart } from "../../features/auth/cartSlice";
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useAppSelector((state: RootState) => state.auth);
-  const userId = user.user?.id;
+  const customerId = user.user?.customerId;
   const queryClient = useQueryClient();
   const event = useAppSelector((state: RootState) => state.event);
   const dispatch = useDispatch();
@@ -28,49 +28,32 @@ export default function Dashboard() {
 
     console.log('Deleting event', eventId);
     // 1. Optimistically update UI
-    queryClient.setQueryData(['EventsByOrganizer', userId], (oldData: EventHeader[] | undefined) => {
+    queryClient.setQueryData(['EventsByOrganizer', customerId], (oldData: EventHeader[] | undefined) => {
       if (!oldData) return [];
       return oldData.filter(event => event.eventId !== eventId);
     });
 
     // 2. Make API call
-    //await axiosClient.delete(`/events/${eventId}`);
+    await axiosClient.delete(`/events/${eventId}`);
 
     // 3. Invalidate to verify our optimistic update
     // This ensures our cache matches the server state
-    await queryClient.invalidateQueries(['EventsByOrganizer', userId]);
+    await queryClient.invalidateQueries(['EventsByOrganizer', customerId]);
 
   } catch (error) {
     console.error('Failed to delete event:', error);
     // On error, refetch to restore correct state
-    await queryClient.invalidateQueries(['EventsByOrganizer', userId]);
+    await queryClient.invalidateQueries(['EventsByOrganizer', customerId]);
   }
 }
 
   const { data, isLoading } = 
-  useQuery(['EventsByOrganizer',userId], async () => {
-      console.log("Fetching events for organizer in", userId);
-      //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
-      //console.log('orders fetched from backend',res.data);
-      let data:EventHeader[]=[];
-      data.push({
-        eventName: "Food Festival",
-        eventId:1,
-        eventLocation:"123 Colorado Springs, CO -80920",
-        eventDate:new Date("2025-12-25T10:00:00"),
-        eventOrganizerId:1,
-        isLive:true
-      }
-      ,
-    {
-        eventId:2,
-        eventName: "Drinks Festival",
-        eventLocation:"567 Colorado Springs, CO -80920",
-        eventDate:new Date("2026-12-25T10:00:00"),
-        eventOrganizerId:1,
-        isLive:false
-      });
-      return data;
+  useQuery(['EventsByOrganizer',customerId], async () => {
+      console.log("Fetching events for customer id", customerId);
+      const res = await axiosClient.get(`/Events/ByCustomer/${customerId}`);
+      console.log('events for customer with status',res?.data, res?.status);
+
+      return res?.data;
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
@@ -79,7 +62,7 @@ export default function Dashboard() {
       // refetchOnMount: false,      // don’t always re-fetch on mount
       // refetchOnWindowFocus: false,
       // refetchOnReconnect: false,
-      //enabled: !!userId //  only run query if we have an id
+      enabled: !!customerId //  only run query if we have an id
     }
   );
 
@@ -91,7 +74,7 @@ export default function Dashboard() {
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
       <div className="divide-y">
-        {data && data.map((event) => (
+        {data && data.map((event:EventHeader) => (
           <div
             key={event.eventId}
             onClick={() => navigate(`/eventdetails/${event.eventId}`)}

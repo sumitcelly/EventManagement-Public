@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using Org.BouncyCastle.Asn1.Mozilla;
 using Stripe;
@@ -10,6 +11,7 @@ namespace EventManagementDbAccess
         public required string EventName { get; set; }
 
         public DateTime EventDate { get; set; }
+        
         
         public string EventSummary { get; set; } = string.Empty;
 

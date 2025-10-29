@@ -148,10 +148,10 @@ using EventUtils;
           {
             EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
             EventName = reader.GetString(reader.GetOrdinal("EventName")),
-            EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline"))?string.Empty: reader.GetString(reader.GetOrdinal("EventHeadline")),
+            EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
             EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
             //EventOrganizer = reader.GetString(reader.GetOrdinal("EventOrganizer")),
-            EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary"))?string.Empty: reader.GetString(reader.GetOrdinal("EventSummary")),
+            EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
 
             Free = reader.GetBoolean(reader.GetOrdinal("Free")),
             EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
@@ -160,6 +160,48 @@ using EventUtils;
         }
       }
       return null;
+    }
+    
+    public async Task<List<EventHeader>> GetEventListByCustomerId(int customerId)
+    {
+      if (customerId <= 0)
+        throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
+
+      using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
+      {
+        await conn.OpenAsync();
+
+        var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate,
+                    a.EventOrganizer,  a.EventSummary,a.Free,
+                    ifnull(a.EventAddress,'') as EventAddress,
+                    a.IsLive,a.Duration
+                    from events a
+                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE()";
+
+        using var cmd = new MySqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@customerId", customerId);
+
+        List<EventHeader> events = new List<EventHeader>();
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (reader.Read())
+        {
+          events.Add(
+            new EventHeader
+            {
+              EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+              EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+              EventName = reader.GetString(reader.GetOrdinal("EventName")),
+              EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
+              EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+              IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
+              Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
+              Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
+            });
+        }
+        return events;
+      }
+     
     }
     
     public async Task<Event> GetEventDetailsById(int eventId)
