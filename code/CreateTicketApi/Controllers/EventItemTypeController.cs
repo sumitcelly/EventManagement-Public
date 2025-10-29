@@ -63,12 +63,10 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<string> Delete(int id)
         {
-            var result = await _eventItemTypeDbAccess.DeleteEventItemType(id);
-            if (result)
-                return Ok();
-            return StatusCode(500, "Failed to delete EventItemType.");
+            return  await _eventItemTypeDbAccess.DeleteEventItemType(id);
+           
         }
     }
 }

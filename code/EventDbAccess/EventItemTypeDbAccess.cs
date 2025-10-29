@@ -1,4 +1,5 @@
 
+using Amazon.Runtime.Internal.Util;
 using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -239,7 +240,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> DeleteEventItemType(int eventItemTypeId)
+        public async Task<string> DeleteEventItemType(int eventItemTypeId)
         {
             if (eventItemTypeId <= 0)
                 throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventItemTypeId));
@@ -260,12 +261,12 @@ namespace EventManagementDbAccess
                     //remove all event item types from cache for the event. the next request will populate it.
                     _cache.RemoveCache<List<EventItemType>>(eventItemTypeId.ToString());
                 }
-                return rowsAffected > 0;
+                return rowsAffected > 0?string.Empty:"Unable to delete ticket type.";
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting EventItemType: {ex.Message}");
-                throw;
+               _logger.LogError($"Error deleting EventItemType: {ex.Message}");
+                return ex.Message.Contains("foreign key constraint") ? "Cannot delete ticket type if tickets has been sold for that type." : "An error occured when deleting ticket type.";
             }
         }
     }

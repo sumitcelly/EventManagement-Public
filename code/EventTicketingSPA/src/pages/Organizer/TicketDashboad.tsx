@@ -9,6 +9,7 @@ import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { Progress } from "flowbite-react";
+import toast, {  Toaster } from "react-hot-toast";
 // 
 
 
@@ -21,19 +22,31 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
   const queryClient = useQueryClient();
   const event = useAppSelector((state: RootState) => state.event);
 
-  const deleteTicket = async (eventId: number,ticketId:number) => 
+  const deleteTicket = async (eventId: number,eventItemTypeId:number) => 
   {
     try 
     {
-        console.log('Deleting ticket', eventId);
+        console.log('Deleting ticket id  for eventId',eventItemTypeId, eventId);
         // 1. Optimistically update UI
         queryClient.setQueryData(['TicketsbyEvent', eventId], (oldData: Ticket[] | undefined) => {
-        if (!oldData) return [];
-        return oldData.filter(ticket => ticket.eventItemTypeId !== ticketId);
+          if (!oldData) return [];
+          return oldData.filter(ticket => ticket.eventItemTypeId !== eventItemTypeId);
         });
 
         // 2. Make API call
-        //await axiosClient.delete(`/events/${eventId}`);
+        await axiosClient.delete(`/eventitemtype/${eventItemTypeId}`).then((response)=>{
+            if (response.data){
+              toast.error(response.data);
+            }
+            else
+            {
+              toast.success("Deleted ticket type succefully");
+            }
+        }).
+        catch((error)=>{
+            toast.error("Error deleting ticket type");
+            console.log("error in catch", error);
+        });
 
         // 3. Invalidate to verify our optimistic update
         // This ensures our cache matches the server state
@@ -51,34 +64,20 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
   const { data, isLoading } = 
   useQuery(['TicketsbyEvent',eventId], async () => {
       console.log("Fetching tickets for event id:", eventId);
-      //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
-      //console.log('orders fetched from backend',res.data);
-      let data:Ticket[]=[];
-      data.push({
-        eventItemTypeId:1,
-        name:"General Admission",
-        description:"General Admission Ticket",
-        cost:50,
-        maxPerOrder:10,
-        ticketsSold:5,
-        totalAllowed:100,
-        quantity:100,
-      },
-    {
-        eventItemTypeId:2,
-        name:"VIP Admission",
-        description:"VIP Admission Ticket",
-        cost:100,
-        maxPerOrder:0,
-        ticketsSold:60,
-        totalAllowed:100,
-        quantity:100,
-      });
-      return data;
+      const res = await axiosClient.get(`/eventitemtype/all/${eventId}`);
+      if (res && res.data && res.data.length>0)
+      {
+        return res.data;
+      }
+      else
+      {
+        return [];
+      }
+     
     },
     {
-      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
 
       // refetchOnMount: false,      // don’t always re-fetch on mount
       // refetchOnWindowFocus: false,
@@ -87,13 +86,15 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     }
   );
 
-
+  const calculateProgress =(sold:number,allowed:number)=>{
+    return allowed ! >0 ? parseFloat(((sold / allowed) * 100).toFixed(2)):0;
+  }
 
   if (isLoading) return <p>Loading...</p>;
 
   return (
     <div className="max-w-md mx-auto">
-      
+    <Toaster position="top-right" />
       <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
       {event && !event.isLive && (
@@ -108,7 +109,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
       )}
 
       <div className="mt-6">
-        {data && data.map((ticket) => (
+        {data && data.map((ticket:Ticket) => (
           <div
             key={ticket.eventItemTypeId}
             onClick={() => navigate(`/ticketDetails/${eventId}/${ticket.eventItemTypeId}`)}
@@ -124,14 +125,14 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
             </div>
            
                 <Progress
-                    progress={ticket.totalAllowed>0 ? (ticket.ticketsSold / ticket.totalAllowed) * 100 : 0}
+                    progress={calculateProgress(ticket.ticketsSold, ticket.totalAllowed)}
                     progressLabelPosition="inside"
                     textLabel="Sale Progress"
                     textLabelPosition="outside"
                     size="xl"
                     labelProgress
                     labelText
-                    className=""
+                    title={calculateProgress(ticket.ticketsSold, ticket.totalAllowed).toString()+'%'}
                 />       
           
             <div className="flex flex-col gap-5">         
