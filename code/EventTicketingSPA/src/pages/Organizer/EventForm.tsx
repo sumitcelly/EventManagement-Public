@@ -6,7 +6,7 @@ import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
 import FileUpload from "../../components/FileUpload";
 import axiosClient from "../../api/axiosClient";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
 import ListInput from "../../components/ListInput";
@@ -62,6 +62,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (imagePreview) {
@@ -95,7 +96,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       return res.data;
   },
   {
-    //staleTime: 1000 * 60 * 5,
+    
+    staleTime: 1000 * 60 * 5,
     enabled: !!id && isActive
   }
   );
@@ -183,6 +185,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           console.log('Event updated succefully for eventid:',eventCache.eventId);
           toast.success("Event saved successfully");
           updateRedux(eventApi);
+          queryClient.resetQueries({queryKey:[`events/details/${id}`]});
         }
         else
         {
@@ -206,6 +209,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           console.log('Event created succefully with eventid:',response.data);
           toast.success("Event created successfully");
           updateRedux(eventApi,response.data);
+          queryClient.resetQueries({queryKey:[`events/details/${id}`]});
+          
           setTimeout(() => navigate(`/EventManager/${response.data}/ticketlist`), 1500);
         }
         else
@@ -396,7 +401,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           control={control}
           render={({ field }) => (
             <ListInput 
-              items={field.value || []} 
+              items={field?.value || []} 
               onChange={(tags: string[]) => {
                 setValue("tagList", tags);    
                 console.log("tags selected in form:", tags);

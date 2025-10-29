@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Button, TextInput, Badge } from "flowbite-react";
 
-export default function ListInput({items,onChange}: {items:string[],onChange:(items:string[])=>void}) 
+export default function ListInput({items = [],onChange}: {items?:string[],onChange:(items:string[])=>void}) 
 {
   const [input, setInput] = useState("");
+  // Ensure items is always an array
+  const itemsArray = Array.isArray(items) ? items : [];
 
   const addItem = () => {
-    if (!input.trim()) return;    
-    onChange([...items, input.trim()]);
+    if (!input.trim()) return;  
+
+    onChange([...itemsArray, input.trim()]);
     setInput("");
   };
 
   const removeItem = (index: number) => {
-    onChange(items.filter((_, i) => i !== index));
+    onChange(itemsArray.filter((_, i) => i !== index));
   };
 
   return (
@@ -27,7 +30,7 @@ export default function ListInput({items,onChange}: {items:string[],onChange:(it
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {items && items.map((item, i) => (
+        {Array.isArray(items) && items.map((item, i) => (
           <Badge
             key={i}
             color="info"

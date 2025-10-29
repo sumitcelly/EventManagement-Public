@@ -63,7 +63,7 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
   };
 
   return (
-    <AddressAutofillFixed accessToken={MAPBOX_TOKEN}  
+    <AddressAutofillFixed accessToken={MAPBOX_TOKEN} 
       //onClick={(e:any)=>{e.stopPropagation();}}
      onRetrieve= {handleRetrieve} options={{ types: "address" }}
       >
@@ -75,6 +75,8 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
         autoComplete="street-address"
         className="border rounded w-full p-2"
         defaultValue={value}
+        //browser's auto complete interfers here
+
         //there maybe a known issues with single click selection of suggestions. For now its OK! Leave it and move on my god!
         //I am not sure if this is needed. For some reason, clicking on the list of addresses does not work or is intermittent.
         //using the keyboard to select and double click works fine.
