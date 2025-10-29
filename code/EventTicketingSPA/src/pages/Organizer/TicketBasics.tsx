@@ -95,7 +95,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     return res.data;
   },
   {
-    //staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5,
     //enable only if redux does not have event details and there is a valid eventID sent to the page
     enabled: !!eventId && !eventBasics?.eventId
   }

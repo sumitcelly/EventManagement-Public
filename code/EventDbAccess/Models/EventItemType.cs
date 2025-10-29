@@ -16,5 +16,15 @@ namespace EventManagementDbAccess
         public int MaxPerOrder { get; set; } 
         
         public int TicketsSold { get; set; }
+
+        public DateTime SalesStartDate { get; set; }
+
+        public DateTime SalesEndDate { get; set; }
+
+        public DateTime TicketValidityStart { get; set; }
+
+        public DateTime TicketValidityEnd { get; set; }
+
+        public bool AddOn { get; set; }
     }
 }

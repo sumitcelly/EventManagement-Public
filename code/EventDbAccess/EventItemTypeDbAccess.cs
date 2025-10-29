@@ -31,8 +31,10 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO EventItemType 
-                    (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder,CreatedAt) 
-                    VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder,@createdAt)";
+                    (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder, SalesStartDate,SalesEndDate,
+                    TicketValidityStart, TicketValidityEnd, AddOn, CreatedAt) 
+                    VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder,
+                    @salesStartDate, @salesEndDate,@ticketValidityStart, @ticketValidityEnd, @addOn,@createdAt)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@name", item.Name);
@@ -41,6 +43,12 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@eventId", item.EventId);
                 cmd.Parameters.AddWithValue("@totalAllowed", item.TotalAllowed);
                 cmd.Parameters.AddWithValue("@maxPerOrder", item.MaxPerOrder);
+                cmd.Parameters.AddWithValue("@salesStartDate", item.SalesStartDate);
+                cmd.Parameters.AddWithValue("@salesEndDate", item.SalesEndDate);
+                cmd.Parameters.AddWithValue("@addOn", item.AddOn);
+                cmd.Parameters.AddWithValue("@ticketValidityStart", item.TicketValidityStart);
+                cmd.Parameters.AddWithValue("@ticketValidityEnd", item.TicketValidityEnd);
+
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -132,6 +140,12 @@ namespace EventManagementDbAccess
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
                         TotalAllowed = reader.GetInt32(reader.GetOrdinal("TotalAllowed")),
                         MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder")),
+                        SalesStartDate = reader.IsDBNull(reader.GetOrdinal("SalesStartDate"))? DateTime.UtcNow:  reader.GetDateTime(reader.GetOrdinal("SalesStartDate")),
+                        SalesEndDate = reader.IsDBNull(reader.GetOrdinal("SalesEndDate"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("SalesEndDate")),
+                        TicketValidityStart = reader.IsDBNull(reader.GetOrdinal("TicketValidityStart"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("TicketValidityStart")),
+                        TicketValidityEnd = reader.IsDBNull(reader.GetOrdinal("TicketValidityEnd"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("TicketValidityEnd")),
+                       AddOn = !reader.IsDBNull(reader.GetOrdinal("AddOn")) && reader.GetBoolean(reader.GetOrdinal("AddOn")),
+
                         TicketsSold = reader.IsDBNull(reader.GetOrdinal("TicketsSold")) ? 0 : reader.GetInt32(reader.GetOrdinal("TicketsSold")),
                     };
                 }
@@ -180,8 +194,15 @@ namespace EventManagementDbAccess
                         TotalAllowed = reader.GetInt32(reader.GetOrdinal("TotalAllowed")),
                         MaxPerOrder = reader.GetInt32(reader.GetOrdinal("MaxPerOrder")),
                         Name = reader.GetString(reader.GetOrdinal("Name")),
-                        TicketsSold =  reader.IsDBNull(reader.GetOrdinal("TicketsSold"))?0:reader.GetInt32(reader.GetOrdinal("TicketsSold")) ,
-                  
+
+                        SalesStartDate = reader.IsDBNull(reader.GetOrdinal("SalesStartDate"))? DateTime.UtcNow:  reader.GetDateTime(reader.GetOrdinal("SalesStartDate")),
+                        SalesEndDate = reader.IsDBNull(reader.GetOrdinal("SalesEndDate"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("SalesEndDate")),
+                        TicketValidityStart = reader.IsDBNull(reader.GetOrdinal("TicketValidityStart"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("TicketValidityStart")),
+                        TicketValidityEnd = reader.IsDBNull(reader.GetOrdinal("TicketValidityEnd"))? DateTime.UtcNow:reader.GetDateTime(reader.GetOrdinal("TicketValidityEnd")),
+                        AddOn = !reader.IsDBNull(reader.GetOrdinal("AddOn")) && reader.GetBoolean(reader.GetOrdinal("AddOn")),
+
+                        TicketsSold = reader.IsDBNull(reader.GetOrdinal("TicketsSold")) ? 0 : reader.GetInt32(reader.GetOrdinal("TicketsSold")),
+
                     });
                 }
                 return list;
@@ -207,9 +228,15 @@ namespace EventManagementDbAccess
                     Name = @name,
                     Description = @description,
                     Cost = @cost,
-                    EventId = @eventId,
+                    AddOn = @addOn,
+
                     TotalAllowed = @totalAllowed,
+                    TicketsSold = @ticketsSold,
                     MaxPerOrder = @maxPerOrder,
+                    SalesStartDate = @salesStartDate,
+                    SalesEndDate = @salesEndDate,
+                    TicketValidityStart = @ticketValidityStart,
+                    TicketValidityEnd = @ticketValidityEnd,
                     ModifiedAt = @modifiedAt
                     WHERE EventItemTypeId = @eventItemTypeId";
 
@@ -217,10 +244,15 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@name", item.Name);
                 cmd.Parameters.AddWithValue("@description", item.Description);
                 cmd.Parameters.AddWithValue("@cost", item.Cost);
-                cmd.Parameters.AddWithValue("@eventId", item.EventId);
+                cmd.Parameters.AddWithValue("@addOn", item.AddOn);
                 cmd.Parameters.AddWithValue("@totalAllowed", item.TotalAllowed);
+                cmd.Parameters.AddWithValue("@ticketsSold", item.TicketsSold);
                 cmd.Parameters.AddWithValue("@maxPerOrder", item.MaxPerOrder);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", item.EventItemTypeId);
+                cmd.Parameters.AddWithValue("@salesStartDate", item.SalesStartDate);
+                cmd.Parameters.AddWithValue("@salesEndDate", item.SalesEndDate);
+                cmd.Parameters.AddWithValue("@ticketValidityStart", item.TicketValidityStart);
+                cmd.Parameters.AddWithValue("@ticketValidityEnd", item.TicketValidityEnd);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
