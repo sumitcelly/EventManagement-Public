@@ -14,6 +14,7 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
+import {toLocalDateTimeInputValue,toUTCDate, addDurationToDate}   from '../../utils/DateUtils'
 
 const ticketSchema = (event: EventHeader)=>yup.object({
   name: yup.string().required("Ticket name is required.").typeError('Invalid number.'),
@@ -74,34 +75,7 @@ type FormValues = {
   tickevalidityEndtDate: string;
 };
 
-const toLocalDateTimeInputValue = (date?: Date | string | null) => {
 
-  //console.log(date,"the date passed");
-  if (!date) {
-    console.warn("⚠️ No date passed to toLocalDateTimeInputValue");
-    return "";
-  }
-
-  const d = new Date(date);
-  if (isNaN(d.getTime())) {
-    //console.log("⚠️ Invalid date passed:", d);
-    return "";
-  }
-
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-};
-
-
-  const toUTCDate = (localDateStr: string): Date => {
-    const localDate = new Date(localDateStr);
-    return new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000); 
-  }
-  function addDurationToDate(date: Date, durationHours: number): Date {
-    const newDate = new Date(date);
-    newDate.setHours(newDate.getHours() + durationHours);
-    return newDate;
-  }
 
 
 export default function TicketBasics({eventId,ticketId}: {eventId?: string, ticketId?:string}) {

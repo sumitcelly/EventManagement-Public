@@ -15,7 +15,7 @@ import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
-import { EventHeader } from "../../types/Event";
+import * as DateUtils from '../../utils/DateUtils'
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -89,7 +89,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         isLive: res.data?.isLive || false,
         eventOrganizerId: res.data.organizerId
       }
-      console.log("success");
+      //console.log("success for basic info", eventBasicInfo);
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log('event in redux',eventBasicInfo);
       return res.data;
@@ -125,7 +125,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       eventDuration: eventDetails?.duration || 0,
       agenda: eventDetails?.agenda || null,
       headline: eventDetails?.eventHeadline || null,
-      eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
+      eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toLocaleString('sv-SE').slice(0, 16) : "", // format for datetime-local input in local timezone
     },   
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
@@ -246,7 +246,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventDuration: eventDetails?.duration || 0,
         agenda: eventDetails?.eventAgenda || null,
         headline: eventDetails?.eventHeadline || null,
-        eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toISOString().slice(0,16) : "", // format for datetime-local input
+        eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toLocaleString('sv-SE').slice(0, 16) : "", // format for datetime-local input in local timezone
       }
     );
     //setValue("description", eventDetails?.description || "");
