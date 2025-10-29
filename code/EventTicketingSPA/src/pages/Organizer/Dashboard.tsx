@@ -9,6 +9,8 @@ import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
+import { useDispatch } from "react-redux";
+import { resetCart } from "../../features/auth/cartSlice";
 // 
 
 
@@ -19,7 +21,8 @@ export default function Dashboard() {
   const userId = user.user?.id;
   const queryClient = useQueryClient();
   const event = useAppSelector((state: RootState) => state.event);
-
+  const dispatch = useDispatch();
+  
   const deleteEvent = async (eventId: number) => {
   try {
 
@@ -124,7 +127,7 @@ export default function Dashboard() {
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=>{ resetEvent(); navigate(`/eventmanager`);}}
+              onClick={()=>{ dispatch(resetEvent()); navigate(`/eventmanager`);}}
             >
               New Event
         </button> 

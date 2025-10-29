@@ -59,7 +59,7 @@ export function EventManager() {
         }
       </TabItem>
 
-      <TabItem   title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
+      <TabItem  title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
         <EventPublish eventId={eventId}/>
       </TabItem>
     </Tabs>

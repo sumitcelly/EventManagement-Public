@@ -167,7 +167,7 @@ using EventUtils;
       if (eventId <= 0)
           throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
 
-      string cacheKey = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString());
+      string cacheKey = CacheHelper.GetCacheKey<Event>(eventId.ToString());
       Event? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventDetailsByIdFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
       return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventId} not found.") ;
     }

@@ -11,7 +11,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
 import ListInput from "../../components/ListInput";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
-import { updateEvent } from "../../features/auth/eventSlice";
+import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
@@ -74,6 +74,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
   const user = useAppSelector((state: RootState) => state.auth.user);
   //const event = useAppSelector((state: RootState) => state.event);
   
+ 
+
   const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
     const res = await axiosClient.get(`/events/details/${id}`);
     console.log('Event details from backend', res?.data);
@@ -112,6 +114,12 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     defaultValues: {
       tagList: eventDetails?.tags || [],
       fullAddress: eventDetails?.eventLocation || "",
+      lat: eventDetails?.latitude || 0,
+      lng: eventDetails?.longitude || 0,
+      street: eventDetails?.streetAddress || "",
+      zip: eventDetails?.zipCode || "",
+      city: eventDetails?.city || "",
+      state: eventDetails?.state || "",
       eventName:  eventDetails?.eventName || "",
       description:  eventDetails?.description || "",
       eventDuration: eventDetails?.duration || 0,
@@ -227,6 +235,12 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       {
         tagList: tagItems,
         fullAddress: eventDetails?.eventLocation || "",
+        lat: eventDetails?.latitude || 0,
+        lng: eventDetails?.longitude || 0,
+        street: eventDetails?.streetAddress || "",
+        zip: eventDetails?.zipCode || "",
+        city: eventDetails?.city || "",
+        state: eventDetails?.state || "",
         eventName:  eventDetails?.eventName || "",
         description:  eventDetails?.eventDescription || "",
         eventDuration: eventDetails?.duration || 0,

@@ -27,8 +27,8 @@ const eventSlice = createSlice({
     },
   
     resetEvent(state) {
+      // Return the initial state directly
       return initialState;
-      {/* let the user info stay*/}
     },
   },
 
