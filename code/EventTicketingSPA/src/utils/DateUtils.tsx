@@ -11,20 +11,29 @@ export const toLocalDateTimeInputValue = (date?: Date | string | null) => {
     //console.log("⚠️ Invalid date passed:", d);
     return "";
   }
-console.log('input date',d);
+//console.log('input date',d);
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  console.log('local date',local);
+  //console.log('local date',local);
   return local.toISOString().slice(0, 16);
 };
-
-
 export const toUTCDate = (localDateStr: string): Date => {
     const localDate = new Date(localDateStr);
     return new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000); 
   }  
   
-export const  addDurationToDate=(date: Date, durationHours: number): Date =>{
+export const  addHoursToDate=(date: Date, durationHours: number): Date =>{
     const newDate = new Date(date);
     newDate.setHours(newDate.getHours() + durationHours);
     return newDate;
+  }
+
+  export const appendTime=(targetDate: string, current?: boolean):Date=>{
+
+    const [year, month, day] = targetDate.split("-").map(Number);
+    const now = new Date(); // current local date and time
+
+// Extract current time components
+    const hours = current? now.getHours():0;
+    const minutes = current?now.getMinutes()+1:0;
+    return new Date(year, month - 1, day, hours, minutes);
   }

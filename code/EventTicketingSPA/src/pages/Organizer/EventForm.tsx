@@ -22,7 +22,7 @@ const eventSchema = yup.object({
   headline: yup.string().nullable().default(null),
   eventStartDate: yup.string().required("Event date is required")
   .test("past-date", "Event start date cannot be in the past", (value) => {
-    
+  
       return  new Date(value) >= new Date();
       
     }),
@@ -78,22 +78,30 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
  
 
   const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
-    const res = await axiosClient.get(`/events/details/${id}`);
+    let res = await axiosClient.get(`/events/details/${id}`);
     console.log('Event details from backend', res?.data);
-     const eventBasicInfo = {
-        eventId: res.data.eventId,
-        eventName: res.data.eventName,
-        eventHeadline: res.data.headline,
-        eventDate: new Date(res.data.eventDate),
-        duration: res.data.duration,
-        eventLocation: res.data.eventLocation,
-        isLive: res.data?.isLive || false,
-        eventOrganizerId: res.data.organizerId
-      }
-      //console.log("success for basic info", eventBasicInfo);
-      dispatch(updateEvent({event: eventBasicInfo}));
-      console.log('event in redux',eventBasicInfo);
-      return res.data;
+    //not sure why when a new event is saved, the date returned does not have a Z at the end.
+    //when I modify the date, it has that. no idea.
+    let dateTemp = !res?.data?.eventDate.endsWith("Z")? res?.data?.eventDate+ "Z":res?.data?.eventDate;
+    console.log("date temp", dateTemp);
+    if (dateTemp)
+    {
+      res.data.eventDate = dateTemp;
+    }
+    const eventBasicInfo = {
+      eventId: res.data.eventId,
+      eventName: res.data.eventName,
+      eventHeadline: res.data.headline,
+      eventDate: new Date(dateTemp),
+      duration: res.data.duration,
+      eventLocation: res.data.eventLocation,
+      isLive: res.data?.isLive || false,
+      eventOrganizerId: res.data.organizerId
+    }
+    //console.log("event date for basic info", eventBasicInfo.eventDate);
+    dispatch(updateEvent({event: eventBasicInfo}));
+    console.log('event in redux',eventBasicInfo);
+    return res.data;
   },
   {
     
@@ -156,7 +164,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       eventId: eventCache.eventId || 0,
       eventName: data.eventName,
       eventHeadline: data.headline,
-      eventDate: new Date(data.eventStartDate),
+      eventDate:new Date(data.eventStartDate).toISOString(),
       duration: data.eventDuration,
       eventLocation: data.fullAddress,
       //use the organizer if from redux (for existing event) or user's id for new event
@@ -209,7 +217,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           console.log('Event created succefully with eventid:',response.data);
           toast.success("Event created successfully");
           updateRedux(eventApi,response.data);
-          queryClient.resetQueries({queryKey:[`events/details/${id}`]});
+          //queryClient.resetQueries({queryKey:[`events/details/${response.data}`]});
           
           setTimeout(() => navigate(`/EventManager/${response.data}/ticketlist`), 1500);
         }

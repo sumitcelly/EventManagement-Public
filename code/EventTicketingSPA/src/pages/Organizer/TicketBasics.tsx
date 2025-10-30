@@ -14,7 +14,8 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
-import {toLocalDateTimeInputValue,toUTCDate, addDurationToDate}   from '../../utils/DateUtils'
+import {appendTime,toUTCDate, addHoursToDate}   from '../../utils/DateUtils'
+import EventDetails from "../EventDetails";
 
 const ticketSchema = (event: EventHeader)=>yup.object({
   name: yup.string().required("Ticket name is required.").typeError('Invalid number.'),
@@ -34,13 +35,15 @@ const ticketSchema = (event: EventHeader)=>yup.object({
     tickeSalesStartDate: yup.string().default(new Date().toLocaleDateString()).required("Ticket sales start date is required")
     .test("past-date", "Either ticket sales date is in the past or after event has ended.", (value) => {  
            if (!event || !event.eventDate) return false;  
-          return  new Date(value) >= new Date() && new Date(value) <= new Date(event.eventDate);      
+          //console.log("value",parseDateOnlyString(value),new Date(),parseDateOnlyString(value) >= new Date());
+          return  appendTime(value,true) >= new Date() 
+           &&  appendTime(value,true) <= new Date(event.eventDate);      
       }),
     tickeSalesEndDate: yup.string().default(event?.eventDate? new Date(event.eventDate).toLocaleDateString(): (new Date()).toLocaleDateString())
                       .required("Ticket sales end date is required")
     .test("ticket-sale-end-date", "Ticket sales end date cannot be after the event has ended.", (value) => {  
         if (!event || !event.eventDate) return false;
-        return  new Date(value) <= new Date(event.eventDate);      
+        return  appendTime(value) <= new Date(event.eventDate);      
       })
     .test("end-after-start", "Ticket sales end date must be after start date", function(value) {
         const { tickeSalesStartDate } = this.parent;
@@ -48,14 +51,15 @@ const ticketSchema = (event: EventHeader)=>yup.object({
       }),
     tickevalidityStartDate: yup.string().required("Ticket validity start date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => {  
-        
+        return true;
         if (!event || !event.eventDate) return false;
         const newDate = new Date(event.eventDate); 
         newDate.setHours(newDate.getHours() + (event.duration || 0));
         return  (new Date(value) >= new Date(event.eventDate)) && (new Date(value) <= newDate);     
       }),
     tickevalidityEndtDate: yup.string().required("Ticket validity end date is required")
-    .test("past-date", "Tickets must be valid during the course of the event.", (value) => {  
+    .test("past-date", "Tickets must be valid during the course of the event.", (value) => { 
+      return true; 
         if (!event || !event.eventDate) return false;
         const newDate = new Date(event.eventDate); 
         newDate.setHours(newDate.getHours() + (event.duration || 0));
@@ -113,6 +117,18 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
   }
   );
 
+  const getEventEndTime =():string=>{
+    let retVal = "";
+
+    if (eventBasics?.duration && eventBasics?.eventDate)
+    {
+      const eventEnd = addHoursToDate(eventBasics.eventDate, eventBasics.duration);
+      retVal=`T${eventEnd.getHours()}:00:00.000`;
+      console.log('enddate',retVal);
+    }
+    return retVal;
+    
+  }
 
   const {
     control,
@@ -129,10 +145,11 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       maxPerOrder: 0,
       totalAllowed: 1 ,
       description: "",
-      tickeSalesStartDate: toLocalDateTimeInputValue(addDurationToDate(new Date(),1)), //default to one hour from now
-      tickeSalesEndDate: toLocalDateTimeInputValue(eventBasics.eventDate ? (eventBasics.eventDate) : addDurationToDate(new Date(),24)),
-      tickevalidityStartDate: toLocalDateTimeInputValue(eventBasics.eventDate ? new Date(eventBasics.eventDate) : new Date()),
-      tickevalidityEndtDate: toLocalDateTimeInputValue(eventBasics.eventDate ? addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration ||0) : new Date()),
+      tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
+      tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
+      tickevalidityStartDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '00:00',
+      tickevalidityEndtDate: eventBasics.eventDate && eventBasics.duration ? 
+                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '23:59',
 
       },   
       mode: "onChange",          // 👈 validates as user types or changes field
@@ -151,8 +168,8 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       cost: data.cost,
       maxPerOrder: data.maxPerOrder,
       totalAllowed: data.totalAllowed,
-      tickeSalesStartDate: toUTCDate(data.tickeSalesStartDate),
-      tickeSalesEndDate: toUTCDate(data.tickeSalesEndDate),
+      tickeSalesStartDate: new Date(data.tickeSalesStartDate + 'T00:00:00.000').toISOString(),
+      tickeSalesEndDate: new Date(data.tickeSalesEndDate + getEventEndTime()).toISOString(),
       tickevalidityStartDate: toUTCDate(data.tickevalidityStartDate),
       tickevalidityEndtDate: toUTCDate(data.tickevalidityEndtDate),
     }
@@ -201,15 +218,22 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         maxPerOrder: ticketDetails?.maxPerOrder || 0,
         totalAllowed: ticketDetails?.totalAllowed || 0,
         description: ticketDetails?.description || "",
-        tickeSalesStartDate: ticketDetails?.tickeSalesStartDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesStartDate)) : toLocalDateTimeInputValue(addDurationToDate(new Date(),1)),
-        tickeSalesEndDate: ticketDetails?.tickeSalesEndDate? toLocalDateTimeInputValue(new Date(ticketDetails.tickeSalesEndDate)) : toLocalDateTimeInputValue(addDurationToDate(new Date(),24)),
-        tickevalidityStartDate: ticketDetails?.tickevalidityStartDate ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityStartDate)) 
-                              : toLocalDateTimeInputValue(new Date(eventBasics.eventDate)),
-        tickevalidityEndtDate: ticketDetails?.tickevalidityEndtDate
-                              ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityEndtDate))
-                              : toLocalDateTimeInputValue(addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0))
+        tickeSalesStartDate: ticketDetails?.salesStartDate ? new Date(ticketDetails.salesStartDate).toISOString().split('T')[0] : 
+                            new Date().toISOString().split('T')[0],
+        tickeSalesEndDate: ticketDetails?.salesEndDate ? new Date(ticketDetails.salesEndDate).toISOString().split('T')[0] :
+                             new Date(eventBasics.eventDate).toISOString().split('T')[0],
+        // tickevalidityStartDate: ticketDetails?.ticketValidityStart ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityStartDate)) 
+        //                       : toLocalDateTimeInputValue(new Date(eventBasics.eventDate)),
+        // tickevalidityEndtDate: ticketDetails?.ticketValidityEnd
+        //                       ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityEndtDate))
+        //                       : toLocalDateTimeInputValue(addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0))
+        tickevalidityStartDate: ticketDetails?.ticketValidityStart ? new Date(ticketDetails?.ticketValidityStart).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                                new Date(eventBasics?.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) ,
+        tickevalidityEndtDate: eventBasics.eventDate && eventBasics.duration ? 
+                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '23:59',
 
-      });
+      
+                            });
     }
   }, [ticketDetails, reset, eventBasics]);
 
@@ -321,7 +345,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           <label className="font-semibold mb-1">Sale start date</label>
           <div>
             <input 
-              type="datetime-local"
+              type="date"
               {...register("tickeSalesStartDate")}
               className="border rounded p-2"
             
@@ -338,7 +362,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         <div className="flex flex-col">
           <label className="font-semibold mb-1">Sale end date</label>
           <input
-            type="datetime-local"
+            type="date"
             {...register("tickeSalesEndDate")}
             className="border rounded p-2"
           
@@ -358,7 +382,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           <label className="font-semibold mb-1">Validity start date</label>
           <div>
             <input 
-              type="datetime-local"
+              type="time"
               {...register("tickevalidityStartDate")}
               className="border rounded p-2"
             />
@@ -375,7 +399,8 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           <label className="font-semibold mb-1">Validity end date</label>
           <div>
             <input
-              type="datetime-local"
+              type="time"
+              
               {...register("tickevalidityEndtDate")}
               className="border rounded p-2"  
             />
