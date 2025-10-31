@@ -112,7 +112,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         {data && data.map((ticket:Ticket) => (
           <div
             key={ticket.eventItemTypeId}
-            onClick={() => navigate(`/ticketDetails/${eventId}/${ticket.eventItemTypeId}`)}
+            onClick={() => navigate(`/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`)}
             className="border border-gray-200 rounded-lg mt-2 cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div className="flex flex-col items-center w-1/4 text-center">

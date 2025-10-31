@@ -6,7 +6,7 @@ import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
@@ -90,6 +90,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
+  const queryClient =useQueryClient();
   
   //redux may or may not have event details
   let eventBasics = useAppSelector((state:RootState) => state.event);
@@ -122,7 +123,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     return res.data;
   },
   {
-    //staleTime: 1000 * 60 * 5, //enable only if redux does not have event details
+    staleTime: 1000 * 60 * 5, //enable only if redux does not have event details
     enabled: !!ticketId && ticketId!=="-1"
   }
   );
@@ -200,6 +201,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         .then(response => {
           toast.success("Ticket type updated!");
           console.log('Ticket updated successfully:', response.data);
+          queryClient.resetQueries({queryKey:[`tickets/details/${eventId}/${ticketId}`]});
           //setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
           //navigate(`/organizer/eventtickets/${eventId}`);
         })
