@@ -15,7 +15,6 @@ import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
-import * as DateUtils from '../../utils/DateUtils'
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),

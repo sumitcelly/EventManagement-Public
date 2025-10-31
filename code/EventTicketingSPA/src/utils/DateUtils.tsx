@@ -27,7 +27,12 @@ export const  addHoursToDate=(date: Date, durationHours: number): Date =>{
     return newDate;
   }
 
-  export const appendTime=(targetDate: string, current?: boolean):Date=>{
+export const  combineDateTime=(date: Date, timeStr: string):string=> {
+  const dateStr = date.toISOString().split('T')[0];
+  return new Date(`${dateStr}T${timeStr}`).toISOString();
+}
+
+export const appendTime=(targetDate: string, current?: boolean):Date=>{
 
     const [year, month, day] = targetDate.split("-").map(Number);
     const now = new Date(); // current local date and time

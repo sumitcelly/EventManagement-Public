@@ -14,8 +14,8 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
-import {appendTime,toUTCDate, addHoursToDate}   from '../../utils/DateUtils'
-import EventDetails from "../EventDetails";
+import {appendTime,toUTCDate, addHoursToDate,combineDateTime}   from '../../utils/DateUtils'
+
 
 const ticketSchema = (event: EventHeader)=>yup.object({
   name: yup.string().required("Ticket name is required.").typeError('Invalid number.'),
@@ -51,19 +51,22 @@ const ticketSchema = (event: EventHeader)=>yup.object({
       }),
     tickevalidityStartDate: yup.string().required("Ticket validity start date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => {  
-        return true;
+        console.log(value);
+        //return true;
         if (!event || !event.eventDate) return false;
-        const newDate = new Date(event.eventDate); 
-        newDate.setHours(newDate.getHours() + (event.duration || 0));
-        return  (new Date(value) >= new Date(event.eventDate)) && (new Date(value) <= newDate);     
+      
+        const  validityDate =  new Date(combineDateTime( new Date(event.eventDate),value));
+        const eventEndDate = addHoursToDate(event.eventDate, event.duration ||0);
+        console.log('validityDate, eventEndDate', validityDate, eventEndDate);
+        return  validityDate >= event.eventDate && validityDate<=eventEndDate;     
       }),
     tickevalidityEndtDate: yup.string().required("Ticket validity end date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => { 
-      return true; 
+      
         if (!event || !event.eventDate) return false;
-        const newDate = new Date(event.eventDate); 
-        newDate.setHours(newDate.getHours() + (event.duration || 0));
-        return  (new Date(value) >= new Date(event.eventDate)) && (new Date(value) <= newDate);     
+        const  validityDate =  new Date(combineDateTime( new Date(event.eventDate),value));
+        const eventEndDate = addHoursToDate(event.eventDate, event.duration ||0);
+        return  validityDate >= event.eventDate && validityDate<=eventEndDate;      
       }),
   });
 
@@ -107,7 +110,14 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
 
 
   const { data:ticketDetails, isLoading:ticketLoading } = useQuery(`tickets/details/${eventId}/${ticketId}`, async () => {
-    const res = await axiosClient.get(`/eventitemtype/${ticketId}`);
+    let res = await axiosClient.get(`/eventitemtype/${ticketId}`);
+    if (res.data)
+    {
+      res.data.salesStartDate+="Z";
+      res.data.salesEndDate+="Z";
+      res.data.ticketValidityStart+="Z";
+      res.data.ticketValidityEnd+="Z";
+    }
     console.log('ticket details from backend', res?.data);
     return res.data;
   },
@@ -147,9 +157,12 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       description: "",
       tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
       tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
-      tickevalidityStartDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '00:00',
+      tickevalidityStartDate: eventBasics.eventDate ? 
+                             new Date(eventBasics.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                            '00:00',
       tickevalidityEndtDate: eventBasics.eventDate && eventBasics.duration ? 
-                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '23:59',
+                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                            '23:59',
 
       },   
       mode: "onChange",          // 👈 validates as user types or changes field
@@ -168,41 +181,46 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       cost: data.cost,
       maxPerOrder: data.maxPerOrder,
       totalAllowed: data.totalAllowed,
-      tickeSalesStartDate: new Date(data.tickeSalesStartDate + 'T00:00:00.000').toISOString(),
-      tickeSalesEndDate: new Date(data.tickeSalesEndDate + getEventEndTime()).toISOString(),
-      tickevalidityStartDate: toUTCDate(data.tickevalidityStartDate),
-      tickevalidityEndtDate: toUTCDate(data.tickevalidityEndtDate),
+      salesStartDate: new Date(data.tickeSalesStartDate + 'T00:00:00.000').toISOString(),
+      salesEndDate: new Date(data.tickeSalesEndDate + getEventEndTime()).toISOString(),
+      ticketValidityStart: combineDateTime(eventBasics.eventDate, data.tickevalidityStartDate),
+      ticketValidityEnd: combineDateTime(eventBasics.eventDate, data.tickevalidityEndtDate),
     }
     console.log('payload to be sent to backend',payload);
+   
+
     if (!user || !user.id) {
       console.error("User not authenticated");
       return;
     }
     if (ticketDetails) {
-      //update
-        toast.success("Ticket updated!");
-        setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
-      // axiosClient.put(`/eventitemtype/update/${ticketDetails.eventItemTypeId}`, payload)
-      // .then(response => {
-      //   console.log('Ticket updated successfully:', response.data);
-      //   navigate(`/organizer/eventtickets/${eventId}`);
-      // })
-      // .catch(error => {
-      //   console.error('Error updating ticket:', error);
-      // });
+      //update     
+       
+        axiosClient.put(`/eventitemtype/${ticketDetails.eventItemTypeId}`, payload)
+        .then(response => {
+          toast.success("Ticket type updated!");
+          console.log('Ticket updated successfully:', response.data);
+          //setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
+          //navigate(`/organizer/eventtickets/${eventId}`);
+        })
+        .catch(error => {
+            toast.error("Ticket type updation failed!");
+            console.error('Error updating ticket:', error);
+        });
     }
     else {
-      toast.success("Ticket created!");
-      setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
-      //create
-      // axiosClient.post(`/eventitemtype/create`, payload)
-      // .then(response => {
-      //   console.log('Ticket created successfully:', response.data);
-      //   navigate(`/organizer/ticketdashboard/${eventId}`);
-      // })
-      // .catch(error => {
-      //   console.error('Error creating ticket:', error);
-      // });
+        //create
+      axiosClient.post(`/eventitemtype`, payload)
+      .then(response => {
+        console.log('Ticket created successfully:', response.data);
+        toast.success("Ticket Type created!");
+        setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
+      })
+      .catch(error => {
+         toast.error("Ticket Type creation failed!");
+        console.error('Error creating ticket:', error);
+      });
+
     }
   }
 
@@ -227,12 +245,10 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         // tickevalidityEndtDate: ticketDetails?.ticketValidityEnd
         //                       ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityEndtDate))
         //                       : toLocalDateTimeInputValue(addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0))
-        tickevalidityStartDate: ticketDetails?.ticketValidityStart ? new Date(ticketDetails?.ticketValidityStart).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+        tickevalidityStartDate: ticketDetails?.ticketValidityStart ? new Date(ticketDetails.ticketValidityStart).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
                                 new Date(eventBasics?.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) ,
-        tickevalidityEndtDate: eventBasics.eventDate && eventBasics.duration ? 
-                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '23:59',
-
-      
+        tickevalidityEndtDate: ticketDetails?.ticketValidityEnd ? new Date(ticketDetails.ticketValidityEnd).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                                addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) ,      
                             });
     }
   }, [ticketDetails, reset, eventBasics]);
