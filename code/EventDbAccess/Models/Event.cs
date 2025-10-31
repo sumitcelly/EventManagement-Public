@@ -31,15 +31,15 @@ namespace EventManagementDbAccess
 
         public bool IsPrivate { get; set; } = false;
     }
-    public class Event :EventHeader
+    public class Event : EventHeader
     {
-      
+
         public required string EventDescription { get; set; }
 
-       
+
         public string Category { get; set; } = string.Empty;
 
-    
+
         public string SubCategory { get; set; } = string.Empty;
 
         public string Tags { get; set; } = string.Empty;
@@ -56,12 +56,24 @@ namespace EventManagementDbAccess
 
         public required string ZipCode { get; set; }
 
-        
-        public  string Country { get; set; } = "USA";
+
+        public string Country { get; set; } = "USA";
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    }
+    
+    public class EventLiveStatus
+    { 
+        public bool IsLive { get; set; }
+
+        /// <summary>
+        /// At least one ticket created
+        /// </summary>
+        public bool TicketStatus { get; set; }
+
+        public required string SanitizedEventName { get; set; }
     }
 }

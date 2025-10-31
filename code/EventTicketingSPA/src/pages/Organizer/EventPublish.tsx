@@ -22,7 +22,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
     // const res = await axiosClient.get(`/events/validate/${eventId}`);
     // console.log('Event validation details from backend', res?.data);
     // return res.data;
-    return {"valid":true,"publishStatus":"Live","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
+    return {"valid":true,"publishStatus":"Draft","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
     {
       //staleTime: 1000 * 60 * 5,
       enabled: !!eventId

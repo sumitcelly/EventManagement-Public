@@ -6,8 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EventUtils;
+using Stripe.TestHelpers.Terminal;
+using System.Text.RegularExpressions;
 
- namespace EventManagementDbAccess
+namespace EventManagementDbAccess
 {
   public class EventDbAccess :BaseDbAccess
   {
@@ -161,6 +163,38 @@ using EventUtils;
       }
       return null;
     }
+
+    public async Task<EventLiveStatus> GetLiveStatusForEvent(int eventId)
+    {
+      if (eventId <= 0)
+        throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+
+      using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
+      {
+        await conn.OpenAsync();
+
+   
+        var query = @"select a.IsLive, a.EventName,
+                    (Select count(*) from eventitemtype b where b.eventid = a.eventid) AS tickettypecount
+                    FROM events a WHERE a.eventid = @eventId";
+                    
+                   
+        using var cmd = new MySqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@eventId", eventId);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+          return new EventLiveStatus
+          {
+            IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
+            TicketStatus = reader.GetInt16(reader.GetOrdinal("tickettypecount")) > 0 ? true : false,
+            SanitizedEventName = System.Uri.EscapeDataString(Regex.Replace(reader.GetString(reader.GetOrdinal("EventName")),@"\s+", string.Empty)) 
+          };
+        }
+      }
+      return null;
+    }
     
     public async Task<List<EventHeader>> GetEventListByCustomerId(int customerId)
     {
@@ -265,47 +299,6 @@ using EventUtils;
       return null;
     }
 
-    //Cannot cache by name since name can be changed and theb the cache wil retain the old name.
-    //We need to send the old name to the cache and then remove it when the event is updated.
-
-    // public async Task<Event> GetEventByName(string eventName)
-    // {
-    //   if (string.IsNullOrEmpty(eventName))
-    //     throw new ArgumentNullException(nameof(eventName));
-    //   string cacheKey = CacheHelper.GetCacheKey<Event>(eventName);
-
-    //   Event? cachedEvent = await _cache.GetOrSetAsync<Event>(cacheKey, () => GetEventByNameFromDb(eventName), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-    //   return cachedEvent ?? throw new KeyNotFoundException($"Event with name {eventName} not found.") ;
-    // }
-
-    // public async Task<Event> GetEventByName(string eventName)
-    // {
-    //   if (string.IsNullOrEmpty(eventName))
-    //     throw new ArgumentNullException(nameof(eventName));
-
-    //   using var conn = new MySqlConnection(this.ConnectionString);
-    //   await conn.OpenAsync();
-    //   var query = "SELECT * FROM Events WHERE EventName = @eventName";
-
-    //   using var cmd = new MySqlCommand(query, conn);
-    //   cmd.Parameters.AddWithValue("@eventName", eventName);
-
-    //   using var reader = await cmd.ExecuteReaderAsync();
-    //   if (await reader.ReadAsync())
-    //   {
-    //     return new Event
-    //     {
-    //       EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-    //       EventName = reader.GetString(reader.GetOrdinal("EventName")),
-    //       EventDescription = reader.GetString(reader.GetOrdinal("EventDescription")),
-    //       EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-    //       EventOrganizer = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-    //       EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
-    //     };
-    //   }
-    //   return null;
-    // }
-
     public async Task<int> CreateEvent(Event evt)
     {
       if (evt == null)
@@ -371,7 +364,41 @@ using EventUtils;
         }
         return rowsAffected > 0;
     }
+    public async Task<bool> UpdatePublishStatus(int eventId, bool status)
+    {
+        if (eventId <=0)
+            throw new ArgumentNullException(nameof(eventId));
 
+        using var connection = new MySqlConnection(this.ConnectionString);
+        await connection.OpenAsync();
+
+        string query = @"UPDATE Events SET   
+            IsLive = @isLive 
+            WHERE EventId = @eventId";
+
+      using var cmd = new MySqlCommand(query, connection);
+ 
+      cmd.Parameters.AddWithValue("@isLive", status);
+      cmd.Parameters.AddWithValue("@eventId", eventId);
+
+      int rowsAffected = await cmd.ExecuteNonQueryAsync();
+      if (rowsAffected > 0)
+      {
+        string key = CacheHelper.GetCacheKey<Event>(eventId.ToString());
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+          Event tempEvent = await _cache.GetOnlyAsync<Event>(key);
+          if (tempEvent !=null)
+          {
+            tempEvent.IsLive = status;
+            _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          }
+        }
+          
+      }
+      return rowsAffected > 0;
+
+    }
     public async Task<bool> UpdateEvent(Event evt)
     {
         if (evt == null)

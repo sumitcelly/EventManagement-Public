@@ -64,10 +64,37 @@ namespace CreateTicketApi.Controllers
         [HttpGet("/Events/Details/{id}")]
         public async Task<ActionResult<Event>> GetEventDetailsById(int id)
         {
+            if (id<=0)
+            {
+                return BadRequest("Invalid event."); 
+            }
             var evt = await _EventDbAccess.GetEventDetailsById(id);
             if (evt == null)
                 return NotFound();
             return evt;
+        }
+
+
+
+        [HttpGet("/Events/LiveStatus/{id}")]
+        public async Task<ActionResult<EventLiveStatus>> GetEventLiveStatusById(int id)
+        {
+            if (id<=0)
+            {
+                return BadRequest("Invalid event."); 
+            }
+            var evt = await _EventDbAccess.GetLiveStatusForEvent(id);
+            if (evt == null)
+                return NotFound();
+            return evt;
+        }
+
+        [HttpPut("/Events/LiveStatus/{id}")]
+        public async Task<ActionResult<bool>> UpdateLiveStatus(int id, [FromBody] bool status)
+        {
+            if (id <= 0)
+                return BadRequest("Invalid event.");
+            return (await _EventDbAccess.UpdatePublishStatus(id, status))?true:false;
         }
 
         [HttpPost]
@@ -87,7 +114,7 @@ namespace CreateTicketApi.Controllers
             Console.WriteLine($"event id {id} and event {evt} received for update");
             if (evt == null || id != evt.EventId)
                 return BadRequest("Invalid event or ID mismatch.");
-            var result = await _EventDbAccess.UpdateEvent(evt);
+            bool result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
                 return Ok();
 
