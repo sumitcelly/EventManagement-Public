@@ -9,85 +9,93 @@ import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { useMutation } from "react-query";
-// 
+import toast, { Toaster } from 'react-hot-toast';
 
 
   
 export default function EventPublish({eventId}: {eventId?:string}) {
   const navigate = useNavigate();
-  const user = useAppSelector((state: RootState) => state.auth);
-  const userId = user.user?.id;
 
-  const { data, isLoading } = useQuery(['validate',eventId], async () => {
-    // const res = await axiosClient.get(`/events/validate/${eventId}`);
-    // console.log('Event validation details from backend', res?.data);
-    // return res.data;
-    return {"valid":true,"publishStatus":"Draft","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
+  const queryClient = useQueryClient();
+
+  const { data, isLoading:validateLoading } = useQuery(['validate',eventId], async () => {
+    const res = await axiosClient.get(`/events/livestatus/${eventId}`);
+    console.log('Event validation details from backend', res?.data);
+    return res.data;
+  },
+    //return {"valid":true,"publishStatus":"Draft","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
     {
-      //staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 60 * 5,
       enabled: !!eventId
     }
-  });
+  );
 
+
+
+  type PublishEventParams = {
+    status: boolean;
+    eventId?: string;
+  };
 
   
-  const mutation = useMutation({
-    mutationFn: () => publishEvent(eventId),
+  const publishEvent = async ({ status, eventId }: PublishEventParams) => {
+    try {
+      console.log("Publishing event", eventId, "set live status to", status);
+
+      const res = await axiosClient.put(`/events/livestatus/${eventId}`, status, {
+                  headers: {
+                  'Content-Type': 'application/json'}
+                });
+            
+      console.log("Event publish API response:", res?.data);
+      const eventStatus = status?"Live":"Draft";
+
+      if (res?.data) {
+        await queryClient.resetQueries({ queryKey: ["validate", eventId] });
+        console.log("✅ Success publishing event", eventId);
+        toast.success("Event status changed successfully to "+eventStatus);
+        return true;
+      } else {
+        console.warn("⚠️ There was an issue publishing your event", eventId);
+         toast.error("Event failed to change event status. Please try again!");
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ Error publishing event", error);
+      return false;
+    }
+  };
+
+  const mutation = useMutation<boolean, Error, PublishEventParams>({
+    mutationFn: publishEvent,
   });
 
-  const publishEvent= async(eventId?:string)=>
-  {
-    try{
-      console.log("event publish starting for eventid",eventId);
-      const res ={data:{"status":true}};
-      // const res = await axiosClient.post(`/events/publish/${eventId}`);
-      console.log('Event publish status', res?.data);
-      if (res?.data.status)
-      {
-        return "Event is online!"
-      }
-      else
-      {
-        return "There was an issue publishing your event. Please try later!"
-      }
-    }
-    catch(error)
-    {
-      console.log("error publishing event", error);
-       return "There was an issue publishing your event. Please try later!"
-    }
-    
-      if (isLoading) return <p>Loading...</p>;
-  }
+  const { mutate, isLoading, isSuccess, isError } = mutation;
+
+
+  if (validateLoading) return <p>Loading...</p>;
   
   return (  
     <div className="max-w-md mx-auto  text-center">
-      <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2>
+      {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col">
-       
-         <label className="block font-semibold italic">Event Status: {data?.publishStatus}</label>
-         {data && data.publishStatus === "Draft"?(
+         <Toaster position="top-right" />
+         <label className="block font-semibold italic font-accent text-accent-color">Your event is in {data?.isLive?'Live':'Draft'} status</label>
+         {data && !data.isLive?(
           <div className="bg-brand-neutral mt-6 p-3 text-center text-secondary-color rounded">
        
             {
-              data && data.valid && (
+              data && data.ticketStatus && (
               <p className="text-l">
                 You are ready to go online! All event and ticket details are complete!
               </p>
             )}
              {
-              data && !data.valid && !data.eventStatus && (
+              data && !data.ticketStatus && (
               <p className=" text-l">
-               Please complete event details.
+               Please add atleast one ticket type.
               </p>
             )}
-             {
-              data && !data.valid && !data.ticketStatus && (
-              <p className="text-l mt-2">
-              Please create at least one ticket before publishing.
-              </p>
-            )}
-
           </div>
           ):
             <div className="bg-brand-neutral mt-6 rounded p-2 text-center">
@@ -97,30 +105,25 @@ export default function EventPublish({eventId}: {eventId?:string}) {
             </div>
         }
 
-        {data && data.valid && (
+        {data && data.isLive && (
           <div className= "mt-3 bg-brand-neutral rounded">
-            Your event url is <a href={data?.eventUrl}>{data?.eventUrl}</a>
+            Your event url is <a href={`${window.location.origin}/${data.sanitizedEventName}`}>{`${window.location.origin}/${data.sanitizedEventName}`}</a>
           </div>
         )}
         
       </div>
     
-    {data && data.publishStatus==="Draft" && data.valid && (
+    {data && data.ticketStatus && (
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-                onClick={() => mutation.mutate()}
+               onClick={() => mutate({ status: !data.isLive, eventId: eventId })}
                 disabled={mutation.isLoading}
               >
-               {mutation.isLoading ? "Publishing..." : "Publish"}
+               {!data.isLive? "Publish" :  "Unpublish"}
           </button> 
           
-          {mutation.isSuccess && (
-            <p className="text-go-color text-sm">Event published successfully!</p>
-          )}
-          {mutation.isError && (
-            <p className="text-secondary-color text-sm">Failed to publish event.</p>
-          )}
+         
       </div>
     )}
 
