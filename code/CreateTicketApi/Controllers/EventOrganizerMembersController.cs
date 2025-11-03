@@ -55,7 +55,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("by-customer/{customerId:int}")]
+        [HttpGet("bycustomer/{customerId:int}")]
         public async Task<IActionResult> GetMembersByCustomerId(int customerId)
         {
             try
@@ -70,8 +70,8 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("by-customer-user")]
-        public async Task<IActionResult> GetMemberByUserId([FromQuery] int userId)
+        [HttpGet("/byuserId/{userId:int}")]
+        public async Task<IActionResult> GetMemberByUserId(int userId)
         {
             try
             {
@@ -87,11 +87,11 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPut("{organizerMemberId:int}")]
-        public async Task<IActionResult> UpdateMember(int organizerMemberId, [FromBody] EventOrganizerMembers member)
+        [HttpPut]
+        public async Task<IActionResult> UpdateMember([FromBody] EventOrganizerMembers member)
         {
-            if (member == null || member.OrganizerMemberId != organizerMemberId)
-                return BadRequest("Invalid member data.");
+            if (member == null)
+                return StatusCode(500, "Bad input data");
 
             try
             {
@@ -107,12 +107,14 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpDelete("{organizerMemberId:int}")]
-        public async Task<IActionResult> DeleteMember(int organizerMemberId)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteMember(int userId, [FromBody]int customerId)
         {
             try
             {
-                var result = await _dbAccess.DeleteMember(organizerMemberId);
+                if (userId < 0 || customerId < 0)
+                    return StatusCode(500, "Invalid data sent for deletion");
+                var result = await _dbAccess.DeleteMember(userId,customerId);
                 if (!result)
                     return NotFound();
                 return Ok();

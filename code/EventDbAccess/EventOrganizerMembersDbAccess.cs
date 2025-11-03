@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
@@ -27,15 +28,13 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO eventorganizermembers 
-                    (CustomerId, UserId, Role, CreatedAt, ModifiedAt, IsActive)
-                    VALUES (@CustomerId, @UserId, @Role, @CreatedAt, @ModifiedAt, @IsActive)";
+                    (CustomerId, UserId, Role, IsActive)
+                    VALUES (@CustomerId, @UserId, @Role, @IsActive)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@CustomerId", member.CustomerId);
                 cmd.Parameters.AddWithValue("@UserId", member.UserId);
                 cmd.Parameters.AddWithValue("@Role", member.Role);
-                cmd.Parameters.AddWithValue("@CreatedAt", member.CreatedAt);
-                cmd.Parameters.AddWithValue("@ModifiedAt", member.ModifiedAt);
                 cmd.Parameters.AddWithValue("@IsActive", member.IsActive);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -107,21 +106,23 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"SELECT * FROM eventorganizermembers WHERE CustomerId = @CustomerId";
+                string query = @"SELECT a.UserId,a.Role,a.IsActive,a.OrganizerMemberId, b.email,b.fullname
+                                FROM eventorganizermembers a, eventuser b WHERE
+                                 a.userid=b.userid and CustomerId = @customerId";
+
                 using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@CustomerId", customerId);
+                cmd.Parameters.AddWithValue("@customerId", customerId);
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
                     members.Add(new EventOrganizerMembers
                     {
-                        OrganizerMemberId = reader.GetInt32(reader.GetOrdinal("OrganizerMemberId")),
-                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        OrganizerMemberId=reader.GetInt32(reader.GetOrdinal("OrganizerMemberId")),
+                        UserId =reader.GetInt32(reader.GetOrdinal("UserId")),
                         Role = reader.GetString(reader.GetOrdinal("Role")),
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        FullName  = reader.GetString(reader.GetOrdinal("FullName")),
                         IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
                     });
                 }
@@ -145,17 +146,16 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"UPDATE eventorganizermembers 
-                    SET CustomerId = @CustomerId, UserId = @UserId, Role = @Role, 
-                        ModifiedAt = @ModifiedAt, IsActive = @IsActive
-                    WHERE OrganizerMemberId = @OrganizerMemberId";
+                    SET  Role = @role, 
+                          IsActive = @isActive
+                    WHERE OrganizerMemberId = @userID and CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@CustomerId", member.CustomerId);
-                cmd.Parameters.AddWithValue("@UserId", member.UserId);
-                cmd.Parameters.AddWithValue("@Role", member.Role);
-                cmd.Parameters.AddWithValue("@ModifiedAt", member.ModifiedAt);
-                cmd.Parameters.AddWithValue("@IsActive", member.IsActive);
-                cmd.Parameters.AddWithValue("@OrganizerMemberId", member.OrganizerMemberId);
+
+                cmd.Parameters.AddWithValue("@customerId", member.CustomerId);      
+                cmd.Parameters.AddWithValue("@userID", member.UserId);   
+                cmd.Parameters.AddWithValue("@role", member.Role);          
+                cmd.Parameters.AddWithValue("@isActive", member.IsActive);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected == 0)
@@ -180,32 +180,33 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> DeleteMember(int organizerMemberId)
+        public async Task<bool> DeleteMember(int userId, int customerId)
         {
-            if (organizerMemberId <= 0)
-                throw new ArgumentException("OrganizerMemberId must be greater than zero.", nameof(organizerMemberId));
+            if (userId <= 0)
+                throw new ArgumentException("OrganizerMemberId must be greater than zero.", nameof(userId));
 
             try
             {
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"DELETE FROM eventorganizermembers WHERE OrganizerMemberId = @OrganizerMemberId";
+                string query = @"DELETE FROM eventorganizermembers WHERE userId = @userId and customerId=@customerId";
                 using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@OrganizerMemberId", organizerMemberId);
+                cmd.Parameters.AddWithValue("@userId", userId);
+                cmd.Parameters.AddWithValue("@customerId", customerId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected == 0)
                 {
-                    _logger.LogWarning($"No member found with OrganizerMemberId {organizerMemberId} to delete.");
+                    _logger.LogWarning($"No member found with OrganizerMemberId {userId} to delete.");
                     return false;
                 }
                 else
                 {
                     // Invalidate cache for this member
-                    string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(organizerMemberId.ToString());
+                    string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(customerId.ToString());
                     await _cache.RemoveAsync(cacheKey);
-                    _logger.LogInformation($"Member with OrganizerMemberId {organizerMemberId} deleted successfully.");
+                    _logger.LogInformation($"Member with OrganizerMemberId {customerId} deleted successfully.");
                     return rowsAffected > 0;
                 }
             }
@@ -216,7 +217,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<EventOrganizerMembers?> GetContainingOrgByUserId( int userId)
+        public async Task<EventOrganizerMembers?> GetContainingOrgByUserId(int userId)
         {
             if (userId <= 0)
                 throw new ArgumentException("UserId must be greater than zero.", nameof(userId));

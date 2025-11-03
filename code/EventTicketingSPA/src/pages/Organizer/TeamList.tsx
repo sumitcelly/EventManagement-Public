@@ -9,6 +9,8 @@ import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { TeamMember } from "../../types/Teams";
+
+import toast, {Toaster} from "react-hot-toast";
 // 
 
 
@@ -36,7 +38,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
 
         // 3. Invalidate to verify our optimistic update
         // This ensures our cache matches the server state
-        await queryClient.invalidateQueries(['TicketsbyEvent', organizerId]);
+        await queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
 
     } 
     catch (error) 
@@ -86,7 +88,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
 
   return (
     <div className="max-w-l mx-auto">
-      
+      <Toaster position="top-right" />
       <h2 className="text-xl font-semibold mb-4 text-center">Build your team</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
       
