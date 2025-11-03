@@ -56,15 +56,24 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
-    if (!memberInfo)
-      return;
-
-    if (memberInfo?.userId)
+    // if (!memberInfo)
+    //   return;
+    const orgAPi={
+      organizerMemberId:memberInfo?.orgMemberId,
+      customerId: organizerId,
+      userId: memberInfo?.userId,
+      role: data?.permissions,
+      email: data?.email,
+      fullName: data?.name,
+      isActive: memberInfo?.status=="Active"?true:false
+    }
+    if (memberInfo?.orgMemberId)
     {
-      axiosClient.post('/user/update',data)
+      console.log('member data sent to server', orgAPi);
+      axiosClient.put(`/EventOrganizerMembers`,orgAPi)
       .then(response => {
       console.log('User updated successfully:', response.data);
-      toast.success("Member update");
+      toast.success("Member updated");
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
@@ -74,9 +83,9 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     }
     else
     {
-      axiosClient.post('/user/add',data)
+      axiosClient.post('/EventOrganizerMembers',orgAPi)
       .then(response => {
-      console.log('User created successfully:', response.data);
+      console.log('Member created successfully:', response.data);
       toast.success("Member created");
       })
       .catch(error => {
@@ -109,12 +118,14 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     //   (data) => console.log("submit fired!", data),
     //   (errors) => console.log("validation errors", errors)
     // )}>
+    <>
+     <Toaster position="top-right" />
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
-
+    
     <div className="flex flex-col">
-     <Toaster position="top-right" />
+    
       <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3">
           Back to member list
       </a>
@@ -125,6 +136,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           {...register("name")}
           className="w-full border rounded p-2"
           placeholder="Enter name"
+          disabled={memberInfo !=null}
         />
         <div className="min-h-[20px]">
           {errors.name && (
@@ -139,6 +151,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           {...register("email")}
           className="w-full border rounded p-2"
           placeholder="Enter email..."
+          disabled={memberInfo !=null}
         />
         <div className="min-h-[20px]">
           {errors.email && (
@@ -178,5 +191,6 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     </div>
             
     </form>
+    </>
   );
 }

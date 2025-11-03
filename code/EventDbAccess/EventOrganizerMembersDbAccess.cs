@@ -146,14 +146,14 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"UPDATE eventorganizermembers 
-                    SET  Role = @role, 
-                          IsActive = @isActive
-                    WHERE OrganizerMemberId = @userID and CustomerId = @customerId";
+                                SET  Role = @role, 
+                                IsActive = @isActive
+                    WHERE OrganizerMemberId = @orgMemberId and CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
 
                 cmd.Parameters.AddWithValue("@customerId", member.CustomerId);      
-                cmd.Parameters.AddWithValue("@userID", member.UserId);   
+                cmd.Parameters.AddWithValue("@orgMemberId", member.OrganizerMemberId);   
                 cmd.Parameters.AddWithValue("@role", member.Role);          
                 cmd.Parameters.AddWithValue("@isActive", member.IsActive);
 

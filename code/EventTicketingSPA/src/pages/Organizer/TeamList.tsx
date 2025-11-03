@@ -34,7 +34,16 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
         });
 
         // 2. Make API call
-        //await axiosClient.delete(`/events/${eventId}`);
+        await axiosClient.delete(`/EventOrganizerMembers/${userId}`, { data: organizerId,headers: {
+                  'Content-Type': 'application/json'}
+                 },).then(response => {
+          console.log('Delete successful:', response.data);
+          toast.success("User deleted succefully.");
+        })
+      .catch(error => {
+          console.error('Error deleting item:', error);
+           toast.error("Error deleting user.");
+        });
 
         // 3. Invalidate to verify our optimistic update
         // This ensures our cache matches the server state
@@ -51,25 +60,26 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
 
   const { data, isLoading } = 
   useQuery(['TeamByOrganizer',organizerId], async () => {
-      console.log("Fetching members for organizer:", organizerId);
-      //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
-      //console.log('orders fetched from backend',res.data);
-      let data:TeamMember[]=[];
-      data.push({
-        userId: 5,
-        email:"fgfgfgfgfgfgfgffg@gmail.com",
-        status:"Active",
-        permissions:["Admin"],
-        name:"member1"
-      },
-    {
-        userId: 7,
-        email:"sumit.celly@gmail.com",
-        status:"Pending",
-        permissions:["Checkin"],
-        name:"member2"
-      });
-      return data;
+     
+      const res = await axiosClient.get(`/EventOrganizerMembers/bycustomer/${organizerId}`);
+
+      console.log('Members fetched from backend',res.data);
+      
+      let  membersData:TeamMember[]=[];
+      if (res.data)
+      {
+        res.data.map((temp:any)=>{
+            membersData.push({
+              userId:temp.userId,
+              email:temp.email,
+              name:temp.fullName,
+              permissions:temp.role?.split(','),
+              status: temp.iActive?"Active":"Pending",
+              orgMemberId:temp.organizerMemberId
+            });
+        });
+      }
+      return membersData;
     },
     {
       //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes

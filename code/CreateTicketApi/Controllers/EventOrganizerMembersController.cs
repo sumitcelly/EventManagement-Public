@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using EventManagementDbAccess;
+using K4os.Compression.LZ4.Internal;
+using System.Data;
 
 namespace CreateTicketApi.Controllers
 {
@@ -13,11 +15,13 @@ namespace CreateTicketApi.Controllers
     {
         private readonly EventOrganizerMembersDbAccess _dbAccess;
         private readonly ILogger<EventOrganizerMembersController> _logger;
-
-        public EventOrganizerMembersController(EventOrganizerMembersDbAccess dbAccess, ILogger<EventOrganizerMembersController> logger)
+        private readonly UserDbAccess _userdbAccess;
+        public EventOrganizerMembersController(EventOrganizerMembersDbAccess dbAccess, UserDbAccess userDbAccess,
+                     ILogger<EventOrganizerMembersController> logger)
         {
             _dbAccess = dbAccess;
             _logger = logger;
+            _userdbAccess = userDbAccess;
         }
 
         [HttpPost]
@@ -28,8 +32,43 @@ namespace CreateTicketApi.Controllers
 
             try
             {
-                var id = await _dbAccess.AddMember(member);
-                return Ok(new { OrganizerMemberId = id });
+                EventUser? user = null;
+                if (member.UserId == 0 && !string.IsNullOrWhiteSpace(member.Email))
+                {
+                    user = await _userdbAccess.GetUserByEmail(member.Email);
+                    if (user == null)
+                    {
+
+                        int userId = await _userdbAccess.CreateUser(
+                            user = new EventUser()
+                            {
+                                Email = member.Email,
+                                Name = member.FullName,
+
+                            }
+                        );
+                        if (userId > 0)
+                        {
+                            _logger.LogInformation($"Created user id {userId} for adding to organization {member.CustomerId} ");
+                            member.UserId = userId;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Retrived user id {user.UserId} for adding to organization {member.CustomerId} ");
+                        member.UserId = user.UserId;
+                    }
+                }
+
+                if (member.UserId > 0)
+                {
+                    var id = await _dbAccess.AddMember(member);
+                    return Ok(new { OrganizerMemberId = id });
+                }
+                else
+                {
+                    return StatusCode(500, "Unable to retrive or add user to add member to organization");
+                }
             }
             catch (Exception ex)
             {
@@ -95,6 +134,7 @@ namespace CreateTicketApi.Controllers
 
             try
             {
+                
                 var result = await _dbAccess.UpdateMember(member);
                 if (!result)
                     return NotFound();

@@ -43,9 +43,17 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@country", attendee.Country);
                 cmd.Parameters.AddWithValue("@streetAddress", attendee.StreetAddress);
                 cmd.Parameters.AddWithValue("@zipCode", attendee.ZipCode);
-                string hashedPassword = PasswordHelper.HashPassword(attendee.Password,  out string passwordSalt);
-                cmd.Parameters.AddWithValue("@password", hashedPassword);
-                cmd.Parameters.AddWithValue("@passwordSalt", passwordSalt);
+                if (!string.IsNullOrWhiteSpace(attendee.Password))
+                {
+                    string hashedPassword = PasswordHelper.HashPassword(attendee.Password, out string passwordSalt);
+                    cmd.Parameters.AddWithValue("@password", hashedPassword);
+                    cmd.Parameters.AddWithValue("@passwordSalt", passwordSalt);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@password", null);
+                    cmd.Parameters.AddWithValue("@passwordSalt", null);
+                }
                 cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 

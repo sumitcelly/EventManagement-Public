@@ -3,5 +3,6 @@ export type TeamMember = {
   permissions: string[],
   email: string,
   status:string,
-  name:string
+  name:string,
+  orgMemberId: number;
 }
