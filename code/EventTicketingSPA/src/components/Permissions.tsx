@@ -17,6 +17,9 @@ export default function Permissions({ permissionsList, onChange }: PermissionsPr
       const perms = permissionsList.split(",").map((p) => p.trim());
       setSelected(new Set(perms));
     }
+    else{
+       setSelected(new Set([]));
+    }
   }, [permissionsList]);
 
   // Whenever selected changes, send comma-separated list back up

@@ -37,8 +37,22 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@Role", member.Role);
                 cmd.Parameters.AddWithValue("@IsActive", member.IsActive);
 
+                
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
-                return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning($"Error adding member to orgid {member?.CustomerId}");
+                    return 0;
+                }
+                else
+                {
+                    // Invalidate cache for this member
+                    string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(member.CustomerId.ToString());
+                    await _cache.RemoveAsync(cacheKey);
+                    _logger.LogInformation($"Member with add  successfully to customer id {member.CustomerId}.");
+                    return Convert.ToInt16(cmd.LastInsertedId);
+                }
+
             }
             catch (Exception ex)
             {

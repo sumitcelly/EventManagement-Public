@@ -270,7 +270,11 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       className="max-w-2xl mx-auto p-6 space-y-6"
     > 
      <Toaster position="top-right" />
-      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color">
+      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color" 
+        onClick={(e)=>{
+          e.preventDefault();
+          navigate('/eventmanager/${eventId}/ticketlist');
+      }}>
           Back to Ticket list
       </a>
      

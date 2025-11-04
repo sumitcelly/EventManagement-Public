@@ -6,7 +6,7 @@ import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
@@ -34,7 +34,8 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
-  
+  const queryClient = useQueryClient();
+
   const {
     control,
     handleSubmit,
@@ -51,6 +52,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
   });
+
 
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
@@ -74,6 +76,8 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       .then(response => {
       console.log('User updated successfully:', response.data);
       toast.success("Member updated");
+      queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
+     
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
@@ -87,6 +91,11 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       .then(response => {
       console.log('Member created successfully:', response.data);
       toast.success("Member created");
+      queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
+      reset();
+      setTimeout(() => {
+        navigate(`/TeamManager/${organizerId}`)
+      }, 1000);
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
@@ -98,35 +107,29 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
 
    useEffect(() => {
     console.log('MemberInfo changed:', memberInfo);
-    if (memberInfo) {
+    
       const values = {
-        name: memberInfo.name || '',
-        email: memberInfo.email || '',
-        permissions: memberInfo.permissions?.join(",") || ''
+        name: memberInfo?.name || '',
+        email: memberInfo?.email || '',
+        permissions: memberInfo?.permissions?.join(",") 
       };
       console.log('Resetting form with:', values);
       reset(values);
-    }
+ 
   }, [memberInfo]);
 
   return (
-    
-    // <form
-    // className="max-w-md mx-auto mt-8 p-6"
-    //   onSubmit={handleSubmit(
-    //     console.log("address", fullAddress),
-    //   (data) => console.log("submit fired!", data),
-    //   (errors) => console.log("validation errors", errors)
-    // )}>
-    <>
-     <Toaster position="top-right" />
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
-    
+    <Toaster position="top-right" />
     <div className="flex flex-col">
-    
-      <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3">
+     
+      <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3" 
+        onClick={(e=>{
+          e.preventDefault();
+          navigate(`/teammanager/${organizerId}`);
+        })}>
           Back to member list
       </a>
       <div className="space-y-1">
@@ -191,6 +194,5 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     </div>
             
     </form>
-    </>
   );
 }

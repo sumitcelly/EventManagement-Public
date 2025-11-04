@@ -4,7 +4,7 @@ import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
 import TicketDashboard from "./TicketDashboad";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import TeamList from "./TeamList";
 import MemberAdd from "./MemberAdd";
@@ -12,7 +12,7 @@ import MemberAdd from "./MemberAdd";
 export function TeamManager() {
   const tabsRef = useRef<TabsRef>(null);
   const location = useLocation();
-  
+  const navigate = useNavigate();
   const {organizerId,mode} = useParams();
 
   //mode valid values are ticketlist,new,edit
@@ -22,18 +22,18 @@ export function TeamManager() {
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
   //console.log('active tab in state is',activeTab);
-  const memberInfo = location.state;
+  let memberInfo = location.state;
   console.log('Member Info is ', memberInfo);
 
-  // if (!memberInfo)
-  // {
-  //   memberInfo ={"userId":userId};
-  // }
+//  useEffect(()=>{
+//       tabsRef.current?.setActiveTab(localActiveTab);
+//   },[localActiveTab]);
 
   useEffect(() => {
     if (mode === "newmember" || mode ==="edit")
     {
-      console.log("new user creation/updation")
+      console.log("new user creation/updation");
+     
       tabsRef.current?.setActiveTab(1);
     }
      else {
@@ -43,17 +43,23 @@ export function TeamManager() {
     }
   }, [mode, organizerId]);
 
+ 
+
   return (  
     <Tabs aria-label="Team Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
-      variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
+      variant="underline" onActiveTabChange={(tab) =>{
+                                        setLocalActiveTab(tab);
+                                        
+                                        console.log("active tab change called",tab);
+                                        }}>
     
-      <TabItem title="Team List" icon={HiUserCircle}>
+      <TabItem title="Team List" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();navigate(`/teammanager/${organizerId}`);}}>
         <TeamList organizerId={organizerId} isActive={localActiveTab===0}/>
       </TabItem>
 
-      <TabItem   title="Add Member" icon={HiUserCircle}  >
+      <TabItem   title="Add/Update Member" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();navigate(`/teammanager/${mode}/${organizerId}`, {state:memberInfo})}} >
         <MemberAdd organizerId={organizerId} memberInfo={memberInfo}/>
       </TabItem>
     </Tabs>

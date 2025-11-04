@@ -74,7 +74,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
               email:temp.email,
               name:temp.fullName,
               permissions:temp.role?.split(','),
-              status: temp.iActive?"Active":"Pending",
+              status: temp.isActive?"Active":"Pending",
               orgMemberId:temp.organizerMemberId
             });
         });
@@ -82,8 +82,8 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       return membersData;
     },
     {
-      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
 
       // refetchOnMount: false,      // don’t always re-fetch on mount
       // refetchOnWindowFocus: false,
