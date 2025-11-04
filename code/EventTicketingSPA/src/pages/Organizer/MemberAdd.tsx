@@ -92,10 +92,10 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       console.log('Member created successfully:', response.data);
       toast.success("Member created");
       queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
-      reset();
-      setTimeout(() => {
-        navigate(`/TeamManager/${organizerId}`)
-      }, 1000);
+      // reset();
+      // setTimeout(() => {
+      //   navigate(`/TeamManager/${organizerId}`)
+      // }, 1000);
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
@@ -111,7 +111,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       const values = {
         name: memberInfo?.name || '',
         email: memberInfo?.email || '',
-        permissions: memberInfo?.permissions?.join(",") 
+        permissions: memberInfo?.permissions?.join(",")  || ''
       };
       console.log('Resetting form with:', values);
       reset(values);

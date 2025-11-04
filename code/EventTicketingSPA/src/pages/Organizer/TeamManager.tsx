@@ -51,7 +51,18 @@ export function TeamManager() {
       className="max-w-2xl mx-auto "
       variant="underline" onActiveTabChange={(tab) =>{
                                         setLocalActiveTab(tab);
-                                        
+                                        if (tab==0)
+                                        {
+                                           window.history.pushState({}, "", `/teammanager/${organizerId}`);
+                                        }
+                                        if (tab ===1 && mode)
+                                        {
+                                            window.history.pushState({}, "", `/teammanager/${organizerId}/${mode}`);
+                                        }
+                                        if (tab ===1 && !mode)
+                                        {
+                                            window.history.pushState({}, "", `/teammanager/${organizerId}/newmember`);
+                                        }
                                         console.log("active tab change called",tab);
                                         }}>
     
