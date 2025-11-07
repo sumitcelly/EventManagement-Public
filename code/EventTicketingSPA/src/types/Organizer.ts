@@ -2,7 +2,7 @@ export interface OrganizerInfo {
   organizerId: number;
   organizationName: string;
   organizerName: string;
-  organizerFullAddress?: string;
+  organizationFullAddress?: string;
   organizerWebsite: string;
   organizerEventBaseUrl: string;
   organizerDescription: string;

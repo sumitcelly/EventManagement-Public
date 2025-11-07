@@ -33,9 +33,9 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("ByName/{name}")]
-        public async Task<ActionResult<EventOrganizer>> GetByName(string name)
+        public async Task<ActionResult<EventOrganizer>> GetByEventBaseUrl(string name)
         {
-            var organizer = await _organizerDbAccess.GetOrganizerByName(name);
+            var organizer = await _organizerDbAccess.GetOrganizerByEventBaseUrl(name);
             if (organizer == null)
                 return NotFound();
             return organizer;

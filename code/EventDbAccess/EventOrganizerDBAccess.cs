@@ -16,75 +16,7 @@ namespace EventManagementDbAccess
 
          }
 
-        public async Task<EventOrganizer> GetOrganizerByName(string organizerName)
-        {
-            if (string.IsNullOrEmpty(organizerName))
-                throw new ArgumentNullException(nameof(organizerName));
-
-            try
-            {
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
-
-                string query = @"SELECT 
-                    CustomerId, 
-                    OrganizerName,
-                    OrganizerEmail,
-                    OrganizerWebsite,
-                    OrganizerEventBaseUrl,
-                    OrganizerDescription,
-                    OrganizerLogo,
-                    OrganizerCity,
-                    OrganizerCountry,
-                    OrganizerPhone,
-                    OrganizerStreetAddress,
-                    OrganizerZipCode,
-                    OrganizerInstagram,
-                    OrganizerFacebook,
-                    StripeAccountId,
-                    StripeConnectAccountStatus
-                   
-                    
-                FROM eventorganizer 
-                WHERE OrganizerName = @organizerName";
-
-                using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@organizerName", organizerName);
-
-                using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    return new EventOrganizer
-                    {
-                        OrganizerId = reader.GetInt32(0),
-                        OrganizerName = reader.GetString(1),
-                        OrganizerEmail = reader.GetString(2),
-                        OrganizerWebsite = reader.IsDBNull(3) ? null : reader.GetString(3),
-                        OrganizerEventBaseUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
-                        OrganizerDescription = reader.IsDBNull(5) ? null : reader.GetString(5),
-                        OrganizerLogo = reader.IsDBNull(6) ? Array.Empty<byte>() : (byte[])reader[6],
-                        OrganizerCity = reader.IsDBNull(7) ? null : reader.GetString(7),
-                        OrganizerCountry = reader.IsDBNull(8) ? null : reader.GetString(8),
-                        OrganizerPhone = reader.IsDBNull(9) ? null : reader.GetString(9),
-                        OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
-                        OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
-                        OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
-                        StripeAccountId = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-                        StripeConnectStatus = reader.IsDBNull(15) 
-                            ? default 
-                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(15), out var status) ? status : default
-                    };
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error retrieving organizer: {ex.Message}");
-                throw;
-            }
-        }
-
+       
         public async Task<EventOrganizer> GetOrganizerById(int customerId)
         {
             if (customerId <= 0)
@@ -102,7 +34,8 @@ namespace EventManagementDbAccess
                         OrganizerWebsite,
                         OrganizerEventBaseUrl,
                         OrganizerDescription,
-                        OrganizerLogo,
+                        OrganizerAboutMe,
+                        OrganizerImageUrl,
                         OrganizerCity,
                         OrganizerCountry,
                         OrganizerPhone,
@@ -110,9 +43,9 @@ namespace EventManagementDbAccess
                         OrganizerZipCode,
                         OrganizerInstagram,
                         OrganizerFacebook,
+                        OrganizerX,
                         StripeAccountId,
-                        StripeConnectStatus
-                        
+                        StripeConnectStatus                      
                     FROM eventorganizer 
                     WHERE CustomerId = @customerId";
 
@@ -124,25 +57,97 @@ namespace EventManagementDbAccess
                 {
                     return new EventOrganizer
                     {
-                        OrganizerId = reader.GetInt32(0),
-                        OrganizerName = reader.GetString(1),
-                        OrganizerEmail = reader.GetString(2),
-                        OrganizerWebsite = reader.IsDBNull(3) ? null : reader.GetString(3),
-                        OrganizerEventBaseUrl = reader.IsDBNull(4) ? null : reader.GetString(4),
-                        OrganizerDescription = reader.IsDBNull(5) ? null : reader.GetString(5),
-                        OrganizerLogo = reader.IsDBNull(6) ? Array.Empty<byte>() : (byte[])reader[6],
-                        OrganizerCity = reader.IsDBNull(7) ? null : reader.GetString(7),
-                        OrganizerCountry = reader.IsDBNull(8) ? null : reader.GetString(8),
-                        OrganizerPhone = reader.IsDBNull(9) ? null : reader.GetString(9),
-                        OrganizerStreetAddress = reader.IsDBNull(10) ? null : reader.GetString(10),
-                        OrgnaizerZipCode = reader.IsDBNull(11) ? null : reader.GetString(11),
-                        OrganizerInstagram = reader.IsDBNull(12) ? null : reader.GetString(12),
-                        OrganizerFacebook = reader.IsDBNull(13) ? null : reader.GetString(13),
-                        StripeAccountId = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-                        StripeConnectStatus = reader.IsDBNull(15) 
-                            ? default 
-                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(15), out var status) ? status : default
-                       
+                        OrganizerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        OrganizerName = reader.GetString(reader.GetOrdinal("OrganizerName")),
+                        OrganizerEmail = reader.GetString(reader.GetOrdinal("OrganizerEmail")),
+                        OrganizerAboutMe = reader.GetString(reader.GetOrdinal("OrganizerAboutMe")),
+                        OrganizerWebsite = reader.IsDBNull(reader.GetOrdinal("OrganizerWebsite")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerWebsite")),
+                        OrganizerEventBaseUrl = reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
+                        OrganizerDescription = reader.IsDBNull(reader.GetOrdinal("OrganizerDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerDescription")),
+                        OrganizerImageUrl = reader.IsDBNull(reader.GetOrdinal("OrganizerImageUrl")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerImageUrl")),
+                        OrganizerCity = reader.IsDBNull(reader.GetOrdinal("OrganizerCity")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerCity")),
+                        OrganizerCountry = reader.GetString(reader.GetOrdinal("OrganizerCountry")),
+                        OrganizerPhone = reader.IsDBNull(reader.GetOrdinal("OrganizerPhone")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerPhone")),
+                        OrganizerStreetAddress = reader.IsDBNull(reader.GetOrdinal("OrganizerStreetAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerStreetAddress")),
+                        OrgnaizerZipCode = reader.IsDBNull(reader.GetOrdinal("OrganizerZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerZipCode")),
+                        OrganizerInstagram = reader.IsDBNull(reader.GetOrdinal("OrganizerInstagram")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerInstagram")),
+                        OrganizerFacebook = reader.IsDBNull(reader.GetOrdinal("OrganizerFacebook")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerFacebook")),
+                        StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
+                        StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
+                            ? default
+                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(reader.GetOrdinal("StripeConnectStatus")),
+                                 out var status) ? status : default
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving organizer by CustomerId: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<EventOrganizer> GetOrganizerByEventBaseUrl(string eventBaseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(eventBaseUrl))
+                throw new ArgumentException("CustomerId must be greater than zero.", nameof(eventBaseUrl));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"SELECT 
+                        CustomerId, 
+                        OrganizerName,
+                        OrganizerEmail,
+                        OrganizerWebsite,
+                        OrganizerEventBaseUrl,
+                        OrganizerDescription,
+                        OrganizerAboutMe,
+                        OrganizerImageUrl,
+                        OrganizerCity,
+                        OrganizerCountry,
+                        OrganizerPhone,
+                        OrganizerStreetAddress,
+                        OrganizerZipCode,
+                        OrganizerInstagram,
+                        OrganizerFacebook,
+                        OrganizerX,
+                        StripeAccountId,
+                        StripeConnectStatus                      
+                    FROM eventorganizer 
+                    WHERE OrganizerEventBaseUrl = @eventBaseUrl";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@eventBaseUrl", eventBaseUrl);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new EventOrganizer
+                    {
+                        OrganizerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        OrganizerName = reader.GetString(reader.GetOrdinal("OrganizerName")),
+                        OrganizerEmail = reader.GetString(reader.GetOrdinal("OrganizerEmail")),
+                        OrganizerAboutMe = reader.GetString(reader.GetOrdinal("OrganizerAboutMe")),
+                        OrganizerWebsite = reader.IsDBNull(reader.GetOrdinal("OrganizerWebsite")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerWebsite")),
+                        OrganizerEventBaseUrl = reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
+                        OrganizerDescription = reader.IsDBNull(reader.GetOrdinal("OrganizerDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerDescription")),
+                        OrganizerImageUrl = reader.IsDBNull(reader.GetOrdinal("OrganizerImageUrl")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerImageUrl")),
+                        OrganizerCity = reader.IsDBNull(reader.GetOrdinal("OrganizerCity")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerCity")),
+                        OrganizerCountry = reader.GetString(reader.GetOrdinal("OrganizerCountry")),
+                        OrganizerPhone = reader.IsDBNull(reader.GetOrdinal("OrganizerPhone")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerPhone")),
+                        OrganizerStreetAddress = reader.IsDBNull(reader.GetOrdinal("OrganizerStreetAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerStreetAddress")),
+                        OrgnaizerZipCode = reader.IsDBNull(reader.GetOrdinal("OrganizerZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerZipCode")),
+                        OrganizerInstagram = reader.IsDBNull(reader.GetOrdinal("OrganizerInstagram")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerInstagram")),
+                        OrganizerFacebook = reader.IsDBNull(reader.GetOrdinal("OrganizerFacebook")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerFacebook")),
+                        StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
+                        StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
+                            ? default
+                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(reader.GetOrdinal("StripeConnectStatus")),
+                                 out var status) ? status : default
                     };
                 }
                 return null;
@@ -170,17 +175,21 @@ namespace EventManagementDbAccess
                         OrganizerWebsite,
                         OrganizerEventBaseUrl,
                         OrganizerDescription,
-                        OrganizerLogo,
+                        OrganizerImageUrl,
+                        OrganizerAboutMe,
                         OrganizerCity,
+                        OrganizerState,
                         OrganizerCountry,
                         OrganizerPhone,
+                        OrganizerFullAddress,
                         OrganizerStreetAddress,
                         OrganizerZipCode,
                         OrganizerInstagram,
-                        OrganizerFacebook
+                        OrganizerFacebook,
+                        OrganizerX
                     ) VALUES (
-                        @name, @email, @website, @eventBaseUrl, @description, @logo, @city, @country,
-                        @phone, @streetAddress, @zipCode, @instagram, @facebook
+                        @name, @email, @website, @eventBaseUrl, @description, @imageUrl,@aboutMe, @city, @state,@country,
+                        @phone,@fullAddress, @streetAddress, @zipCode, @instagram, @facebook,@X
                     )";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -189,14 +198,18 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@description", organizer.OrganizerDescription ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@logo", organizer.OrganizerLogo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@imageUrl", organizer.OrganizerImageUrl ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@aboutMe", organizer.OrganizerAboutMe ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@city", organizer.OrganizerCity ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@state", organizer.OrganizerState ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@country", organizer.OrganizerCountry ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@phone", organizer.OrganizerPhone ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@streetAddress", organizer.OrganizerStreetAddress ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@fullAddress", organizer.OrganizationFullAddress ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@zipCode", organizer.OrgnaizerZipCode ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@facebook", organizer.OrganizerFacebook ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@X", organizer.OrganizerX ?? (object)DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
@@ -248,14 +261,17 @@ namespace EventManagementDbAccess
                         OrganizerWebsite = @website,
                         OrganizerEventBaseUrl = @eventBaseUrl,
                         OrganizerDescription = @description,
-                        OrganizerLogo = @logo,
+                        OrganizerAboutMe = @aboutMe,
+                        OrganizerImageUrl = @imageUrl,
                         OrganizerCity = @city,
                         OrganizerCountry = @country,
                         OrganizerPhone = @phone,
                         OrganizerStreetAddress = @streetAddress,
                         OrganizerZipCode = @zipCode,
+                        OrganizerFullAddress = @fullAddress,
                         OrganizerInstagram = @instagram,
                         OrganizerFacebook = @facebook,
+                        OrganizerX= @organizerX,
                         StripeAccountId = @StripeAccountId,
                         StripeConnectStatus = @stripeConnectStatus
                     WHERE CustomerId = @customerId";
@@ -266,7 +282,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@description", organizer.OrganizerDescription ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@logo", organizer.OrganizerLogo ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@imageUrl", organizer.OrganizerImageUrl ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@city", organizer.OrganizerCity ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@country", organizer.OrganizerCountry ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@phone", organizer.OrganizerPhone ?? (object)DBNull.Value);
@@ -275,6 +291,9 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@instagram", organizer.OrganizerInstagram ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@facebook", (object)organizer.OrganizerFacebook??DBNull.Value);
                 cmd.Parameters.AddWithValue("@customerId", organizer.OrganizerId);
+                cmd.Parameters.AddWithValue("@organizerX", organizer.OrganizerX);
+                cmd.Parameters.AddWithValue("@aboutMe", organizer.OrganizerAboutMe);
+                cmd.Parameters.AddWithValue("@fullAddress", organizer.OrganizationFullAddress);
                 cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@stripeConnectStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
