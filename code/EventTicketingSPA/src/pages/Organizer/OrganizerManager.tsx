@@ -12,6 +12,7 @@ import { useQuery } from "react-query";
 import { OrganizerInfo } from "../../types/Organizer";
 import OrganizerAbout from "./OrganizerAbout";
 import OrganizerConnect from "./OrganizerConnect";
+import axiosClient from "../../api/axiosClient";
 
 export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
@@ -31,27 +32,28 @@ export function OrganizerManager() {
    const { data, isLoading } = 
     useQuery(['Organizer',organizerId], async () => {
         console.log("Fetching organizer details", organizerId);
-        //const res = await axiosClient.get(`/SalesOrder/ByUserId/${userId}`);
+        const res = await axiosClient.get(`/eventorganizer/${organizerId}`);
+        console.log('detail for organizer', res);
         //console.log('orders fetched from backend',res.data);
-        const data: OrganizerInfo = {
-          organizerId: 1,
-          organizerName: "Monika C",
-          organizationName: "PDAC",
-          organizerWebsite: "https://www.pdac.com",
-          organizerEmail: "hello@pdac.com",
-          organizerDescription: "Premier Dance Academy of Colorado",
-          organizerEventBaseUrl: "pdac-events", 
-          organizerCountry: "USA",
-          organizerPhone: "719-555-0123",
-          organizerInstagram: "@pdacdance",
-          organizerFacebook: "facebook.com/pdacdance",
-          organizerStripeAccountId: "",
-          organizerStripeAccountStatus: "pending",
-          organizerAboutMe:"helllo",
-          organizerImageUrl:"/ghg/"
-        };
+        // const data: OrganizerInfo = {
+        //   organizerId: 1,
+        //   organizerName: "Monika C",
+        //   organizationName: "PDAC",
+        //   organizerWebsite: "https://www.pdac.com",
+        //   organizerEmail: "hello@pdac.com",
+        //   organizerDescription: "Premier Dance Academy of Colorado",
+        //   organizerEventBaseUrl: "pdac-events", 
+        //   organizerCountry: "USA",
+        //   organizerPhone: "719-555-0123",
+        //   organizerInstagram: "@pdacdance",
+        //   organizerFacebook: "facebook.com/pdacdance",
+        //   organizerStripeAccountId: "",
+        //   organizerStripeAccountStatus: "pending",
+        //   organizerAboutMe:"helllo",
+        //   organizerImageUrl:"/ghg/"
+        // };
     
-        return data;
+        return res.data;
       },
       {
         //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes

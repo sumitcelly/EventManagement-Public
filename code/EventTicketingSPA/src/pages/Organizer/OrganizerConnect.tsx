@@ -56,9 +56,26 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     if (!organizerInfo)
       return;
 
+    const apiData={
+        organizerId:organizerInfo.organizerId || 0,
+        organizerName: organizerInfo.organizerName,
+        organizationName: organizerInfo.organizationName,
+        organizerEmail: data.organizerEmail,
+        organizerWebsite: data.organizerWebsite,
+        organizerEventBaseUrl: organizerInfo.organizerEventBaseUrl ,
+        organizerDescription: organizerInfo.organizerDescription,
+        organizerAboutMe: organizerInfo.organizerAboutMe,
+        organizerInstagram: data.organizerInstagram ,
+        organizerImageUrl: organizerInfo.organizerImageUrl ,
+        organizerFacebook: data.organizerFacebook,
+        organizerX: data.organizerX,
+        organizerPhone: data.organizerPhone,
+        organizerCountry: organizerInfo.organizerCountry,
+    };
+
     if (organizerInfo.organizerId)
     {
-      axiosClient.post('/organizer/update',data)
+      axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
       .then(response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
@@ -71,7 +88,7 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     }
     else
     {
-      axiosClient.post('/organizer/add',data)
+      axiosClient.post(`/eventorganizer`,apiData)
       .then(response => {
       console.log('Organizer created successfully:', response.data);
          toast.success("Organizer info saved");

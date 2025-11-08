@@ -105,7 +105,7 @@ public class EmailUtils
                         values[token] = eventObj.EventLocation ?? "Not specified";
                         break;
                     case "EventOrganizerName":
-                        values[token] = eventOrganizer.OrganizerName ?? "Not specified";
+                        values[token] = eventOrganizer.OrganizationName ?? "Not specified";
                         break;
                     case "EventOrganizerHelpLine":
                         values[token] = eventOrganizer.OrganizerPhone ?? "Not specified";

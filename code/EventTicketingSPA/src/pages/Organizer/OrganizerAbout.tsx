@@ -19,19 +19,19 @@ import FileUpload from "../../components/FileUpload";
 
 const memberSchema = yup.object({
   orgName: yup.string().required("Organization name required."),
-  organizerName: yup.string().required("Organizer Name is required."),
+  eventBaseUrl: yup.string().required("Event Base Url is required."),
   description: yup.string().required("Organizer company description is required"),
   country: yup.string().required("Country is required").default("USA"),
-  aboutme: yup.string().required("Organizer about me is required."),
+  aboutMe: yup.string().required("Organizer about me is required."),
   imageUrl: yup.string().nullable().default(null)
   });
 
 type FormValues = {
   orgName: string;
-  organizerName: string;
+  eventBaseUrl: string;
   description:string;
   country: string;
-  aboutme:string;
+  aboutMe:string;
   imageUrl: string | null;
   
 };
@@ -63,22 +63,38 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     if (!organizerInfo)
       return;
 
+
+    const apiData={
+        organizerId:organizerInfo.organizerId || 0,
+        organizationName: data.orgName,
+        organizerEmail: organizerInfo.organizerEmail,
+        organizerWebsite: organizerInfo.organizerWebsite,
+        organizerEventBaseUrl: data.eventBaseUrl ,
+        organizerDescription: data.description,
+        organizerAboutMe: data.aboutMe,
+        organizerInstagram: organizerInfo.organizerInstagram ,
+        organizerImageUrl: data.imageUrl ,
+        organizerFacebook: organizerInfo.organizerFacebook,
+        organizerX: organizerInfo.organizerX,
+        organizerPhone: organizerInfo.organizerPhone,
+        organizerCountry: organizerInfo.organizerCountry,
+    };
+
     if (organizerInfo.organizerId)
-    {
-      axiosClient.post('/organizer/update',data)
+    {    
+      axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
       .then(response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
-        toast.error("Error saving organizer info");
-      
+        toast.error("Error saving organizer info");     
       });
     }
     else
     {
-      axiosClient.post('/organizer/add',data)
+      axiosClient.post('/eventorganizer',apiData)
       .then(response => {
       console.log('Organizer created successfully:', response.data);
          toast.success("Organizer info saved");
@@ -90,18 +106,30 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       });
     }
   }
+      function createUrlSlug(inputString:String) {
+      // Remove special characters (keep alphanumeric and spaces)
+      let cleanedString = inputString.replace(/[^a-zA-Z0-9\s]/g, '');
+
+      // Replace spaces with hyphens
+      let slug = cleanedString.replace(/\s+/g, '');
+
+      // Convert to lowercase
+      slug = slug.toLowerCase();
+
+      return slug;
+    }
 
    useEffect(() => {
     console.log('MemberInfo changed:', organizerInfo);
     if (organizerInfo) {
       const values = {
         organizerId: organizerInfo.organizerId,
-        orgName: organizerInfo.organizerName || '',
-        organizerName: organizerInfo.organizerName || '',
+        orgName: organizerInfo.organizationName || '',
+        eventBaseUrl: organizerInfo.organizerEventBaseUrl || window.location.origin+'/'+createUrlSlug(organizerInfo.organizationName),
         description: organizerInfo.organizerDescription || '',
         imageUrl: organizerInfo.organizerImageUrl || '',
         aboutMe: organizerInfo.organizerAboutMe || '',
-        country: organizerInfo.organizerCountry || ''
+        country: organizerInfo.organizerCountry || 'USA'
       };
       console.log('Resetting form with:', values);
       reset(values);
@@ -119,12 +147,9 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     // )}>
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
-    >   
-    <Toaster position="top-right" />
-
+     >   
     <div className="flex flex-col">
-     
-      
+       <Toaster position="top-right" />   
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organization Name</label>
         <input
@@ -154,16 +179,17 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         </div>
       </div>
      <div className="space-y-1">
-        <label className="font-semibold mb-1">Organizer Name</label>
+        <label className="font-semibold mb-1">Event base url</label>
         <input
           type="text"
-          {...register("organizerName")}
+          {...register("eventBaseUrl")}
           className="w-full border rounded p-2"
-          placeholder="Enter your name..."
+          placeholder="The base url for all your events..."
+          disabled
         />
         <div className="min-h-[20px]">
-          {errors.organizerName && (
-            <p className="text-red-600 text-sm mt-1">{errors.organizerName.message}</p>
+          {errors.eventBaseUrl && (
+            <p className="text-red-600 text-sm mt-1">{errors.eventBaseUrl.message}</p>
           )}
         </div>
       </div>
@@ -171,13 +197,13 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         <label className="font-semibold mb-1">About Me</label>
         <textarea      
           rows={2}
-          {...register("aboutme")}
+          {...register("aboutMe")}
           className="w-full border rounded p-2"
-          placeholder="A little blurb about you that will show on all even pages..."
+          placeholder="A little blurb about your company or self that will show on all event pages..."
         />
         <div className="min-h-[20px]">
-          {errors.aboutme && (
-            <p className="text-red-600 text-sm mt-1">{errors.aboutme.message}</p>
+          {errors.aboutMe && (
+            <p className="text-red-600 text-sm mt-1">{errors.aboutMe.message}</p>
           )}
         </div>
       </div>

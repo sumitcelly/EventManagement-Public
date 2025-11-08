@@ -7,7 +7,7 @@ namespace EventManagementDbAccess
     public class EventOrganizer
     {
         public int OrganizerId { get; set; }
-        public required string OrganizerName { get; set; }
+        public required string OrganizationName { get; set; }
         public required string OrganizerEmail { get; set; }
         public string OrganizerWebsite { get; set; } = string.Empty;
         public required string OrganizerEventBaseUrl { get; set; }

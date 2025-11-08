@@ -29,7 +29,7 @@ namespace EventManagementDbAccess
 
                 string query = @"SELECT 
                         CustomerId, 
-                        OrganizerName,
+                        OrganizationName,
                         OrganizerEmail,
                         OrganizerWebsite,
                         OrganizerEventBaseUrl,
@@ -58,7 +58,7 @@ namespace EventManagementDbAccess
                     return new EventOrganizer
                     {
                         OrganizerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                        OrganizerName = reader.GetString(reader.GetOrdinal("OrganizerName")),
+                        OrganizationName = reader.GetString(reader.GetOrdinal("OrganizationName")),
                         OrganizerEmail = reader.GetString(reader.GetOrdinal("OrganizerEmail")),
                         OrganizerAboutMe = reader.GetString(reader.GetOrdinal("OrganizerAboutMe")),
                         OrganizerWebsite = reader.IsDBNull(reader.GetOrdinal("OrganizerWebsite")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerWebsite")),
@@ -72,6 +72,7 @@ namespace EventManagementDbAccess
                         OrgnaizerZipCode = reader.IsDBNull(reader.GetOrdinal("OrganizerZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerZipCode")),
                         OrganizerInstagram = reader.IsDBNull(reader.GetOrdinal("OrganizerInstagram")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerInstagram")),
                         OrganizerFacebook = reader.IsDBNull(reader.GetOrdinal("OrganizerFacebook")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerFacebook")),
+                        OrganizerX = reader.IsDBNull(reader.GetOrdinal("OrganizerX")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerX")),
                         StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
                         StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
                             ? default
@@ -129,7 +130,7 @@ namespace EventManagementDbAccess
                     return new EventOrganizer
                     {
                         OrganizerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                        OrganizerName = reader.GetString(reader.GetOrdinal("OrganizerName")),
+                        OrganizationName = reader.GetString(reader.GetOrdinal("OrganizationName")),
                         OrganizerEmail = reader.GetString(reader.GetOrdinal("OrganizerEmail")),
                         OrganizerAboutMe = reader.GetString(reader.GetOrdinal("OrganizerAboutMe")),
                         OrganizerWebsite = reader.IsDBNull(reader.GetOrdinal("OrganizerWebsite")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerWebsite")),
@@ -143,6 +144,7 @@ namespace EventManagementDbAccess
                         OrgnaizerZipCode = reader.IsDBNull(reader.GetOrdinal("OrganizerZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerZipCode")),
                         OrganizerInstagram = reader.IsDBNull(reader.GetOrdinal("OrganizerInstagram")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerInstagram")),
                         OrganizerFacebook = reader.IsDBNull(reader.GetOrdinal("OrganizerFacebook")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerFacebook")),
+                        OrganizerX = reader.IsDBNull(reader.GetOrdinal("OrganizerX")) ? string.Empty :  reader.GetString(reader.GetOrdinal("OrganizerX")),
                         StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
                         StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
                             ? default
@@ -170,7 +172,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO eventorganizer (
-                        OrganizerName,
+                        OrganizationName,
                         OrganizerEmail,
                         OrganizerWebsite,
                         OrganizerEventBaseUrl,
@@ -193,7 +195,7 @@ namespace EventManagementDbAccess
                     )";
 
                 using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@name", organizer.OrganizerName);
+                cmd.Parameters.AddWithValue("@name", organizer.OrganizationName);
                 cmd.Parameters.AddWithValue("@email", organizer.OrganizerEmail);
                 cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
@@ -256,7 +258,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"UPDATE eventorganizer SET
-                        OrganizerName = @name,
+                        OrganizationName = @name,
                         OrganizerEmail = @email,
                         OrganizerWebsite = @website,
                         OrganizerEventBaseUrl = @eventBaseUrl,
@@ -277,7 +279,7 @@ namespace EventManagementDbAccess
                     WHERE CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@name", organizer.OrganizerName);
+                cmd.Parameters.AddWithValue("@name", organizer.OrganizationName);
                 cmd.Parameters.AddWithValue("@email", organizer.OrganizerEmail);
                 cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
