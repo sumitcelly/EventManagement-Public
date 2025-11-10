@@ -6,7 +6,7 @@ import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
@@ -49,12 +49,15 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
       reValidateMode: "onChange"
   });
 
+   const queryClient = useQueryClient();
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
     if (!organizerInfo)
       return;
+
+   
 
     const apiData={
         organizerId:organizerInfo.organizerId || 0,
@@ -79,6 +82,7 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
       .then(response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
+      queryClient.invalidateQueries(['Organizer',organizerId]);
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
@@ -90,8 +94,9 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     {
       axiosClient.post(`/eventorganizer`,apiData)
       .then(response => {
-      console.log('Organizer created successfully:', response.data);
-         toast.success("Organizer info saved");
+        console.log('Organizer created successfully:', response.data);
+        toast.success("Organizer info saved");
+        queryClient.invalidateQueries(['Organizer',organizerId]);
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);

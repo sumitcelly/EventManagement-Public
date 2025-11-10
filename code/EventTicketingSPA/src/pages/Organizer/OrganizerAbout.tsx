@@ -5,7 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 
 import axiosClient from "../../api/axiosClient";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
@@ -43,6 +43,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
+  const queryClient = useQueryClient();
   
   const {
     control,
@@ -86,6 +87,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       .then(response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
+      queryClient.invalidateQueries(['Organizer',organizerId]);
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
@@ -98,6 +100,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       .then(response => {
       console.log('Organizer created successfully:', response.data);
          toast.success("Organizer info saved");
+         queryClient.invalidateQueries(['Organizer',organizerId]);
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);

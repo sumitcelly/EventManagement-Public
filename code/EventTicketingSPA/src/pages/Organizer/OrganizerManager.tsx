@@ -56,8 +56,8 @@ export function OrganizerManager() {
         return res.data;
       },
       {
-        //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-        //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+        staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+        cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
   
         // refetchOnMount: false,      // don’t always re-fetch on mount
         // refetchOnWindowFocus: false,
