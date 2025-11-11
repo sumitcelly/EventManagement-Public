@@ -16,6 +16,69 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `emailcampaign`
+--
+
+DROP TABLE IF EXISTS `emailcampaign`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `emailcampaign` (
+  `Id` int NOT NULL,
+  `TemplateId` int NOT NULL,
+  `EventId` int DEFAULT NULL,
+  `SendAt` datetime NOT NULL,
+  `Status` varchar(45) DEFAULT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ModifiedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`Id`),
+  KEY `templateIdRef_idx` (`TemplateId`),
+  KEY `EventIdRef2_idx` (`EventId`),
+  CONSTRAINT `eventdRef` FOREIGN KEY (`EventId`) REFERENCES `events` (`EventId`),
+  CONSTRAINT `templateIdRef1` FOREIGN KEY (`TemplateId`) REFERENCES `notificationtemplates` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `emailcampaign`
+--
+
+LOCK TABLES `emailcampaign` WRITE;
+/*!40000 ALTER TABLE `emailcampaign` DISABLE KEYS */;
+/*!40000 ALTER TABLE `emailcampaign` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `emailrecipients`
+--
+
+DROP TABLE IF EXISTS `emailrecipients`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `emailrecipients` (
+  `id` int NOT NULL,
+  `emailcampaignid` int NOT NULL,
+  `recipientemail` varchar(255) NOT NULL,
+  `status` varchar(255) NOT NULL DEFAULT 'Pending',
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `LastAttemptedAt` datetime DEFAULT NULL,
+  `RetryCount` int DEFAULT NULL,
+  `TokenGuid` varchar(36) NOT NULL DEFAULT ' UUID()',
+  PRIMARY KEY (`id`),
+  KEY `campaignRef_idx` (`emailcampaignid`),
+  CONSTRAINT `campaignRef` FOREIGN KEY (`emailcampaignid`) REFERENCES `emailcampaign` (`Id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `emailrecipients`
+--
+
+LOCK TABLES `emailrecipients` WRITE;
+/*!40000 ALTER TABLE `emailrecipients` DISABLE KEYS */;
+/*!40000 ALTER TABLE `emailrecipients` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `eventitemtype`
 --
 
@@ -126,7 +189,7 @@ CREATE TABLE `eventorganizer` (
 
 LOCK TABLES `eventorganizer` WRITE;
 /*!40000 ALTER TABLE `eventorganizer` DISABLE KEYS */;
-INSERT INTO `eventorganizer` VALUES (1,'PDAC22','','','CO','','https://polkadotsandcurry1.com','http://localhost:5173/pdac25','Events, Cooking, and Health, and fiun! fun','https://tes12t.instagram.com','hello.facebook2.com','71912345672','hello221@polka1.com','','2025-07-22 10:31:10',NULL,'','Inactive','love food and cooking, drinksms,bbb','','','wo1w.x.com'),(2,'PDAC New','Test Street','Colorado Springs','','80920','https://polkadotnewsandcurry.com','','Events, Cooking, and Health, DRINKA','https://tes2t.instagram.com','hello.facebook.com','7191234567','hello2323231@polka.com','','2025-11-06 18:25:29','2025-11-06 18:25:29',NULL,NULL,'love food and cooking, drinks','','','wow.x.com');
+INSERT INTO `eventorganizer` VALUES (1,'PDAC22','','','CO','','https://polkadotsandcurry1.com','http://localhost:5173/pdac25','Events, Cooking, and Health, and fiun! fun2','https://tes12sst.instagram.com','hello.facebook2.com','71912345672','hello221@polka1.com','','2025-07-22 10:31:10',NULL,'','Inactive','love food and cooking, drinksms,bbb','','','wo1w.x.com'),(2,'PDAC New','Test Street','Colorado Springs','','80920','https://polkadotnewsandcurry.com','','Events, Cooking, and Health, DRINKA','https://tes2t.instagram.com','hello.facebook.com','7191234567','hello2323231@polka.com','','2025-11-06 18:25:29','2025-11-06 18:25:29',NULL,NULL,'love food and cooking, drinks','','','wow.x.com');
 /*!40000 ALTER TABLE `eventorganizer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -376,4 +439,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-11-09 20:15:31
+-- Dump completed on 2025-11-11 22:54:14
