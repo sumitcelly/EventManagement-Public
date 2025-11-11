@@ -1,0 +1,24 @@
+namespace EventManagementDbAccess
+{
+    public class EmailRecipient
+    {
+        public int Id { get; set; }
+        public int EmailCampaignId { get; set; }
+        public string RecipientEmail { get; set; } = string.Empty;
+        public string Status { get; set; } = "Pending";
+        public DateTime CreatedAt { get; set; }
+        public DateTime? LastAttemptedAt { get; set; }
+        public int? RetryCount { get; set; }
+        public string TokenGuid { get; set; } = string.Empty;
+    }
+    public class EmailCampaign
+    {
+        public int Id { get; set; }
+        public int TemplateId { get; set; }
+        public int? EventId { get; set; }
+        public DateTime SendAt { get; set; }
+        public string? Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ModifiedAt { get; set; }
+    }
+}
