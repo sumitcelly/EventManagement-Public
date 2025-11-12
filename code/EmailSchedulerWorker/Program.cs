@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Amazon.SQS;
 using EmailSchedulerWorker.Services;
+using EventManagementDbAccess;
+using Stripe;
 
 Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
@@ -15,7 +17,11 @@ Host.CreateDefaultBuilder(args)
     {
         var config = context.Configuration;
         services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
+        services.AddScoped<EmailCampaignDbAccess>();
+        services.AddScoped<EmailRecipientsDbAccess>();
+        services.AddDistributedMemoryCache();
         services.AddHostedService<EmailSchedulerService>();
+       
     })
     .ConfigureLogging(logging =>
     {

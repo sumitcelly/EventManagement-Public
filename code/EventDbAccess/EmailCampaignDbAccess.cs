@@ -21,7 +21,8 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status, CreatedAt, ModifiedAt) VALUES (@TemplateId, @EventId, @SendAt, @Status, @CreatedAt, @ModifiedAt); SELECT LAST_INSERT_ID();";
+            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status, CreatedAt, ModifiedAt) VALUES (@TemplateId, @EventId, @SendAt, @Status, @CreatedAt, @ModifiedAt); 
+                        SELECT LAST_INSERT_ID();";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@TemplateId", campaign.TemplateId);
             cmd.Parameters.AddWithValue("@EventId", campaign.EventId);
@@ -33,17 +34,17 @@ namespace EventManagementDbAccess
             return Convert.ToInt32(result);
         }
 
-        public async Task<EmailCampaign?> GetEmailCampaignById(int id)
+        public async Task<List<EmailCampaign>> GetPendingCampaigns()
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailcampaign WHERE Id = @Id";
+            var query = "SELECT * FROM emailcampaign WHERE Status = 'Pending' and  SendAt <= Utc_timestamp()";
             using var cmd = new MySqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@Id", id);
             using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            var campaigns = new List<EmailCampaign>();
+            while (await reader.ReadAsync())
             {
-                return new EmailCampaign
+                campaigns.Add(new EmailCampaign
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
@@ -52,18 +53,24 @@ namespace EventManagementDbAccess
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
-                };
+                });
             }
-            return null;
+            return campaigns;       
         }
 
-        public async Task<List<EmailCampaign>> GetAllEmailCampaigns()
+        public async Task<List<EmailCampaign>> GetEmailCampaignsByEventId(int eventId)
         {
+            if (eventId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+
             var campaigns = new List<EmailCampaign>();
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailcampaign";
+            var query = "SELECT * FROM emailcampaign where eventId = @EventId";
             using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@EventId", eventId);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {

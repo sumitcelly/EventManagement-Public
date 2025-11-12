@@ -68,6 +68,31 @@ namespace EventManagementDbAccess
             return cachedTicket ?? throw new KeyNotFoundException($"Ticket with code {code} not found.");
         }
 
+        /// <summary>
+        /// Returns list of attendee email and names for a given event
+        public async Task<Dictionary<string, string>> GetAttendeeInfoByEventId(int eventId)
+        {
+            if (eventId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+            var emails = new List<string>();
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"SELECT a.EmailAddress,a.FullName FROM eventuser a,EventSalesItem b WHERE b.EventId = @eventId
+                         AND a.UserId=b.UserId";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            var result = new Dictionary<string, string>();
+            while (await reader.ReadAsync())
+            {
+                if (!reader.IsDBNull(reader.GetOrdinal("EmailAddress")))
+                    result.Add(reader.GetString(reader.GetOrdinal("EmailAddress")), reader.GetString(reader.GetOrdinal("FullName")));
+            }
+            return result;
+        }
+        
         public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId = 1)
         {
             if (string.IsNullOrEmpty(code))
@@ -105,7 +130,7 @@ namespace EventManagementDbAccess
                             {
                                 Name = reader.GetString(0),
                                 Email = reader.GetString(1),
-                                Sms =reader.IsDBNull(reader.GetOrdinal("Sms")) ? string.Empty : reader.GetString(reader.GetOrdinal("Sms")),
+                                Sms = reader.IsDBNull(reader.GetOrdinal("Sms")) ? string.Empty : reader.GetString(reader.GetOrdinal("Sms")),
                             };
 
                             ticket.CreatedAt = reader.GetDateTime(3);

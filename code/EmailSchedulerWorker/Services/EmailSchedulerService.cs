@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using EventManagementDbAccess;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,14 +22,21 @@ namespace EmailSchedulerWorker.Services
         private readonly string _queueUrl;
         private readonly int _pollIntervalSeconds;
 
+        private readonly EmailCampaignDbAccess _emailCampaignDbAccess;
+        private readonly EmailRecipientsDbAccess _emailRecipientsDbAccess;
+
         public EmailSchedulerService(
             ILogger<EmailSchedulerService> logger,
             IConfiguration config,
-            IAmazonSQS sqs)
+            IAmazonSQS sqs,
+            EmailCampaignDbAccess emailCampaignDbAccess,
+            EmailRecipientsDbAccess emailRecipientsDbAccess)
         {
             _logger = logger;
             _config = config;
             _sqs = sqs;
+            _emailCampaignDbAccess = emailCampaignDbAccess;
+            _emailRecipientsDbAccess = emailRecipientsDbAccess;
 
             _connectionString = config.GetConnectionString("MySql") 
                 ?? throw new Exception("Missing MySQL connection string.");

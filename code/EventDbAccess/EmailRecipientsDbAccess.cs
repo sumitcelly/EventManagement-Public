@@ -31,11 +31,14 @@ namespace EventManagementDbAccess
             return Convert.ToInt32(result);
         }
 
-        public async Task<EmailRecipient?> GetEmailRecipientById(int id)
+        public async Task<EmailRecipient?> GetEmailRecipientByCampaignId(int id)
         {
+            if (id <= 0)
+                throw new ArgumentException("Invalid email campaign ID.", nameof(id));
+
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailrecipients WHERE id = @id";
+            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = await cmd.ExecuteReaderAsync();

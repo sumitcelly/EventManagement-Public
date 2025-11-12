@@ -58,8 +58,10 @@ builder.Services.AddScoped(typeof(SalesOrderDbAccess));
 builder.Services.AddScoped(typeof(SalesOrderConductor));
 builder.Services.AddScoped(typeof(EmailUtils));
 builder.Services.AddScoped(typeof(EventOrganizerMembersDbAccess));
+builder.Services.AddScoped(typeof(EmailCampaignDbAccess));
+builder.Services.AddScoped(typeof(EmailRecipientsDbAccess));
 
-builder.Services.AddSingleton(typeof(EventUtils.JwtUtils));
+builder.Services.AddSingleton(typeof(JwtUtils));
 builder.Services.AddSingleton<EncryptionHelper>();
 builder.Services.AddSingleton(typeof(SQSHelper));
 builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
