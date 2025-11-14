@@ -3,6 +3,26 @@ using System.Collections.Generic;
 
 namespace EventUtils
 {
+    public class TokenValues
+    {
+        public string QRCode { get; set; } = string.Empty;
+
+        public string QRCodeImage { get; set; } = string.Empty;
+
+        public string EventName { get; set; } = string.Empty;
+
+        public DateTime EventDate { get; set; }
+
+        public string Attendee { get; set; } = string.Empty;
+
+        public string EventLocation { get; set; } = string.Empty;
+
+        public string EventOrganizerName { get; set; } = string.Empty;
+
+        public string EventOrganizerHelpLine { get; set; } = string.Empty;
+
+        public string EventTicketLink { get; set; } = string.Empty;
+    }
     /// <summary>
     /// Handles the replacement of tokens in email templates
     /// </summary>
@@ -18,8 +38,8 @@ namespace EventUtils
             "Attendee",
             "EventLocation",
             "EventOrganizerName",
-            "EventOrganizerHelpLine"
-
+            "EventOrganizerHelpLine",
+            "EventTicketLink"
         };
 
         public EmailTokenReplacement()
@@ -31,6 +51,46 @@ namespace EventUtils
             }
         }
 
+        public static Dictionary<string, string> GetReplacementValues(TokenValues tokenValues)
+        {
+            var values = new Dictionary<string, string>();
+             foreach (var token in EmailTokenReplacement._supportedTokens)
+            {
+                switch (token)
+                {
+                    case "QRCode":
+                        values[token] = tokenValues.QRCode;
+                        break;
+                    case "QRCodeImage":
+                        values[token] = tokenValues.QRCodeImage;
+                        break;
+                    case "EventName":
+                        values[token] = tokenValues.EventName;
+                        break;
+                    case "Attendee":
+                        values[token] = tokenValues.Attendee ?? string.Empty;
+                        break;
+                    case "EventDate":
+                        values[token] = tokenValues.EventDate.ToString("yyyy-MM-dd");
+                        break;
+                    case "EventLocation":
+                        values[token] = tokenValues.EventLocation ?? "Not specified";
+                        break;
+                    case "EventOrganizerName":
+                        values[token] = tokenValues.EventOrganizerName ?? "Not specified";
+                        break;
+                    case "EventOrganizerHelpLine":
+                        values[token] = tokenValues.EventOrganizerHelpLine ?? "Not specified";
+                        break;
+                    case "EventTicketLink":
+                        values[token] = tokenValues.EventTicketLink ?? string.Empty;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return values;
+        }
         /// <summary>
         /// Replaces tokens in the provided template with their corresponding values
         /// </summary>

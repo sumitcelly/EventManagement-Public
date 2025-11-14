@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
+using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using ZXing.OneD.RSS.Expanded.Decoders;
 
 namespace EventManagementDbAccess
 {
@@ -31,7 +34,7 @@ namespace EventManagementDbAccess
             return Convert.ToInt32(result);
         }
 
-        public async Task<EmailRecipient?> GetEmailRecipientByCampaignId(int id)
+        public async Task<List<EmailRecipient>> GetEmailRecipientsByCampaignId(int id)
         {
             if (id <= 0)
                 throw new ArgumentException("Invalid email campaign ID.", nameof(id));
@@ -42,9 +45,10 @@ namespace EventManagementDbAccess
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            var recipients = new List<EmailRecipient>();
+            while (await reader.ReadAsync())
             {
-                return new EmailRecipient
+                recipients.Add(new EmailRecipient
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("id")),
                     EmailCampaignId = reader.GetInt32(reader.GetOrdinal("emailcampaignid")),
@@ -54,9 +58,10 @@ namespace EventManagementDbAccess
                     LastAttemptedAt = reader.IsDBNull(reader.GetOrdinal("LastAttemptedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("LastAttemptedAt")),
                     RetryCount = reader.IsDBNull(reader.GetOrdinal("RetryCount")) ? null : reader.GetInt32(reader.GetOrdinal("RetryCount")),
                     TokenGuid = reader.GetString(reader.GetOrdinal("TokenGuid"))
-                };
+                });
             }
-            return null;
+
+            return recipients;
         }
 
         public async Task<List<EmailRecipient>> GetAllEmailRecipients()
@@ -112,43 +117,63 @@ namespace EventManagementDbAccess
             return rows > 0;
         }
 
-        public async Task<int> InsertRecipientsForEvent(int eventId, int emailCampaignId)
+        public async Task<Dictionary<string, FullNameOrder>> InsertRecipientsForEvent(int eventId, int emailCampaignId)
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            // Select all email addresses for the event
-            var selectQuery = "SELECT BuyerEmail FROM EventSalesItem WHERE EventId = @eventId";
+            // Select all email addresses for the event and filter by status for salesorder
+            var selectQuery = @"SELECT a.Email, a.FullName, a.OrderId FROM User a, salesorder b 
+                                WHERE b.EventId = @eventId and 
+                                b.UserId = a.UserId";
             using var selectCmd = new MySqlCommand(selectQuery, conn);
             selectCmd.Parameters.AddWithValue("@eventId", eventId);
-            var emails = new List<string>();
+            var orderUser = new Dictionary<string, FullNameOrder>();
+
             using (var reader = await selectCmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
-                    emails.Add(reader.GetString(reader.GetOrdinal("BuyerEmail")));
+                    FullNameOrder eu = new()
+                    {
+                        SalesOrderId = reader.GetInt16(reader.GetOrdinal("OrderId")),
+                        FullName = reader.GetString(reader.GetOrdinal("FullName"))
+                    };
+                    orderUser.Add(reader.GetString(reader.GetOrdinal("Email")), eu);
                 }
             }
 
-            if (emails.Count == 0)
-                return 0;
+            if (orderUser.Count == 0)
+                return orderUser;
 
             // Build bulk insert statement
             var insertQuery = new System.Text.StringBuilder();
             insertQuery.Append("INSERT INTO emailrecipients (emailcampaignid, recipientemail, status, CreatedAt, TokenGuid) VALUES ");
             var parameters = new List<MySqlParameter>();
-            for (int i = 0; i < emails.Count; i++)
+            foreach (var ge in orderUser)
             {
-                if (i > 0) insertQuery.Append(", ");
-                insertQuery.Append($"(@emailcampaignid, @recipientemail{i}, 'Pending', @CreatedAt, UUID())");
-                parameters.Add(new MySqlParameter($"@recipientemail{i}", emails[i]));
+                if (ge.Value != null)
+                {
+                    if (parameters.Count > 0) insertQuery.Append(", ");
+                    insertQuery.Append($"(@emailcampaignid, @recipientemail{parameters.Count}, 'Pending', @CreatedAt, UUID())");
+                    parameters.Add(new MySqlParameter($"@recipientemail{parameters.Count}", ge.Key));
+                }
             }
+
             parameters.Add(new MySqlParameter("@emailcampaignid", emailCampaignId));
             parameters.Add(new MySqlParameter("@CreatedAt", DateTime.UtcNow));
 
             using var insertCmd = new MySqlCommand(insertQuery.ToString(), conn);
             insertCmd.Parameters.AddRange(parameters.ToArray());
             int insertedCount = await insertCmd.ExecuteNonQueryAsync();
-            return insertedCount;
+            return orderUser;
         }
+    }
+
+    public class FullNameOrder
+    {
+        public string FullName { get; set; } = string.Empty;
+
+        public int SalesOrderId { get; set; }
+
     }
 }

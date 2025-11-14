@@ -30,6 +30,7 @@ public class UserSalesOrders : EventHeader
     public int SalesOrdeId { get; set; }
 }
 
+
 public enum SalesOrderStatus
 {
     InProgress, // No payment initiated yet

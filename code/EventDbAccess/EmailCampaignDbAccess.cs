@@ -103,7 +103,17 @@ namespace EventManagementDbAccess
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;
         }
-
+         public async Task<bool> UpdateEmailCampaignStatus(int campaignId, string status)
+        {
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"UPDATE emailcampaign SET  Status = @Status, ModifiedAt = @ModifiedAt WHERE Id = @Id";
+            using var cmd = new MySqlCommand(query, conn);    
+            cmd.Parameters.AddWithValue("@Status", status);
+            cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
+            var rows = await cmd.ExecuteNonQueryAsync();
+            return rows > 0;
+        }
         public async Task<bool> DeleteEmailCampaign(int id)
         {
             using var conn = new MySqlConnection(this.ConnectionString);

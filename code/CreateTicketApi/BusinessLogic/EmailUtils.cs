@@ -65,7 +65,7 @@ public class EmailUtils
         var tokenReplacer = new EmailTokenReplacement();
         var values = new Dictionary<string, string>();
         // Fetch the email template
-        string emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew1");
+        Tuple<string,string> emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew1");
         byte[] qrBytes = QRCodeUtils.GetQRCodes(order.SalesOrderCode);
 
         EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerById(order.CustomerId);
@@ -79,50 +79,30 @@ public class EmailUtils
         {
             throw new Exception($"Event with ID {order.EventId} not found.");
         }
+        string replacedContent = string.Empty;
         // Set values for supported tokens
-        if (!string.IsNullOrWhiteSpace(emailContent))
+        if (!string.IsNullOrWhiteSpace(emailContent.Item1))
         {
-            foreach (var token in EmailTokenReplacement._supportedTokens)
+            values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
-                switch (token)
-                {
-                    case "QRCode":
-                        values[token] = order.SalesOrderCode;
-                        break;
-                    case "QRCodeImage":
-                        values[token] = System.Convert.ToBase64String(qrBytes);
-                        break;
-                    case "EventName":
-                        values[token] = eventObj.EventName;
-                        break;
-                    case "Attendee":
-                        values[token] = attendee.Name ?? "Not specified";
-                        break;
-                    case "EventDate":
-                        values[token] = eventObj.EventDate.ToString("yyyy-MM-dd");
-                        break;
-                    case "EventLocation":
-                        values[token] = eventObj.EventLocation ?? "Not specified";
-                        break;
-                    case "EventOrganizerName":
-                        values[token] = eventOrganizer.OrganizationName ?? "Not specified";
-                        break;
-                    case "EventOrganizerHelpLine":
-                        values[token] = eventOrganizer.OrganizerPhone ?? "Not specified";
-                        break;
-                    default:
-                        break;
-                }
-            }
-            emailContent = tokenReplacer.ReplaceTokens(
-                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent)), values);
+                Attendee = attendee.Name,
+                EventDate = eventObj.EventDate,
+                EventLocation = eventObj.EventLocation,
+                EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
+                EventOrganizerName = eventOrganizer.OrganizationName,
+                QRCode = order.SalesOrderCode,
+                QRCodeImage = System.Convert.ToBase64String(qrBytes)
+            });
+            
+            replacedContent = tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent.Item1)), values);
         }
 
         await _sqsClient.QueueEmailMessage(
-            "support@polkadotsandcurry.com",
-            "info@polkadotsandcurry.com",
-            "Test Hello",
-            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(emailContent)),
+            "support@polkadotsandcurry.com",//from config
+            "info@polkadotsandcurry.com",//attendee.Email,
+            emailContent.Item2,
+            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
             attendee?.Name);
 
         return true;
