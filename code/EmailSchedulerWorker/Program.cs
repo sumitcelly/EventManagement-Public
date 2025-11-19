@@ -16,9 +16,13 @@ Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
         var config = context.Configuration;
-        services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
+        //services.AddSingleton<IAmazonSQS, AmazonSQSClient>();
         services.AddScoped<EmailCampaignDbAccess>();
         services.AddScoped<EmailRecipientsDbAccess>();
+        services.AddScoped<NotificationTemplateAccess>();
+        services.AddScoped<EventDbAccess>();
+        services.AddScoped<EventOrganizerDBAccess>();
+        services.AddSingleton<SQSHelper>();
         services.AddDistributedMemoryCache();
         services.AddHostedService<EmailSchedulerService>();
        
@@ -27,6 +31,7 @@ Host.CreateDefaultBuilder(args)
     {
         logging.ClearProviders();
         logging.AddConsole();
+        logging.AddDebug();
     })
     .Build()
     .Run();

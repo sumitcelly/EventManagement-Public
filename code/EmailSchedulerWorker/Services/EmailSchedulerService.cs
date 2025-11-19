@@ -19,7 +19,6 @@ namespace EmailSchedulerWorker.Services
     {
         private readonly ILogger<EmailSchedulerService> _logger;
         private readonly IConfiguration _config;
-        private readonly IAmazonSQS _sqs;
         private readonly string _connectionString;
         private readonly string _queueUrl;
         private readonly int _pollIntervalSeconds;
@@ -31,28 +30,24 @@ namespace EmailSchedulerWorker.Services
         private readonly SQSHelper _sqsClient;
 
         private readonly EventOrganizerDBAccess _organizerDBAccess;
+        private readonly IServiceProvider _serviceProvider;
         public EmailSchedulerService(
             ILogger<EmailSchedulerService> logger,
             IConfiguration config,
-            IAmazonSQS sqs,
-            EmailCampaignDbAccess emailCampaignDbAccess,
-            EmailRecipientsDbAccess emailRecipientsDbAccess,
-            NotificationTemplateAccess templateAccess,
-            EventDbAccess eventDbAccess,
-            EventOrganizerDBAccess eventOrganizerDBAccess,
+            IServiceProvider serviceProvider,
             SQSHelper sqsClient)
         {
             _logger = logger;
             _config = config;
-            _sqs = sqs;
-            _emailCampaignDbAccess = emailCampaignDbAccess;
-            _emailRecipientsDbAccess = emailRecipientsDbAccess;
-            _templateAccess = templateAccess;
-            _eventDBAccess = eventDbAccess;
-            _organizerDBAccess = eventOrganizerDBAccess;
+            _serviceProvider = serviceProvider;
+            // _emailCampaignDbAccess = emailCampaignDbAccess;
+            // _emailRecipientsDbAccess = emailRecipientsDbAccess;
+            // _templateAccess = templateAccess;
+            // _eventDBAccess = eventDbAccess;
+            // _organizerDBAccess = eventOrganizerDBAccess;
             _sqsClient = sqsClient;
 
-            _connectionString = config.GetConnectionString("MySql") 
+            _connectionString = config.GetConnectionString("Default") 
                 ?? throw new Exception("Missing MySQL connection string.");
             _queueUrl = config["Sqs:QueueUrl"] 
                 ?? throw new Exception("Missing SQS QueueUrl.");
@@ -82,6 +77,13 @@ namespace EmailSchedulerWorker.Services
         {
             try
             {
+                using var scope = _serviceProvider.CreateScope();
+                EmailCampaignDbAccess _emailCampaignDbAccess = scope.ServiceProvider.GetRequiredService<EmailCampaignDbAccess>();
+                EmailRecipientsDbAccess _emailRecipientsDbAccess = scope.ServiceProvider.GetRequiredService<EmailRecipientsDbAccess>();
+                NotificationTemplateAccess _templateAccess = scope.ServiceProvider.GetRequiredService<NotificationTemplateAccess>();
+                EventDbAccess _eventDBAccess = scope.ServiceProvider.GetRequiredService<EventDbAccess>();
+                EventOrganizerDBAccess _organizerDBAccess = scope.ServiceProvider.GetRequiredService<EventOrganizerDBAccess>();
+                
                 _logger.LogInformation("Checking for pending emails at {time}.", DateTime.UtcNow);
                 List<EmailCampaign> campaignList = await _emailCampaignDbAccess.GetPendingCampaigns();
                 foreach (var campaign in campaignList)

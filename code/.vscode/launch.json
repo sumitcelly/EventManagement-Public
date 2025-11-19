@@ -4,19 +4,18 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-        {
-            "name": "C#: EventTicketUI Debug",
-            "type": "dotnet",
-            "request": "launch",
-            "projectPath": "C:\\temp\\Projects\\eventmgmt\\Code\\EventTicketUI\\EventTicketUI.csproj"
-        },
         
         {
             "name": "C#: CreateTicketApi Debug",
             "type": "dotnet",
             "request": "launch",
             "projectPath": "C:\\temp\\Projects\\eventmgmt\\Code\\CreateTicketApi\\CreateTicketApi.csproj"
+        },
+        {
+            "name": "C#: EmailSchedulerWorker Debug",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "C:\\temp\\Projects\\eventmgmt\\Code\\EmailSchedulerWorker\\EmailSchedulerWorker.csproj"
         }
         
         
