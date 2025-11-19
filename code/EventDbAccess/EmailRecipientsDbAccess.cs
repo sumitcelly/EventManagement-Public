@@ -21,7 +21,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"INSERT INTO emailrecipients (emailcampaignid, recipientemail, status, CreatedAt, LastAttemptedAt, RetryCount, TokenGuid) VALUES (@emailcampaignid, @recipientemail, @status, @CreatedAt, @LastAttemptedAt, @RetryCount, @TokenGuid); SELECT LAST_INSERT_ID();";
+            var query = @"INSERT INTO emailrecipients (emailcampaignid, recipientemail, status, CreatedAt, LastAttemptedAt, RetryCount, SalesOrderId) VALUES (@emailcampaignid, @recipientemail, @status, @CreatedAt, @LastAttemptedAt, @RetryCount, @TokenGuid); SELECT LAST_INSERT_ID();";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@emailcampaignid", recipient.EmailCampaignId);
             cmd.Parameters.AddWithValue("@recipientemail", recipient.RecipientEmail);
@@ -29,7 +29,7 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@CreatedAt", recipient.CreatedAt);
             cmd.Parameters.AddWithValue("@LastAttemptedAt", recipient.LastAttemptedAt);
             cmd.Parameters.AddWithValue("@RetryCount", recipient.RetryCount);
-            cmd.Parameters.AddWithValue("@TokenGuid", recipient.TokenGuid);
+            cmd.Parameters.AddWithValue("@SalesOrderId", recipient.SalesOrderId);
             var result = await cmd.ExecuteScalarAsync();
             return Convert.ToInt32(result);
         }
@@ -57,7 +57,7 @@ namespace EventManagementDbAccess
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     LastAttemptedAt = reader.IsDBNull(reader.GetOrdinal("LastAttemptedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("LastAttemptedAt")),
                     RetryCount = reader.IsDBNull(reader.GetOrdinal("RetryCount")) ? null : reader.GetInt32(reader.GetOrdinal("RetryCount")),
-                    TokenGuid = reader.GetString(reader.GetOrdinal("TokenGuid"))
+                    SalesOrderId = reader.GetInt16(reader.GetOrdinal("SalesOrderId"))
                 });
             }
 
@@ -83,7 +83,7 @@ namespace EventManagementDbAccess
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                     LastAttemptedAt = reader.IsDBNull(reader.GetOrdinal("LastAttemptedAt")) ? null : reader.GetDateTime(reader.GetOrdinal("LastAttemptedAt")),
                     RetryCount = reader.IsDBNull(reader.GetOrdinal("RetryCount")) ? null : reader.GetInt32(reader.GetOrdinal("RetryCount")),
-                    TokenGuid = reader.GetString(reader.GetOrdinal("TokenGuid"))
+                    SalesOrderId = reader.GetInt16(reader.GetOrdinal("SalesOrderId"))
                 });
             }
             return recipients;
@@ -93,7 +93,9 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"UPDATE emailrecipients SET emailcampaignid = @emailcampaignid, recipientemail = @recipientemail, status = @status, LastAttemptedAt = @LastAttemptedAt, RetryCount = @RetryCount, TokenGuid = @TokenGuid WHERE id = @id";
+            var query = @"UPDATE emailrecipients SET emailcampaignid = @emailcampaignid, recipientemail = @recipientemail, status = @status, 
+                        LastAttemptedAt = @LastAttemptedAt, RetryCount = @RetryCount, SalesOrderId = @SalesOrderId 
+                        WHERE id = @id";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", recipient.Id);
             cmd.Parameters.AddWithValue("@emailcampaignid", recipient.EmailCampaignId);
@@ -101,7 +103,7 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@status", recipient.Status);
             cmd.Parameters.AddWithValue("@LastAttemptedAt", recipient.LastAttemptedAt);
             cmd.Parameters.AddWithValue("@RetryCount", recipient.RetryCount);
-            cmd.Parameters.AddWithValue("@TokenGuid", recipient.TokenGuid);
+            cmd.Parameters.AddWithValue("@SalesOrderId", recipient.SalesOrderId);
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;
         }
@@ -117,28 +119,29 @@ namespace EventManagementDbAccess
             return rows > 0;
         }
 
-        public async Task<Dictionary<string, FullNameOrder>> InsertRecipientsForEvent(int eventId, int emailCampaignId)
+        public async Task<List<OrderEmailDetails>> InsertRecipientsForEvent(int eventId, int emailCampaignId)
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             // Select all email addresses for the event and filter by status for salesorder
-            var selectQuery = @"SELECT a.Email, a.FullName, a.OrderId FROM User a, salesorder b 
+            var selectQuery = @"SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b 
                                 WHERE b.EventId = @eventId and 
                                 b.UserId = a.UserId";
             using var selectCmd = new MySqlCommand(selectQuery, conn);
             selectCmd.Parameters.AddWithValue("@eventId", eventId);
-            var orderUser = new Dictionary<string, FullNameOrder>();
+            var orderUser = new List<OrderEmailDetails>();
 
             using (var reader = await selectCmd.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
-                    FullNameOrder eu = new()
+                    OrderEmailDetails eu = new()
                     {
                         SalesOrderId = reader.GetInt16(reader.GetOrdinal("OrderId")),
-                        FullName = reader.GetString(reader.GetOrdinal("FullName"))
+                        FullName = reader.GetString(reader.GetOrdinal("FullName")),
+                        Email = reader.GetString(reader.GetOrdinal("Email"))
                     };
-                    orderUser.Add(reader.GetString(reader.GetOrdinal("Email")), eu);
+                    orderUser.Add(eu);
                 }
             }
 
@@ -147,16 +150,17 @@ namespace EventManagementDbAccess
 
             // Build bulk insert statement
             var insertQuery = new System.Text.StringBuilder();
-            insertQuery.Append("INSERT INTO emailrecipients (emailcampaignid, recipientemail, status, CreatedAt, TokenGuid) VALUES ");
+            insertQuery.Append("INSERT INTO emailrecipients (emailcampaignid, recipientemail, status, CreatedAt, SalesOrderId) VALUES ");
             var parameters = new List<MySqlParameter>();
-            foreach (var ge in orderUser)
+            foreach (var tempUser in orderUser)
             {
-                if (ge.Value != null)
-                {
-                    if (parameters.Count > 0) insertQuery.Append(", ");
-                    insertQuery.Append($"(@emailcampaignid, @recipientemail{parameters.Count}, 'Pending', @CreatedAt, UUID())");
-                    parameters.Add(new MySqlParameter($"@recipientemail{parameters.Count}", ge.Key));
-                }
+                
+                if (parameters.Count > 0) insertQuery.Append(", ");
+                int count1 = parameters.Count;
+                insertQuery.Append($"(@emailcampaignid, @recipientemail{count1}, 'Pending', @CreatedAt, @SalesOrderId{count1})");
+                parameters.Add(new MySqlParameter($"@recipientemail{count1}", tempUser.Email));       
+                parameters.Add(new MySqlParameter($"@SalesOrderId{count1}", tempUser.SalesOrderId));  
+                     
             }
 
             parameters.Add(new MySqlParameter("@emailcampaignid", emailCampaignId));
@@ -169,11 +173,13 @@ namespace EventManagementDbAccess
         }
     }
 
-    public class FullNameOrder
+    public class OrderEmailDetails
     {
         public string FullName { get; set; } = string.Empty;
 
         public int SalesOrderId { get; set; }
+
+        public string Email { get; set; } = string.Empty;
 
     }
 }

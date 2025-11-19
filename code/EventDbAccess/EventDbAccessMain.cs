@@ -136,7 +136,7 @@ namespace EventManagementDbAccess
         var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
-                    b.OrganizerName from events a, eventorganizer b 
+                    b.OrganizationName from events a, eventorganizer b 
                     WHERE a.EventOrganizer= b.CustomerId and 
                     a.EventId = @eventId";
 

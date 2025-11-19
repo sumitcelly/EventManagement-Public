@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
+using Mysqlx.Crud;
 using Org.BouncyCastle.Crypto.Prng;
 
 namespace EmailSchedulerWorker.Services
@@ -93,7 +94,8 @@ namespace EmailSchedulerWorker.Services
                     await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, campaign.Status);
                     List<EmailRecipient> recipients = await _emailRecipientsDbAccess.GetEmailRecipientsByCampaignId(campaign.Id);
                     _logger.LogInformation($"Found {recipients.Count} recipients for Campaign ID: {campaign.Id}");
-                    Dictionary<string,FullNameOrder> emailSalesOrder = [];
+                    List<OrderEmailDetails> emailSalesOrder = [];
+
                     if (recipients.Count == 0)
                     {
                         _logger.LogWarning(@$"No recipients found for Campaign ID: {campaign.Id}. 
@@ -152,7 +154,7 @@ namespace EmailSchedulerWorker.Services
                     }
                   
                     
-                    Tuple<string,string> templateData = await _templateAccess.GetTemplateByIdFromDb(campaign.TemplateId);
+                    Tuple<string,string> templateData = await _templateAccess.GetTemplateById(campaign.TemplateId);
                     string emailTemplate = templateData.Item1;
                     string emailSubject = templateData.Item2;
                     if (string.IsNullOrWhiteSpace(emailTemplate))
@@ -162,21 +164,21 @@ namespace EmailSchedulerWorker.Services
                         continue;
                     }
                     // At this point, we have recipients to process
-                      ///At this point we have all the information to send the email.
+                    ///At this point we have all the information to send the email.
+                    
                     foreach (var recipient in recipients)
                     {
                         try
-                        {
-                            FullNameOrder? orderEmailData = null;
-                            emailSalesOrder?.TryGetValue(recipient.RecipientEmail, out orderEmailData);
-                            string content = GetEmailContentToSend(emailTemplate, eventHeader, eventOrganizer,orderEmailData);
-
+                        {                    
+                            OrderEmailDetails? orderEmailDetails =  emailSalesOrder?.Where(eso=>eso.SalesOrderId==recipient.SalesOrderId).FirstOrDefault();
+                            string content = GetEmailContentToSend(emailTemplate, eventHeader, eventOrganizer,orderEmailDetails);
+                                                                   
                             await _sqsClient.QueueEmailMessage(
                                 "support@polkadotsandcurry.com",//from config
                                 recipient.RecipientEmail,//"info@polkadotsandcurry.com",//attendee.Email,
                                 emailSubject,
                                 Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content)),
-                                orderEmailData?.FullName);
+                                orderEmailDetails?.FullName ?? string.Empty);
                            
                             // Update recipient status to 'Queued'
                             recipient.Status = "Queued";
@@ -196,6 +198,7 @@ namespace EmailSchedulerWorker.Services
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);
                         }
                     }
+
                 }
             }
             catch (Exception ex)
@@ -205,17 +208,19 @@ namespace EmailSchedulerWorker.Services
         }
 
         private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
-                FullNameOrder? orderEmailData)
+                OrderEmailDetails? orderEmailData)
         {
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
-                Attendee = orderEmailData?.FullName,
+                Attendee = orderEmailData?.FullName ?? "Attendee",
                 EventDate = eventHeader.EventDate,
                 EventLocation = eventHeader.EventLocation,
                 EventName = eventHeader.EventName,
                 EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
                 EventOrganizerName = eventOrganizer.OrganizationName,
-                EventTicketLink = $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData?.SalesOrderId.ToString())}"
+                EventTicketLink = orderEmailData?.SalesOrderId>0?
+                                    $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
+                                    :string.Empty
             });
             
             var tokenReplacer = new EmailTokenReplacement();

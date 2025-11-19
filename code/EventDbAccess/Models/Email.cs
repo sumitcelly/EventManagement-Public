@@ -9,7 +9,7 @@ namespace EventManagementDbAccess
         public DateTime CreatedAt { get; set; }
         public DateTime? LastAttemptedAt { get; set; }
         public int? RetryCount { get; set; }
-        public string TokenGuid { get; set; } = string.Empty;
+        public int SalesOrderId { get; set; } = 0;
     }
     public class EmailCampaign
     {

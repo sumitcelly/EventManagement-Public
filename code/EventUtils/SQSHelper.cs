@@ -13,7 +13,9 @@ public class SQSHelper
 
     public SQSHelper(IConfiguration configuration)
     {
+        
         _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"],Amazon.RegionEndpoint.USWest2);     
+        
     }
     
     public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name)
