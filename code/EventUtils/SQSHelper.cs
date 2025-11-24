@@ -5,11 +5,13 @@ using Amazon.SQS.Model;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 public class SQSHelper
 {
     private  readonly AmazonSQSClient _amazonSQSClient;
     private  readonly string _queueUrl = "https://sqs.us-west-2.amazonaws.com/975050117852/NotificationEventPr0";
 
+    private readonly string _fromEmail = "support@polkadotsandcurry.com";
 
     public SQSHelper(IConfiguration configuration)
     {
@@ -34,6 +36,24 @@ public class SQSHelper
         Console.WriteLine($"Response from queueing message is:{response.HttpStatusCode}");
         return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
     } 
+
+    public async Task<bool> QueueMessage(string to, string name, string content, string subject)
+    {
+        var messageAttributes = new Email()
+        {
+            From = _fromEmail,
+            To = to,
+            Subject = subject,
+            Body = content,
+            Name = name
+        };
+       
+        SendMessageResponse response = await _amazonSQSClient.SendMessageAsync(new SendMessageRequest() 
+            { QueueUrl = _queueUrl, MessageBody = JsonSerializer.Serialize(messageAttributes) });
+        Console.WriteLine($"Response from queueing message is:{response.HttpStatusCode}");
+        return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
+      
+    }
 }
 
 public class Email

@@ -22,6 +22,8 @@ namespace EventUtils
         public string EventOrganizerHelpLine { get; set; } = string.Empty;
 
         public string EventTicketLink { get; set; } = string.Empty;
+
+        public string EmailCode {get; set;} = string.Empty;
     }
     /// <summary>
     /// Handles the replacement of tokens in email templates
@@ -39,7 +41,8 @@ namespace EventUtils
             "EventLocation",
             "EventOrganizerName",
             "EventOrganizerHelpLine",
-            "EventTicketLink"
+            "EventTicketLink",
+            "EmailCode"
         };
 
         public EmailTokenReplacement()
@@ -54,7 +57,7 @@ namespace EventUtils
         public static Dictionary<string, string> GetReplacementValues(TokenValues tokenValues)
         {
             var values = new Dictionary<string, string>();
-             foreach (var token in EmailTokenReplacement._supportedTokens)
+            foreach (var token in EmailTokenReplacement._supportedTokens)
             {
                 switch (token)
                 {
@@ -74,7 +77,7 @@ namespace EventUtils
                         values[token] = tokenValues.EventDate.ToString("yyyy-MM-dd");
                         break;
                     case "EventLocation":
-                        values[token] = tokenValues.EventLocation ?? "Not specified";
+                        values[token] = tokenValues.EventLocation ?? string.Empty;
                         break;
                     case "EventOrganizerName":
                         values[token] = tokenValues.EventOrganizerName ?? "Not specified";
@@ -84,6 +87,9 @@ namespace EventUtils
                         break;
                     case "EventTicketLink":
                         values[token] = tokenValues.EventTicketLink ?? string.Empty;
+                        break;
+                    case "EmailCode":
+                        values[token] = tokenValues.EmailCode ?? string.Empty;
                         break;
                     default:
                         break;
@@ -110,7 +116,7 @@ namespace EventUtils
 
             foreach (var token in _templateTokenMap)
             {
-                if (replacementValues.TryGetValue(token.Key, out var value))
+                if (replacementValues.TryGetValue(token.Key, out var value) && !string.IsNullOrEmpty(value))
                 {
                     template = template.Replace(token.Value, value);
                 }
