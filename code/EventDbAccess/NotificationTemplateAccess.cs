@@ -93,10 +93,12 @@ namespace EventManagementDbAccess
 
             try
             {
+
                 using (MySqlConnection connection = new(this.ConnectionString))
                 {
                     string sql = @$"Select TemplateContent,Subject from eventmanagement.notificationtemplates where
-                                    TemplateName='{templateName}' and OrganizerId='{customerId}'";
+                                    TemplateName='{templateName}';
+                                    and OrganizerId<=>{(customerId.HasValue ? customerId.Value : "NULL")}";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using DbDataReader reader = await cmd.ExecuteReaderAsync();

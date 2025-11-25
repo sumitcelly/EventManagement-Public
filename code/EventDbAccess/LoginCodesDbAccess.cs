@@ -1,28 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 
 
 namespace EventManagementDbAccess
 {
-    public class LoginCodesDbAccess
+    public class LoginCodesDbAccess: BaseDbAccess
     {
-        private readonly string _connectionString;
-        public LoginCodesDbAccess(string connectionString)
+  
+        public LoginCodesDbAccess(IConfiguration connectionString, ILogger<EventOrganizerDBAccess> logger) : base(connectionString, logger) 
         {
-            _connectionString = connectionString;
+
         }
 
         public async Task<int> CreateLoginCode(LoginCode code)
         {
-            using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand(@"INSERT INTO logincodes (userid, securitycode, expiresat, requestip)
-                VALUES (@userid, @securitycode, @expiresat, @requestip); SELECT LAST_INSERT_ID();", conn);
+            var cmd = new MySqlCommand(@"INSERT INTO logincodes (userid, securitycode, expiresat, requestip,createdat)
+                VALUES (@userid, @securitycode, @expiresat, @requestip,utc_timestamp()); SELECT LAST_INSERT_ID();", conn);
             cmd.Parameters.AddWithValue("@userid", code.UserId);
             cmd.Parameters.AddWithValue("@securitycode", code.SecurityCode);
             cmd.Parameters.AddWithValue("@expiresat", code.ExpiresAt);
+          
             cmd.Parameters.AddWithValue("@requestip", code.RequestIp ?? (object)DBNull.Value);
             var id = Convert.ToInt32(await cmd.ExecuteScalarAsync());
             return id;
@@ -31,7 +34,7 @@ namespace EventManagementDbAccess
 
         public async Task<int?> GetUserIdByCode(string code)
         {
-            using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
             var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code", conn);
             cmd.Parameters.AddWithValue("@code", code);
@@ -44,7 +47,7 @@ namespace EventManagementDbAccess
         public async Task<List<string>> GetLoginCodesByUser(int userId)
         {
             var result = new List<string>();
-            using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
             var cmd = new MySqlCommand("SELECT securitycode FROM logincodes WHERE userid = @userid and expiresat < UTC_TIMESTAMP()", conn);
             cmd.Parameters.AddWithValue("@userid", userId);
@@ -56,10 +59,10 @@ namespace EventManagementDbAccess
 
         public async Task<bool> UpdateUsedAt(int userId)
         {
-            using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
             var cmd = new MySqlCommand(@"UPDATE logincodes SET
-                usedat = UTC_TIMESTAMP(),
+                usedat = UTC_TIMESTAMP()
                 WHERE userid = @id AND usedat IS NULL", conn);
             
             cmd.Parameters.AddWithValue("@id", userId);
@@ -69,7 +72,7 @@ namespace EventManagementDbAccess
 
         public async Task<bool> DeleteLoginCodes()
         {
-            using var conn = new MySqlConnection(_connectionString);
+            using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
             var cmd = new MySqlCommand("DELETE FROM logincodes WHERE expiresat < UTC_TIMESTAMP() ", conn);
 

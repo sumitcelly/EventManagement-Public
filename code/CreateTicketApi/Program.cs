@@ -60,6 +60,7 @@ builder.Services.AddScoped(typeof(EmailUtils));
 builder.Services.AddScoped(typeof(EventOrganizerMembersDbAccess));
 builder.Services.AddScoped(typeof(EmailCampaignDbAccess));
 builder.Services.AddScoped(typeof(EmailRecipientsDbAccess));
+builder.Services.AddScoped(typeof(LoginCodesDbAccess));
 
 builder.Services.AddSingleton(typeof(JwtUtils));
 builder.Services.AddSingleton<EncryptionHelper>();

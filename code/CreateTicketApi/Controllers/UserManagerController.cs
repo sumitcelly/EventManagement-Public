@@ -1,5 +1,6 @@
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Logging;
@@ -65,7 +66,7 @@ namespace CreateTicketApi.Controllers
                 return Unauthorized("Invalid email or password.");
 
             //Get role for the user
-            EventOrganizerMembers orgMember = await _eventOrganizerMembersDbAccess.GetContainingOrgByUserId(user.UserId);
+            EventOrganizerMembers? orgMember = await _eventOrganizerMembersDbAccess.GetContainingOrgByUserId(user.UserId);
             if (orgMember == null)
                 _logger.LogInformation($"User with email {user.Email} is not part of any organization.  Returning default role.");
             string role = orgMember?.Role ?? UserRoles.Attendee.ToString(); // Default to "User" if no organization member found
@@ -89,7 +90,7 @@ namespace CreateTicketApi.Controllers
             });
         }
 
-          [HttpPost("refresh")]
+        [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -126,6 +127,24 @@ namespace CreateTicketApi.Controllers
             return Ok(new { accessToken = newAccessToken });
         }
 
+        [Authorize]
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] LoginRequest request)
+        {
+            string email = request.Email;
+            string newPassword = request.Password;
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(newPassword))
+                return BadRequest("Email or new password is null or empty.");
+            var user = await _userDbAccess.GetUserByEmail(email);
+            if (user == null)
+                return NotFound("User not found.");
+
+            var result = await  _userDbAccess.ResetPassword(user.UserId, newPassword);
+            if (result)
+                return Ok("Password reset successful.");
+            return StatusCode(500, "Failed to reset password.");
+        }
+
         [HttpPost("VerifyEmailCode")]
         public async Task<IActionResult> VerifyEmailCode([FromBody] LoginRequest request)
         {
@@ -140,6 +159,9 @@ namespace CreateTicketApi.Controllers
             var userId = await _loginCodesDbAccess.GetUserIdByCode(code);
             if (userId == null || userId != user.UserId)
                 return Unauthorized("Invalid code.");
+            //code is valid, delete all codes for the user
+            await _loginCodesDbAccess.UpdateUsedAt(user.UserId);
+
              //Get role for the user
             EventOrganizerMembers? orgMember = await _eventOrganizerMembersDbAccess.GetContainingOrgByUserId(user.UserId);
             if (orgMember == null)
@@ -192,13 +214,15 @@ namespace CreateTicketApi.Controllers
             EmailTokenReplacement tokenReplacer = new EmailTokenReplacement();
             var values = new Dictionary<string, string>
             {
-                { "EmailCode", emailCode }
+                { "EmailCode", emailCode },
+                {"Attendee", user.Name }
             };
+
             string content = tokenReplacer.ReplaceTokens(templateData.Item1, values);
             await _sqsHelper.QueueMessage(email,
-                templateData.Item2,
+                user.Name,
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
-                user.Name);
+                templateData.Item2);
 
             return Ok("Email verification code sent.");
         }
@@ -247,11 +271,26 @@ namespace CreateTicketApi.Controllers
                 return Ok();
             return StatusCode(500, "Failed to delete user.");
         }
+
+   
+        [Authorize]
+        [HttpPost("UserSignup")]
+        public async Task<ActionResult<int>> UserSignup([FromBody] EventUser user)
+        {
+            //Authorize because user email must be verified before signup
+            if (user == null || string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Password))
+                return BadRequest("Invalid user.");
+    
+            var id = await _userDbAccess.CreateUser(user);
+            if (id > 0)
+                return Ok(id);
+            return StatusCode(500, "Failed to create user.");
+        }
     }
     
     public class LoginRequest
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        public required string Email { get; set; }
+        public required string Password { get; set; }
     }
 }
