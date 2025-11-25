@@ -36,7 +36,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code", conn);
+            var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code  and expiresat < UTC_TIMESTAMP()", conn);
             cmd.Parameters.AddWithValue("@code", code);
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
