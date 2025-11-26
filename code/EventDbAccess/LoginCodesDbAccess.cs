@@ -36,7 +36,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code  and expiresat < UTC_TIMESTAMP()", conn);
+            var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code  and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
             cmd.Parameters.AddWithValue("@code", code);
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
@@ -49,7 +49,7 @@ namespace EventManagementDbAccess
             var result = new List<string>();
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand("SELECT securitycode FROM logincodes WHERE userid = @userid and expiresat < UTC_TIMESTAMP()", conn);
+            var cmd = new MySqlCommand("SELECT securitycode FROM logincodes WHERE userid = @userid and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
             cmd.Parameters.AddWithValue("@userid", userId);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

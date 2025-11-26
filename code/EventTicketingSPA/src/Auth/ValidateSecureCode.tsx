@@ -7,7 +7,7 @@ import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
 
 
@@ -25,6 +25,7 @@ export default function ValidateSecureCode() {
  // const { status, error } = useAppSelector((state) => state.auth);
   const [apiStatus,setApiStatus] = useState("");
   const [status,setStatus]=useState<"idle"|"loading"|"error">("idle");
+  const [timerExpired,setTimerExpired]=useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const {email} = location.state;
@@ -47,20 +48,22 @@ export default function ValidateSecureCode() {
       setStatus("loading");
       try{
         const res = await axiosClient.get(`/user/generateemailcode/${email}`);
-        if (res?.data?.success) {
+        if (res?.status) {
             setApiStatus("Secure code sent to your email.");
             
-        } 
-        else  if (res?.status === 404 ) {
-            setApiStatus("Email not found. Please check and try again.");
         } 
         else {
             setApiStatus("Failed to send secure code. Please try again later.");
         }
         setStatus("idle");
+        setTimerExpired(false);
     }
-    catch (err) {
-        setApiStatus("Failed to send secure code. Please try again later.");
+    catch (err:any) {
+        if (err.response && err.response.status === 404) {
+            setApiStatus("Email not found. Please check and try again.");
+        }
+        else
+          setApiStatus("Failed to send secure code. Please try again later.");
         setStatus("error");
     }
     finally {
@@ -73,8 +76,8 @@ export default function ValidateSecureCode() {
       setApiStatus("");
       setStatus("loading");
       try{
-        const res = await axiosClient.post(`/user/VerifyEmailCode`,{email:email, password:data.secureCode});
-        if (res?.data?.success) {
+        const res = await axiosClient.post(`/user/VerifyEmailCode`,{email:email, password:data.secureCode.toUpperCase()});
+        if (res?.status) {
             setApiStatus("You are logged in.");
             //hookup login logic here
             //navigate("/validatesecurecode",{state:{email:data.email}});      
@@ -115,32 +118,37 @@ export default function ValidateSecureCode() {
         </div>
         
         <div className="flex flex-row items-center justify-between">
-        <CountdownTimer displayString="Generate new code in" timerExpiredCallback={()=>{
-            console.log("timer expired - enabling generate new code button");
-            <button
-                type="button"
-                onClick={() => generateemailcode(email)}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
-                {status === "loading" ? "Logging in..." : "Generate New Code"}
-            </button>
-        }}/>
 
-        
-         <button
-            type="submit"
-            aria-busy={status === "loading"} 
-            disabled={status === "loading"}
-            className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-            >
-          {status === "loading" ? "Logging in..." : "Login"}
-         </button>
+          {!timerExpired && (
+          <CountdownTimer displayString="Generate new code in" timerExpiredCallback={()=>{
+              console.log("timer expired - enabling generate new code button");
+            setTimerExpired(true);
+          }}/>)}
+
+          {timerExpired && (
+              <a
+                  href="#"
+                  onClick={(e) =>{ e.preventDefault(); generateemailcode(email)}   }     
+                  className="text-blue-600 hover:underline">
+                  {status === "loading" ? "Generating code..." : "New Code"}
+              </a>
+          )}
+
+          <button
+              type="submit"
+              aria-busy={status === "loading"} 
+              disabled={status === "loading"}
+              className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+            {status === "loading" ? "Logging in..." : "Login"}
+          </button>
         </div>
-        {apiStatus && <p className="mt-4 text-green-500">{apiStatus}</p>}
+        {apiStatus && <p className="mt-2 text-green-500">{apiStatus}</p>}
 
-        <a className="mr-auto text-accent-color hover:underline mb-3" 
+        <a href="#" className="mr-auto text-accent-color hover:underline mb-3" 
             onClick={(e=>{
             e.preventDefault();
-            navigate("/sendsecurecode",{state:{email:email}});  
+            navigate("/auth/sendsecurecode",{state:{email:email}});  
             })}>
             Back
         </a>

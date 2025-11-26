@@ -21,6 +21,8 @@ import TicketBasics from "./pages/Organizer/TicketBasics";
 import { EventManager } from "./pages/Organizer/EventManager";
 import { TeamManager } from "./pages/Organizer/TeamManager";
 import { OrganizerManager } from "./pages/Organizer/OrganizerManager";
+import SendSecureCode from "./Auth/SendSecureCode";
+import ValidateSecureCode from "./Auth/ValidateSecureCode";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -35,6 +37,9 @@ export default function App() {
             isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
           }
         />
+
+        <Route path="/Auth/SendSecureCode" element={<SendSecureCode/>}/>
+        <Route path="/Auth/ValidateSecureCode" element={<ValidateSecureCode/>}/>
 
         <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
         
