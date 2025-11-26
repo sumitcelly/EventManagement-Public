@@ -90,7 +90,12 @@ export default function ValidateSecureCode() {
       dispatch(loginUserWithSecureCode({email:email, password:data.secureCode.toUpperCase()}));
   };
 
-
+  const getAuthenticationMessage = () => {
+    if (status === "loading") return "Logging in...";
+    if (status === "failed") return `Login failed: ${error}`;
+    if (isAuthenticated) return "Login successful!";
+    return "";
+  }
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
@@ -137,7 +142,7 @@ export default function ValidateSecureCode() {
           </button>
         </div>
         {apiStatus && <p className="mt-2 text-green-500">{apiStatus}</p>}
-        {(!apiStatus && status) && <p className="mt-2 text-green-500">{status==="failed"?error:"Logged in"}</p>}
+        {(!apiStatus && status) && <p className="mt-2 text-green-500">{getAuthenticationMessage()}</p>}
 
         <a href="#" className="mr-auto text-accent-color hover:underline mb-3" 
             onClick={(e=>{
