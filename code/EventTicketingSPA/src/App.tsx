@@ -38,8 +38,10 @@ export default function App() {
           }
         />
 
-        <Route path="/Auth/SendSecureCode" element={<SendSecureCode/>}/>
-        <Route path="/Auth/ValidateSecureCode" element={<ValidateSecureCode/>}/>
+        <Route path="/Auth/SendSecureCode/:returnUrl?" element={<SendSecureCode/>}/>
+        <Route path="/Auth/ValidateSecureCode/:returnUrl?" element={<ValidateSecureCode/>}/>
+        
+        {/* <Route path="/FindMyTickets" element={isAuthenticated?<MyEvents/>:<SendSecureCode/>}/> */}
 
         <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
         

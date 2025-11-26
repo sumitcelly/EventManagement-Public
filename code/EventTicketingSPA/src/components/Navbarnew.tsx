@@ -208,7 +208,10 @@ export function AppNavbar() {
         <NavbarLink href="/dashboard" active>
           Organize an Event
         </NavbarLink>
-        <NavbarLink href="#">Find my tickets</NavbarLink>
+        {isAuthenticated  ?
+        (<NavbarLink href="/myevents">Find my tickets</NavbarLink>) :
+        (<NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>)}
+       
         <NavbarLink href="#">Help</NavbarLink>
       </NavbarCollapse>
     </Navbar>

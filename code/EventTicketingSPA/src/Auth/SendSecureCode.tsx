@@ -7,7 +7,7 @@ import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useLocation} from "react-router-dom";
 
 interface SecureCodeFormInputs {
@@ -27,7 +27,10 @@ export default function SendSecureCode() {
   const navigate = useNavigate();
   const location = useLocation();
   const {email} = location.state || {};
-
+  const {returnUrl} = useParams();
+ 
+  console.log("SendSecureCode returnUrl:", returnUrl);
+  
   const {
     register,
     handleSubmit,
@@ -52,7 +55,7 @@ export default function SendSecureCode() {
 
         if (res?.status === 200) {
             setApiStatus("Secure code sent to your email.");
-            navigate("/auth/validatesecurecode",{state:{email:data.email}});      
+            navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email}});      
         } 
         else  if (res?.status === 404 ) {
             setApiStatus("Email not found. Please check and try again.");

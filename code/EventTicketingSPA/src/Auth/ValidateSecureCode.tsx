@@ -5,8 +5,8 @@ import * as yup from "yup";
 import { loginUser, loginUserWithSecureCode } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { use, useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
 
@@ -23,7 +23,7 @@ const schema = yup.object({
 export default function ValidateSecureCode() {
 
   const dispatch = useAppDispatch();
-  const { status, error } = useAppSelector((state) => state.auth);
+  const { status, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
   const [apiStatus,setApiStatus] = useState("");
   const [codeStatus,setcodeStatus]=useState<"idle"|"loading"|"error">("idle");
@@ -32,6 +32,7 @@ export default function ValidateSecureCode() {
   const location = useLocation();
   const {email} = location.state;
   console.log("validating secure code for email:", email);
+  const {returnUrl} = useParams();
 
   const {
     register,
@@ -73,37 +74,23 @@ export default function ValidateSecureCode() {
       setcodeStatus("idle");
     }
   }
+  useEffect(() => {
+    // Generate the initial secure code when the component mounts
+    if (isAuthenticated)
+    {
+      console.log("login succeeded - navigating to returnUrl:", returnUrl);
+      navigate("/"+returnUrl || "/");
+    }
+  }
+  , [status]);
 
   const onSubmit = async (data :SecureCodeFormInputs) => {
       console.log("sending secure code to email:", data.secureCode);
       setApiStatus("");
       dispatch(loginUserWithSecureCode({email:email, password:data.secureCode.toUpperCase()}));
-      //   setApiStatus("");
-      //   setStatus("loading");
-      //   try{
-      //     const res = await axiosClient.post(`/user/VerifyEmailCode`,{email:email, password:data.secureCode.toUpperCase()});
-      //     console.log("API response for validate secure code:", res);
-      //     if (res?.status) {
-      //         setApiStatus("You are logged in.");
-      //         //hookup login logic here
-      //         //navigate("/validatesecurecode",{state:{email:data.email}});      
-      //     } 
-      //     else  if (res?.status === 404 ) {
-      //         setApiStatus("Email not found. Please check and try again.");
-      //     } 
-    //     else {
-    //         setApiStatus("Failed to send secure code. Please try again later.");
-    //     }
-    //     setStatus("idle");
-    // }
-    // catch (err) {
-    //     setApiStatus("Failed to validate secure code. Please try again later.");
-    //     setStatus("error");
-    // }
-    // finally {
-    // setStatus("idle");
-    // }
   };
+
+
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
