@@ -2,7 +2,7 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 //import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../features/auth/authSlice";
+import { loginUser, loginUserWithSecureCode } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { useState } from "react";
@@ -22,9 +22,11 @@ const schema = yup.object({
 
 export default function ValidateSecureCode() {
 
- // const { status, error } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const { status, error } = useAppSelector((state) => state.auth);
+
   const [apiStatus,setApiStatus] = useState("");
-  const [status,setStatus]=useState<"idle"|"loading"|"error">("idle");
+  const [codeStatus,setcodeStatus]=useState<"idle"|"loading"|"error">("idle");
   const [timerExpired,setTimerExpired]=useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,7 +47,8 @@ export default function ValidateSecureCode() {
   const generateemailcode = async (email:string) => {
     console.log("sending secure code to email:", email);
       setApiStatus("");
-      setStatus("loading");
+      setcodeStatus("loading");
+
       try{
         const res = await axiosClient.get(`/user/generateemailcode/${email}`);
         if (res?.status) {
@@ -55,7 +58,7 @@ export default function ValidateSecureCode() {
         else {
             setApiStatus("Failed to send secure code. Please try again later.");
         }
-        setStatus("idle");
+        setcodeStatus("idle");
         setTimerExpired(false);
     }
     catch (err:any) {
@@ -64,39 +67,42 @@ export default function ValidateSecureCode() {
         }
         else
           setApiStatus("Failed to send secure code. Please try again later.");
-        setStatus("error");
+          setcodeStatus("error");
     }
     finally {
-    setStatus("idle");
+      setcodeStatus("idle");
     }
   }
 
   const onSubmit = async (data :SecureCodeFormInputs) => {
       console.log("sending secure code to email:", data.secureCode);
       setApiStatus("");
-      setStatus("loading");
-      try{
-        const res = await axiosClient.post(`/user/VerifyEmailCode`,{email:email, password:data.secureCode.toUpperCase()});
-        if (res?.status) {
-            setApiStatus("You are logged in.");
-            //hookup login logic here
-            //navigate("/validatesecurecode",{state:{email:data.email}});      
-        } 
-        else  if (res?.status === 404 ) {
-            setApiStatus("Email not found. Please check and try again.");
-        } 
-        else {
-            setApiStatus("Failed to send secure code. Please try again later.");
-        }
-        setStatus("idle");
-    }
-    catch (err) {
-        setApiStatus("Failed to validate secure code. Please try again later.");
-        setStatus("error");
-    }
-    finally {
-    setStatus("idle");
-    }
+      dispatch(loginUserWithSecureCode({email:email, password:data.secureCode.toUpperCase()}));
+      //   setApiStatus("");
+      //   setStatus("loading");
+      //   try{
+      //     const res = await axiosClient.post(`/user/VerifyEmailCode`,{email:email, password:data.secureCode.toUpperCase()});
+      //     console.log("API response for validate secure code:", res);
+      //     if (res?.status) {
+      //         setApiStatus("You are logged in.");
+      //         //hookup login logic here
+      //         //navigate("/validatesecurecode",{state:{email:data.email}});      
+      //     } 
+      //     else  if (res?.status === 404 ) {
+      //         setApiStatus("Email not found. Please check and try again.");
+      //     } 
+    //     else {
+    //         setApiStatus("Failed to send secure code. Please try again later.");
+    //     }
+    //     setStatus("idle");
+    // }
+    // catch (err) {
+    //     setApiStatus("Failed to validate secure code. Please try again later.");
+    //     setStatus("error");
+    // }
+    // finally {
+    // setStatus("idle");
+    // }
   };
 
   return (
@@ -130,7 +136,7 @@ export default function ValidateSecureCode() {
                   href="#"
                   onClick={(e) =>{ e.preventDefault(); generateemailcode(email)}   }     
                   className="text-blue-600 hover:underline">
-                  {status === "loading" ? "Generating code..." : "New Code"}
+                  {codeStatus === "loading" ? "Generating code..." : "New Code"}
               </a>
           )}
 
@@ -144,6 +150,7 @@ export default function ValidateSecureCode() {
           </button>
         </div>
         {apiStatus && <p className="mt-2 text-green-500">{apiStatus}</p>}
+        {(!apiStatus && status) && <p className="mt-2 text-green-500">{status==="failed"?error:"Logged in"}</p>}
 
         <a href="#" className="mr-auto text-accent-color hover:underline mb-3" 
             onClick={(e=>{

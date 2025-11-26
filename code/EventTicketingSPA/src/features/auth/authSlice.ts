@@ -49,6 +49,24 @@ export const loginUser = createAsyncThunk(
   }
 );
 
+export const loginUserWithSecureCode = createAsyncThunk(
+  "auth/loginUserWithSecureCode",
+  async (credentials: LoginFormInputs, { rejectWithValue }) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5220/user/VerifyEmailCode",
+        credentials,
+        { withCredentials: true } // needed for HttpOnly cookies
+      );
+      accessToken= res.data.accessToken; // Expecting { username: "john", ... }
+      return  res.data.user; // Adjust based on your API response
+      
+    } catch (err :any) {
+      return rejectWithValue(err.response?.data || "Login failed");
+    }
+  }
+);
+
 export const refreshAccessToken = async () => {
   try {
     const response = await axios.post(
@@ -102,6 +120,18 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action: any) => {
+        state.status = "failed";
+        state.error = action.payload || "Login failed"  ;
+      })
+      .addCase(loginUserWithSecureCode.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(loginUserWithSecureCode.fulfilled, (state, action :PayloadAction<User>) => {
+        state.status = "succeeded";
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginUserWithSecureCode.rejected, (state, action: any) => {
         state.status = "failed";
         state.error = action.payload || "Login failed"  ;
       })
