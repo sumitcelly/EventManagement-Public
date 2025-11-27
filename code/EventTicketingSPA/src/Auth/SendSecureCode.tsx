@@ -52,15 +52,31 @@ export default function SendSecureCode() {
       try
       {        
         let url=`/user/GenerateEmailCode/${data.email}`;
-        if(returnUrl==="signup"){
+        let userExists=false;
+        if(returnUrl==="signup")
+        {
             url+="/true";
+            console.log("Checking if user exists for signup flow");
+            axiosClient.get(`/user/checkuserexists/${data.email}`).then(res=>{
+                if(res?.status===200 && res.data===true){
+                    userExists=true;
+                    console.log("User exists with email:", data.email);
+                }
+            }).
+            catch(err=>{
+                if(err.response && err.response.status===404){
+                    // email does not exist, proceed    
+                    setStatus("idle");
+                    //navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email}}); 
+                }
+            });
         }
         const res = await axiosClient.get(url);
         console.log("API response for generate email code:", res);
 
         if (res?.status === 200) {
             setApiStatus("Secure code sent to your email.");
-            navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email}});      
+            navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email, userExists:userExists}});      
         } 
         else  if (res?.status === 404 ) {
             setApiStatus("Email not found. Please check and try again.");

@@ -30,8 +30,8 @@ export default function ValidateSecureCode() {
   const [timerExpired,setTimerExpired]=useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const {email} = location.state;
-  console.log("validating secure code for email:", email);
+  const {email,userExists} = location.state;
+  console.log("validating secure code for email:", email,userExists);
   const {returnUrl} = useParams();
 
   const {
@@ -79,7 +79,15 @@ export default function ValidateSecureCode() {
     if (isAuthenticated)
     {
       console.log("login succeeded - navigating to returnUrl:", returnUrl);
-      navigate("/"+returnUrl || "/", {state:{email:email}});
+      if (returnUrl === "signup" && userExists)
+      {
+        
+        navigate("/Myevents");
+      }
+      else
+      {
+        navigate("/"+returnUrl || "/", {state:{email:email}});
+      }
     }
   }
   , [status]);
