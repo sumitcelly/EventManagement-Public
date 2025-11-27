@@ -1,3 +1,4 @@
+using Amazon.S3.Model;
 using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization;
@@ -152,16 +153,30 @@ namespace CreateTicketApi.Controllers
             string code = request.Password; //using password field to pass code
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(code))
                 return BadRequest("Email or code is null or empty.");
-            var user = await _userDbAccess.GetUserByEmail(email);
-            if (user == null)
-                return NotFound("User not found.");
-
-            var userId = await _loginCodesDbAccess.GetUserIdByCode(code);
-            if (userId == null || userId != user.UserId)
+           
+            var emailAddress = await _loginCodesDbAccess.GetEmailAddressByCode(code);
+            if (string.IsNullOrWhiteSpace(emailAddress) || emailAddress != request.Email)
                 return Unauthorized("Invalid code.");
             //code is valid, delete all codes for the user
-            await _loginCodesDbAccess.UpdateUsedAt(user.UserId);
+            await _loginCodesDbAccess.UpdateUsedAt(code);
 
+            var user = await _userDbAccess.GetUserByEmail(email);
+            if (user == null && request.Signup.HasValue && !request.Signup.Value)
+                return NotFound("User not found and no signup requested");
+            if (user == null && request.Signup.HasValue && request.Signup.Value)
+            {
+                _logger.LogInformation($"User with email {email} not found, continuing signup by creating user.");
+                //create a temporary user record for signup
+                user = new EventUser
+                {
+                    Email = email,
+                    Name = email.Split('@')[0],               
+                };
+                var id = await _userDbAccess.CreateUser(user);
+                if (id <= 0)
+                    return StatusCode(500, "Failed to create user during signup.");
+                user.UserId = id;
+            }
              //Get role for the user
             EventOrganizerMembers? orgMember = await _eventOrganizerMembersDbAccess.GetContainingOrgByUserId(user.UserId);
             if (orgMember == null)
@@ -186,19 +201,38 @@ namespace CreateTicketApi.Controllers
             });
         }
 
-        [HttpGet("GenerateEmailCode/{email}")]
-        public async Task<ActionResult<string>> GenerateEmailCode(string email)
+     
+        [HttpGet("CheckUserExists/{email}")]
+        public async Task<bool> CheckUserExists(string email)
+        {
+            var user =  await _userDbAccess.GetUserByEmail(email);
+            return user != null;
+        }
+
+        [HttpGet("GenerateEmailCode/{email}/{signup?}")]
+        public async Task<ActionResult<string>> GenerateEmailCode(string email, bool? signup = false)
         {
             if (string.IsNullOrEmpty(email))
                 return BadRequest("Email is null or empty.");
             var user = await _userDbAccess.GetUserByEmail(email);
-            if (user == null)
+            if (user == null && signup != true)
                 return NotFound();
             
+            if (user == null && signup == true)
+            {
+                _logger.LogInformation($"User with email {email} not found, continuing since this is signup.");
+               //create a temporary user record for signup
+            }
+            if (user != null && signup == true)
+            {
+                _logger.LogInformation($"User {email} already exists and tryig to singup, sending them one time code.");
+               //create a temporary user record for signup
+            }
+
             string emailCode= EventUtils.PasswordGenerator.GetPassword();
             var code = await _loginCodesDbAccess.CreateLoginCode(new LoginCode
             {
-                UserId = user.UserId,
+                EmailAddress = email,
                 SecurityCode =emailCode,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(15),
                 RequestIp = HttpContext.Connection.RemoteIpAddress?.ToString()
@@ -215,12 +249,12 @@ namespace CreateTicketApi.Controllers
             var values = new Dictionary<string, string>
             {
                 { "EmailCode", emailCode },
-                {"Attendee", user.Name }
+                {"Attendee", user?.Name ?? "User" }
             };
 
             string content = tokenReplacer.ReplaceTokens(templateData.Item1, values);
             await _sqsHelper.QueueMessage(email,
-                user.Name,
+                user?.Name ?? "User",
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
                 templateData.Item2);
 
@@ -292,5 +326,7 @@ namespace CreateTicketApi.Controllers
     {
         public required string Email { get; set; }
         public required string Password { get; set; }
+
+        public bool? Signup { get; set; }
     }
 }

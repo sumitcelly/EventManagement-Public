@@ -20,9 +20,9 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand(@"INSERT INTO logincodes (userid, securitycode, expiresat, requestip,createdat)
-                VALUES (@userid, @securitycode, @expiresat, @requestip,utc_timestamp()); SELECT LAST_INSERT_ID();", conn);
-            cmd.Parameters.AddWithValue("@userid", code.UserId);
+            var cmd = new MySqlCommand(@"INSERT INTO logincodes (emailaddress, securitycode, expiresat, requestip,createdat)
+                VALUES (@emailaddress, @securitycode, @expiresat, @requestip,utc_timestamp()); SELECT LAST_INSERT_ID();", conn);
+            cmd.Parameters.AddWithValue("@emailaddress", code.EmailAddress);
             cmd.Parameters.AddWithValue("@securitycode", code.SecurityCode);
             cmd.Parameters.AddWithValue("@expiresat", code.ExpiresAt);
           
@@ -32,40 +32,40 @@ namespace EventManagementDbAccess
         }
 
 
-        public async Task<int?> GetUserIdByCode(string code)
+        public async Task<string?> GetEmailAddressByCode(string code)
         {
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand("SELECT userid FROM logincodes WHERE securitycode = @code  and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
+            var cmd = new MySqlCommand("SELECT emailaddress FROM logincodes WHERE securitycode = @code  and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
             cmd.Parameters.AddWithValue("@code", code);
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
-                return reader.GetInt16(reader.GetOrdinal("userid"));
+                return reader.GetString(reader.GetOrdinal("emailaddress"));
             return null;
         }
 
-        public async Task<List<string>> GetLoginCodesByUser(int userId)
+        public async Task<List<string>> GetLoginCodesByUser(string emailAddress)
         {
             var result = new List<string>();
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
-            var cmd = new MySqlCommand("SELECT securitycode FROM logincodes WHERE userid = @userid and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
-            cmd.Parameters.AddWithValue("@userid", userId);
+            var cmd = new MySqlCommand("SELECT securitycode FROM logincodes WHERE emailaddress = @emailaddress and expiresat > UTC_TIMESTAMP() and usedat is null", conn);
+            cmd.Parameters.AddWithValue("@emailAddress", emailAddress);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
                 result.Add(ReadLoginCode(reader));
             return result;
         }
 
-        public async Task<bool> UpdateUsedAt(int userId)
+        public async Task<bool> UpdateUsedAt(string code)
         {
             using var conn = new MySqlConnection(ConnectionString);
             await conn.OpenAsync();
             var cmd = new MySqlCommand(@"UPDATE logincodes SET
                 usedat = UTC_TIMESTAMP()
-                WHERE userid = @id AND usedat IS NULL", conn);
+                WHERE securitycode = @code AND usedat IS NULL", conn);
             
-            cmd.Parameters.AddWithValue("@id", userId);
+            cmd.Parameters.AddWithValue("@code", code);
         
             return await cmd.ExecuteNonQueryAsync() > 0;
         }

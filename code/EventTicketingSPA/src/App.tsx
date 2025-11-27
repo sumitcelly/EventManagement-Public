@@ -23,6 +23,7 @@ import { TeamManager } from "./pages/Organizer/TeamManager";
 import { OrganizerManager } from "./pages/Organizer/OrganizerManager";
 import SendSecureCode from "./Auth/SendSecureCode";
 import ValidateSecureCode from "./Auth/ValidateSecureCode";
+import SignupForm from "./pages/SignupForm";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -41,7 +42,7 @@ export default function App() {
         <Route path="/Auth/SendSecureCode/:returnUrl?" element={<SendSecureCode/>}/>
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" element={<ValidateSecureCode/>}/>
         
-        {/* <Route path="/FindMyTickets" element={isAuthenticated?<MyEvents/>:<SendSecureCode/>}/> */}
+        <Route path="/Signup" element={<SignupForm/>}/> 
 
         <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
         

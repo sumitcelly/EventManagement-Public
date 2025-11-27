@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import PasswordFields, { PasswordStatus } from "../components/PasswordFields";
 import { useLocation } from "react-router-dom";
+import axios from "axios";
 
 interface FormValues {
   name: string;
@@ -26,11 +27,17 @@ export default function SignupForm()  {
       alert("Fix password errors first.");
       return;
     }
-
-    console.log("FORM SUBMITTED:", {
-      ...data,
+    axios.post("http://localhost:5220/user/usersignup", {
+      name: data.name,
+      email: email,
       password: passwordState.password
+    }).then(response => {
+      console.log("Signup successful:", response.data);
+    }).catch(error => {
+      console.error("Signup error:", error);
     });
+
+   
   };
 
   return (
@@ -46,11 +53,14 @@ export default function SignupForm()  {
         placeholder="Your full name"
       />
 
-      {/* PASSWORD COMPONENT */}
+      {/* PASSWORD COMPONENT 
+      receives state from passwordfields 
+      to update state locally*/}
+      
       <PasswordFields onChange={(state) => setPasswordState(state)} />
 
       {/* SUBMIT BUTTON */}
-      <button type="submit" disabled={!passwordState.valid}>
+      <button type="submit" disabled={!passwordState.valid || !email}>
         Sign Up
       </button>
     </form>

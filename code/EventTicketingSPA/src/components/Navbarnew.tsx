@@ -211,8 +211,9 @@ export function AppNavbar() {
         {isAuthenticated  ?
         (<NavbarLink href="/myevents">Find my tickets</NavbarLink>) :
         (<NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>)}
-       
-        <NavbarLink href="#">Help</NavbarLink>
+        {!isAuthenticated &&(
+          <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>
+        )}
       </NavbarCollapse>
     </Navbar>
   );
