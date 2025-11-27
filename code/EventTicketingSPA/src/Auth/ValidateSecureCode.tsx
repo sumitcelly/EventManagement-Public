@@ -79,7 +79,7 @@ export default function ValidateSecureCode() {
     if (isAuthenticated)
     {
       console.log("login succeeded - navigating to returnUrl:", returnUrl);
-      navigate("/"+returnUrl || "/");
+      navigate("/"+returnUrl || "/", {state:{email:email}});
     }
   }
   , [status]);
@@ -87,7 +87,7 @@ export default function ValidateSecureCode() {
   const onSubmit = async (data :SecureCodeFormInputs) => {
       console.log("sending secure code to email:", data.secureCode);
       setApiStatus("");
-      dispatch(loginUserWithSecureCode({email:email, password:data.secureCode.toUpperCase()}));
+      dispatch(loginUserWithSecureCode({email:email, password:data.secureCode.toUpperCase(), signup: returnUrl==="signup"?true:false}) );
   };
 
   const getAuthenticationMessage = () => {
@@ -138,7 +138,7 @@ export default function ValidateSecureCode() {
               disabled={status === "loading"}
               className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
               >
-            {status === "loading" ? "Logging in..." : "Login"}
+            {status === "loading" ? "Verifying..." : "Verify Code"}
           </button>
         </div>
         {apiStatus && <p className="mt-2 text-green-500">{apiStatus}</p>}

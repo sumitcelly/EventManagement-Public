@@ -30,7 +30,7 @@ export default function SendSecureCode() {
   const {returnUrl} = useParams();
  
   console.log("SendSecureCode returnUrl:", returnUrl);
-  
+
   const {
     register,
     handleSubmit,
@@ -49,8 +49,13 @@ export default function SendSecureCode() {
       console.log("sending secure code to email:", data.email);
       setApiStatus("");
       setStatus("loading");
-      try{
-        const res = await axiosClient.get(`/user/GenerateEmailCode/${data.email}`);
+      try
+      {        
+        let url=`/user/GenerateEmailCode/${data.email}`;
+        if(returnUrl==="signup"){
+            url+="/true";
+        }
+        const res = await axiosClient.get(url);
         console.log("API response for generate email code:", res);
 
         if (res?.status === 200) {

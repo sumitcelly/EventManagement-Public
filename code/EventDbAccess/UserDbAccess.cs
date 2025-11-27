@@ -307,7 +307,7 @@ namespace EventManagementDbAccess
                     throw new Exception("Old password is incorrect.");
                 user.Password = password;
                 
-                bool isUpdated = await UpdateUser(user);
+                bool isUpdated = await UpdateUserByEmail(user);
                 if (!isUpdated)
                     throw new Exception("Failed to update user password.");
                 return user;
@@ -319,7 +319,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> UpdateUser(EventUser user)
+        public async Task<bool> UpdateUserByEmail(EventUser user)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user));
@@ -331,7 +331,6 @@ namespace EventManagementDbAccess
 
                 string query = @"UPDATE eventuser SET
                                     FullName = @name,
-                                    Email = @email,
                                     Sms = @sms,
                                     City = @city,
                                     Country = @country,
@@ -340,7 +339,7 @@ namespace EventManagementDbAccess
                                     Password = @password,
                                     PasswordSalt = @passwordSalt,
                                     ModifiedAt = @modifiedAt
-                                 WHERE UserId = @userId";
+                                 WHERE Email = @email";
 
                 using var cmd = new MySqlCommand(query, connection);
 

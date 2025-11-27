@@ -26,6 +26,7 @@ const initialState: AuthState = {
 interface LoginFormInputs {
   email: string;
   password: string;
+  signup?: boolean;
 }
 
 let accessToken: string | null = null;

@@ -284,12 +284,12 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to create user.");
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] EventUser user)
+        [HttpPut("/user/{email}")]
+        public async Task<IActionResult> Update(string email, [FromBody] EventUser user)
         {
-            if (user == null || id != user.UserId)
-                return BadRequest("Invalid user or ID mismatch.");
-            var result = await _userDbAccess.UpdateUser(user);
+            if (user == null || string.IsNullOrEmpty(email) || user.Email != email)
+                return BadRequest("Invalid user or email mismatch.");
+            var result = await _userDbAccess.UpdateUserByEmail(user);
             if (result)
                 return Ok();
             return StatusCode(500, "Failed to update user.");
