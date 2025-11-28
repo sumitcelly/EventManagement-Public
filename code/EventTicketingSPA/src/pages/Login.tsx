@@ -1,10 +1,11 @@
 // src/pages/Login.jsx
-import { useForm } from "react-hook-form";
+import { get, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 //import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
+import { useNavigate } from "react-router-dom";
 
 
 interface LoginFormInputs {
@@ -21,10 +22,12 @@ const schema = yup.object({
 export default function Login() {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.auth);
-
+  const navigate = useNavigate();
+  
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<LoginFormInputs>({ resolver: yupResolver(schema) });
 
@@ -36,7 +39,7 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Username */}
@@ -64,14 +67,22 @@ export default function Login() {
             <p className="text-red-500 text-sm">{errors.password.message}</p>
           )}
         </div>
-
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {status === "loading" ? "Logging in..." : "Login"}
-        </button>
+        <div className="flex flex-row items-center justify-between">
+          <a href="#" className="text-sm text-blue-600 hover:underline"
+          onClick={(e) => {e.preventDefault(); 
+                  navigate(`/auth/sendsecurecode/resetpassword`,{state:{email:getValues("email")}}); 
+                  
+                }}
+          >Forgot Password?
+          </a>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {status === "loading" ? "Logging in..." : "Login"}
+          </button>
+        </div>
       </form>
     </div>
   );

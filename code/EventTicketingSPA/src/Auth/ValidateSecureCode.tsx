@@ -87,6 +87,7 @@ export default function ValidateSecureCode() {
       else
       {
         navigate("/"+returnUrl || "/", {state:{email:email}});
+       
       }
     }
   }
