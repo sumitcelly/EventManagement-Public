@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using EventUtils;
-using Amazon.S3.Model; // Adjust namespace if AmazonS3ContentUploader is elsewhere
+using Amazon.S3.Model;
+using static EventUtils.AmazonS3ContentUploader;
+using Stripe; // Adjust namespace if AmazonS3ContentUploader is elsewhere
 
 namespace CreateTicketApi.Controllers
 {
@@ -24,14 +26,16 @@ namespace CreateTicketApi.Controllers
         [HttpPost("uploaddev")]
         /// <summary>
         /// Uploads a file to the local file system for development purposes.
-        public async Task<IActionResult> UploadFileDev(IFormFile file, string customerName, string eventName)
+        public async Task<IActionResult> UploadFileDev(IFormFile file, int organizationId, int eventId, string purpose)
         {
-            if (file == null || file.Length == 0 || string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName))
+            if (file == null || file.Length == 0 || organizationId <=0 )
                 return BadRequest("File, customerName, and eventName are required.");
 
             try
             {
-                string filePath = AmazonS3ContentUploader.GetFileKey(file.FileName, customerName, eventName);
+                if (!Enum.TryParse(purpose, out Purpose filePurpose))
+                    return BadRequest("A valid file purpose is required.");
+                string filePath = GetFileKey(file.FileName, organizationId,filePurpose, eventId);
                 filePath = filePath.Replace('/', '\\'); // Ensure correct path format for Windows
                 filePath = Path.Combine(_contentPath, filePath);
                 if (file.Length > 0 && file.Length < 10 * 1024 * 1024) // Limit to 10MB
@@ -69,23 +73,23 @@ namespace CreateTicketApi.Controllers
         /// <param name="customerName"></param>
         /// <param name="eventName"></param>
         /// <returns></returns>
-        [HttpPost("uploadtest")]
-        public async Task<IActionResult> UploadFileTest(IFormFile file, string customerName,  string eventName)
-        {
-            if (file == null || file.Length == 0 || string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName))
-                return BadRequest("File, customerName, and eventName are required.");
+        // [HttpPost("uploadtest")]
+        // public async Task<IActionResult> UploadFileTest(IFormFile file, string customerName,  string eventName)
+        // {
+        //     if (file == null || file.Length == 0 || string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName))
+        //         return BadRequest("File, customerName, and eventName are required.");
 
-            try
-            {
-                await _s3Uploader.UploadFileAsync(customerName, eventName, file.OpenReadStream(), file.FileName, file.ContentType);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to upload file to S3.");
-                return StatusCode(500, "Failed to upload file to S3.");
-            }
-            return Ok("File uploaded successfully.");
-        }
+        //     try
+        //     {
+        //         await _s3Uploader.UploadFileAsync(customerName, eventName, file.OpenReadStream(), file.FileName, file.ContentType);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Failed to upload file to S3.");
+        //         return StatusCode(500, "Failed to upload file to S3.");
+        //     }
+        //     return Ok("File uploaded successfully.");
+        // }
 
         /// <summary>
         /// The presigned URL is used to upload a file to Amazon S3. The url returned should be used by JS to send a put request
@@ -97,14 +101,18 @@ namespace CreateTicketApi.Controllers
         /// <returns></returns>
 
         [HttpGet("presigned-url")]
-        public async Task<IActionResult> GetPresignedUrl([FromQuery] string fileName, [FromQuery] string customerName, [FromQuery] string eventName)
+        public async Task<IActionResult> GetPresignedUrl([FromQuery] string fileName, [FromQuery] int organizationId,
+        [FromQuery] string contentType,
+         [FromQuery] int eventId,[FromQuery] string filePurpose)
         {
-            if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName))
-                return BadRequest("fileName, customerName, and eventName are required.");
-
+            if (string.IsNullOrWhiteSpace(fileName) || organizationId <=0 )
+            return BadRequest("File, customerName, and eventName are required.");
+       
+            if (!Enum.TryParse(filePurpose, out Purpose purpose))
+                return BadRequest("A valid file purpose is required.");
             try
             {
-                var url = await _s3Uploader.GetPreSignedUrlForUpload(fileName, customerName, eventName);
+                var url = await _s3Uploader.GetPreSignedUrlForUpload(fileName, organizationId, purpose, contentType,eventId);
                 return Ok(new { url });
             }
             catch (Exception ex)

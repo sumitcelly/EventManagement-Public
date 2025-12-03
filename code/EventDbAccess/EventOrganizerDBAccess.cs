@@ -1,3 +1,5 @@
+using EventUtils;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
@@ -11,10 +13,11 @@ namespace EventManagementDbAccess
     {
 
 
-        public EventOrganizerDBAccess(IConfiguration connectionString, ILogger<EventOrganizerDBAccess> logger) : base(connectionString, logger) 
+        public EventOrganizerDBAccess(IConfiguration connectionString, ILogger<EventOrganizerDBAccess> logger, 
+        IDistributedCache cache) : base(connectionString, logger,cache) 
         {
 
-         }
+        }
 
        
         public async Task<EventOrganizer> GetOrganizerById(int customerId)
@@ -159,6 +162,34 @@ namespace EventManagementDbAccess
                 Console.WriteLine($"Error retrieving organizer by CustomerId: {ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<bool> UpdateOrganizerImageUrl(int organizerId, string url)
+        {
+            if (organizerId <=0 || string.IsNullOrWhiteSpace(url))
+                throw new ArgumentException("Invalid input args for function");
+            
+            using var connection = new MySqlConnection(this.ConnectionString);
+            await connection.OpenAsync();
+            string query = @"UPDATE eventorganizer SET 
+                OrganizerImageUrl = @url
+                where customerid=@organizerId";
+            using var cmd = new MySqlCommand(query, connection);
+    
+            cmd.Parameters.AddWithValue("@name", url);
+            cmd.Parameters.AddWithValue("@organizerId", organizerId);
+
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            if (rowsAffected > 0)
+            { 
+                EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
+                if (evtOrg!=null)
+                {
+                    evtOrg.OrganizerImageUrl =AmazonS3ContentUploader.ConvertKeyToUrl(url);
+                    await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                }
+            }
+            return rowsAffected > 0;
         }
 
         public async Task<int> AddOrganizer(EventOrganizer organizer)

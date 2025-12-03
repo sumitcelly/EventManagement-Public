@@ -30,6 +30,8 @@ namespace EventManagementDbAccess
         public bool IsLive { get; set; } = false;
 
         public bool IsPrivate { get; set; } = false;
+
+        public string EventBannerUrl {get;set;} = string.Empty;
     }
     public class Event : EventHeader
     {

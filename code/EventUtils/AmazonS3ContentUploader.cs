@@ -1,25 +1,41 @@
 
 using System;
 using System.Threading.Tasks;
+using Amazon.Runtime.Internal.Util;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Stripe;
 
 namespace EventUtils;
 
 public class AmazonS3ContentUploader
 {
    
+    public enum Purpose
+    {
+        EventBannerImage,
+        EventContentImage,
+        EventContentDocument,
+        OrganizerAboutMeImage,
+        OrganizerOtherImage,
+        OrganizerDocument 
+    } 
+
     private readonly int _maxTimeForUrl = 3; // in minutes
 
     private readonly AmazonS3Client _s3Client;
-    public AmazonS3ContentUploader(IConfiguration configuration)
+
+    private  static Microsoft.Extensions.Logging.ILogger? _logger { get; set; }
+    public AmazonS3ContentUploader(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger logger)
     {
+        _logger = logger;
+
         _s3Client = new AmazonS3Client(
             configuration["AccessKeyId"],
             configuration["AccessKeySecret"],
             Amazon.RegionEndpoint.USWest2);
-        BucketName = configuration["S3BucketName"] ?? "customereventcontent";
         if (string.IsNullOrEmpty(BucketName))
         {
             throw new ArgumentException("S3 bucket name is not configured.");
@@ -27,54 +43,69 @@ public class AmazonS3ContentUploader
        
     }
     
-    public static string BucketName { get; set; } = "customereventcontent";
+    public static string BucketName { get; set; } = "customercontent";
+    public static bool CheckImageFileExtension(string fileName) => 
+            fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+            fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+            fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
+    public static bool CheckDocFileExtension(string fileName) => 
+            fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ||
+            fileName.EndsWith(".doc", StringComparison.OrdinalIgnoreCase);
     
-    public static string GetFileKey(string fileName, string customerName, string eventName)
+    public static string GetFileKey(string fileName, int organizerId,Purpose contentPurpose, int eventId=0)
     {
         // Example key format: "customer event content/CustomerName/Events/EventName/"
         string key = string.Empty;
-        if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
-            fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
-            fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
+        if (contentPurpose.ToString().Contains("Image") && !CheckImageFileExtension(fileName))
         {
-            key = GetBannerImageKey(customerName, eventName) + fileName;
+            _logger?.LogError($"Unable to store image with filename {fileName} because extension is not valid");
+            return key;
         }
-        else if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ||
-            fileName.EndsWith(".doc", StringComparison.OrdinalIgnoreCase))
+        if (contentPurpose.ToString().Contains("Document") && !CheckDocFileExtension(fileName))
         {
-            key = GetDocumentKey(customerName, eventName) + fileName;
+            _logger?.LogError($"Unable to store document with filename {fileName} because extension is not valid");
+            return key;
         }
-        else
+        if (contentPurpose.ToString().Contains("Event") && eventId==0)
         {
-            throw new ArgumentException("Unsupported file type. Only .jpg, .png, .pdf, and .doc files are allowed.");
+             _logger?.LogError($"For event purpose, eventId must be valid");
+            return key;
+        }
+        switch (contentPurpose)
+        {
+            case Purpose.EventBannerImage:
+                {                
+                    key = $"/public/{organizerId}/Events/{eventId}/Images/Banner/Main." + fileName.Split(".")[1];              
+                    break;
+                }
+            case Purpose.OrganizerAboutMeImage:
+                {           
+                    key = $"/public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
+                    break;
+                }
+             case Purpose.OrganizerDocument:
+                {           
+                    key = $"/public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
+                    break;
+                }
+             default:
+                break;
+           
         }
         return key;
     }
-
-    public static string GetBannerImageKey(string customerName, string eventName)
+    public async Task UploadFileAsync(int organizerId, int  eventId,  Stream fileStream, string fileName, string contentType, Purpose purpose)
     {
-        // Example key format: "customer event content/CustomerName/Events/EventName/Images/Banner/"
-        return @$"{customerName}/Events/{eventName}/Images/Banner/";
-    }
-   
-   public static string GetDocumentKey(string customerName, string eventName)
-    {
-        // Example key format: "customer event content/CustomerName/Events/EventName/"
-        return @$"{customerName}/Events/{eventName}/Documents/";
-    }
-
-    public async Task UploadFileAsync(string customerName, string eventName,  Stream fileStream, string fileName, string contentType)
-    {
-        if (string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName) || fileStream == null || string.IsNullOrEmpty(fileName))
+        if (organizerId <=0 || fileStream == null || string.IsNullOrEmpty(fileName))
         {
-            throw new ArgumentException("Customer name, event name, file stream, and file name must be provided.");
+            throw new ArgumentException("Customer id, event id, file stream, and file name must be provided.");
         }
 
 
         var request = new PutObjectRequest
         {
             BucketName = BucketName,
-            Key = GetFileKey(fileName, customerName, eventName),
+            Key = GetFileKey(fileName, organizerId, purpose, eventId),
             InputStream = fileStream,
             ContentType = contentType
         };
@@ -83,19 +114,20 @@ public class AmazonS3ContentUploader
     }
    
 
-    public async Task<string> GetPreSignedUrlForUpload(string fileName, string customerName, string eventName)
+    public async Task<string> GetPreSignedUrlForUpload(string fileName, int organizerId, Purpose purpose, string contentType,int eventId=0)
     {
-        if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(eventName))
+        if (string.IsNullOrEmpty(fileName) || organizerId<=0)
         {
-            throw new ArgumentException("File name, customer name, and event name must be provided.");
+            throw new ArgumentException("File name and customer id must be provided");
         }
-        
+        //todo verify content type
         // Generate a pre-signed URL for the file upload
         var preSignedUrl = await _s3Client.GetPreSignedURLAsync(new Amazon.S3.Model.GetPreSignedUrlRequest
         {
             BucketName = BucketName,
-            Key = GetFileKey(fileName, customerName, eventName),
+            Key = GetFileKey(fileName, organizerId,purpose, eventId),
             Verb = Amazon.S3.HttpVerb.PUT,
+            ContentType= contentType,
             Expires = DateTime.UtcNow.AddMinutes(_maxTimeForUrl) // URL valid for 15 minutes
         });
 
@@ -104,5 +136,9 @@ public class AmazonS3ContentUploader
         Console.WriteLine($"Generating pre-signed URL for {fileName} in bucket {BucketName}");
         return preSignedUrl;
     }
-    
+
+    public static string ConvertKeyToUrl(string key)
+    {
+        return $"https://{BucketName}.s3.us-west-2.amazonaws.com{key}";
+    }
 }
