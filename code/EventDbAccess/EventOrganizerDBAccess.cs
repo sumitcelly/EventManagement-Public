@@ -67,7 +67,8 @@ namespace EventManagementDbAccess
                         OrganizerWebsite = reader.IsDBNull(reader.GetOrdinal("OrganizerWebsite")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerWebsite")),
                         OrganizerEventBaseUrl = reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
                         OrganizerDescription = reader.IsDBNull(reader.GetOrdinal("OrganizerDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerDescription")),
-                        OrganizerImageUrl = reader.IsDBNull(reader.GetOrdinal("OrganizerImageUrl")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerImageUrl")),
+                        OrganizerImageUrl = reader.IsDBNull(reader.GetOrdinal("OrganizerImageUrl")) ? string.Empty : 
+                                    AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("OrganizerImageUrl"))),
                         OrganizerCity = reader.IsDBNull(reader.GetOrdinal("OrganizerCity")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerCity")),
                         OrganizerCountry = reader.GetString(reader.GetOrdinal("OrganizerCountry")),
                         OrganizerPhone = reader.IsDBNull(reader.GetOrdinal("OrganizerPhone")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerPhone")),

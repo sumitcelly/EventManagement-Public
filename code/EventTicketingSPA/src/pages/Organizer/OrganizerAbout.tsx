@@ -16,6 +16,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import Permissions from "../../components/Permissions";
 import { OrganizerInfo } from "../../types/Organizer";
 import FileUpload from "../../components/FileUpload";
+import axios from "axios";
 
 const memberSchema = yup.object({
   orgName: yup.string().required("Organization name required."),
@@ -39,6 +40,8 @@ type FormValues = {
 export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId?:string,organizerInfo?:OrganizerInfo}) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+ 
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -64,6 +67,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     if (!organizerInfo)
       return;
 
+    console.log('image data', imagePreview);
 
     const apiData={
         organizerId:organizerInfo.organizerId || 0,
@@ -84,10 +88,35 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     if (organizerInfo.organizerId)
     {    
       axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
-      .then(response => {
+      .then(async response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
       queryClient.invalidateQueries(['Organizer',organizerId]);
+      if (file)
+      {
+        const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}&organizationId=${organizerId}&contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);
+        
+        console.log('Response from presigned url is:',response.data);
+        if (response.status !== 200)
+        {
+          console.error('Error updating image:', response?.statusText);
+          toast.error("Error updating image");    
+          return;
+        }
+        
+        const res =await axios.put(response.data.url, file, {
+        headers: {
+          "Content-Type": file.type,           // MUST match what was signed
+        },
+        });   
+        if (res.status !== 200)
+        {
+          console.log('Error uploading image to presigned url', res.data);
+          toast.error("Error updating image");  
+          return;
+        }   
+        console.log('response for image upload', res.data);
+      }
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
@@ -215,6 +244,8 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         <FileUpload 
           imagePreview={imagePreview} 
           setImagePreview={setImagePreview} 
+          file={file}
+          setFile={setFile}
         />
       </div>
      

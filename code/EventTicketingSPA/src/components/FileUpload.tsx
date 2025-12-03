@@ -3,16 +3,27 @@ import { useState } from 'react'
 type Props = {
   imagePreview: string | null;
   setImagePreview: (preview: string | null) => void;
+  // fileType: string | null;
+  // setFileType :(fileType: string | null) => void;
+  // fileName: string | null;
+  // setFileName :(fileName: string | null) => void;
+  file: File | null;
+  setFile : (fileObj: File |null)=>void;
 };
 
-export default function ImageUploadBox({ imagePreview, setImagePreview }: Props) {
+export default function ImageUploadBox({ imagePreview, setImagePreview,file, setFile }: Props) {
  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      console.log('file type and name',file.type, file.name);
+
       const reader = new FileReader()
-      reader.onloadend = () => setImagePreview(reader.result as string)
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+        setFile(file);
+      }
       reader.readAsDataURL(file)
     }
   }

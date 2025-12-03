@@ -75,17 +75,17 @@ public class AmazonS3ContentUploader
         {
             case Purpose.EventBannerImage:
                 {                
-                    key = $"/public/{organizerId}/Events/{eventId}/Images/Banner/Main." + fileName.Split(".")[1];              
+                    key = $"public/{organizerId}/Events/{eventId}/Images/Banner/Main." + fileName.Split(".")[1];              
                     break;
                 }
             case Purpose.OrganizerAboutMeImage:
                 {           
-                    key = $"/public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
+                    key = $"public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
                     break;
                 }
              case Purpose.OrganizerDocument:
                 {           
-                    key = $"/public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
+                    key = $"public/{organizerId}/Profile/AboutMe." + fileName.Split(".")[1];              
                     break;
                 }
              default:
@@ -139,6 +139,6 @@ public class AmazonS3ContentUploader
 
     public static string ConvertKeyToUrl(string key)
     {
-        return $"https://{BucketName}.s3.us-west-2.amazonaws.com{key}";
+        return $"https://{BucketName}.s3.us-west-2.amazonaws.com/{key}";
     }
 }
