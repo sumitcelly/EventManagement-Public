@@ -23,12 +23,12 @@ public class AmazonS3ContentUploader
         OrganizerDocument 
     } 
 
-    private readonly int _maxTimeForUrl = 3; // in minutes
+    private readonly int _maxTimeForUrl = 30; // in minutes
 
     private readonly AmazonS3Client _s3Client;
 
     private  static Microsoft.Extensions.Logging.ILogger? _logger { get; set; }
-    public AmazonS3ContentUploader(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger logger)
+    public AmazonS3ContentUploader(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<AmazonS3ContentUploader> logger)
     {
         _logger = logger;
 
@@ -43,7 +43,7 @@ public class AmazonS3ContentUploader
        
     }
     
-    public static string BucketName { get; set; } = "customercontent";
+    public static string BucketName { get; set; } = "customereventcontent";
     public static bool CheckImageFileExtension(string fileName) => 
             fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
             fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||

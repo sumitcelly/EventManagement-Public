@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using EventUtils;
 using Amazon.S3.Model;
 using static EventUtils.AmazonS3ContentUploader;
-using Stripe; // Adjust namespace if AmazonS3ContentUploader is elsewhere
+using Stripe;
+using EventManagementDbAccess; // Adjust namespace if AmazonS3ContentUploader is elsewhere
 
 namespace CreateTicketApi.Controllers
 {
@@ -16,11 +17,19 @@ namespace CreateTicketApi.Controllers
         private readonly AmazonS3ContentUploader _s3Uploader;
         private readonly string _contentPath = string.Empty;
 
-        public FileUploadController(IWebHostEnvironment env, ILogger<FileUploadController> logger, AmazonS3ContentUploader s3Uploader)
+        private readonly EventOrganizerDBAccess _evtOrganizerDbAccess;
+
+        private readonly EventDbAccess _evtDbAccess;
+
+        public FileUploadController(IWebHostEnvironment env, ILogger<FileUploadController> logger, 
+                                AmazonS3ContentUploader s3Uploader,EventOrganizerDBAccess evtOrganizerDbAccess,
+                                EventDbAccess evtDbAccess)
         {
             _logger = logger;
             _s3Uploader = s3Uploader;
             _contentPath = env.ContentRootPath+"\\Content\\Customer\\";
+            _evtOrganizerDbAccess = evtOrganizerDbAccess;
+            _evtDbAccess = evtDbAccess;
         }
 
         [HttpPost("uploaddev")]
@@ -108,10 +117,26 @@ namespace CreateTicketApi.Controllers
             if (string.IsNullOrWhiteSpace(fileName) || organizationId <=0 )
             return BadRequest("File, customerName, and eventName are required.");
        
+
             if (!Enum.TryParse(filePurpose, out Purpose purpose))
                 return BadRequest("A valid file purpose is required.");
             try
             {
+                bool result = false;
+                if (purpose == Purpose.OrganizerAboutMeImage)
+                {
+                    result =await _evtOrganizerDbAccess.UpdateOrganizerImageUrl(organizationId,
+                    AmazonS3ContentUploader.GetFileKey(fileName,organizationId,purpose));
+                }
+                if (purpose == Purpose.EventBannerImage)
+                {
+                    result = await _evtDbAccess.UpdateEventBannerImageUrl(organizationId,
+                    AmazonS3ContentUploader.GetFileKey(fileName,organizationId,purpose,eventId));
+                }
+                if (!result)
+                {
+                    return StatusCode(500, "Failed to generate presigned URL due to DB issues");
+                }
                 var url = await _s3Uploader.GetPreSignedUrlForUpload(fileName, organizationId, purpose, contentType,eventId);
                 return Ok(new { url });
             }

@@ -176,7 +176,7 @@ namespace EventManagementDbAccess
                 where customerid=@organizerId";
             using var cmd = new MySqlCommand(query, connection);
     
-            cmd.Parameters.AddWithValue("@name", url);
+            cmd.Parameters.AddWithValue("@url", url);
             cmd.Parameters.AddWithValue("@organizerId", organizerId);
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
