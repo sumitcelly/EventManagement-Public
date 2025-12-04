@@ -17,4 +17,5 @@ export interface EventHeader {
   eventOrganizerId:number;
   duration?:number; //in hours
   isLive?:boolean;
+  eventBannerUrl?:string;
 }

@@ -427,11 +427,12 @@ namespace EventManagementDbAccess
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         if (rowsAffected > 0)
         { 
-          Event? evt = await _cache.GetOnlyAsync<Event>(eventId.ToString());
+          string cacheKey = CacheHelper.GetCacheKey<Event>(eventId.ToString());
+          Event? evt = await _cache.GetOnlyAsync<Event>(cacheKey);
           if (evt!=null)
           {
               evt.EventBannerUrl =AmazonS3ContentUploader.ConvertKeyToUrl(url);
-              await _cache.SetOnlyAsync<Event>(eventId.ToString(),evt);
+              await _cache.SetOnlyAsync<Event>(cacheKey,evt);
           }
         }
         return rowsAffected > 0;

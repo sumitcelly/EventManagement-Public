@@ -15,6 +15,7 @@ import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
+import axios from "axios";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -60,8 +61,9 @@ type FormValues = {
 export default function EventForm({id, isActive}: {id?: string,isActive:boolean}) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
 
-   const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (imagePreview) {
@@ -95,7 +97,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       duration: res.data.duration,
       eventLocation: res.data.eventLocation,
       isLive: res.data?.isLive || false,
-      eventOrganizerId: res.data.organizerId
+      eventOrganizerId: res.data.organizerId,
+      eventBannerUrl: res.data.eventBannerUrl
     }
     //console.log("event date for basic info", eventBasicInfo.eventDate);
     dispatch(updateEvent({event: eventBasicInfo}));
@@ -149,12 +152,15 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventDate: new Date(data.eventStartDate),
         duration: data.duration,
         eventLocation: data.fullAddress,
-        eventOrganizerId: data.organizerId  
+        eventOrganizerId: data.organizerId,
+        eventBannerUrl: data.eventBannerUrl
+
       }
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log("redux update with even data", eventBasicInfo);
   }
   const eventCache = useAppSelector((state: RootState) => state.event);
+
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors);
@@ -185,12 +191,13 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     if (eventCache.eventId) {
       console.log("event already exists. Updating event for id:",eventCache.eventId);
       axiosClient.put(`/events/${eventCache.eventId}`,eventApi)
-      .then(response => {
+      .then(async response => {
         console.log('Event updated response:', response.data);
         if (response.status === 200)
         {
           console.log('Event updated succefully for eventid:',eventCache.eventId);
           toast.success("Event saved successfully");
+          await uploadImage(eventApi.eventOrganizerId,eventCache.eventId);
           updateRedux(eventApi);
           queryClient.resetQueries({queryKey:[`events/details/${id}`]});
         }
@@ -209,12 +216,13 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     {
       console.log("Creating new event");
       axiosClient.post('/events',eventApi)
-      .then(response => {
+      .then(async response => {
         console.log('Event created response:', response.data);
         if (response.data > 0)
         {
           console.log('Event created succefully with eventid:',response.data);
           toast.success("Event created successfully");
+          await uploadImage(eventApi.eventOrganizerId,response.data);
           updateRedux(eventApi,response.data);
           //queryClient.resetQueries({queryKey:[`events/details/${response.data}`]});
           
@@ -232,7 +240,37 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       });
     }  
       //setTimeout(() =>  window.location.assign(`/EventManager/${eventId}/ticketlist`), 1500);
+  }
+
+  const uploadImage = async (organizerId:any,eventId:any)=>{
+    if (file)
+    {
+      const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}` +
+                                `&eventId=${eventId}&organizationId=${organizerId}&` +
+                                `contentType=${file.type}&filePurpose=EventBannerImage`);    
+      
+      console.log('Response from presigned url is:',response.data);
+      if (response.status !== 200)
+      {
+        console.error('Error updating image:', response?.statusText);
+        toast.error("Error updating image");    
+        return;
+      }
+      
+      const res =await axios.put(response.data.url, file, {
+      headers: {
+        "Content-Type": file.type,           // MUST match what was signed
+      },
+      });   
+      if (res.status !== 200)
+      {
+        console.log('Error uploading image to presigned url', res.data);
+        toast.error("Error updating image");  
+        return;
+      }   
+      console.log('response for image upload', res.data);
     }
+  }
   
   useEffect(() => { 
     if (eventDetails) { 
@@ -240,8 +278,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       if (eventDetails.tags && eventDetails.tags.length > 0) {
         tagItems = eventDetails.tags.split(',').map((tag: string) => tag.trim());
       }
-      if (eventDetails.eventImageUrl) {
-        setImagePreview(eventDetails.eventImageUrl);
+      if (eventDetails.eventBannerUrl) {
+        setImagePreview(eventDetails.eventBannerUrl);
       }
       reset(
       {
@@ -309,6 +347,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       <FileUpload 
         imagePreview={imagePreview} 
         setImagePreview={setImagePreview} 
+        file={file}
+        setFile={setFile}
       />
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col">

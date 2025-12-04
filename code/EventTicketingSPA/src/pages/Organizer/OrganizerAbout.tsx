@@ -24,7 +24,7 @@ const memberSchema = yup.object({
   description: yup.string().required("Organizer company description is required"),
   country: yup.string().required("Country is required").default("USA"),
   aboutMe: yup.string().required("Organizer about me is required."),
-  imageUrl: yup.string().nullable().default(null)
+  imagePreview: yup.string().nullable().default(null)
   });
 
 type FormValues = {
@@ -33,8 +33,7 @@ type FormValues = {
   description:string;
   country: string;
   aboutMe:string;
-  imageUrl: string | null;
-  
+  imagePreview: string | null;
 };
 
 export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId?:string,organizerInfo?:OrganizerInfo}) {
@@ -42,9 +41,6 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
  
-
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient = useQueryClient();
   
@@ -78,7 +74,6 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         organizerDescription: data.description,
         organizerAboutMe: data.aboutMe,
         organizerInstagram: organizerInfo.organizerInstagram ,
-        organizerImageUrl: data.imageUrl ,
         organizerFacebook: organizerInfo.organizerFacebook,
         organizerX: organizerInfo.organizerX,
         organizerPhone: organizerInfo.organizerPhone,
@@ -89,34 +84,17 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     {    
       axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
       .then(async response => {
-      console.log('Organizer updated successfully:', response.data);
-      toast.success("Organizer info saved");
-      queryClient.invalidateQueries(['Organizer',organizerId]);
-      if (file)
-      {
-        const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}&organizationId=${organizerId}&contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);
-        
-        console.log('Response from presigned url is:',response.data);
-        if (response.status !== 200)
+        if (response.status === 200)
         {
-          console.error('Error updating image:', response?.statusText);
-          toast.error("Error updating image");    
-          return;
+          console.log('Organizer updated successfully:', response.data);
+          toast.success("Organizer info saved");
+          await uploadImage();
+          queryClient.invalidateQueries(['Organizer',organizerId]);
         }
-        
-        const res =await axios.put(response.data.url, file, {
-        headers: {
-          "Content-Type": file.type,           // MUST match what was signed
-        },
-        });   
-        if (res.status !== 200)
+        else
         {
-          console.log('Error uploading image to presigned url', res.data);
-          toast.error("Error updating image");  
-          return;
-        }   
-        console.log('response for image upload', res.data);
-      }
+           toast.error(`Error saving organizer info ${response.status}`);
+        }
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
@@ -126,10 +104,18 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     else
     {
       axiosClient.post('/eventorganizer',apiData)
-      .then(response => {
-      console.log('Organizer created successfully:', response.data);
-         toast.success("Organizer info saved");
-         queryClient.invalidateQueries(['Organizer',organizerId]);
+      .then(async response => {
+        console.log('Organizer created successfully:', response.data);
+        if (response.status === 200)
+        {
+          toast.success("Organizer info saved");
+          await uploadImage();
+          queryClient.invalidateQueries(['Organizer',response.data]);
+        }
+        else
+        {
+           toast.error(`Error saving organizer info ${response.status}`);
+        }
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
@@ -138,7 +124,35 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       });
     }
   }
-      function createUrlSlug(inputString:String) {
+  
+  const uploadImage = async ()=>{
+    if (file)
+    {
+      const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}&organizationId=${organizerId}&contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);    
+      console.log('Response from presigned url is:',response.data);
+      if (response.status !== 200)
+      {
+        console.error('Error updating image:', response?.statusText);
+        toast.error("Error updating image");    
+        return;
+      }
+      
+      const res =await axios.put(response.data.url, file, {
+      headers: {
+        "Content-Type": file.type,           // MUST match what was signed
+      },
+      });   
+      if (res.status !== 200)
+      {
+        console.log('Error uploading image to presigned url', res.data);
+        toast.error("Error updating image");  
+        return;
+      }   
+      console.log('response for image upload', res.data);
+    }
+  }
+
+  function createUrlSlug(inputString:String) {
       // Remove special characters (keep alphanumeric and spaces)
       let cleanedString = inputString.replace(/[^a-zA-Z0-9\s]/g, '');
 
@@ -159,12 +173,14 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         orgName: organizerInfo.organizationName || '',
         eventBaseUrl: organizerInfo.organizerEventBaseUrl || window.location.origin+'/'+createUrlSlug(organizerInfo.organizationName),
         description: organizerInfo.organizerDescription || '',
-        imageUrl: organizerInfo.organizerImageUrl || '',
+        //imagePreview: organizerInfo.organizerImageUrl || '',
         aboutMe: organizerInfo.organizerAboutMe || '',
         country: organizerInfo.organizerCountry || 'USA'
       };
       console.log('Resetting form with:', values);
+      
       reset(values);
+      setImagePreview(organizerInfo.organizerImageUrl);
     }
   }, [organizerInfo]);
 

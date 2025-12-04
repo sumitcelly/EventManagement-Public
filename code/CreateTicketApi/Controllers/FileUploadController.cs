@@ -130,7 +130,7 @@ namespace CreateTicketApi.Controllers
                 }
                 if (purpose == Purpose.EventBannerImage)
                 {
-                    result = await _evtDbAccess.UpdateEventBannerImageUrl(organizationId,
+                    result = await _evtDbAccess.UpdateEventBannerImageUrl(eventId,
                     AmazonS3ContentUploader.GetFileKey(fileName,organizationId,purpose,eventId));
                 }
                 if (!result)
