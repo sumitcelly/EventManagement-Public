@@ -119,7 +119,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     )}
 
   {eventDetails.eventDescription &&( 
-    <div className=" bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
+    <div className="bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
               border rounded-lg p-2 shadow-lg">
         <div className="text-lg font-bold mb-1 text-center text-primary-color">More Info ...</div>
         <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventDescription }} />
@@ -132,12 +132,13 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     {!isOrganizerLoading && (
       <div className="flex flex-row mt-4 items-center
                 border rounded-lg p-2 shadow-lg">
-          <img src={organizerDetails.organizerImageUrl}  alt={organizerDetails.organizerName}  
+          <img src={organizerDetails.organizerImageUrl}  alt={organizerDetails.organizationName}  
             className="rounded-full shadow-md w-24 h-24" />
           <div className="flex flex-col justify-center ml-4">
-            <div className="text-l font-bold text-primary-color">{organizerDetails.organizerName}</div>
-            <div className="text-sm font-body text-primary-color">{organizerDetails.organizerDescription}</div>
+            <div className="text-l font-bold text-primary-color">{organizerDetails.organizationName}</div>
+            <div className="text-sm font-body text-primary-color">{organizerDetails.organizerAboutMe}</div>
             <div className="flex flex-row mt-2 space-x-4">
+              <a href={`mailto:${organizerDetails.organizerEmail}`} className="text-pink-500 hover:underline">Email</a>
               <Link to={organizerDetails.organizerInstagram} target="_blank" className="text-pink-500 hover:underline">Instagram</Link>
               <Link to={organizerDetails.organizerX} target="_blank" className="text-blue-400 hover:underline">X</Link>
               <Link to={organizerDetails.organizerFacebook} target="_blank" className="text-blue-600 hover:underline">Facebook</Link>
