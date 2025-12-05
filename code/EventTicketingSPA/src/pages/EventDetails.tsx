@@ -68,7 +68,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       <div className="text-3xl text-center text-primary-color font-heading font-bold">{eventDetails.eventName}</div>
       <div className="text-l text-center font-body mt-3 text-secondary-color">{eventDetails.eventHeadline}</div>
       <div className="flex flex-row mt-4 bg-">
-          <img src="/images/concert.jpg"  alt={eventDetails.eventName} 
+          <img src={eventDetails.eventBannerUrl}  alt={eventDetails.eventName} 
             className="rounded-lg shadow-md w-2/3" />
           <div className="flex flex-col justify-center ml-4">
     
@@ -87,12 +87,12 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
             </Button>
           </div>
       </div>
-      <div className="flex italic font-body mt-4 font-extrabold">
+      <div className="flex flex-row justify-center  italic font-body mt-4 font-extrabold">
         <div className="text-l font-headline text-primary-color">
-          {new Date(eventDetails.eventDate).toLocaleDateString()} 
+          {new Date(eventDetails.eventDate).toLocaleString()} 
         </div>
 
-        <div className="font-headline text-primary-color ml-auto">
+        <div className="font-headline text-primary-color ml-auto w-1/2">
           {eventDetails.eventLocation} 
         </div>
     </div>
@@ -110,33 +110,36 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       <div className="text-sm font-body mt-3 text-primary-color 
                 border rounded-lg p-2 shadow-lg">
           <div className="text-lg font-bold mb-2 text-center text-primary-color">Event Agenda</div>
-          {eventDetails.eventAgenda.split('\n').map((line:string, index:number) => (
-            <li key={index}>{line}</li>
+          {/* {eventDetails.eventAgenda.split('\n').map((line:string, index:number) => (
+            <li className="ml-5" key={index}>{line}</li>
           ))}
+           */}
+           <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventAgenda }} />
       </div>
     )}
 
   {eventDetails.eventDescription &&( 
     <div className=" bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
               border rounded-lg p-2 shadow-lg">
-        <div className="text-lg font-bold mb-2 text-center text-primary-color">More Info ...</div>
-        {eventDetails.eventDescription.split('\n').map((line:string, index:number) => (
+        <div className="text-lg font-bold mb-1 text-center text-primary-color">More Info ...</div>
+        <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventDescription }} />
+        {/* {eventDetails.eventDescription.split('\n').map((line:string, index:number) => (
           <p key={index} className="mb-2">{line}</p>
-        ))}
+        ))} */}
     </div>
   )}
 
     {!isOrganizerLoading && (
       <div className="flex flex-row mt-4 items-center
                 border rounded-lg p-2 shadow-lg">
-          <img src={"/images/concert2.jpg"}  alt={organizerDetails.organizerName}  
+          <img src={organizerDetails.organizerImageUrl}  alt={organizerDetails.organizerName}  
             className="rounded-full shadow-md w-24 h-24" />
           <div className="flex flex-col justify-center ml-4">
             <div className="text-l font-bold text-primary-color">{organizerDetails.organizerName}</div>
             <div className="text-sm font-body text-primary-color">{organizerDetails.organizerDescription}</div>
             <div className="flex flex-row mt-2 space-x-4">
               <Link to={organizerDetails.organizerInstagram} target="_blank" className="text-pink-500 hover:underline">Instagram</Link>
-              <Link to={organizerDetails.organizerTwitter} target="_blank" className="text-blue-400 hover:underline">Twitter</Link>
+              <Link to={organizerDetails.organizerX} target="_blank" className="text-blue-400 hover:underline">X</Link>
               <Link to={organizerDetails.organizerFacebook} target="_blank" className="text-blue-600 hover:underline">Facebook</Link>
             </div>
           </div>
