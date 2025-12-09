@@ -177,6 +177,7 @@ public class SalesOrderConductor
                     TicketScanned = 0, // Assuming ticket is not scanned initially
                     EventId = customerSalesOrder.EventId,
                     User = attendee,
+                    PricePaid = item.Cost,
                     EventItemType = new EventItemType
                     {
                         EventItemTypeId = item.EventTicketTypeId,

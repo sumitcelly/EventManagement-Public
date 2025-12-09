@@ -21,5 +21,7 @@ namespace EventManagementDbAccess
         public DateTime CreatedAt { get; set; } = DateTime.MinValue;
 
         public DateTime ModifiedAt { get; set; } = DateTime.MinValue;
+
+        public decimal PricePaid {get;set;} = 0;
     }
 }

@@ -1,7 +1,10 @@
+
 CREATE TABLE logincodes (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     
     userid INT  NOT NULL,
+    
+    usedat DATETIME NULL,
     
     securitycode VARCHAR(32) NOT NULL,
     

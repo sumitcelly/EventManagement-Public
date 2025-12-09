@@ -108,7 +108,7 @@ namespace EventManagementDbAccess
                 {
                     string sql = @$"Select a.FullName, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
-                                b.TicketCode, b.TicketScanned 
+                                b.TicketCode, b.TicketScanned , b.PricePaid
                                 from eventmanagement.EventUser a, 
                                 eventmanagement.EventSalesItem b where
                                 a.UserId=b.UserId and
@@ -137,6 +137,7 @@ namespace EventManagementDbAccess
                             ticket.ModifiedAt = reader.GetDateTime(4);
                             ticket.TicketCode = reader.GetString(5);
                             ticket.TicketScanned = reader.GetInt32(6);
+                            ticket.PricePaid = reader.GetDecimal(7);
 
                         }
                     }
@@ -163,7 +164,7 @@ namespace EventManagementDbAccess
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
+                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                         CreatedAt,ModifiedAt) ");
                 sb.Append(" VALUES (");
 
@@ -185,6 +186,10 @@ namespace EventManagementDbAccess
                 sb.Append(",");
                 sb.Append("'");
                 sb.Append(ticket.EventItemType.EventItemTypeId);
+                sb.Append("'");
+                sb.Append(",");
+                sb.Append("'");
+                sb.Append(ticket.EventItemType.Cost);
                 sb.Append("'");
                 sb.Append(",");
                 sb.Append("'");
@@ -275,7 +280,7 @@ namespace EventManagementDbAccess
 
                     sb.Clear();
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                    TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,
+                    TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");
                     int index = 0;
                     var parameters = new List<MySqlParameter>();
@@ -283,7 +288,7 @@ namespace EventManagementDbAccess
                     {
                         if (index > 0) sb.Append(","); // comma between VALUES
                         sb.Append($@"(@EventId{index}, @UserId{index}, @TicketScanned{index},@TicketCode{index},
-                                        @SalesOrderId{index}, @EventItemTypeId{index},@CreatedAt{index},@ModifiedAt{index})");
+                                        @SalesOrderId{index}, @EventItemTypeId{index},@PricePaid{index},@CreatedAt{index},@ModifiedAt{index})");
 
                         parameters.Add(new MySqlParameter($"@EventId{index}", ticket.EventId));
                         parameters.Add(new MySqlParameter($"@UserId{index}", ticket.User.UserId));
@@ -291,6 +296,7 @@ namespace EventManagementDbAccess
                         parameters.Add(new MySqlParameter($"@TicketCode{index}", ticket.TicketCode));
                         parameters.Add(new MySqlParameter($"@SalesOrderId{index}", ticket.SalesOrderId));
                         parameters.Add(new MySqlParameter($"@EventItemTypeId{index}", ticket.EventItemType.EventItemTypeId));
+                        parameters.Add(new MySqlParameter($"@PricePaid{index}", ticket.PricePaid));             
                         parameters.Add(new MySqlParameter($"@CreatedAt{index}", DateTime.UtcNow));
                         parameters.Add(new MySqlParameter($"@ModifiedAt{index}", DateTime.UtcNow));
 
@@ -356,7 +362,7 @@ namespace EventManagementDbAccess
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @"SELECT a.FullName, a.Email, a.Sms,a.UserId, c.Description,
-                                c.EventItemTypeId,c.Name as ItemName, c.Cost,
+                                c.EventItemTypeId,c.Name as ItemName, b.PricePaid,
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketScanned 
                                 from eventmanagement.EventUser a, 
@@ -390,10 +396,11 @@ namespace EventManagementDbAccess
                             ticket.ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"));
                             ticket.TicketCode = reader.GetString(reader.GetOrdinal("TicketCode"));
                             ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
+                            ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()
                             {
                                 Description = reader.GetString(reader.GetOrdinal("Description")),
-                                Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
+                                //Cost = reader.GetDecimal(reader.GetOrdinal("Cost")),
                                 EventItemTypeId = reader.GetInt32(reader.GetOrdinal("EventItemTypeId")),
                                 Name = reader.GetString(reader.GetOrdinal("ItemName"))
                             };
@@ -420,7 +427,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketScanned, c.EventItemTypeId,c.Name 
+                    string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketScanned, b.PricePaid, c.EventItemTypeId,c.Name 
                                     from SalesOrder a, EventSalesItem b, EventItemType c
                                     where a.OrderId=b.SalesOrderId and
                                     b.EventItemTypeId=c.EventItemTypeId and
@@ -439,6 +446,7 @@ namespace EventManagementDbAccess
                             EventSalesItem ticket = new EventSalesItem();
                             ticket.TicketCode = reader.GetString(reader.GetOrdinal("TicketCode"));
                             ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
+                            ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()
                             {
                                 EventItemTypeId = reader.GetInt32(reader.GetOrdinal("EventItemTypeId")),

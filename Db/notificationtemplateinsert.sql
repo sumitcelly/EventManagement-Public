@@ -1,4 +1,4 @@
-SELECT * FROM eventmanagement.notificationtemplates;
+SELECT * FROM eventmanagement.notificationtemplates where OrganizerId <=>  NULL;
 
 INSERT INTO `eventmanagement`.`notificationtemplates`
 (

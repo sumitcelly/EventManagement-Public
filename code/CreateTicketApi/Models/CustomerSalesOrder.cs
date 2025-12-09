@@ -28,6 +28,7 @@ public class ErrorResponseSalesOrderItems
 
 public class SalesOrderItems
 {
+    public decimal Cost { get; set; } = 0;
     public int EventTicketTypeId { get; set; }
     public int Quantity { get; set; } = 1; // Default to 1
 }
