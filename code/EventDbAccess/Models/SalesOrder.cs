@@ -30,7 +30,19 @@ public class UserSalesOrders : EventHeader
     public int SalesOrdeId { get; set; }
 }
 
+public class SalerOrderReportItems
+{
+    public int OrderId { get; set;}
+    public int OrderTotal { get; set;} = 0;
+    public int OrderCount { get; set;} = 0;
+    public DateTime OrderDate { get; set;} = DateTime.MinValue;
+    public string  SalesOrderStatus { get; set;} = string.Empty;
 
+    public string  EventName { get; set;} = string.Empty;
+
+    public string FullName { get; set;} = string.Empty;
+    public string EmailAddress { get; set;} = string.Empty;
+}
 public enum SalesOrderStatus
 {
     InProgress, // No payment initiated yet

@@ -238,114 +238,129 @@ namespace EventManagementDbAccess
             }
         }
 
-    // public async Task<List<SalesOrder>> SearchByCustomer(int customerId, int eventId,DateOnly startDate, DateOnly endDate,
-    //                                                     string emailAddress, string name, string orderStatus,
-    //                                                     string orderByColumn= "createdate", bool isAscending =false,
-    //                                                     int limit=20)
+    public async Task<List<SalerOrderReportItems>> SearchByCustomer(int customerId, int eventId,DateOnly startDate, DateOnly endDate,
+                                                        string emailAddress, string name, int orderStatus,
+                                                        string orderByColumn= "createat", bool isAscending =false,
+                                                        DateTime? cursor =null, int? orderIdCursor=null,
+                                                        int limit=10)
 
-    // {   
-    //     if (customerId <= 0)
-    //     {
-    //         throw new ArgumentException("Invalid customer id provided", nameof(customerId));
-    //     }
+    {   
+        if (customerId <= 0)
+        {
+            throw new ArgumentException("Invalid customer id provided", nameof(customerId));
+        }
       
-    //    // Implement search logic based on the provided parameters.
-    //     // This is a placeholder implementation and should be replaced with actual search logic.
-    //     List<SalesOrder> events = new List<SalesOrder>();
-    //     using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
-    //     {
-    //         await connection.OpenAsync();
-    //         {
-    //             _logger.LogInformation("Connection to database established successfully.");
-    //             string query = @"SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt
-    //                             b.EventName, c.Email, c.FullName
-    //                             from SalesOrder a, Events b, EventUser c
-    //                             where a.EventId = b.EventId and a.UserId = c.UserId
-    //                             and a.customerId = @customerId and 
-    //                             WHERE 1=1";
+       // Implement search logic based on the provided parameters.
+        // This is a placeholder implementation and should be replaced with actual search logic.
+        List<SalerOrderReportItems> salesOrders = new List<SalerOrderReportItems>();
+        using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
+        {
+            await connection.OpenAsync();
+            {
+                _logger.LogInformation("Connection to database established successfully.");
+                string query = @" SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
+                                b.EventName, c.Email, c.FullName,
+                                COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
+                                Count(*) AS OrderCount
+                                from SalesOrder a
+                                JOIN Events b ON a.EventId = b.EventId
+                                JOIN EventUser c ON a.UserId = c.UserId
+                                LEFT JOIN EventSalesItem e ON e.salesorderid = a.orderid
+                                LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
+                                WHERE 1=1 and a.customerId = @customerId ";
 
-    //             DateOnly dtTemp =  DateOnly.FromDateTime(DateTime.Now);
+                DateOnly dtTemp =  DateOnly.FromDateTime(DateTime.Now);
                 
-    //             //cannot get future orders
-    //             if (endDate >  dtTemp)
-    //                 endDate= dtTemp;
-    //             if (startDate == DateOnly.MinValue)
-    //             {
-    //                 //default to 30 days before
-    //                 startDate = dtTemp.AddDays(-30);
-    //             }
-    //             if (endDate >=startDate)
-    //             {
-    //                 query += " AND CreatedDate between @startDate and @endDate";
-    //             }
-                                
-    //             if (!string.IsNullOrEmpty(emailAddress))
-    //             {
-    //                 query += " AND c.EmailAddress like '%@emailAddress%'";
-    //             }
-    //             if (!string.IsNullOrEmpty(name))
-    //             {
-    //                 query += " AND c.FullName like '%@name%'";
-    //             }
-    //             if (!string.IsNullOrEmpty(orderStatus))
-    //             {
-    //                 query += " AND a.SalesOrderStatus like '%@salesorderstatus%'";
-    //             }
-    //             //the comparison means that some results maybe repeated.
-    //             //So if there are multiple events at the same exact date and time, then
-    //             //search results will show an overlap
-    //             if (cursor != null)
-    //             {
-    //             query += " AND EventDate >= @cursor";
-    //             }
-    //             query += @" AND EventDate >= CURDATE() 
-    //                                     ORDER BY EventDate ASC
-    //                                     LIMIT @limit;";
-    //             Console.WriteLine("Final Query: " + query);
+                //cannot get future orders
+                if (endDate >  dtTemp || endDate == DateOnly.MinValue)
+                    endDate= dtTemp;
+                if (startDate == DateOnly.MinValue)
+                {
+                    //default to 30 days before
+                    startDate = dtTemp.AddDays(-30);
+                }
+               
+                query += " AND a.CreatedAt between @startDate and @endDate";
+                //the comparison means that some results maybe repeated.
+                //So if there are multiple events at the same exact date and time, then
+                //search results will show an overlap
+                if (cursor != null)
+                {
+                    query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
+                                         : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
+                }
+                                            
+                if (!string.IsNullOrEmpty(emailAddress))
+                {
+                    query += " AND c.Email like @emailAddress";
+                }
+                if (!string.IsNullOrEmpty(name))
+                {
+                    query += " AND c.FullName like @fullname";
+                }
+                if (orderStatus >0)
+                {
+                    query += " AND a.SalesOrderStatus = @salesorderstatus";
+                }
+                
+                query+=@" GROUP BY
+                        a.OrderId,
+                        a.SalesOrderCode,
+                        a.SalesOrderStatus,
+                        a.CreatedAt,
+                        b.EventName,
+                        c.Email,
+                        c.FullName";
+                string ASC = isAscending ? " ASC " : " DESC ";
+                query += @" ORDER BY a.CreatedAt " + ASC + "LIMIT @limit;";
 
-    //             MySqlCommand cmd = new MySqlCommand(query, connection);
-                
-    //             cmd.Parameters.AddWithValue("@keyword",keyword ?? string.Empty);
-    //             if (startDate != DateOnly.MinValue && intervalDays > 0)
-    //             {
-    //             cmd.Parameters.AddWithValue("@start_date", startDate.ToDateTime(new TimeOnly(0, 0, 0)));
-    //             cmd.Parameters.AddWithValue("@end_date", endDate);
-    //             }
-                
-    //             cmd.Parameters.AddWithValue("@city", city ?? string.Empty);
-            
-    //             cmd.Parameters.AddWithValue("@state", state ?? string.Empty);
-    //             if (!string.IsNullOrEmpty(category))
-    //             cmd.Parameters.AddWithValue("@category", category);
-    //             cmd.Parameters.AddWithValue("@limit", limit);
-                
-                
-    //             cmd.Parameters.AddWithValue("@cursor", cursor);
-                
+                Console.WriteLine("Final Query: " + query);
 
-    //             using (MySqlDataReader reader = cmd.ExecuteReader())
-    //             {
-    //                 while (reader.Read())
-    //                 {
-    //                 events.Add(new EventHeader()
-    //                 {
-    //                     EventId = reader.GetInt32("EventId"),
-    //                     EventName = reader.GetString("EventName"),
-    //                     EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
-    //                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString("EventBannerFileName")),
-    //                     EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
-    //                     EventDate = reader.GetDateTime("EventDate"),
-    //                     EventOrganizerId = reader.GetInt32("EventOrganizer"),
-    //                     EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString("EventSummary"),
-    //                     Free = reader.GetBoolean("Free"),
-    //                     EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
-    //                 });
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return events;
-    // }
+                MySqlCommand cmd = new MySqlCommand(query, connection);
+                
+                cmd.Parameters.AddWithValue("@customerId", customerId);
+                cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(new TimeOnly(0, 0, 0)));
+                cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(new TimeOnly(0,0,0)));
+                if (!string.IsNullOrEmpty(emailAddress))
+                {
+                    cmd.Parameters.AddWithValue("@emailAddress", "%"+emailAddress+"%");
+                }
+                if (!string.IsNullOrEmpty(name))
+                {
+                    cmd.Parameters.AddWithValue("@fullname","%"+ name+"%");
+                }
+                if (orderStatus>0)
+                {
+                    cmd.Parameters.AddWithValue("@salesorderstatus", orderStatus);
+                }                
+        
+                cmd.Parameters.AddWithValue("@limit", limit);
+                if (cursor != null)
+                    cmd.Parameters.AddWithValue("@cursor", cursor);
+                if (orderIdCursor != null)
+                    cmd.Parameters.AddWithValue("@orderIdCursor", orderIdCursor);
+                
+                using (MySqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        salesOrders.Add(new SalerOrderReportItems
+                        {
+                            OrderId = reader.GetInt32("OrderId"),
+                            SalesOrderStatus = reader.GetString("SalesOrderStatus"),
+                            OrderDate = reader.GetDateTime("CreatedAt"),
+                            EventName = reader.GetString("EventName"),
+                            FullName = reader.GetString("FullName"),
+                            EmailAddress = reader.GetString("Email"),
+                            OrderTotal = reader.GetInt32("OrderTotal"),
+                            OrderCount = reader.GetInt32("OrderCount")
+                        });
+                    }
+                }
+            }
+        }
+        return salesOrders;
+    }
     
     }
 }

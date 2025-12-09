@@ -60,6 +60,34 @@ namespace CreateTicketApi.Controllers
 
         }
 
+   
+        [HttpGet("/SalesOrderByCustomer/{customerId}")]
+        public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
+                                                        string emailAddress = "", string name = "", string orderStatus = "",
+                                                        string orderByColumn = "createat", bool isAscending = false,
+                                                        DateTime? cursor = null, int? orderIdCursor = null,
+                                                        int limit = 10)
+        {
+            if (customerId <= 0)
+                return BadRequest("Invalid customer id.");
+            Enum.TryParse<SalesOrderStatus>(orderStatus, out var orderStatusData);
+           
+            var result = await _dbAccess.SearchByCustomer( customerId, eventId, startDate, endDate,
+                                                        emailAddress, name, (int)orderStatusData,
+                                                        orderByColumn, isAscending,
+                                                        cursor, orderIdCursor,
+                                                        limit);
+            if (result != null)
+            {
+                Console.WriteLine("retrieved orders");
+                return Ok( result);
+            }
+            else
+                return StatusCode(500, "Failed to delete sales order.");
+        }
+
+
+
         [Authorize] 
         [HttpGet]
         [Route("/SalesOrder/ByUserId/{id}")]
