@@ -302,6 +302,10 @@ namespace EventManagementDbAccess
                 {
                     query += " AND a.SalesOrderStatus = @salesorderstatus";
                 }
+                if (eventId >0)
+                {
+                    query += " AND a.EventId = @eventId";
+                }
                 
                 query+=@" GROUP BY
                         a.OrderId,

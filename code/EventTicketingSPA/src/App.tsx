@@ -24,6 +24,7 @@ import { OrganizerManager } from "./pages/Organizer/OrganizerManager";
 import SendSecureCode from "./Auth/SendSecureCode";
 import ValidateSecureCode from "./Auth/ValidateSecureCode";
 import SignupForm from "./pages/SignupForm";
+import OrderReport from "./pages/Organizer/OrderReport";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -43,7 +44,8 @@ export default function App() {
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" element={<ValidateSecureCode/>}/>
         
         <Route path="/Signup" element={<SignupForm/>}/> 
-
+        <Route path="/Organizer/SalesOrderReport" element={isAuthenticated?<OrderReport/>:<LoginPage/>}/>
+        
         <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
         
 

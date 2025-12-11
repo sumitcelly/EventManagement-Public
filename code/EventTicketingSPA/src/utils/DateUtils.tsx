@@ -27,6 +27,12 @@ export const  addHoursToDate=(date: Date, durationHours: number): Date =>{
     return newDate;
   }
 
+export const  addDaysToDate=(date: Date, durationDays: number): Date =>{
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + durationDays);
+    return newDate;
+  }
+
 export const  combineDateTime=(date: Date, timeStr: string):string=> {
   const dateStr = date.toISOString().split('T')[0];
   return new Date(`${dateStr}T${timeStr}`).toISOString();
