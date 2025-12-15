@@ -337,7 +337,11 @@ namespace EventManagementDbAccess
                 {
                     cmd.Parameters.AddWithValue("@salesorderstatus", orderStatus);
                 }                
-        
+                if (eventId > 0)
+                {
+                    cmd.Parameters.AddWithValue("@eventId", eventId);
+                }
+
                 cmd.Parameters.AddWithValue("@limit", limit);
                 if (cursor != null)
                     cmd.Parameters.AddWithValue("@cursor", cursor);
@@ -351,7 +355,7 @@ namespace EventManagementDbAccess
                         salesOrders.Add(new SalerOrderReportItems
                         {
                             OrderId = reader.GetInt32("OrderId"),
-                            SalesOrderStatus = reader.GetString("SalesOrderStatus"),
+                            SalesOrderStatus = int.TryParse(reader.GetString("SalesOrderStatus"), out int statusValue) ? ((SalesOrderStatus)statusValue).ToString() : SalesOrderStatus.InProgress.ToString(),
                             OrderDate = reader.GetDateTime("CreatedAt"),
                             EventName = reader.GetString("EventName"),
                             FullName = reader.GetString("FullName"),

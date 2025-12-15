@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useInfiniteQuery, useQuery } from "react-query";
 import axiosClient from "../../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
@@ -8,11 +8,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import * as DateUtils from "../../utils/DateUtils"
 import toast, { Toaster } from "react-hot-toast";
-import { useForm } from "react-hook-form";
-import { use, useEffect } from "react";
+import { set, useForm } from "react-hook-form";
+import { use, useEffect, useState } from "react";
 // 
 
-
+const pageSize =10;
 const memberSchema = yup.object({
   startDate: yup.string().default(DateUtils.addDaysToDate(new Date(), -30).toISOString().split('T')[0]).required("Start date is required."),
   endDate: yup.string().default(new Date().toISOString().split('T')[0]).required("End date is required."),
@@ -39,8 +39,9 @@ export default function OrderReport() {
   const navigate = useNavigate();
   const  user = useAppSelector((state:RootState) => state.auth);
   const customerId = user.user?.customerId;
-  
-  const { data:events, isLoading:isEventsLoading } = 
+  const [orders, setOrders] = useState([]);
+
+const { data:events, isLoading:isEventsLoading } = 
   useQuery(['EventsByCustomerId',customerId], async () => {
      console.log("Fetching events for customer", customerId);
      try
@@ -75,8 +76,6 @@ export default function OrderReport() {
   );
 
 
-  let searchResults: any[] = [];
-
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
@@ -98,7 +97,7 @@ export default function OrderReport() {
     axiosClient.get(`/SalesOrderByCustomer/${customerId}?${queryString}`).then(response => {
       console.log('Order report data fetched successfully:', response.data);
       toast.success("Report data fetched. Check console log.");
-      searchResults = response.data;
+      setOrders(response.data);
       // Handle the response data as needed
     }).catch(error => {
       console.error('Error fetching order report data:', error);
@@ -129,15 +128,18 @@ export default function OrderReport() {
         orderStatus: "",
         eventName: ""
       });
-    }, [events, reset]);
+      if (orders.length>0)
+        setOrders( orders);
+    }, [events, orders,reset]);
     
     if (isEventsLoading) return <p>Loading...</p>;
   return (
+    <>
     <form onSubmit={handleSubmit(onSubmit)}
-      className="max-w-xl mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
+      className="max-w-3xl mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
     >  
       <Toaster position="top-right" />
-      <div className="text-center text-2xl font-bold text-accent-color mb-6">Order Report</div>
+      <div className="text-center text-xl font-bold text-accent-color mb-6">Order Report</div>
 
       {/* Date Row */}
       <div className="flex flex-row gap-x-4 mb-4">
@@ -200,9 +202,9 @@ export default function OrderReport() {
             className="w-full border rounded p-2"
           >
             <option value="">Any Status</option>
-            <option value="PaymentPending">In Progress</option>
+            <option value="InProgress">In Progress</option>
             <option value="PaymentRequired">Payment Required</option>
-            <option value="PaymentInitiated">Payment Initiated</option>
+            <option value="PaymentPending">Payment Pending</option>
             <option value="PaymentFailed">Payment Failed</option>
             <option value="PaymentSucceeded">Payment Succeeded</option>
             <option value="OrderCompleted">Order Completed</option>
@@ -231,8 +233,48 @@ export default function OrderReport() {
           className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
         >
           Search
-        </button>
+        </button>      
       </div>
+      {orders.length>0 && (
+          <div className="border-l-2 pl-2">
+          <table className="table-auto w-full mt-4">
+            <thead>
+              <tr>
+                <th >Date</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Event</th>
+                <th>Status</th>
+                <th >Total</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((row:any) => (
+                <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
+                  <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
+                  <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
+                
+                  <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
+                  {row.emailAddress}
+                  </td>
+                  <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
+                  <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
+              
+                  <td>
+                    ${row.orderTotal.toFixed(2)}
+                  </td>
+                  <td>{row.orderCount}</td>
+                </tr>
+              ))}
+            </tbody>
+            </table>
+          </div>
+        )}
+      
     </form>
+
+      
+    </>
   );
 }

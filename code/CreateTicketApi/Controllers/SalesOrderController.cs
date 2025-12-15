@@ -70,7 +70,9 @@ namespace CreateTicketApi.Controllers
         {
             if (customerId <= 0)
                 return BadRequest("Invalid customer id.");
-            Enum.TryParse<SalesOrderStatus>(orderStatus, out var orderStatusData);
+            
+            SalesOrderStatus orderStatusData = SalesOrderStatus.InProgress;
+            Enum.TryParse(orderStatus, out orderStatusData);
            
             var result = await _dbAccess.SearchByCustomer( customerId, eventId, startDate, endDate,
                                                         emailAddress, name, (int)orderStatusData,
