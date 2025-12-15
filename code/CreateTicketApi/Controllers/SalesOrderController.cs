@@ -65,7 +65,7 @@ namespace CreateTicketApi.Controllers
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", string orderStatus = "",
                                                         string orderByColumn = "createat", bool isAscending = false,
-                                                        DateTime? cursor = null, int? orderIdCursor = null,
+                                                        string? dateCursor = null, int? orderIdCursor = null,
                                                         int limit = 10)
         {
             if (customerId <= 0)
@@ -73,11 +73,11 @@ namespace CreateTicketApi.Controllers
             
             SalesOrderStatus orderStatusData = SalesOrderStatus.InProgress;
             Enum.TryParse(orderStatus, out orderStatusData);
-           
-            var result = await _dbAccess.SearchByCustomer( customerId, eventId, startDate, endDate,
+            
+            var result = await _dbAccess.SearchByCustomer(customerId, eventId, startDate, endDate,
                                                         emailAddress, name, (int)orderStatusData,
                                                         orderByColumn, isAscending,
-                                                        cursor, orderIdCursor,
+                                                        dateCursor, orderIdCursor,
                                                         limit);
             if (result != null)
             {

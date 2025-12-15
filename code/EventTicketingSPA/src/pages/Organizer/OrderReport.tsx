@@ -10,6 +10,7 @@ import * as DateUtils from "../../utils/DateUtils"
 import toast, { Toaster } from "react-hot-toast";
 import { set, useForm } from "react-hook-form";
 import { use, useEffect, useState } from "react";
+import React from "react";
 // 
 
 const pageSize =10;
@@ -39,9 +40,10 @@ export default function OrderReport() {
   const navigate = useNavigate();
   const  user = useAppSelector((state:RootState) => state.auth);
   const customerId = user.user?.customerId;
-  const [orders, setOrders] = useState([]);
+  //const [orders, setOrders] = useState([]);
+  const [filters, setFilters] = useState<FormValues | null>(null);
 
-const { data:events, isLoading:isEventsLoading } = 
+  const { data:events, isLoading:isEventsLoading } = 
   useQuery(['EventsByCustomerId',customerId], async () => {
      console.log("Fetching events for customer", customerId);
      try
@@ -75,8 +77,7 @@ const { data:events, isLoading:isEventsLoading } =
     }
   );
 
-
-  const onSubmit = (data: FormValues,errors:any) => {
+  const fetchOrders = async (data:FormValues, dateCursor?: string, orderIdCursor?: number) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     const queryParams = new URLSearchParams();
@@ -91,20 +92,56 @@ const { data:events, isLoading:isEventsLoading } =
     if (data.eventName)
       queryParams.append("eventId", data.eventName);
     queryParams.append("isAscending","false");
+    if (dateCursor)
+      queryParams.append("dateCursor", dateCursor);
+
     const queryString = queryParams.toString();
     console.log("Generated query string:", queryString);
-    
-    axiosClient.get(`/SalesOrderByCustomer/${customerId}?${queryString}`).then(response => {
+    try{
+      const response =await axiosClient.get(`/SalesOrderByCustomer/${customerId}?${queryString}`);
       console.log('Order report data fetched successfully:', response.data);
       toast.success("Report data fetched. Check console log.");
-      setOrders(response.data);
+      //setOrders(response.data);
+      console.log("Response data:", response.data);
+      return {orders:response.data};
       // Handle the response data as needed
-    }).catch(error => {
+    }
+    catch(error) {
       console.error('Error fetching order report data:', error);
       toast.error("Error fetching report data");
+      return {orders:[]};
       // Handle error (e.g., show notification to user)
-    });
+    }
+  }
 
+  const {
+    data: orderPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    ...rest
+  } = useInfiniteQuery(
+    ['orders', filters],
+    async ({ pageParam = null}) => {
+      if (!filters) return { orders: [] };
+      const data = await fetchOrders(filters, pageParam);
+      console.log("Fetched orders page:", data);
+      return data; // expects { orders: [], hasMore: true/false }
+    },
+    {
+      enabled: !!filters,
+      getNextPageParam: (lastPage, allPages) =>{
+        if (lastPage.orders.length < pageSize) return undefined; 
+        return lastPage.orders[lastPage.orders.length - 1].orderDate;
+      }
+    }
+  );
+
+  const onSubmit = async (data: FormValues,errors:any) => {
+    console.log("✅ Submitted data:", data);
+    console.log("❌ Validation errors:", errors); 
+    //await fetchOrders(data);
+     setFilters(data);
   }
   
     const {
@@ -128,9 +165,9 @@ const { data:events, isLoading:isEventsLoading } =
         orderStatus: "",
         eventName: ""
       });
-      if (orders.length>0)
-        setOrders( orders);
-    }, [events, orders,reset]);
+      // if (orders.length>0)
+      //   setOrders( orders);
+    }, [events,reset]);
     
     if (isEventsLoading) return <p>Loading...</p>;
   return (
@@ -235,7 +272,7 @@ const { data:events, isLoading:isEventsLoading } =
           Search
         </button>      
       </div>
-      {orders.length>0 && (
+      {orderPages && orderPages.pages.length > 0 &&(
           <div className="border-l-2 pl-2">
           <table className="table-auto w-full mt-4">
             <thead>
@@ -250,25 +287,37 @@ const { data:events, isLoading:isEventsLoading } =
               </tr>
             </thead>
             <tbody>
-              {orders.map((row:any) => (
-                <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
-                  <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
-                  <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
+              {orderPages.pages.map((page, i) => (
+              <React.Fragment key={i}>
+                {console.log("Rendering page", i, page,page.orders)}
+                 {page.orders.map((row:any) => (
+                  <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
+                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleString()}</td>
+                    <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
+                  
+                    <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
+                    {row.emailAddress}
+                    </td>
+                    <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
+                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
                 
-                  <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
-                  {row.emailAddress}
-                  </td>
-                  <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
-                  <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
-              
-                  <td>
-                    ${row.orderTotal.toFixed(2)}
-                  </td>
-                  <td>{row.orderCount}</td>
-                </tr>
+                    <td>
+                      ${row.orderTotal.toFixed(2)}
+                    </td>
+                    <td>{row.orderCount}</td>
+                  </tr>
+                   ))}
+              </React.Fragment>
               ))}
+             
             </tbody>
             </table>
+            {hasNextPage && (
+                <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                  {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                </button>
+              )}
+
           </div>
         )}
       

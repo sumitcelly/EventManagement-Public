@@ -241,7 +241,7 @@ namespace EventManagementDbAccess
     public async Task<List<SalerOrderReportItems>> SearchByCustomer(int customerId, int eventId,DateOnly startDate, DateOnly endDate,
                                                         string emailAddress, string name, int orderStatus,
                                                         string orderByColumn= "createat", bool isAscending =false,
-                                                        DateTime? cursor =null, int? orderIdCursor=null,
+                                                        string? cursor =null, int? orderIdCursor=null,
                                                         int limit=10)
 
     {   
@@ -284,10 +284,20 @@ namespace EventManagementDbAccess
                 //the comparison means that some results maybe repeated.
                 //So if there are multiple events at the same exact date and time, then
                 //search results will show an overlap
-                if (cursor != null)
-                {
-                    query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
-                                         : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
+                DateTime cursorDateTime = DateTime.MinValue;
+                if (!string.IsNullOrWhiteSpace(cursor))
+                {              
+                    DateTime.TryParse(cursor, out cursorDateTime);
+                    if (cursorDateTime != DateTime.MinValue)
+                    {
+                        //  query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
+                        //                  : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
+
+                        query += isAscending ? " AND (a.CreatedAt > @cursor)"
+                                         : " AND (a.CreatedAt < @cursor)";
+
+                    }
+                    
                 }
                                             
                 if (!string.IsNullOrEmpty(emailAddress))
@@ -343,9 +353,9 @@ namespace EventManagementDbAccess
                 }
 
                 cmd.Parameters.AddWithValue("@limit", limit);
-                if (cursor != null)
-                    cmd.Parameters.AddWithValue("@cursor", cursor);
-                if (orderIdCursor != null)
+                if (cursorDateTime != DateTime.MinValue)
+                    cmd.Parameters.AddWithValue("@cursor", cursorDateTime);
+                if (orderIdCursor >0)
                     cmd.Parameters.AddWithValue("@orderIdCursor", orderIdCursor);
                 
                 using (MySqlDataReader reader = cmd.ExecuteReader())
