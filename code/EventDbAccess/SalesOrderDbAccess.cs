@@ -290,11 +290,11 @@ namespace EventManagementDbAccess
                     DateTime.TryParse(cursor, out cursorDateTime);
                     if (cursorDateTime != DateTime.MinValue)
                     {
-                        //  query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
-                        //                  : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
+                         query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
+                                         : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
 
-                        query += isAscending ? " AND (a.CreatedAt > @cursor)"
-                                         : " AND (a.CreatedAt < @cursor)";
+                        // query += isAscending ? " AND (a.CreatedAt > @cursor)"
+                        //                  : " AND (a.CreatedAt < @cursor)";
 
                     }
                     

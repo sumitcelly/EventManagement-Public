@@ -79,7 +79,7 @@ export default function OrderReport() {
     }
   );
 
-  const fetchOrders = async (data:FormValues, dateCursor?: string, orderIdCursor?: number) => {
+  const fetchOrders = async (data:FormValues, lastRowData:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     const queryParams = new URLSearchParams();
@@ -95,15 +95,18 @@ export default function OrderReport() {
       queryParams.append("eventId", data.eventName);
     queryParams.append("isAscending", (!data.isDescending).toString());
     
-    if (dateCursor)
+    if (lastRowData != null)
+    {
+      const dateCursor = new Date(lastRowData.orderDate).toISOString();
       queryParams.append("dateCursor", dateCursor);
-
+      queryParams.append("orderidCursor", lastRowData.orderId.toString());
+    }
     const queryString = queryParams.toString();
     console.log("Generated query string:", queryString);
     try{
       const response =await axiosClient.get(`/SalesOrderByCustomer/${customerId}?${queryString}`);
       console.log('Order report data fetched successfully:', response.data);
-      toast.success("Report data fetched. Check console log.");
+      toast.success("Report data fetched.");
       //setOrders(response.data);
       console.log("Response data:", response.data);
       return {orders:response.data};
@@ -132,10 +135,15 @@ export default function OrderReport() {
       return data; // expects { orders: [], hasMore: true/false }
     },
     {
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: false,      // don’t always re-fetch on mount
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       enabled: !!filters,
       getNextPageParam: (lastPage, allPages) =>{
         if (lastPage.orders.length < pageSize) return undefined; 
-        return lastPage.orders[lastPage.orders.length - 1].orderDate;
+        return lastPage.orders[lastPage.orders.length - 1];
       }
     }
   );
