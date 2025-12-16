@@ -261,7 +261,7 @@ namespace EventManagementDbAccess
                 string query = @" SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
                                 b.EventName, c.Email, c.FullName,
                                 COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
-                                Count(*) AS OrderCount
+                                Count(e.ticketid) AS OrderCount
                                 from SalesOrder a
                                 JOIN Events b ON a.EventId = b.EventId
                                 JOIN EventUser c ON a.UserId = c.UserId

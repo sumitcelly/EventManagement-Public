@@ -42,7 +42,7 @@ export default function OrderReport() {
   const navigate = useNavigate();
   const  user = useAppSelector((state:RootState) => state.auth);
   const customerId = user.user?.customerId;
-  //const [orders, setOrders] = useState([]);
+  const [recCount, setRecCount] = useState(0);
   const [filters, setFilters] = useState<FormValues | null>(null);
 
   const { data:events, isLoading:isEventsLoading } = 
@@ -109,6 +109,11 @@ export default function OrderReport() {
       toast.success("Report data fetched.");
       //setOrders(response.data);
       console.log("Response data:", response.data);
+      if (lastRowData == null)
+        setRecCount(response.data.length);
+      else
+        setRecCount(prevCount => prevCount + response.data.length);
+
       return {orders:response.data};
       // Handle the response data as needed
     }
@@ -276,11 +281,12 @@ export default function OrderReport() {
       </div>
 
       {/* Submit Button */}
-      <div className="flex justify-end mt-4">
+      <div className="flex mt-4 mb-4 justify-between items-center">
         <div className="flex items-center mr-auto">
           <label className="font-semibold self-center">Show latest orders on top</label>
           <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
         </div>
+        <label className="mr-4 font-semibold">Total Records: {recCount}</label>
         <button
           type="submit"
           className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
