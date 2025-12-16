@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useQuery } from "react-query";
 import axiosClient from "../../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
-import { ListGroup, ListGroupItem, Button} from "flowbite-react";
+import { ListGroup, ListGroupItem, Button, Checkbox} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -21,6 +21,7 @@ const memberSchema = yup.object({
   fullname: yup.string().default(""),
   orderStatus: yup.string().default(""),
   eventName: yup.string().default(""),
+  isDescending: yup.boolean().default(true),
   }).test('start-end-date', 'Start date must be before end date', function(value) {
     const { startDate, endDate } = value;
     return startDate <= endDate;
@@ -33,6 +34,7 @@ type FormValues = {
   fullname:string;
   orderStatus:string;
   eventName:string;
+  isDescending:boolean;
 };
 
   
@@ -91,7 +93,8 @@ export default function OrderReport() {
       queryParams.append("orderStatus", data.orderStatus);
     if (data.eventName)
       queryParams.append("eventId", data.eventName);
-    queryParams.append("isAscending","false");
+    queryParams.append("isAscending", (!data.isDescending).toString());
+    
     if (dateCursor)
       queryParams.append("dateCursor", dateCursor);
 
@@ -163,7 +166,8 @@ export default function OrderReport() {
         email: "",
         fullname: "",
         orderStatus: "",
-        eventName: ""
+        eventName: "",
+        isDescending:true
       });
       // if (orders.length>0)
       //   setOrders( orders);
@@ -265,6 +269,10 @@ export default function OrderReport() {
 
       {/* Submit Button */}
       <div className="flex justify-end mt-4">
+        <div className="flex items-center mr-auto">
+          <label className="font-semibold self-center">Show latest orders on top</label>
+          <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
+        </div>
         <button
           type="submit"
           className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
@@ -292,7 +300,7 @@ export default function OrderReport() {
                 {console.log("Rendering page", i, page,page.orders)}
                  {page.orders.map((row:any) => (
                   <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
-                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleString()}</td>
+                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
                     <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
                   
                     <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>

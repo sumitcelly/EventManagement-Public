@@ -210,6 +210,7 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
+        //todo: maybe get all events including past events 
         var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
