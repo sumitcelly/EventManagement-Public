@@ -6,6 +6,9 @@ import { store, persistor } from "./app/store";
 import { Provider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { PersistGate } from "redux-persist/integration/react";
+import { IonApp } from '@ionic/react';
+import '@ionic/react/css/core.css';
+
 const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(
@@ -16,7 +19,9 @@ root.render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <PersistGate loading={null} persistor={persistor}>
-          <App />
+          <IonApp>
+            <App />
+          </IonApp>
         </PersistGate>
       </QueryClientProvider>
     </Provider>

@@ -11,6 +11,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { set, useForm } from "react-hook-form";
 import { use, useEffect, useState } from "react";
 import React from "react";
+import { IonContent, IonPage } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 
 // 
 
@@ -189,7 +191,9 @@ export default function OrderReport() {
     
     if (isEventsLoading) return <p>Loading...</p>;
   return (
-    <>
+    <IonPage>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+        <AppNavbar />
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-3xl mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
     >  
@@ -369,8 +373,9 @@ export default function OrderReport() {
         )}
       
     </form>
-
+    </IonContent>
+    </IonPage>
       
-    </>
+   
   );
 }

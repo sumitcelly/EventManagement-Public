@@ -9,6 +9,8 @@ import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import  { updateEvent} from "../features/auth/eventSlice";
 import { useAppDispatch } from "../app/hook";
+import { IonContent, IonPage } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 
 export default function EventDetails() {
@@ -63,7 +65,9 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
   if (isLoading) return <p>Loading...</p>;
 
   return (
- 
+    <IonPage>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+        <AppNavbar/>
     <div className= "max-w-2xl mx-auto mt-3 flex-col border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
       <div className="text-3xl text-center text-primary-color font-heading font-bold">{eventDetails.eventName}</div>
       <div className="text-l text-center font-body mt-3 text-secondary-color">{eventDetails.eventHeadline}</div>
@@ -149,7 +153,10 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     
     </div>
     
+    </IonContent>
+    </IonPage>
   
+
    
   );
 }

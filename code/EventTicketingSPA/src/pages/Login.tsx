@@ -6,7 +6,8 @@ import * as yup from "yup";
 import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import { useNavigate } from "react-router-dom";
-
+import { IonPage, IonContent } from '@ionic/react';
+import AppNavbar from "../components/Navbarnew";
 
 interface LoginFormInputs {
   email: string;
@@ -36,6 +37,9 @@ export default function Login() {
   };
 
   return (
+    <IonPage>
+     <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+       <AppNavbar />
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
@@ -85,5 +89,7 @@ export default function Login() {
         </div>
       </form>
     </div>
+    </IonContent>
+    </IonPage>
   );
 }
