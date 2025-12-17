@@ -2,8 +2,10 @@ import axios from "axios";
 import { refreshAccessToken, getAccessToken, logout } from "../features/auth/authSlice";
 import { store } from "../app/store";
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const axiosClient = axios.create({
-  baseURL: "http://localhost:5220",
+  baseURL: API_BASE_URL,
   withCredentials: true, // important for cookies
 });
 

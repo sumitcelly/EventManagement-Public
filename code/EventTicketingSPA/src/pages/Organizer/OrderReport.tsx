@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from "react-query";
-import axiosClient from "../../api/axiosClient";
+import axiosClient, { API_BASE_URL } from "../../api/axiosClient";
 import { useNavigate,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button, Checkbox} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
@@ -11,6 +11,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { set, useForm } from "react-hook-form";
 import { use, useEffect, useState } from "react";
 import React from "react";
+
 // 
 
 const pageSize =10;
@@ -290,7 +291,7 @@ export default function OrderReport() {
             <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
               onClick={(e)=>{
                 e.preventDefault();
-                const url =`http://localhost:5220/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
+                const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
                 startDate: filters.startDate,
                 endDate: filters.endDate,
                 emailAddress: filters.email || '',
