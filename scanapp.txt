@@ -1,0 +1,17 @@
+Scanning app:
+
+User logs in
+Credentials checked to find customer id and permissions.
+if scanning perm,
+	Fetch upcoming events for customer sort by date.
+	IF any event is today, offer start scanning button?
+	Let user select event to scan.
+
+On scan page, access camera. (for our case, enter QR code for web page)
+On successful scan (if user is not already scanned), update db,
+show success else show failure.
+Take back to camera page.
+
+
+
+Side note: Attendance report for organizer.
