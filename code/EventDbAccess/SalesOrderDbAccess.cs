@@ -326,8 +326,11 @@ namespace EventManagementDbAccess
                         c.Email,
                         c.FullName";
                 string ASC = isAscending ? " ASC " : " DESC ";
-                query += @" ORDER BY a.CreatedAt " + ASC + "LIMIT @limit;";
+                query += @" ORDER BY a.CreatedAt " + ASC;
 
+                if (limit >0)
+                    query += " LIMIT @limit;";
+                    
                 Console.WriteLine("Final Query: " + query);
 
                 MySqlCommand cmd = new MySqlCommand(query, connection);

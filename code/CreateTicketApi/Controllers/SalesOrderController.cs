@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
 using Microsoft.AspNetCore.Authorization;
+using System.Text;
 
 namespace CreateTicketApi.Controllers
 {
@@ -88,7 +89,68 @@ namespace CreateTicketApi.Controllers
                 return StatusCode(500, "Failed to delete sales order.");
         }
 
+        [HttpGet("/DownloadOrderReport/{customerId}")]
+        public  async Task<ActionResult> DownloadOrderReport(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
+                                                        string emailAddress = "", string name = "", 
+                                                        string orderStatus = "",
+                                                        bool isAscending = false
+                                                       )
+        {
+            if (customerId <= 0)
+                return BadRequest("Invalid customer id.");
+        
+            Enum.TryParse(orderStatus, out SalesOrderStatus orderStatusData);
+            
+            var result = await _dbAccess.SearchByCustomer(customerId, eventId, startDate, endDate,
+                                                        emailAddress, name, (int)orderStatusData,
+                                                        string.Empty, isAscending,
+                                                        null, null,
+                                                        -1);
+            
+            if (result != null)
+            {
+                Console.WriteLine("retrieved orders");
+                
+                 var sb = new StringBuilder();
+                // CSV header
+                sb.AppendLine("Order Id, Date, Name, Email,  Event, Status,Order Total, Item Count");
+                foreach (var o in result)
+                {
+                    sb.AppendLine(
+                        $"{o.OrderId}," +
+                        $"{o.OrderDate:yyyy-MM-dd HH:mm:ss}," +                     
+                        $"{Escape(o.FullName)}," +
+                        $"{Escape(o.EmailAddress)}," +
+                        $"{Escape(o.EventName)}," +
+                        $"{o.SalesOrderStatus}," +
+                        $"{o.OrderTotal}," +
+                        $"{o.OrderCount}"
+                    );
+                }
+                var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+                return File(
+                    bytes,
+                    "text/csv",
+                    $"sales-orders-{DateTime.UtcNow:yyyyMMdd}.csv"
+                );             
+            }
+            else
+                return StatusCode(500, "Failed to delete sales order.");
+        }
 
+        private static string Escape(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+            {
+                value = value.Replace("\"", "\"\"");
+                return $"\"{value}\"";
+            }
+
+            return value;
+        }
 
         [Authorize] 
         [HttpGet]

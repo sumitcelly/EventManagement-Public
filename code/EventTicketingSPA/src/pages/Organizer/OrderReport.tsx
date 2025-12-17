@@ -286,6 +286,30 @@ export default function OrderReport() {
           <label className="font-semibold self-center">Show latest orders on top</label>
           <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
         </div>
+        {recCount > 0 && (
+            <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
+              onClick={(e)=>{
+                e.preventDefault();
+                const url =`http://localhost:5220/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
+                startDate: filters.startDate,
+                endDate: filters.endDate,
+                emailAddress: filters.email || '',
+                name: filters.fullname || '',
+                orderStatus: filters.orderStatus || '',
+                eventId: filters.eventName == ''? '0': filters.eventName,
+                isAscending: (!filters.isDescending).toString()
+                }).toString() : ""}`;
+                console.log("Downloading report from",url);
+                
+                window.location.href = url;
+              }
+              }>
+              Download CSV
+            </Button>
+          // </a>
+        )}
+        
+
         <label className="mr-4 font-semibold">Total Records: {recCount}</label>
         <button
           type="submit"
