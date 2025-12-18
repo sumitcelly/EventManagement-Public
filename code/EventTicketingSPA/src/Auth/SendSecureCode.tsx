@@ -7,8 +7,10 @@ import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 import { useLocation} from "react-router-dom";
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 interface SecureCodeFormInputs {
   email: string;
@@ -24,10 +26,11 @@ export default function SendSecureCode() {
  // const { status, error } = useAppSelector((state) => state.auth);
   const [apiStatus,setApiStatus] = useState("");
   const  [status,setStatus]=useState<"idle"|"loading"|"error">("idle");
-  const navigate = useNavigate();
+  const ionRouter = useIonRouter();
   const location = useLocation();
-  const {email} = location.state || {};
-  const {returnUrl} = useParams();
+  const params = new URLSearchParams(location.search);
+  const email = params.get('email') || '';
+  const {returnUrl} = useParams<{returnUrl: string}>();
  
   console.log("SendSecureCode returnUrl:", returnUrl);
 
@@ -76,7 +79,9 @@ export default function SendSecureCode() {
 
         if (res?.status === 200) {
             setApiStatus("Secure code sent to your email.");
-            navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email, userExists:userExists}});      
+            ionRouter.push(`/auth/validatesecurecode/${returnUrl}?email=${data.email}&userExists=${userExists}`);
+               //{ email: data.email, userExists: userExists }
+            
         } 
         else  if (res?.status === 404 ) {
             setApiStatus("Email not found. Please check and try again.");
@@ -101,6 +106,12 @@ export default function SendSecureCode() {
   };
 
   return (
+    <IonPage>
+          <IonHeader>
+            <AppNavbar />
+          </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">SecureCode Login- Step1</h1>
 
@@ -132,5 +143,7 @@ export default function SendSecureCode() {
         {apiStatus && <p className="mt-4 text-red-500">{apiStatus}</p>}
       </form>
     </div>
+    </IonContent>
+    </IonPage>
   );
 }

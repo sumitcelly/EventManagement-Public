@@ -13,12 +13,14 @@ import { OrganizerInfo } from "../../types/Organizer";
 import OrganizerAbout from "./OrganizerAbout";
 import OrganizerConnect from "./OrganizerConnect";
 import axiosClient from "../../api/axiosClient";
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 
 export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
  // const location = useLocation();
   
-  const {organizerId,mode} = useParams();
+  const {organizerId,mode} = useParams<{organizerId: string; mode: string}>();
 
   //mode valid values are ticketlist,new,edit
   console.log('organizer id, mode from params',organizerId,mode);
@@ -80,6 +82,12 @@ export function OrganizerManager() {
   }, [organizerId,mode]);
 
   return (  
+    <IonPage>
+          <IonHeader>
+            <AppNavbar />
+          </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <Tabs aria-label="Organizer Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
@@ -93,5 +101,7 @@ export function OrganizerManager() {
         <OrganizerConnect organizerId={organizerId} organizerInfo={data}/>
       </TabItem>
     </Tabs>
+    </IonContent>
+    </IonPage>
   );
 }

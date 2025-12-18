@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "react-query";
 import axiosClient from "../../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { useHistory,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -11,12 +11,14 @@ import { useEffect } from "react";
 import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { useDispatch } from "react-redux";
 import { resetCart } from "../../features/auth/cartSlice";
+import { IonContent, IonHeader, IonPage } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 // 
 
 
   
 export default function Dashboard() {
-  const navigate = useNavigate();
+  const history = useHistory();
   const user = useAppSelector((state: RootState) => state.auth);
   const customerId = user.user?.customerId;
   const queryClient = useQueryClient();
@@ -71,13 +73,19 @@ export default function Dashboard() {
   if (isLoading) return <p>Loading...</p>;
 
   return (
+     <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+    <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
       <div className="divide-y">
         {data && data.map((event:EventHeader) => (
           <div
             key={event.eventId}
-            onClick={() => navigate(`/eventdetails/${event.eventId}`)}
+            onClick={() => history.push(`/eventdetails/${event.eventId}`)}
             className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div>
@@ -110,11 +118,13 @@ export default function Dashboard() {
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=>{ dispatch(resetEvent()); navigate(`/eventmanager`);}}
+              onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`);}}
             >
               New Event
         </button> 
       </div>
   </div>
+  </IonContent>
+  </IonPage>
   );
 }

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
 import LoginPage from "./pages/Login";
 import MyEvents from "./pages/MyEvents";
@@ -25,116 +25,125 @@ import SendSecureCode from "./Auth/SendSecureCode";
 import ValidateSecureCode from "./Auth/ValidateSecureCode";
 import SignupForm from "./pages/SignupForm";
 import OrderReport from "./pages/Organizer/OrderReport";
+import { BrowserRouter,  Route, Switch } from "react-router-dom";
+import { IonReactRouter } from "@ionic/react-router";
+import { IonContent, IonHeader, IonPage, IonRouterOutlet,IonTab,setupIonicReact } from "@ionic/react";
+import SalesOrderTicket from "./components/SalesOrderTicket";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
-
+  //setupIonicReact();
   return (
-    <BrowserRouter>
-      <AppNavbar />
-      <Routes>
+    <IonReactRouter>
+     
+      <IonRouterOutlet>
+        {/* No idea why adding it at beginning works. If put at end, then I always see Myevents page for 
+        any route. Tooke me a day. I would expect it be other way*/}
+        <Route
+          path="/"
+           render={() =>
+            isAuthenticated ? <MyEvents/> : <IonPage><IonHeader><AppNavbar/></IonHeader></IonPage>
+          }
+        />
         <Route
           path="/login"
-          element={
-            isAuthenticated ? <Navigate to="/myevents" /> : <LoginPage />
-          }
+          exact={true}
+          render={()=> isAuthenticated ? <MyEvents/> : <LoginPage />}
         />
-
-        <Route path="/Auth/SendSecureCode/:returnUrl?" element={<SendSecureCode/>}/>
-        <Route path="/Auth/ValidateSecureCode/:returnUrl?" element={<ValidateSecureCode/>}/>
-        
-        <Route path="/Signup" element={<SignupForm/>}/> 
-        <Route path="/Organizer/SalesOrderReport" element={isAuthenticated?<OrderReport/>:<LoginPage/>}/>
-        
-        <Route path="/OrganizerManager/:organizerId/:mode?" element={isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
-        
-
-        <Route path="/TeamManager/:organizerId" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>
-        <Route path="/TeamManager/:organizerId/:mode" element={isAuthenticated?<TeamManager/>:<LoginPage/>}/>
-
-        <Route path="/EventManager" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode/:ticketId" element={isAuthenticated?<EventManager/>:<LoginPage/>}/>
-
-        <Route path="/Dashboard" element={isAuthenticated?<Dashboard/>:<LoginPage/>}/>
-           
+        <Route path="/Dashboard"  render={() =>isAuthenticated?<Dashboard/>:<LoginPage/>}/>
         <Route
           path="/myevents"
-          element={
-            isAuthenticated ? <MyEvents /> : <Navigate to="/login" />
+          exact={true}
+           render={() =>
+            isAuthenticated ? <MyEvents /> :<LoginPage />
           }
         />
-
+          <Route
+          exact={true}
+          path="/ticketdetails/:eventId/:salesOrderCode"
+           render={() =>
+            isAuthenticated ? <TicketDetails/> : <LoginPage/>
+          }
+          />
+        <Route
+          path="/eventdetails/:id"
+           render={() =>
+            <EventDetails /> 
+          }
+        />
+        <Route path="/Organizer/SalesOrderReport"       
+          render={() =>isAuthenticated?
+          <OrderReport/>:<LoginPage/>}
+        />
+      
         <Route
           path="/searchevents/keyword/:keyword?"
-          element={
+           render={() =>
             <SearchEvents/> 
           }
         /> 
          <Route
           path="/searchevents/location/:location?"
-          element={
+           render={() =>
             <SearchEvents /> 
           }
         /> 
          <Route
           path="/searchevents/location/:location/keyword/:keyword"
-          element={
+           render={() =>
             <SearchEvents /> 
           }
         /> 
          <Route
           path="/searchevents/keyword/:keyword/location/:location"
-          element={
+           render={() =>
             <SearchEvents /> 
           }
         /> 
          <Route
           path="/searchevents"
-          element={
+           render={() =>
             <SearchEvents /> 
           }
         /> 
-        <Route
-          path="/eventDetails/:id"
-          element={
-            <EventDetails /> 
-          }
-        />
+        <Route path="/Auth/SendSecureCode/:returnUrl?"><SendSecureCode/></Route>
+        <Route path="/Auth/ValidateSecureCode/:returnUrl?" ><ValidateSecureCode/></Route>       
+        <Route path="/Signup" ><SignupForm/></Route>  
+
+        <Route path="/EventManager"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode/:ticketId"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
+
+     
+        <Route path="/OrganizerManager/:organizerId/:mode?"  render={() =>isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
+        <Route path="/TeamManager/:organizerId"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
+        <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
+        
         <Route
           path="/buytickets/:id"
-          element={
+           render={() =>
               <BuyTickets /> 
           }
         />
 
         <Route
           path="/ordersummary/:id"
-          element={
+           render={() =>
                <OrderSummary /> 
           }
         />
          <Route
           path="/orderconfirmation/event/:eventId"
-          element={
-               isAuthenticated ? <OrderConfirmation /> : <Navigate to="/login" />
+           render={() =>
+               isAuthenticated ? <OrderConfirmation /> : <LoginPage/>
           }
-        />
-        {/* Optionally, redirect unknown routes */}
-          <Route
-          path="/ticketdetails/:eventId/:salesOrderCode"
-          element={
-            isAuthenticated ? <TicketDetails/> : <Navigate to="/login" />
-          }
-        />
-        <Route
-          path="*"
-          element={
-            isAuthenticated ? <MyEvents/> : <Navigate to="/" />
-          }
-        />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+        /> 
+        </IonRouterOutlet>
+      </IonReactRouter>
+    );
+  }
+
+   
+    
+ 

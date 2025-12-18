@@ -1,11 +1,12 @@
 import { Card } from "flowbite-react";
 import { EventSearchResult } from "../pages/SearchEvents";
-    import { useNavigate } from "react-router-dom";
+import { useHistory } from "react-router-dom";
+import { useIonRouter } from "@ionic/react";
 
 
 export function EventCard({event}: 
     {event: EventSearchResult}) {
-    const navigate = useNavigate();
+    const ionRouter = useIonRouter();
     console.log('card data',event);
   return (
 
@@ -13,7 +14,7 @@ export function EventCard({event}:
       className="bg-brand-light max-w-xs  cursor-pointer hover:shadow-lg"
       imgAlt="test"
       imgSrc={event.eventImageUrl}
-      onClick={() => navigate(`/eventDetails/${event.eventId}`)}
+      onClick={() => ionRouter.push(`/eventDetails/${event.eventId}`)}
     >
       <div className="text-xl font-heading tracking-tight dark:text-white">
        {event.eventName}   

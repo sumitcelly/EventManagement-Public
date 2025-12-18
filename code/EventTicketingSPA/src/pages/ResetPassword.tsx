@@ -1,7 +1,7 @@
 import React, { use, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import PasswordFields, { PasswordStatus } from "../components/PasswordFields";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from 'react-hot-toast';
 import axiosClient from "../api/axiosClient";
@@ -43,7 +43,7 @@ export default function ResetPassword()  {
     valid: false,
     errors: []
   });
-  const navigate = useNavigate();
+  const history = useHistory();
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     if (!passwordState.valid) {
       alert("Fix password errors first.");
@@ -60,7 +60,7 @@ export default function ResetPassword()  {
     }).then(response => {
       console.log("Reset password successful:", response.data);
       toast.success("Reset successful! Logging you in.");
-      navigate("/myevents");     
+      history.push("/myevents");
     }).catch(error => {
       console.error("Signup error:", error);
       toast.error("Reset failed. Please try again.");     

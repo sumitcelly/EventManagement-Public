@@ -7,7 +7,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";

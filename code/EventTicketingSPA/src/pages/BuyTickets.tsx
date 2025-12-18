@@ -7,12 +7,14 @@ import CartTotal from "../components/CartTotal"
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
-import { useNavigate, useParams } from "react-router";
+import { useHistory, useParams } from "react-router";
 import OrderSummary from "./OrderSummary";
 import EventSummary from "../components/EventSummary";
 import axiosClient from "../api/axiosClient";
 import { useQuery } from "react-query";
 import { useEffect } from "react";
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 
 const schema = yup.object({
@@ -58,13 +60,12 @@ const schema = yup.object({
 });
 
 
-
 export default function BuyTickets() {
 
   const dispatch = useAppDispatch();
   const  cart = useAppSelector((state:RootState) => state.cart);
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const ionRouter = useIonRouter();
+  const { id } = useParams<{ id: string }>();
 
   
   const {
@@ -134,10 +135,15 @@ export default function BuyTickets() {
     console.log('submite',data);
     dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
     dispatch(updatetickets({ tickets: data.tickets }));
-    navigate(`/ordersummary/${id}`);
+    ionRouter.push(`/ordersummary/${id}`);
   };
  
 return (
+   <IonPage>
+         <IonHeader>
+           <AppNavbar />
+         </IonHeader>
+       <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
    
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
@@ -235,6 +241,7 @@ return (
         </form>
     
     </div>
-   
+    </IonContent>
+    </IonPage>
   );
 }

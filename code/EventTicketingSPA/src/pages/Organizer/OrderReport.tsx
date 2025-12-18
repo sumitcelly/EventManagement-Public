@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "react-query";
 import axiosClient, { API_BASE_URL } from "../../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { useHistory,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button, Checkbox} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -42,7 +42,7 @@ type FormValues = {
 
   
 export default function OrderReport() {
-  const navigate = useNavigate();
+  const history = useHistory();
   const  user = useAppSelector((state:RootState) => state.auth);
   const customerId = user.user?.customerId;
   const [recCount, setRecCount] = useState(0);

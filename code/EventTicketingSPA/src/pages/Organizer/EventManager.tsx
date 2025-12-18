@@ -8,11 +8,19 @@ import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import TicketBasics from "./TicketBasics";
 import EventPublish from "./EventPublish";
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
+
+interface EventManagerParams {
+  eventId?: string;
+  mode?: string;
+  ticketId?: string;
+}
 
 export function EventManager() {
   const tabsRef = useRef<TabsRef>(null);
 
-  const {eventId,mode,ticketId} = useParams();
+  const {eventId,mode,ticketId} = useParams<EventManagerParams>();
 
   //mode valid values are ticketlist,new,edit
   console.log('event, ticket id ,mode from params',eventId,ticketId,mode);
@@ -42,6 +50,12 @@ export function EventManager() {
   }, [mode,ticketId]);
 
   return (  
+    <IonPage>
+      <IonHeader>
+          <AppNavbar />
+       </IonHeader>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <Tabs aria-label="Event Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
@@ -63,5 +77,7 @@ export function EventManager() {
         <EventPublish eventId={eventId}/>
       </TabItem>
     </Tabs>
+    </IonContent>
+    </IonPage>
   );
 }

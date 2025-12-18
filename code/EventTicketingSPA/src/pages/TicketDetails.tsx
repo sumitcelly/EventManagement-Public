@@ -11,6 +11,8 @@ import App from "../App";
 import AppPagination from "../components/Pagination";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
+import { IonContent, IonHeader, IonPage } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 export default function TicketDetails() {
   
@@ -21,7 +23,8 @@ export default function TicketDetails() {
         setCurrentPage(page);
   }
 
-  const { eventId, salesOrderCode } = useParams();
+  const { eventId, salesOrderCode } = useParams<{ eventId: string; salesOrderCode: string }>();
+  console.log('eventId and salesOrderCode from params', eventId, salesOrderCode);
   //const  eventDetails = useAppSelector((state:RootState) => state.event);
   
   //console.log('sales order code and event id',salesOrderCode, eventId );
@@ -73,6 +76,11 @@ export default function TicketDetails() {
   if (isLoading) return <p>Loading...</p>;
 
   return ( 
+      <IonPage>
+            <IonHeader>
+              <AppNavbar />
+            </IonHeader>
+          <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
       <div className="flex flex-col max-w-md mx-auto ">
         
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
@@ -91,5 +99,7 @@ export default function TicketDetails() {
          </div>
           
     </div>
+    </IonContent>
+    </IonPage>
   );
 }

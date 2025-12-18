@@ -7,7 +7,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
@@ -31,7 +31,7 @@ type FormValues = {
 
 export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamMember, organizerId?:string}) {
 
-  const navigate = useNavigate();
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient = useQueryClient();
@@ -128,7 +128,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3" 
         onClick={(e=>{
           e.preventDefault();
-          navigate(`/teammanager/${organizerId}`);
+          history.push(`/teammanager/${organizerId}`);
         })}>
           Back to member list
       </a>

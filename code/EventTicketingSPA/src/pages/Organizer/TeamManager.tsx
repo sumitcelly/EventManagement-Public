@@ -4,16 +4,23 @@ import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
 import TicketDashboard from "./TicketDashboad";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useHistory, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import TeamList from "./TeamList";
 import MemberAdd from "./MemberAdd";
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
+
+interface TeamManagerParams {
+  organizerId?: string;
+  mode?: string;
+}
 
 export function TeamManager() {
   const tabsRef = useRef<TabsRef>(null);
   const location = useLocation();
-  const navigate = useNavigate();
-  const {organizerId,mode} = useParams();
+  const history = useHistory();
+  const {organizerId, mode} = useParams<TeamManagerParams>();
 
   //mode valid values are ticketlist,new,edit
   console.log('organizer id, mode from params',organizerId),mode;
@@ -22,7 +29,7 @@ export function TeamManager() {
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
   //console.log('active tab in state is',activeTab);
-  let memberInfo = location.state;
+  let memberInfo:any = location.state;
   console.log('Member Info is ', memberInfo);
 
 //  useEffect(()=>{
@@ -46,6 +53,12 @@ export function TeamManager() {
  
 
   return (  
+    <IonPage>
+          <IonHeader>
+            <AppNavbar />
+          </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <Tabs aria-label="Team Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
@@ -66,13 +79,15 @@ export function TeamManager() {
                                         console.log("active tab change called",tab);
                                         }}>
     
-      <TabItem title="Team List" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();navigate(`/teammanager/${organizerId}`);}}>
+      <TabItem title="Team List" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();history.push(`/teammanager/${organizerId}`);}}>
         <TeamList organizerId={organizerId} isActive={localActiveTab===0}/>
       </TabItem>
 
-      <TabItem   title="Add/Update Member" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();navigate(`/teammanager/${mode}/${organizerId}`, {state:memberInfo})}} >
+      <TabItem   title="Add/Update Member" icon={HiUserCircle} onClick={(e)=>{e.preventDefault();history.push(`/teammanager/${mode}/${organizerId}`, {state:memberInfo})}} >
         <MemberAdd organizerId={organizerId} memberInfo={memberInfo}/>
       </TabItem>
     </Tabs>
+    </IonContent>
+    </IonPage>
   );
 }

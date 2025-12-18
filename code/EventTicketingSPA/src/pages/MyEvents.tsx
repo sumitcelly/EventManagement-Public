@@ -1,9 +1,11 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { IonHeader, useIonRouter } from "@ionic/react";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
+import { IonContent, IonPage, IonRouterLink } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 // 
 interface UserSalesOrder {
   eventId: number;
@@ -19,7 +21,8 @@ interface UserSalesOrder {
 
   
 export default function MyEvents() {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
+  const router = useIonRouter();
   const  user = useAppSelector((state:RootState) => state.auth);
   const userId= user.user?.id;
 
@@ -43,13 +46,21 @@ export default function MyEvents() {
   if (isLoading) return <p>Loading...</p>;
 
   return (
+     <IonPage>
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+      <IonContent  className="ion-padding flex flex-col justify-center items-center h-full">
+     
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
       <ListGroup>
         {data && data.map((event:UserSalesOrder) => (
             <ListGroupItem
             key={event.salesOrderCode}
-            onClick={() => navigate(`/eventdetails/${event.eventId}`)}
+            onClick={(e) =>{ 
+              console.log("Navigating to event details for eventId:", event.eventId);
+              router.push(`/eventdetails/${event.eventId}`,'forward'); }}
             className="cursor-pointer"
           >
           <div className="flex items-center justify-between gap-4 w-full">
@@ -61,13 +72,24 @@ export default function MyEvents() {
               <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
             </div>
             {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
-            <Link
-              to={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
+            {/* <IonRouterLink
+              routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
               onClick={(e) => e.stopPropagation()}
               className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
             >
               View tickets
-            </Link>
+            </IonRouterLink> */}
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/ticketdetails/${event.eventId}/${event.salesOrderCode}`, 'forward');
+              }
+              }
+              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
+            >
+              View Tickets
+            </Button>
+            
         </div>
           </ListGroupItem>
       
@@ -76,5 +98,7 @@ export default function MyEvents() {
 
     </ListGroup>
     </div>
+    </IonContent>
+    </IonPage>
   );
 }

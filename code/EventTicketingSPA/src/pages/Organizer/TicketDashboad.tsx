@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "react-query";
 import axiosClient from "../../api/axiosClient";
-import { useNavigate,Link, useParams } from "react-router-dom";
+import { useHistory,Link, useParams } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -10,12 +10,14 @@ import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { Progress } from "flowbite-react";
 import toast, {  Toaster } from "react-hot-toast";
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 // 
 
 
   
 export default function TicketDashboard({eventId,isActive}: {eventId?: string, isActive?:boolean}) {
-  const navigate = useNavigate();
+  const history = useHistory();
  
   console.log('event id from props and is active',eventId, isActive);
 
@@ -93,6 +95,8 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
   if (isLoading) return <p>Loading...</p>;
 
   return (
+   
+    
     <div className="max-w-md mx-auto">
     <Toaster position="top-right" />
       <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
@@ -101,7 +105,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-                onClick={()=> navigate(`/eventmanager/${eventId}/publish`)}
+                onClick={()=> history.push(`/eventmanager/${eventId}/publish`)}
               >
                 Go Live!
           </button> 
@@ -112,7 +116,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         {data && data.map((ticket:Ticket) => (
           <div
             key={ticket.eventItemTypeId}
-            onClick={() => navigate(`/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`)}
+            onClick={() => history.push(`/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`)}
             className="border border-gray-200 rounded-lg mt-2 cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div className="flex flex-col items-center w-1/4 text-center">
@@ -153,11 +157,13 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=> navigate(`/eventmanager/${eventId}/new`)}
+              onClick={()=> history.push(`/eventmanager/${eventId}/new`)}
             >
               New Ticket
         </button> 
       </div>
     </div>
+    
   );
+  
 }

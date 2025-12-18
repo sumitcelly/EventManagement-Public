@@ -7,6 +7,8 @@ import App from "../App";
 import { useEffect, useState } from "react";
 import{useParams} from "react-router";
 import { get } from "react-hook-form";
+import { IonContent, IonHeader, IonPage } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 // 
 export interface EventSearchResult {
   eventId: number;
@@ -26,7 +28,7 @@ console.log("SearchEvents rendered");
 const pageSize =5;
 export default function EventsPage() {
    
-    const { keyword: paramKeyword, location: paramLocation } = useParams();
+    const { keyword: paramKeyword, location: paramLocation } = useParams<{ keyword?: string; location?: string }>();
     const keyword = paramKeyword ?? "";
     const location = paramLocation ?? "";
     let state = "";
@@ -86,7 +88,10 @@ export default function EventsPage() {
     if (isLoading) return <p>Loading...</p>;
 
   return (
-    <>
+    
+        <IonPage>
+          <IonHeader><AppNavbar/></IonHeader>
+         <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
     <h4 className="text-xl font-bold m-2 flex justify-center">Events you maybe interested in</h4>
     <div className="grid grid-cols-1 m-6 sm:grid-cols-2 md:grid-cols-5 gap-3 justify-items-center">
         {data?.pages.map((page) =>
@@ -101,6 +106,7 @@ export default function EventsPage() {
           {isFetchingNextPage ? "Loading..." : hasNextPage ? "Load More" : "No More Results"}
       </button>
 
-    </>
+   </IonContent>
+       </IonPage>
   );
 }

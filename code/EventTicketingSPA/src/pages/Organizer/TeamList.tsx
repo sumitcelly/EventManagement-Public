@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "react-query";
 import axiosClient from "../../api/axiosClient";
-import { useNavigate,Link, useParams } from "react-router-dom";
+import { useHistory,Link, useParams } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -16,7 +16,7 @@ import toast, {Toaster} from "react-hot-toast";
 
   
 export default function TeamList({organizerId,isActive}: {organizerId?: string, isActive?:boolean}) {
-  const navigate = useNavigate();
+  const history = useHistory();
  
   console.log('event id from props and is active',organizerId, isActive);
 
@@ -105,7 +105,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 mb-2 rounded hover:bg-blue-700"
-                onClick={()=> navigate(`/teammanager/${organizerId}/newmember`)}
+                onClick={()=> history.push(`/teammanager/${organizerId}/newmember`)}
               >
                 Add member
           </button> 

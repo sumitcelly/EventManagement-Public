@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "react-query";
 import axiosClient from "../../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { useHistory,Link } from "react-router-dom";
 import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -10,11 +10,13 @@ import { ListMenuData } from "../../components/ListMenu";
 import { useEffect } from "react";
 import { useMutation } from "react-query";
 import toast, { Toaster } from 'react-hot-toast';
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 
 
   
 export default function EventPublish({eventId}: {eventId?:string}) {
-  const navigate = useNavigate();
+  const history = useHistory();
 
   const queryClient = useQueryClient();
 
@@ -76,6 +78,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   if (validateLoading) return <p>Loading...</p>;
   
   return (  
+     
     <div className="max-w-md mx-auto  text-center">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col">
@@ -128,5 +131,6 @@ export default function EventPublish({eventId}: {eventId?:string}) {
     )}
 
   </div>
+ 
   );
 }

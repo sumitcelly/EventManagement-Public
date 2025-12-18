@@ -1,8 +1,9 @@
 import { Dropdown,DropdownItem } from "flowbite-react";
 import { HiOutlineDotsVertical } from "react-icons/hi";
-import {  useNavigate } from "react-router-dom";
+import {  useHistory } from "react-router-dom";
 import { YesNoModal } from "./YesNoModal"; 
 import { useState } from "react";
+import { useIonRouter } from "@ionic/react";
 
 export interface ListMenuData{
     viewLink:string,
@@ -13,7 +14,7 @@ export interface ListMenuData{
 
 export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
   const [openModal, setOpenModal] = useState(false);
-  const navigate = useNavigate();
+  const history = useHistory();
   const handleDelete = () => {
       // Handle the actual delete operation here
       linkData.delete();
@@ -29,11 +30,11 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
         label={<HiOutlineDotsVertical className="text-xl cursor-pointer"/>}
       >
         {linkData.viewLink && (
-          <DropdownItem onClick={() => navigate(linkData.viewLink)}>
+          <DropdownItem onClick={() => history.push(linkData.viewLink)}>
             View Details
           </DropdownItem>
         )}
-        <DropdownItem onClick={() => navigate(linkData.editLink, {state:linkData?.editData})}>
+        <DropdownItem onClick={() => history.push(linkData.editLink, linkData?.editData)}>
           Edit
         </DropdownItem>
         <DropdownItem onClick={() => setOpenModal(true)}>

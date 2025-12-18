@@ -2,21 +2,20 @@ import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 
 import { useParams } from "react-router-dom";
-import { Button} from "flowbite-react";
-import { useNavigate,Link } from "react-router-dom";
+import { Button } from "flowbite-react";
+import { useHistory, Link } from "react-router-dom";
 import { EventHeader} from "../types/Event";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import  { updateEvent} from "../features/auth/eventSlice";
 import { useAppDispatch } from "../app/hook";
-import { IonContent, IonPage } from "@ionic/react";
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
-
 
 export default function EventDetails() {
 
-  const {id}  = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
 
   const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
@@ -45,7 +44,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
   }
 );
  
-  
+
   const handleGetTickets = () => {
     const event: EventHeader = {
       eventId: eventDetails.eventId,
@@ -59,15 +58,16 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       return;
 
     dispatch(updateEvent({event}));
-    navigate(`/buytickets/${id}`);
+    ionRouter.push(`/buytickets/${id}`);
   }
   
   if (isLoading) return <p>Loading...</p>;
 
   return (
     <IonPage>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-        <AppNavbar/>
+      <IonHeader><AppNavbar/></IonHeader>
+      <IonContent fullscreen className="ion-padding flex flex-col justify-center items-center h-full">
+        
     <div className= "max-w-2xl mx-auto mt-3 flex-col border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
       <div className="text-3xl text-center text-primary-color font-heading font-bold">{eventDetails.eventName}</div>
       <div className="text-l text-center font-body mt-3 text-secondary-color">{eventDetails.eventHeadline}</div>

@@ -7,7 +7,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 import FileUpload from "../../components/FileUpload";
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import MapboxAddressField, { AddressData } from "../../components/MapboxAddressField";
 import ListInput from "../../components/ListInput";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
@@ -71,7 +71,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     }
   }, [imagePreview]) // 
 
-  const navigate = useNavigate();
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   //const event = useAppSelector((state: RootState) => state.event);
@@ -226,7 +226,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           updateRedux(eventApi,response.data);
           //queryClient.resetQueries({queryKey:[`events/details/${response.data}`]});
           
-          setTimeout(() => navigate(`/EventManager/${response.data}/ticketlist`), 1500);
+          setTimeout(() => history.push(`/EventManager/${response.data}/ticketlist`), 1500);
         }
         else
         {

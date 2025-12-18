@@ -7,7 +7,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
@@ -15,6 +15,8 @@ import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
 import {appendTime,toUTCDate, addHoursToDate,combineDateTime}   from '../../utils/DateUtils'
+import { IonPage, IonHeader, IonContent } from "@ionic/react";
+import AppNavbar from "../../components/Navbarnew";
 
 
 const ticketSchema = (event: EventHeader)=>yup.object({
@@ -87,7 +89,7 @@ type FormValues = {
 
 export default function TicketBasics({eventId,ticketId}: {eventId?: string, ticketId?:string}) {
 
-  const navigate = useNavigate();
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient =useQueryClient();
@@ -216,7 +218,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       .then(response => {
         console.log('Ticket created successfully:', response.data);
         toast.success("Ticket Type created!");
-        setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
+        setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
       })
       .catch(error => {
          toast.error("Ticket Type creation failed!");
@@ -266,6 +268,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     //   (data) => console.log("submit fired!", data),
     //   (errors) => console.log("validation errors", errors)
     // )}>
+   
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-2xl mx-auto p-6 space-y-6"
     > 
@@ -273,7 +276,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color" 
         onClick={(e)=>{
           e.preventDefault();
-          navigate(`/eventmanager/${eventId}/ticketlist`);
+          history.push(`/eventmanager/${eventId}/ticketlist`);
       }}>
           Back to Ticket list
       </a>
@@ -447,5 +450,6 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         </button>
       </div>
     </form>
+  
   );
 }

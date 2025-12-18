@@ -6,9 +6,11 @@ import { loginUser, loginUserWithSecureCode } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { use, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation,  useParams } from "react-router-dom";
 import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 
 interface SecureCodeFormInputs {
@@ -28,11 +30,15 @@ export default function ValidateSecureCode() {
   const [apiStatus,setApiStatus] = useState("");
   const [codeStatus,setcodeStatus]=useState<"idle"|"loading"|"error">("idle");
   const [timerExpired,setTimerExpired]=useState(false);
-  const navigate = useNavigate();
+  const ionRouter = useIonRouter();
+
   const location = useLocation();
-  const {email,userExists} = location.state;
+  const params = new URLSearchParams(location.search);
+  const email = params.get("email") || "";
+  const  userExists = params.get("userExists") || false;
+  
   console.log("validating secure code for email:", email,userExists);
-  const {returnUrl} = useParams();
+  const {returnUrl} = useParams<{returnUrl: string}>();
 
   const {
     register,
@@ -82,12 +88,11 @@ export default function ValidateSecureCode() {
       if (returnUrl === "signup" && userExists)
       {
         
-        navigate("/Myevents");
+        ionRouter.push("/Myevents");
       }
       else
       {
-        navigate("/"+returnUrl || "/", {state:{email:email}});
-       
+        ionRouter.push("/" + (returnUrl || "")+"?email="+email);      
       }
     }
   }
@@ -107,6 +112,12 @@ export default function ValidateSecureCode() {
   }
 
   return (
+    <IonPage>
+          <IonHeader>
+            <AppNavbar />
+          </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">SecureCode Login- Step 2</h1>
 
@@ -156,11 +167,13 @@ export default function ValidateSecureCode() {
         <a href="#" className="mr-auto text-accent-color hover:underline mb-3" 
             onClick={(e=>{
             e.preventDefault();
-            navigate("/auth/sendsecurecode",{state:{email:email}});  
+            ionRouter.push("/auth/sendsecurecode?email="+email);
             })}>
             Back
         </a>
       </form>
     </div>
+    </IonContent>
+    </IonPage>
   );
 }

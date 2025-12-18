@@ -1,11 +1,11 @@
 import React, { use, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import PasswordFields, { PasswordStatus } from "../components/PasswordFields";
-import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from 'react-hot-toast';
 import axiosClient from "../api/axiosClient";
-
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 interface FormValues {
   name: string;
   password: string;
@@ -14,10 +14,12 @@ interface FormValues {
 
 export default function SignupForm()  {
 
-  //const [error,setError] = useState<string | null>(null);
-  const {email} =  useLocation().state || {};
+  
+  const params = new URLSearchParams(location.search);
+  const email = params.get("email") || "";
+  const ionRouter = useIonRouter();
 
-  //console.log("SignupForm for email:", email);
+  console.log("SignupForm for email:", email);
 
   const { register, handleSubmit, formState:{errors} } = useForm<FormValues>({
     defaultValues: {
@@ -33,7 +35,7 @@ export default function SignupForm()  {
     valid: false,
     errors: []
   });
-  const navigate = useNavigate();
+
   const onSubmit: SubmitHandler<FormValues> = (data) => {
     if (!passwordState.valid) {
       alert("Fix password errors first.");
@@ -51,7 +53,7 @@ export default function SignupForm()  {
     }).then(response => {
       console.log("Signup successful:", response.data);
       toast.success("Signup successful! You can now log in.");
-      navigate("/myevents");     
+      ionRouter.push("/myevents");
     }).catch(error => {
       console.error("Signup error:", error);
       toast.error("Signup failed. Please try again.");     
@@ -61,6 +63,12 @@ export default function SignupForm()  {
   };
 
   return (
+     <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
      <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
         <Toaster position="top-right" />
         <h1 className="text-2xl font-bold mb-4 text-center">Create Account</h1>
@@ -99,6 +107,8 @@ export default function SignupForm()  {
         </div>
         </form>
     </div>
+    </IonContent>
+    </IonPage>
   );
 };
 

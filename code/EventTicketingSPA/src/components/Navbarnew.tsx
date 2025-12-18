@@ -11,7 +11,8 @@ import {
   NavbarLink,
   NavbarToggle
 } from "flowbite-react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useIonRouter } from '@ionic/react';
+
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import { logout } from "../features/auth/authSlice";
 import axios from "axios";
@@ -49,7 +50,8 @@ export function AppNavbar() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
-  const navigate = useNavigate();
+ // const navigate = useNavigate();
+  const history = useIonRouter();
 
   const handleLogout = async () => {
     await axios.post(
@@ -85,7 +87,7 @@ export function AppNavbar() {
       }
       console.log(`/searchevents/${queryParams}`);
       //window.location.href =`/searchevents/${queryParams}`;
-      navigate(`/searchevents/${queryParams}`);
+      history.push(`/searchevents/${queryParams}`);
     };
 
   return (

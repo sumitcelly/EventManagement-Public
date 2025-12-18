@@ -5,8 +5,8 @@ import * as yup from "yup";
 //import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
-import { useNavigate } from "react-router-dom";
-import { IonPage, IonContent } from '@ionic/react';
+
+import { IonPage, IonContent, IonHeader,IonRoute, useIonRouter } from '@ionic/react';
 import AppNavbar from "../components/Navbarnew";
 
 interface LoginFormInputs {
@@ -23,7 +23,8 @@ const schema = yup.object({
 export default function Login() {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.auth);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
+  const router = useIonRouter();
   
   const {
     register,
@@ -38,8 +39,10 @@ export default function Login() {
 
   return (
     <IonPage>
-     <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-       <AppNavbar />
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+    <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
@@ -74,7 +77,7 @@ export default function Login() {
         <div className="flex flex-row items-center justify-between">
           <a href="#" className="text-sm text-blue-600 hover:underline"
           onClick={(e) => {e.preventDefault(); 
-                  navigate(`/auth/sendsecurecode/resetpassword`,{state:{email:getValues("email")}}); 
+                  router.push(`/auth/sendsecurecode/resetpassword?email`+getValues('email')); 
                   
                 }}
           >Forgot Password?

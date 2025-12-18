@@ -1,6 +1,6 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
@@ -8,11 +8,13 @@ import { useParams } from "react-router";
 import { Button } from "flowbite-react";
 import { useState } from "react";
 import EventSummary from "../components/EventSummary";
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
    
 export default function OrderSummary() {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const history = useHistory();
+  const { id } = useParams<{ id: string }>();
   const [error,setError] = useState("");
   
   const  cart = useAppSelector((state:RootState) => state.cart);
@@ -24,12 +26,12 @@ export default function OrderSummary() {
     return (
       <div className="p-4"> 
         <h2 className="text-xl font-bold mb-2">No tickets in cart</h2>
-        <Button
-              className="align-bottom mt-auto align-center ml-4"
-                    size="xs"
-                    onClick={() => navigate(`/buytickets/${id}`)}>
-                    Back to Cart
-        </Button>
+          <Button
+            className="align-bottom mt-auto align-center ml-4"
+              size="xs"
+              onClick={() => history.push(`/buytickets/${id}`)}>
+              Back to Cart
+          </Button>
         {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
       </div>
     );
@@ -45,7 +47,7 @@ export default function OrderSummary() {
   console.log("totalAmount", totalAmount);
   console.log("paymentRequired", paymentRequired);
   const handleconfirmOrder = () => {      
-    //navigate(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);   
+    //history.push(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);   
     axiosClient.post("/salesOrder", {
       userId: user.user?.id, // Replace with actual user ID
       eventId: id,
@@ -58,7 +60,8 @@ export default function OrderSummary() {
       salesOrderItems: cart.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity, cost: t.cost })),
     }).then((res) => {
       console.log("Order created:", res.data);  
-      navigate(`/orderconfirmation/event/${id}`, {state: res.data});
+      
+      history.push(`/orderconfirmation/event/${id}`, res.data);
     }).catch((error) => {
       console.error("Error creating order:", error);
       setError("Error creating order. Please try again."+error.message);
@@ -67,6 +70,12 @@ export default function OrderSummary() {
     });
   }
   return (
+    <IonPage>
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+    <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
         <EventSummary/>
         <div className="bg-brand-neutral p-4 rounded">
@@ -124,6 +133,8 @@ export default function OrderSummary() {
       </div>
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
     </div>
+    </IonContent>
+    </IonPage>
   );
 }
 

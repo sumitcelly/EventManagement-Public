@@ -1,6 +1,6 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
-import { useNavigate,Link } from "react-router-dom";
+import { useHistory,Link } from "react-router-dom";
 import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
 import { useLocation, useParams } from "react-router";
@@ -10,21 +10,23 @@ import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
 import { useEffect, useState } from "react";
 import SalesOrderTicket from "../components/SalesOrderTicket";
-import { s } from "react-router/dist/development/index-react-server-client-CMphySRb";
 import { Ticket } from "../types/Tickets";
 import {SalesOrderErrors} from "../types/Order"
+import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
+import AppNavbar from "../components/Navbarnew";
 
 export default function OrderConfirmation() {
   
 
   const [cartTickets,setCartTickets] = useState<Ticket[]>([]);
 
-  const navigate = useNavigate();
-  const { eventId } = useParams();
+  const ionRouter = useIonRouter();
+  //const { eventId } = useParams();
   
   const location = useLocation();
-  const salesOrderData = location.state;
-  console.log('sales order receipt', salesOrderData);
+  const salesOrderData:any = location.state || {};
+
+  console.log('sales order receipt', salesOrderData.salesOrderCode, salesOrderData);
 
 
   const  event = useAppSelector((state:RootState) => state.event);
@@ -44,6 +46,12 @@ export default function OrderConfirmation() {
   }, [dispatch]);
   console.log('carttickets',cartTickets);
   return (
+    <IonPage>
+      <IonHeader>
+         <AppNavbar />
+       </IonHeader>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+    
       <div className="flex flex-col max-w-md mx-auto ">
         <EventSummary/>
         <div className="bg-brand-neutral p-4 rounded mb-4 font-body">  
@@ -83,7 +91,7 @@ export default function OrderConfirmation() {
                   <Button
                         className="align-bottom ml-auto align-center"
                         size="xs"
-                        onClick={() => navigate(`/ticketdetails/${event.eventId}/${salesOrderData.salesOrderCode}`)}>
+                        onClick={() => ionRouter.push(`/ticketdetails/${event.eventId}/${salesOrderData.salesOrderCode}`)}>
                         View your Tickets
                   </Button>
                 </div>
@@ -105,6 +113,8 @@ export default function OrderConfirmation() {
         </div>
        
       </div>
+      </IonContent>
+      </IonPage>
   );
 
   
