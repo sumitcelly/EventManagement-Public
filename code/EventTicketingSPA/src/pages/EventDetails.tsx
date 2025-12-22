@@ -11,6 +11,7 @@ import  { updateEvent} from "../features/auth/eventSlice";
 import { useAppDispatch } from "../app/hook";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
+import Navbar from "../components/Navbar";
 
 export default function EventDetails() {
 
@@ -66,7 +67,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
   return (
     <IonPage>
       <IonHeader><AppNavbar/></IonHeader>
-      <IonContent fullscreen className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
         
     <div className= "max-w-2xl mx-auto mt-3 flex-col border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
       <div className="text-3xl text-center text-primary-color font-heading font-bold">{eventDetails.eventName}</div>

@@ -72,14 +72,14 @@ export default function MyEvents() {
               <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
             </div>
             {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
-            {/* <IonRouterLink
+            <IonRouterLink
               routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
               onClick={(e) => e.stopPropagation()}
               className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
             >
               View tickets
-            </IonRouterLink> */}
-            <Button
+            </IonRouterLink>
+            {/* <Button
               onClick={(e) => {
                 e.stopPropagation();
                 router.push(`/ticketdetails/${event.eventId}/${event.salesOrderCode}`, 'forward');
@@ -88,7 +88,7 @@ export default function MyEvents() {
               className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
             >
               View Tickets
-            </Button>
+            </Button> */}
             
         </div>
           </ListGroupItem>
