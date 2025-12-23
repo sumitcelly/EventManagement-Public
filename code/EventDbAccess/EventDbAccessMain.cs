@@ -216,7 +216,8 @@ namespace EventManagementDbAccess
                     ifnull(a.EventAddress,'') as EventAddress,
                     a.IsLive,a.Duration
                     from events a
-                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE()";
+                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE()
+                    order by a.EventDate ASC";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@customerId", customerId);
@@ -237,6 +238,49 @@ namespace EventManagementDbAccess
               EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
               Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
+              Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+              EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
+            });
+        }
+        return events;
+      }
+     
+    }
+
+    public async Task<List<EventHeader>> GetEventListForscanningByCustomerId(int customerId)
+    {
+      if (customerId <= 0)
+        throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
+
+      using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
+      {
+        await conn.OpenAsync();
+
+        //todo: maybe get all events including past events 
+        var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+                    a.EventOrganizer,  a.EventSummary,a.Free,
+                    ifnull(a.EventAddress,'') as EventAddress
+                    from events a
+                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE() and a.IsLive=1
+                    order by a.EventDate ASC";
+
+        using var cmd = new MySqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@customerId", customerId);
+
+        List<EventHeader> events = new List<EventHeader>();
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (reader.Read())
+        {
+          events.Add(
+            new EventHeader
+            {
+              EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+              EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+              EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
+                                AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
+              EventName = reader.GetString(reader.GetOrdinal("EventName")),
+              EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
+              EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               Free = reader.GetBoolean(reader.GetOrdinal("Free")),
               EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
             });

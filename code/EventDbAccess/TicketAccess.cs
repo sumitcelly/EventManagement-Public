@@ -19,18 +19,31 @@ namespace EventManagementDbAccess
         {
             _eventTypeAccess = itemTypeDbAccess;
         }
-        public async Task<bool> ValidateTicket(string code, int eventId = 1)
+        public async Task<string> ValidateTicket(string code, int eventId)
         {
             if (string.IsNullOrEmpty(code))
             {
                 throw new ArgumentNullException(nameof(code));
             }
+            if (eventId < 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
             bool retVal = false;
             try
             {
+                EventSalesItem item = await GetEventTicketByQRCode(code, eventId);
+                if (item == null)
+                {
+                    return "Ticket not found";
+                }
+                if (item.TicketScanned == 1)
+                {
+                    return "Ticket already scanned";
+                }
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$" Update eventmanagement.eventsalesitem set TicketScanned=1  where
+                    string sql = @$"Update eventmanagement.eventsalesitem set TicketScanned=1  where
                                 EventId='{eventId}' and TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
@@ -40,7 +53,8 @@ namespace EventManagementDbAccess
                     if (retVal)
                     {
                         _logger.LogInformation($"Ticket with code {code} validated successfully.");
-                        _cache.Remove(CacheHelper.GetCacheKey<EventSalesItem>($"{eventId}:{code}"));
+                        item.TicketScanned = 1;
+                        _cache.AddOrUpdateCache<EventSalesItem>(item, $"{eventId}:{code}", TimeSpan.FromMinutes(base._cacheDurationInMinutes));
                     }
                     else
                     {
@@ -53,7 +67,7 @@ namespace EventManagementDbAccess
             {
                 Console.WriteLine(ex.Message);
             }
-            return retVal;
+            return retVal?"Successful":"Failed";
         }
 
         public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId = 1)
@@ -93,7 +107,7 @@ namespace EventManagementDbAccess
             return result;
         }
         
-        public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId = 1)
+        public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId)
         {
             if (string.IsNullOrEmpty(code))
             {
@@ -407,6 +421,9 @@ namespace EventManagementDbAccess
                             ticketList.Add(ticket);
                         }
                     }
+
+                    _cache.AddOrUpdateCache(ticketList.AsEnumerable(), salesOrderId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+
                 }
             }
             catch (Exception ex)

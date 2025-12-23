@@ -61,6 +61,14 @@ namespace CreateTicketApi.Controllers
             return evtList;
         }
 
+        [HttpGet("/Events/ForScanning/{customerId}")]
+        public async Task<List<EventHeader>> GetEventsForScanningByCustomer(int customerId)
+        {
+            var evtList = await _EventDbAccess.GetEventListForscanningByCustomerId(customerId);
+            _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(evtList));
+            return evtList;
+        }
+
         [HttpGet("/Events/Details/{id}")]
         public async Task<ActionResult<Event>> GetEventDetailsById(int id)
         {
