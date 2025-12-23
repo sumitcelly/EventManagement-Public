@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // your React dev server
+            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", "http://localhost", "https://localhost","https://sc-dev-ticketspro.ngrok.io") // your React dev server
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies
@@ -31,7 +31,7 @@ builder.Services.AddControllers();
 //not sure if this will work with swagger, but it is needed for JWT authentication
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddJwtBearer(options =>    
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -42,6 +42,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured."))),
         };
     });
+    // )
+    // .AddCookie(options1 =>
+    // {
+    //     options1.LoginPath = "/user/login";
+    //     options1.Cookie.Name = "refreshToken";
+    //     options1.Cookie.HttpOnly = true;
+    //      // 1 hour expiration
+    //     //if (builder.Environment.IsDevelopment())
+       
+    //     options1.Cookie.SameSite = SameSiteMode.None; // Allows cross-site requests
+    //     options1.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Browser requires this for 'None'
+    
+    //     options1.Events.OnRedirectToLogin = context => {
+    //         context.Response.StatusCode = 401; // Prevents 302 redirects in APIs
+    //         return Task.CompletedTask;
+    //     };
+
+
+
+
+        // FOR LOCAL EMULATOR DEVELOPMENT:
+            
+    //});
 builder.Services.AddAuthorization();
 
 //builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());

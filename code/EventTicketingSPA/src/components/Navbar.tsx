@@ -1,4 +1,5 @@
 // src/components/Navbar.jsx
+import axiosClient from "../api/axiosClient";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import { logout } from "../features/auth/authSlice";
 import axios from "axios";
@@ -10,8 +11,8 @@ export default function Navbar() {
   const dispatch = useAppDispatch();
 
   const handleLogout = async () => {
-    await axios.post(
-      "http://localhost:5220/user/logout",
+    await axiosClient.post(
+      "/user/logout",
       {},
       { withCredentials: true }
     );

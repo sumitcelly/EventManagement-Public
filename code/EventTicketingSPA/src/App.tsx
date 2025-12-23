@@ -47,19 +47,19 @@ export default function App() {
         />
         <Route
           path="/login"
-          exact={true}
+          
           render={()=> isAuthenticated ? <MyEvents/> : <LoginPage />}
         />
         <Route path="/Dashboard"  render={() =>isAuthenticated?<Dashboard/>:<LoginPage/>}/>
         <Route
           path="/myevents"
-          exact={true}
+  
            render={() =>
             isAuthenticated ? <MyEvents /> :<LoginPage />
           }
         />
           <Route
-          exact={true}
+         
           path="/ticketdetails/:eventId/:salesOrderCode"
            render={() =>
             isAuthenticated ? <TicketDetails/> : <LoginPage/>

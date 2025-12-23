@@ -1,0 +1,8 @@
+THe only way i can get the emulator to work reliably is by running the 
+api using ngrok dues to https issues.
+
+ngrok command is ./ngrok http http://localhost:5220 --hostname=sc-dev-ticketspro.ngrok.io
+got to c:\temp\ngrok first
+
+.env.local needs to have that changed.
+Also the program.cs has to allow this url sc-dev-ticketspro.ngrok.io

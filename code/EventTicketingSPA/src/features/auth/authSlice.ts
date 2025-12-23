@@ -30,14 +30,17 @@ interface LoginFormInputs {
 }
 
 let accessToken: string | null = null;
+let  baseApiUrl =import.meta.env.VITE_API_BASE_URL;
+console.log("baseApiUrl", baseApiUrl);
 
 // Async login action
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials: LoginFormInputs, { rejectWithValue }) => {
     try {
+      
       const res = await axios.post(
-        "http://localhost:5220/user/login",
+        `${baseApiUrl}/user/login`,
         credentials,
         { withCredentials: true } // needed for HttpOnly cookies
       );
@@ -55,7 +58,7 @@ export const loginUserWithSecureCode = createAsyncThunk(
   async (credentials: LoginFormInputs, { rejectWithValue }) => {
     try {
       const res = await axios.post(
-        "http://localhost:5220/user/VerifyEmailCode",
+        baseApiUrl+"/user/VerifyEmailCode",
         credentials,
         { withCredentials: true } // needed for HttpOnly cookies
       );
@@ -71,7 +74,7 @@ export const loginUserWithSecureCode = createAsyncThunk(
 export const refreshAccessToken = async () => {
   try {
     const response = await axios.post(
-       "http://localhost:5220/user/refresh",
+       baseApiUrl+"/user/refresh",
       {},
       { withCredentials: true }
     );
@@ -91,7 +94,7 @@ export const fetchUser = createAsyncThunk(
   "auth/fetchUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get("http://localhost:5220/api/auth/me", {
+      const res = await axios.get(baseApiUrl+"/api/auth/me", {
         withCredentials: true,
       });
       return res.data;

@@ -20,6 +20,7 @@ import { useState } from "react";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
+import axiosClient from "../api/axiosClient";
 
 interface SearchFormInputs {
   keyword: string ;
@@ -54,8 +55,8 @@ export function AppNavbar() {
   const history = useIonRouter();
 
   const handleLogout = async () => {
-    await axios.post(
-      "http://localhost:5220/user/logout",
+    await axiosClient.post(
+      "/user/logout",
       {},
       { withCredentials: true }
     );

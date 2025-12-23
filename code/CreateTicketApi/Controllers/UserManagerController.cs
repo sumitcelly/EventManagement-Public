@@ -77,13 +77,9 @@ namespace CreateTicketApi.Controllers
             //create a JWT token or session here as needed
             var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
             string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7)
-            });
+           // Response.Cookies.Append("refreshToken", refreshToken);
+            SetSecureCookie("refreshToken", refreshToken);
+
             return Ok(new
             {
                 accessToken = _accessToken,
@@ -115,17 +111,24 @@ namespace CreateTicketApi.Controllers
             //RefreshTokens.Remove(refreshToken);
             //RefreshTokens[newRefreshToken] = userId;
 
-            Response.Cookies.Append("refreshToken", newRefreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7)
-            });
+            //Response.Cookies.Append("refreshToken", newRefreshToken);
+            SetSecureCookie("refreshToken", newRefreshToken);
 
             var newAccessToken = _tokenUtils.GenerateJwtToken(userId, role, Convert.ToInt16(customerId));
 
             return Ok(new { accessToken = newAccessToken });
+        }
+        private void SetSecureCookie(string name, string value)
+        {
+            var options = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, 
+                //for cross site mobile access, need to set SameSiteMode.None and set Secure=true in production
+                SameSite = SameSiteMode.None,
+                Path = "/"
+            };
+            Response.Cookies.Append(name, value, options);
         }
 
         [Authorize]
@@ -187,13 +190,9 @@ namespace CreateTicketApi.Controllers
             //create a JWT token or session here as needed
             var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
             string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false,
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddDays(7)
-            });
+           // Response.Cookies.Append("refreshToken", refreshToken);
+            SetSecureCookie("refreshToken", refreshToken);
+
             return Ok(new
             {
                 accessToken = _accessToken,
