@@ -55,12 +55,17 @@ public class TicketController : ControllerBase
 
     [HttpPost]
     [Route("/Ticket/Validate")]
-    public async Task<string> ValidateTicket(string qrCode, int eventId)
+    public async Task<string> ValidateTicket([FromBody]ScanData data)
     {
-        return await _ticketContext.ValidateTicket(qrCode, eventId);
+        return await _ticketContext.ValidateTicket(data.qrCode, data.eventId);
     }
 
-   
+    
+}
 
+public class ScanData
+{
+    public int eventId { get; set;}  
+    public required string qrCode { get; set;}
 }
 

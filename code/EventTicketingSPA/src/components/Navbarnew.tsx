@@ -212,7 +212,11 @@ export function AppNavbar() {
           Organize an Event
         </NavbarLink>
         {isAuthenticated  ?
-        (<NavbarLink href="/myevents">Find my tickets</NavbarLink>) :
+        (<>
+          <NavbarLink href="/myevents">Find my tickets</NavbarLink>
+          <NavbarLink href="/scannerdashboard">Scan Tickets</NavbarLink>
+          </>
+        ) :
         (<NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>)}
         {!isAuthenticated &&(
           <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>

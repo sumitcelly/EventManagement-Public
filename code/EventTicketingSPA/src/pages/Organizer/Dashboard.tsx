@@ -6,7 +6,7 @@ import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import  ListMenu  from "../../components/ListMenu";
-import { ListMenuData } from "../../components/ListMenu";
+import { ListMenuData } from "../../components/ListMenu";   
 import { useEffect } from "react";
 import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { useDispatch } from "react-redux";

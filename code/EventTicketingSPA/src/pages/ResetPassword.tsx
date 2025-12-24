@@ -15,7 +15,8 @@ interface FormValues {
 export default function ResetPassword()  {
 
   //const [error,setError] = useState<string | null>(null);
-  const {email} =  useLocation().state || {};
+  const params = new URLSearchParams(location.search);
+  const email = params.get("email") || "";
   
   if (!email) {
     return (

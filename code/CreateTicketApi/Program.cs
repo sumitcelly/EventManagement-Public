@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", "http://localhost", "https://localhost","https://sc-dev-ticketspro.ngrok.io") // your React dev server
+            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", "http://localhost:5173","http://localhost", "https://localhost","https://sc-dev-ticketspro.ngrok.io") // your React dev server
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies

@@ -29,6 +29,8 @@ import { BrowserRouter,  Route, Switch } from "react-router-dom";
 import { IonReactRouter } from "@ionic/react-router";
 import { IonContent, IonHeader, IonPage, IonRouterOutlet,IonTab,setupIonicReact } from "@ionic/react";
 import SalesOrderTicket from "./components/SalesOrderTicket";
+import ScannerDashboard from "./pages/Scanner/Dashboard";
+import ScanTicket from "./pages/Scanner/ScanTicket";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -139,6 +141,10 @@ export default function App() {
                isAuthenticated ? <OrderConfirmation /> : <LoginPage/>
           }
         /> 
+
+        <Route path="/ScannerDashboard"  render={() =>isAuthenticated?<ScannerDashboard/>:<LoginPage/>}/>
+        <Route path="/ScanTicket/:eventId"  render={() =>isAuthenticated?<ScanTicket/>:<LoginPage/>}/>
+
         </IonRouterOutlet>
       </IonReactRouter>
     );
