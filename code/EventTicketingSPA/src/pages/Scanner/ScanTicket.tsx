@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { Capacitor } from '@capacitor/core';
@@ -16,8 +16,8 @@ export default function ScanTicket() {
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [stopScan, setStopScan] = useState(false);
+  
 
   const validateTicket = async (code: string) => {
     if (!code || !eventId) {
@@ -41,31 +41,33 @@ export default function ScanTicket() {
       if (Capacitor.isNativePlatform()) {
         document.querySelector('body')?.classList.add('barcode-scanner-active');
         const result = await CapacitorBarcodeScanner.scanBarcode({ hint: 0 });
-        if (result.ScanResult) {
+        if (result && result.ScanResult) {
           const validationResult = await validateTicket(result.ScanResult);
           setScanResult(validationResult);
-          setToastMessage(validationResult);
-          setShowToast(true);
-        //   if (validationResult=="Success")
-        //     toast.success("Ticket Validated");
-        //   else
-        //     toast.error(validationResult);
+          if (validationResult=="Success")
+            toast.success("Ticket Validated",{position: 'bottom-center'});
+          else
+            toast.error(validationResult,{position: 'bottom-center'});
+       
 
         } else {
-          setScanResult("Failed to scan");
-          setToastMessage("Failed to scan");
-          setShowToast(true);
+        
+         
+          setScanResult("Failed to scan"+result.ScanResult);
+          toast.error("Failed to scan",{position: 'bottom-center'});
         }
+        //startScan();    
       } else {
         // Web fallback
         const validationResult = await validateTicket('XF6OJJ1I'); // Test code
         setScanResult(validationResult);
-        setToastMessage(validationResult);
-        setShowToast(true);
+        
       }
     } catch (error) {
-      setScanResult("Scan error");
-      setToastMessage("Scan error");
+    
+      setStopScan(true);
+      toast.error(String(error),{position: 'bottom-center'});
+      setScanResult(String(error));
       
     } finally {
       setIsScanning(false);
@@ -75,34 +77,57 @@ export default function ScanTicket() {
     }
   };
 
+  useEffect(() => {
+     
+    let tempId:number;
+    if(!isScanning && !stopScan)
+    {
+        tempId =setTimeout(() => {
+            startScan();
+        }, 2000);
+       
+    }
+    return () => {
+        // It stops the scanner from opening if the user leaves the page
+        if (tempId) {
+            clearTimeout(tempId);
+        }
+    };
+    }
+    , [isScanning, stopScan]);
+
   return (
     <IonPage>
       <IonHeader>
         <AppNavbar />
       </IonHeader>
       <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-        <Toaster position="top-right" />
+        <Toaster
+            containerStyle={{
+                // Ensure toasts stay below notches and above home bars
+                top: 'calc(16px + env(safe-area-inset-top))',
+                bottom: 'calc(16px + env(safe-area-inset-bottom))',
+            }}
+        />
+
         <div className="max-w-md mx-auto mt-6">
         <div className="flex flex-col items-center justify-between ">
             <h2 className="text-xl font-semibold mb-4 text-center">Scan Ticket for Event {eventName}</h2>
             <div>
-            <button onClick={startScan} disabled={isScanning}
-                        className="bg-blue-600 text-center text-white px-4 py-2 rounded hover:bg-blue-700 
+            <button onClick={()=>{ 
+                setStopScan(!stopScan); 
+            }} 
+                className="bg-blue-600 text-center text-white px-4 py-2 rounded hover:bg-blue-700 
                         disabled:bg-gray-400">
-            {isScanning ? <IonSpinner name="crescent" /> : "Start Scan"}
+            {!stopScan ? "Stop Scan" : "Start Scan"}
             </button>
+
             </div>
-             {scanResult && (
+            {scanResult && (
             <div className="text-center mt-4">
                 <p>{scanResult}</p>
-            </div>
+            </div>     
             )}
-            <IonToast
-                isOpen={showToast}
-                onDidDismiss={() => setShowToast(false)}
-                message={toastMessage}
-                duration={3000}
-            />
         </div>
            
        
