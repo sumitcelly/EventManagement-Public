@@ -38,12 +38,13 @@ public class StripeAccess
         }
 
         _logger = logger;
-        if (string.IsNullOrEmpty(StripeConfiguration.ApiKey))
+
+        if (string.IsNullOrWhiteSpace(configuration["Stripe:SecretKey"]))
         {
-            throw new ArgumentException("Stripe API key is not configured.");
+            throw new ArgumentException("Stripe Secret key is not configured.");
         }
 
-        StripeConfiguration.ApiKey = configuration["Stripe:ApiKey"];
+        StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         WebhookSecret = configuration["Stripe:WebhookSecret"];
         if (string.IsNullOrEmpty(WebhookSecret))
         {
@@ -64,8 +65,14 @@ public class StripeAccess
         try
         {
             var service = new AccountService();
-
+            
             var options = new AccountCreateOptions();
+            /*Stripe collects fees directly from your connected account. We don’t charge any Connect fees to it or to your platform.
+
+                Any application fees that your platform bills to the connected account are in addition to Stripe fees.
+
+                You can set the fee payer when you create connected accounts. Accounts created with type=standard also have this value.*/
+            options.Type = "standard";
             options.Metadata = new Dictionary<string, string>
             {
                 { "CustomerId", customerId.ToString() }
@@ -99,6 +106,7 @@ public class StripeAccess
             var options = new AccountLinkCreateOptions
             {
                 Account = accountId,
+                //
                 RefreshUrl = _connectRefreshUrl,
                 //the url to redirect the client to after they complete the account onboarding process
                 ReturnUrl = _connectReturnUrl,
@@ -107,7 +115,7 @@ public class StripeAccess
             };
 
             AccountLink accountLink = await service.CreateAsync(options);
-
+            
             //The url to redirect the client to complete the account onboarding process
             return accountLink.Url;
         }
@@ -125,7 +133,9 @@ public class StripeAccess
         {
             totalAmount += item.Price * item.Quantity;
         }
-        return (long)(totalAmount * _applicationFeePercentage + lineItems.Count + _fixedTransactionFee); // Example: 10% application fee
+        long i = Convert.ToInt64(totalAmount * _applicationFeePercentage *100); // Example: 10% application fee
+        _logger.LogInformation($"fees amount is {i}");
+        return i;
     }
 
     /// <summary>
@@ -159,7 +169,7 @@ public class StripeAccess
                 ApplicationFeeAmount = CalculateApplicationFee(lineItems),
             },
             Mode = "payment",
-            UiMode = "embdedded"
+            UiMode = "hosted"
 
         };
         // options.Metadata = new Dictionary<string, string>
@@ -167,7 +177,7 @@ public class StripeAccess
         //     { "SalesOrderId", salesOrderId.ToString() }
         // };
         options.ClientReferenceId = salesOrderId.ToString();
-        options.LineItems.Clear();
+        options.LineItems = new List<SessionLineItemOptions>();
         foreach (var item in lineItems)
         {
             options.LineItems.Add(new Stripe.Checkout.SessionLineItemOptions
@@ -193,8 +203,8 @@ public class StripeAccess
         };
         var service = new Stripe.Checkout.SessionService();
         Stripe.Checkout.Session session = await service.CreateAsync(options, requestOptions);
-
         _logger.LogInformation($"Stripe session created with ID: {session.Id}");
+        _logger.LogInformation($"session details {session.ReturnUrl}", session.Url);
         ///return the client secret to the frontend to complete the payment
         return new Tuple<string, string>(session.ClientSecret, session.Id);
     }

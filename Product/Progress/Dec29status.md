@@ -28,7 +28,7 @@ Architectural Stuff around whats left:
 * Payment is another one.
     * Stripe UI for attendees to pay. Refunds and how they work.
     * Stripe setup for Organizers.
-    * role validation at backend and also front end.
+* Role validation at backend and also front end.
 * Logging  to disk at least
 * Deployment
     * Need to revisit plan and acquire resources.

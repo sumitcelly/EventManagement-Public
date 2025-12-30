@@ -352,7 +352,7 @@ namespace EventManagementDbAccess
 
                 string query = @"UPDATE eventorganizer 
                                  SET StripeAccountId = @StripeAccountId, 
-                                     StripeConnectAccountStatus = @StripeAccountStatus 
+                                     StripeConnectStatus = @StripeAccountStatus 
                                  WHERE CustomerId = @organizerId";
 
                 using var cmd = new MySqlCommand(query, connection);
