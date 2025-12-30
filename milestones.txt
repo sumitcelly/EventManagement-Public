@@ -6,11 +6,10 @@ Important milestones to celebrate:
 
 3. Devops and infra finalized and sample deploy done.
 
-4. Basic form layout, nav, css, look and feel finalized and prototype visibile.
-
+4. Basic form layout, nav, css, look and feel finalized and prototype visibile. -- done
 5. First test event published and tested with users.
 
-6. Mobile app created.
+6. Mobile app created. -- androind done
 
 7. Email promotion and templating finalized.
 

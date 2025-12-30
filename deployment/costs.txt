@@ -10,5 +10,70 @@ Skip rds proxy at first.
 Start with t3.small for app server with 100 gb storage.
 linux. Cost about 23 per month.
 
+🔹 Cost Breakdown (us-east-1, on-demand)
+1. Frontend (SPA hosting on S3 + CloudFront)
+
+S3:
+
+Storage: ~$0.023/GB-month.
+
+Requests: ~$0.005 per 1,000 PUT, ~$0.0004 per 1,000 GET.
+
+Example: React build (say 50 MB) + 10 GB images/videos → ~$0.25/month storage.
+
+CloudFront:
+
+First 1 TB data out → ~$0.085/GB.
+
+Requests: ~$0.0075 per 10,000.
+
+Example: 100 GB/month traffic → ~$8.50/month.
+
+2. App Server (EC2 or ECS)
+
+EC2 t3.small (2 vCPU, 2 GB RAM): ~$17/month.
+
+Or ECS Fargate (1 vCPU, 2 GB RAM): ~$31/month.
+
+3. Database (RDS or EC2 MySQL)
+
+RDS db.t3.micro: ~$13 + storage (~$10 for 100 GB) → ~$23/month.
+
+Or MySQL on same EC2 (free, but shared resources).
+
+4. Other Costs
+
+Data transfer out of AWS: ~$0.09/GB beyond free tiers. (But if via CloudFront, you pay CloudFront’s rates instead, which are cheaper).
+
+SSL (HTTPS): Free via ACM.
+
+Domain: ~$12/year via Route 53.
+
+🔹 Example Monthly Total (Small/Medium MVP)
+
+S3 (50 MB app + 10 GB images) → ~$0.25
+
+CloudFront (100 GB traffic) → ~$8.50
+
+EC2 t3.small app server → ~$17
+
+RDS db.t3.micro + 100 GB storage → ~$23
+
+Route 53 domain → ~$1
+
+👉 Total: ~ $50/month for a globally cached SPA + API + database.
+
+🔹 Cost Estimate (Small/Medium MVP)
+Component	Monthly Cost Estimate
+S3 (50 MB SPA + 10 GB images)	~$0.25
+CloudFront (100 GB traffic)	~$8.50
+EC2 t3.medium (app + Nginx)	~$37
+RDS db.t3.micro + 100 GB storage	~$23
+Route 53 domain	~$1
+
+Total ≈ $70/month for a fully functional global SPA + API + media setup.
+
+Note: CloudFront scales automatically, so if traffic spikes, cost increases with GB served.
+
 
 
