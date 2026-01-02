@@ -79,9 +79,8 @@ namespace EventManagementDbAccess
                         OrganizerX = reader.IsDBNull(reader.GetOrdinal("OrganizerX")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerX")),
                         StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
                         StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
-                            ? default
-                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(reader.GetOrdinal("StripeConnectStatus")),
-                                 out var status) ? status : default
+                            ? string.Empty: reader.GetString(reader.GetOrdinal("StripeConnectStatus"))
+                            
                     };
                 }
                 return null;
@@ -151,9 +150,9 @@ namespace EventManagementDbAccess
                         OrganizerX = reader.IsDBNull(reader.GetOrdinal("OrganizerX")) ? string.Empty :  reader.GetString(reader.GetOrdinal("OrganizerX")),
                         StripeAccountId = reader.IsDBNull(reader.GetOrdinal("StripeAccountId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeAccountId")),
                         StripeConnectStatus = reader.IsDBNull(reader.GetOrdinal("StripeConnectStatus"))
-                            ? default
-                            : Enum.TryParse<StripeAccountStatus>(reader.GetString(reader.GetOrdinal("StripeConnectStatus")),
-                                 out var status) ? status : default
+                            ? string.Empty:
+                            reader.GetString(reader.GetOrdinal("StripeConnectStatus"))
+                          
                     };
                 }
                 return null;

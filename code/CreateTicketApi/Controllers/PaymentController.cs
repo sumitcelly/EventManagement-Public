@@ -10,7 +10,7 @@ using CreateTicketApi.BusinessLogic;
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class PaymentController : ControllerBase
     {
         private readonly ILogger<PaymentController> _logger;
@@ -39,7 +39,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost("create-account")]
-        public async Task<IActionResult> CreateStripeAccount(int customerId)
+        public async Task<IActionResult> CreateStripeAccount([FromBody]int customerId)
         {
             if (customerId <= 0)
             {
@@ -48,7 +48,18 @@ namespace CreateTicketApi.Controllers
 
             try
             {
-                var result = await _stripeAccess.CreateStripeAccount(customerId);
+                EventOrganizer org = await _eventOrganizerDbAccess.GetOrganizerById(customerId);
+                StripePrefillInfo info = new StripePrefillInfo()
+                {
+                    OrganizationName = org.OrganizationName,
+                    OrganizerCountry = org.OrganizerCountry,
+                    OrganizerDisplayName = org.OrganizationName,
+                    OrganizerEmail = org.OrganizerEmail,
+                    OrganizerPhone = org.OrganizerPhone,
+                    OrganizerWebsite = org.OrganizerWebsite,
+                };
+
+                var result = await _stripeAccess.CreateStripeAccount(customerId,info);
                 if (string.IsNullOrEmpty(result))
                 {
                     return StatusCode(500, "Failed to create Stripe account.");
@@ -57,7 +68,7 @@ namespace CreateTicketApi.Controllers
                 {
                     await _eventOrganizerDbAccess.UpdateStripeAccountInfo(customerId, result, StripeAccountStatus.IdCreated);
                     _logger.LogInformation($"Stripe account created successfully for customer ID {customerId}.");
-                    return Ok(new { StripeAccountId = result });
+                    return Ok(result);
                 }               
             }
             catch (Exception ex)
@@ -67,8 +78,27 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPost("initiate-account-link")]
-        public async Task<IActionResult> InitiateAccountLink(int organizerId, string stripeAcctId)
+        [HttpGet("connect-status/{stripeAccountId}")]
+        public async Task<IActionResult> GetStripeAccountConnectStatus(string stripeAccountId)
+        {
+             if (string.IsNullOrEmpty(stripeAccountId))
+            {
+                return BadRequest("Stripe account ID cannot be null or empty.");
+            }
+            try
+            {
+                return  Ok(await  _stripeAccess.IsAccountOnboarded(stripeAccountId));
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Unable to get stripe account status for {stripeAccountId}");
+                return StatusCode(500, $"Unable to get stripe account status for {stripeAccountId}");
+            }
+        }
+
+        [HttpPost("initiate-account-link/{organizerId}")]
+        public async Task<IActionResult> InitiateAccountLink(int organizerId, [FromBody]string stripeAcctId)
         {
             if (string.IsNullOrEmpty(stripeAcctId))
             {

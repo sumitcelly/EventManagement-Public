@@ -14,7 +14,7 @@ export interface OrganizerInfo {
   organizerPhone:string;
   organizerEmail:string;
   organizerCountry:string;
-  organizerStripeAccountId?:string;
-  organizerStripeAccountStatus?:string;
+  stripeAccountId?:string;
+  stripeConnectStatus?:string;
 }
 

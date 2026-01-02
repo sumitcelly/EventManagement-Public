@@ -23,7 +23,7 @@ namespace EventManagementDbAccess
         public string OrganizerPhone { get; set; } = string.Empty;
         public string OrganizerCountry { get; set; } = "USA";
 
-        public StripeAccountStatus StripeConnectStatus { get; set; } = StripeAccountStatus.Inactive;
+        public string StripeConnectStatus { get; set; } = string.Empty;
 
         public string OrganizationFullAddress { get; set; } = string.Empty;
         //Organizer Address fields

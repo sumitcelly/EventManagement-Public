@@ -15,6 +15,7 @@ import OrganizerConnect from "./OrganizerConnect";
 import axiosClient from "../../api/axiosClient";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
+import OrganizerStripe from "./OrganizerStripe";
 
 export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
@@ -36,24 +37,7 @@ export function OrganizerManager() {
         console.log("Fetching organizer details", organizerId);
         const res = await axiosClient.get(`/eventorganizer/${organizerId}`);
         console.log('detail for organizer', res);
-        //console.log('orders fetched from backend',res.data);
-        // const data: OrganizerInfo = {
-        //   organizerId: 1,
-        //   organizerName: "Monika C",
-        //   organizationName: "PDAC",
-        //   organizerWebsite: "https://www.pdac.com",
-        //   organizerEmail: "hello@pdac.com",
-        //   organizerDescription: "Premier Dance Academy of Colorado",
-        //   organizerEventBaseUrl: "pdac-events", 
-        //   organizerCountry: "USA",
-        //   organizerPhone: "719-555-0123",
-        //   organizerInstagram: "@pdacdance",
-        //   organizerFacebook: "facebook.com/pdacdance",
-        //   organizerStripeAccountId: "",
-        //   organizerStripeAccountStatus: "pending",
-        //   organizerAboutMe:"helllo",
-        //   organizerImageUrl:"/ghg/"
-        // };
+      
     
         return res.data;
       },
@@ -74,6 +58,11 @@ export function OrganizerManager() {
       console.log("organizer Connect mode")
       tabsRef.current?.setActiveTab(1);
     }
+    else if (mode ==="stripe")
+    {
+     console.log("Stripe Connect mode")
+      tabsRef.current?.setActiveTab(2); 
+    }
      else {
      // setLocalActiveTab(0);
       console.log("organizer Info mode");
@@ -91,7 +80,7 @@ export function OrganizerManager() {
     <Tabs aria-label="Organizer Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "
-      variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
+      variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
     
       <TabItem title="About Info" icon={HiUserCircle}>
         <OrganizerAbout organizerId={organizerId} organizerInfo  ={data}/>
@@ -99,6 +88,9 @@ export function OrganizerManager() {
 
       <TabItem   title="Connection Info" icon={HiUserCircle}  >
         <OrganizerConnect organizerId={organizerId} organizerInfo={data}/>
+      </TabItem>
+       <TabItem   title="Stripe Info" icon={HiUserCircle}  >
+        <OrganizerStripe organizerId={organizerId} organizerInfo={data}/>
       </TabItem>
     </Tabs>
     </IonContent>

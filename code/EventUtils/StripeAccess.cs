@@ -54,7 +54,7 @@ public class StripeAccess
         logger.LogInformation("Initializing Stripe API with provided configuration.");
     }
 
-    public async Task<string> CreateStripeAccount(int customerId)
+    public async Task<string> CreateStripeAccount(int customerId,StripePrefillInfo stripePrefillInfo)
     {
         if (customerId <= 0)
         {
@@ -73,6 +73,18 @@ public class StripeAccess
 
                 You can set the fee payer when you create connected accounts. Accounts created with type=standard also have this value.*/
             options.Type = "standard";
+            options.Email = stripePrefillInfo.OrganizerEmail;
+            options.Country = stripePrefillInfo.OrganizerCountry;
+            options.BusinessProfile = new AccountBusinessProfileOptions()
+            {
+                Name = stripePrefillInfo.OrganizationName,
+                Url = stripePrefillInfo.OrganizerWebsite
+            };
+            options.Capabilities = new AccountCapabilitiesOptions()
+            {
+                 CardPayments = new AccountCapabilitiesCardPaymentsOptions (){ Requested =true},
+            };
+            
             options.Metadata = new Dictionary<string, string>
             {
                 { "CustomerId", customerId.ToString() }
@@ -90,7 +102,34 @@ public class StripeAccess
         }
 
     }
+    public async Task<bool> IsAccountOnboarded(string accountId)
+    {
+        if (string.IsNullOrEmpty(accountId))
+        {
+            throw new ArgumentException("Stripe account ID cannot be null or empty.", nameof(accountId));
+        }
 
+        _logger.LogInformation($"Initiating account link for Stripe account: {accountId}");
+        try
+        {
+            var service = new AccountService();
+            Account acct = service.Get(accountId);
+            if (acct != null)
+            {
+               return acct.DetailsSubmitted;
+            }
+            else
+            {
+                _logger.LogCritical($"An error occurred when calling the Stripe API to get account status: no acct object returned for acctid {accountId}" );
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical("An error occurred when calling the Stripe API to get account status:  " + ex.Message);
+            throw new InvalidOperationException("Failed to get account status.", ex);
+        }
+    }
     public async Task<string> InitiateAccountLink(string accountId)
     {
         if (string.IsNullOrEmpty(accountId))
@@ -111,6 +150,8 @@ public class StripeAccess
                 //the url to redirect the client to after they complete the account onboarding process
                 ReturnUrl = _connectReturnUrl,
                 Type = "account_onboarding",
+                //collect incrementally, not upfront
+                CollectionOptions = new AccountLinkCollectionOptionsOptions(){ Fields ="currently_due"}
 
             };
 

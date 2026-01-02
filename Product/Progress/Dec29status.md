@@ -10,6 +10,7 @@ UI:
 * Bugs in ticket setup
 * Mapbox issues with double click.
 * event page looks ugly.
+* sanitize inputs for event and ticket pages or whereever html is allowed.
 
 Whats left in attendee:
 * Legal agreement on tickets page.

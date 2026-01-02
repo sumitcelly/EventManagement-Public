@@ -27,7 +27,7 @@ namespace CreateTicketApi.Controllers
                 return NotFound();
 
             //resetting fields which do not make sense when not authenticated.
-            organizer.StripeAccountId = string.Empty;
+           // organizer.StripeAccountId = string.Empty;
           
             return organizer;
         }
