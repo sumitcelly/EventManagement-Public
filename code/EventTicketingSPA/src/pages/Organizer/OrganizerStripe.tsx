@@ -15,26 +15,18 @@ export default function OrganizerStripe({organizerInfo, organizerId}: {organizer
 const [stripeAcctId, setStripeAcctId] = useState(organizerInfo?.stripeAccountId);
 const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStatus);
 
-//   if (!organizerInfo)
-//   {
-//     toast.error("Unable to proceed since organizer info could not be retrieved");
-//     return;
-//   }
+    console.log(`stripe acctid ${stripeAcctId} and status is ${stripeStatus}`);
 
-  //let stripeAcctId =  organizerInfo?.organizerStripeAccountId;
-  //let stripeStatus = organizerInfo?.organizerStripeAccountStatus;
-  console.log(`stripe acctid ${stripeAcctId} and status is ${stripeStatus}`);
-
-  const { data:liveStripeStatus, isLoading } = useQuery(['validateStripeStatus',organizerId], async () => {
+    const { data:liveStripeStatus, isLoading } = useQuery(['validateStripeStatus',organizerId], async () => {
     const res = await axiosClient.get(`/payment/connect-status/${stripeAcctId}`);
     console.log('stripe validation details from backend', res?.data);
     return res.data;
-  },
+    },
     {
     staleTime: 1000 * 60 * 5,
-    enabled: !!stripeAcctId && stripeStatus!="Completed"
+    enabled: !!stripeAcctId
     }
-  );
+    );
 
   useEffect(() => {
       console.log('MemberInfo changed:', organizerInfo);
@@ -48,7 +40,9 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
   const createStripeAccount = async()=>{
     try
     {
-        const res = await axiosClient.post(`/payment/create-account`,organizerId);
+        const res = await axiosClient.post(`/payment/create-account`,organizerId, { headers: {
+        'Content-Type': 'application/json'}
+    });
         if (res.status == 200 && res.data)
         {
             linkStripeAccount(res.data);
@@ -69,7 +63,11 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
   const linkStripeAccount = async(stripeId:string | undefined) =>{
     try
     {
-        const res = await axiosClient.post(`/payment/initiate-account-link/${organizerId}`,stripeId);
+        const res = await axiosClient.post(`/payment/initiate-account-link/${organizerId}`,stripeId,
+        {
+             headers: {
+            'Content-Type': 'application/json'}
+        });
         if (res.status == 200)
             window.location.href = res?.data;
         else
@@ -90,34 +88,43 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
      
     <div className="max-w-md mx-auto  text-center">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
-      <div className="flex flex-col">
+      <div className="flex flex-col items-center">
          <Toaster position="top-right" />
          {/**We have nothing with stripe*/}
          {(!stripeAcctId || !stripeStatus) &&(
-            <button 
-            className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-            onClick={()=>createStripeAccount()}
-            >
-                Connect to Stripe
-            </button>
+            <div className="flex items-center">
+                <button 
+                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                onClick={()=>createStripeAccount()}
+                >
+                    Connect to Stripe
+                </button>
+            </div>
          )}
          
          {/*We have stripe id but live status is false */}
          {(stripeAcctId && !liveStripeStatus)  &&(
             <>
-             <label className="block font-semibold text-go-color">Your Stripe connect was interrupted.</label>
-            <button 
-            className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+            <label className="font-semibold text-secondary-color items-center">Your Stripe connection for stripe account <i>{stripeAcctId}</i> is not complete.</label>
+            {stripeStatus === "RequirementsPending" &&(
+                 <label className="font-semibold text-secondary-color mt-2">There are requirments pending on your stripe account.</label>
+            )}
+
+            <div 
+            className="bg-brand-dark text-white text-xs mt-2  text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
             onClick={()=>linkStripeAccount(stripeAcctId)}
             >
                 Complete Stripe Connection
-            </button>
+            </div>
             </>
          )}
 
 
          {liveStripeStatus &&(
-            <label className="block font-semibold text-go-color">You are all connected to Stripe!</label>
+            <>
+            <label className="font-semibold text-go-color mt-2">You are all connected to Stripe!</label>
+            <label className="font-semibold text-go-color mt-2">Stripe Acct Id: {stripeAcctId}</label>
+            </>
          )}
          
       </div>

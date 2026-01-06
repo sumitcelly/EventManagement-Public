@@ -14,8 +14,8 @@ namespace EventUtils;
 public class StripeAccess
 {
     private readonly Microsoft.Extensions.Logging.ILogger<StripeAccess> _logger;
-    private readonly string _connectReturnUrl = "https://yourapp.com/stripe/connect";
-    private readonly string _connectRefreshUrl = "https://yourapp.com/stripe/refresh";
+    private readonly string _connectReturnUrl = "http://localhost:5173/organizermanager/customerId/stripe";
+    private readonly string _connectRefreshUrl = "http://localhost:5173/organizermanager/customerId/stripe";
     private readonly string _paymentReturnUrl = "https://yourapp.com/stripe/payment/success";
     private readonly string _cancelUrl = "https://yourapp.com/stripe/payment/cancel";
 
@@ -83,6 +83,7 @@ public class StripeAccess
             options.Capabilities = new AccountCapabilitiesOptions()
             {
                  CardPayments = new AccountCapabilitiesCardPaymentsOptions (){ Requested =true},
+                 Transfers = new AccountCapabilitiesTransfersOptions (){ Requested =true}
             };
             
             options.Metadata = new Dictionary<string, string>
@@ -130,7 +131,7 @@ public class StripeAccess
             throw new InvalidOperationException("Failed to get account status.", ex);
         }
     }
-    public async Task<string> InitiateAccountLink(string accountId)
+    public async Task<string> InitiateAccountLink(int organizerId,string accountId)
     {
         if (string.IsNullOrEmpty(accountId))
         {
@@ -146,9 +147,9 @@ public class StripeAccess
             {
                 Account = accountId,
                 //
-                RefreshUrl = _connectRefreshUrl,
+                RefreshUrl = _connectRefreshUrl.Replace("customerId",organizerId.ToString()),
                 //the url to redirect the client to after they complete the account onboarding process
-                ReturnUrl = _connectReturnUrl,
+                ReturnUrl = _connectReturnUrl.Replace("customerId",organizerId.ToString()),
                 Type = "account_onboarding",
                 //collect incrementally, not upfront
                 CollectionOptions = new AccountLinkCollectionOptionsOptions(){ Fields ="currently_due"}
@@ -285,7 +286,21 @@ public class StripeAccess
                 EventType = stripeEvent.Type,
                 SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
                 SessionId = session.Id,
-                CustomerId = session.CustomerId
+               // CustomerId = int.TryParse(session.CustomerId
+            };
+        }
+        else if (stripeEvent.Data.Object is Account account)
+        {
+            account.Metadata.TryGetValue("CustomerId", out string tempId);
+            int.TryParse(tempId, out int customerId);
+            
+            return new StripeWebHookData
+            {
+                EventType = stripeEvent.Type,
+                AccountId =  account.Id,
+                CustomerId = customerId,
+                DetailsSubmitted = account.DetailsSubmitted,
+                RequirementsPending = account.Requirements?.CurrentlyDue.Count > 0
             };
         }
         else
@@ -299,10 +314,29 @@ public class StripeAccess
 
 }
 
-public class StripeWebHookData
+public class StripeWebHookData 
+{
+    public string EventType { get; set; } = string.Empty;
+    public int SalesOrderId { get; set; } = 0;
+    public string SessionId { get; set; } = string.Empty;
+    public int CustomerId { get; set; } =0;
+
+   public string AccountId { get; set; }= string.Empty;
+
+    public bool DetailsSubmitted { get; set; } = false;
+
+    public bool RequirementsPending { get; set; } = false;
+   public override string ToString()
+    {
+        return @$"EventType:{EventType} SalesOrderId: {SalesOrderId} Sessionid { SessionId} 
+                CustomerId { CustomerId}  AccountId {AccountId} 
+                DetailsSubmitted { DetailsSubmitted == true} RequirementsPending {RequirementsPending}";
+    }
+}
+
+public class StripeWebHookAccount
 {
     public string EventType { get; set; }
-    public int SalesOrderId { get; set; }
-    public string SessionId { get; set; }
-    public string CustomerId { get; set; }
+
+    public int CustomerId { get; set; }
 }

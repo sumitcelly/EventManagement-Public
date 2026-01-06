@@ -39,8 +39,8 @@ namespace EventManagementDbAccess
         IdCreated,
         LinkInitiated,
         Completed,
-        Inactive,   
-        Rejected,
+        RequirementsPending,   
+        InProgress,
         Deleted
     }
 }

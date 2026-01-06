@@ -110,7 +110,7 @@ namespace CreateTicketApi.Controllers
             }
             try
             {
-                var result = await _stripeAccess.InitiateAccountLink(stripeAcctId);
+                var result = await _stripeAccess.InitiateAccountLink(organizerId,stripeAcctId);
                 if (string.IsNullOrEmpty(result))
                 {
                     return StatusCode(500, "Failed to initiate account link.");
@@ -162,21 +162,23 @@ namespace CreateTicketApi.Controllers
             }
         }
         
-        [HttpPost]
+        [HttpPost("stripewebhook")]
         public async Task<IActionResult> HandleWebhook()
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-
+            _logger.LogInformation(json);
             try
             {
                 var stripeEvent = StripeAccess.GetWebhookEventAndRefIdReceived(json, HttpContext.Request.Headers);
-                if (stripeEvent == null || stripeEvent.SalesOrderId <= 0)
-                {
+                if (stripeEvent == null)
+                {                          
                     _logger.LogError("Invalid Stripe webhook event data.");
                     return BadRequest("Invalid Stripe webhook event data.");    
                 }
 
-                _logger.LogInformation($"Received Stripe webhook event: {stripeEvent.EventType} for SalesOrder ID: {stripeEvent.SalesOrderId}");
+                _logger.LogInformation($"event info is: {stripeEvent.ToString()}");
+
+               // _logger.LogInformation($"Received Stripe webhook event: {stripeEvent.EventType} for SalesOrder ID: {stripeEvent.SalesOrderId}");
                 // Handle the event
                 if (stripeEvent.EventType.Contains("CheckoutSessionCompleted"))
                 {
@@ -205,6 +207,16 @@ namespace CreateTicketApi.Controllers
                     await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentFailed, stripeEvent.SessionId);
    
                     _logger.LogError($"Payment failed for SalesOrder: {stripeEvent.SalesOrderId}");
+                }
+                else if (stripeEvent.EventType.Contains("account.updated"))
+                {
+                    StripeAccountStatus status = stripeEvent.DetailsSubmitted ? StripeAccountStatus.Completed:
+                                                (stripeEvent.RequirementsPending ? StripeAccountStatus.RequirementsPending: 
+                                                StripeAccountStatus.InProgress);
+                    _logger.LogInformation(@$"updating stripe account: {stripeEvent.AccountId} for 
+                                        event customer id {stripeEvent.CustomerId} to status {status}");     
+                    bool result = await _eventOrganizerDbAccess.UpdateStripeStatus(stripeEvent.CustomerId, stripeEvent.AccountId, status);
+                    _logger.LogInformation($"Result of account status updating for customerid {stripeEvent.CustomerId} is {result}");
                 }
                 else
                 {

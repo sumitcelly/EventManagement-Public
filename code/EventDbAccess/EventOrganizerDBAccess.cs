@@ -368,5 +368,38 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
+
+        public async Task<bool> UpdateStripeStatus(int organizerId, string stripeAccountId, StripeAccountStatus stripeAccountStatus)
+        {
+            if (organizerId <= 0)
+                throw new ArgumentException("OrganizerId must be greater than zero.", nameof(organizerId));
+            
+             if (string.IsNullOrWhiteSpace(stripeAccountId))
+                throw new ArgumentException("OrganizerId must be greater than zero.", nameof(stripeAccountId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventorganizer 
+                                 SET  StripeConnectStatus = @StripeAccountStatus 
+                                 WHERE CustomerId = @organizerId and
+                                 StripeAccountId=@StripeAccountId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@StripeAccountId", stripeAccountId ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@StripeAccountStatus", stripeAccountStatus.ToString() ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@organizerId", organizerId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating Stripe account status: {ex.Message}");
+                throw;
+            }
+        }
     }
 }
