@@ -190,7 +190,7 @@ public class StripeAccess
     /// <returns>Tuple containing client secret to be used by UI (Item1) and
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Tuple<string, string>> BuySalesItem(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
+    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
         {

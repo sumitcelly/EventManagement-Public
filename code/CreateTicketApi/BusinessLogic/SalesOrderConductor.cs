@@ -2,6 +2,7 @@ using System;
 using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.SignalR.Protocol;
+using Mysqlx.Crud;
 namespace CreateTicketApi.BusinessLogic;
 public class SalesOrderConductor
 {
@@ -12,9 +13,12 @@ public class SalesOrderConductor
     private readonly ILogger<SalesOrderConductor> _logger;
 
     private readonly EmailUtils _emailUtils;
+
+    private readonly EventItemTypeDbAccess _eventItemTypeDbAccess;
+    private readonly StripeAccess _stripeAccess;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
-                    EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess,
-                    EmailUtils emailUtils)
+                    EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess, EventItemTypeDbAccess eventItemTypeDbAccess,
+                    EmailUtils emailUtils, StripeAccess stripeAccess)
     {
         if (dbAccess == null)
             throw new ArgumentNullException(nameof(dbAccess));
@@ -27,8 +31,13 @@ public class SalesOrderConductor
 
         if (emailUtils == null)
             throw new ArgumentNullException(nameof(emailUtils));
+
+        if (stripeAccess == null)
+            throw new ArgumentNullException(nameof(_stripeAccess));
+
         _dbAccess = dbAccess;
         _ticketDbAccess = ticketAccess;
+        _eventItemTypeDbAccess = eventItemTypeDbAccess;
         this.userDbAccess = attendeeDbAccess;
         _emailUtils = emailUtils;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -192,15 +201,18 @@ public class SalesOrderConductor
             {
                 string error = result == -1 ? "Ticket are sold out for this item." : "An error occurred while creating ticket.";
                 errorItems.Add(new  ErrorResponseSalesOrderItems
-                            {EventItemTypeId=  item.EventTicketTypeId,
-                                Error= error });
+                            {
+                            EventItemTypeId=  item.EventTicketTypeId,
+                            PaymentRequired = item.Cost>0,
+                            Error= error 
+                            });
             }
             _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");
         }
 
         CustomerSalesOrder salesOrderReturn = new();
 
-        if (errorItems.Count == customerSalesOrder.SalesOrderItems.Count)
+        if (errorItems.Count >0)
         {
             _logger.LogInformation($"All ticket types failed to be added...Deleting sales order");
             await _dbAccess.DeleteSalesOrder(orderId);
@@ -214,8 +226,26 @@ public class SalesOrderConductor
             }
             else
             {
-                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.PaymentPending, string.Empty);
-                _logger.LogInformation($"Sales order {orderId} is pending payment.");
+                List<EventItemType> itemTypes = await _eventItemTypeDbAccess.GetAllEventItemTypesByEventId(salesOrder.EventId);
+                List<PaymentLineItemModel> checkoutItems = [];
+                foreach (var item in customerSalesOrder.SalesOrderItems.Where(item => item.Cost>0))
+                {
+                    checkoutItems?.Add(new PaymentLineItemModel()
+                    {
+                         EventTicketTypeId = item.EventTicketTypeId,
+                         Price = item.Cost,
+                         Quantity = item.Quantity,
+                         Description =checkoutItems?
+                                        .FirstOrDefault(x => x.EventTicketTypeId == item.EventTicketTypeId)?
+                                        .Description ?? "No description available"
+                    });
+                    
+                }
+                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(orderId, customerSalesOrder.StripeConnectedAccountId,checkoutItems);
+                salesOrderReturn.CheckoutSessionSecret = result.Item1;
+                salesOrderReturn.CheckoutSessionId = result.Item2;
+                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.CheckoutSessionCreated,result.Item2);
+                _logger.LogInformation($"Sales order {orderId} checkout created with session id {result.Item2}");
             }
             salesOrderReturn.SalesOrderCode = salesOrder.SalesOrderCode;
             salesOrderReturn.SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode));

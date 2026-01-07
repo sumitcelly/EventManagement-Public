@@ -11,6 +11,11 @@ public class CustomerSalesOrder
     public string DeliveryType { get; set; } = "Email"; // Default to Email"
     public string SalesOrderCode { get; set; } = string.Empty;
     public string SalesOrderQrCodeImage { get; set; } = string.Empty;
+
+    public string CheckoutSessionId {get;set;} = string.Empty;
+    public string CheckoutSessionSecret {get;set;} = string.Empty;
+
+    public string StripeConnectedAccountId {get;set;} = string.Empty;
     public bool PaymentRequired { get; set; } = false;
     public List<SalesOrderItems> SalesOrderItems { get; set; } = new List<SalesOrderItems>();
 
@@ -24,6 +29,8 @@ public class ErrorResponseSalesOrderItems
     public int EventItemTypeId { get; set; }
 
     public string Error { get; set; } = string.Empty;
+
+    public bool PaymentRequired {get; set; } = false;
 }
 
 public class SalesOrderItems

@@ -48,7 +48,7 @@ public enum SalesOrderStatus
     InProgress, // No payment initiated yet
     PaymentRequired, //s Payment required but not initiated
     PaymentPending,//Payment session created, awaiting payment from customer
-    PaymentInitiated, // Payment initiated by user, wating for confirmation from Stripe
+    CheckoutSessionCreated, // Payment initiated by user, wating for confirmation from Stripe
     PaymentFailed,
     PaymentSucceeded,
     OrderCompleted, // Payment succeeded and order is completed

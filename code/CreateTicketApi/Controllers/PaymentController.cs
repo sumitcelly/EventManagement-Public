@@ -130,8 +130,8 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPost("charge")]
-        public async Task<IActionResult> Charge(int salesOrderId, string stripeAccountId, List<PaymentLineItemModel> request)
+        [HttpPost("createcheckoutsession")]
+        public async Task<IActionResult> CreateCheckoutSession(int salesOrderId, string stripeAccountId, List<PaymentLineItemModel> request)
         {
             if (salesOrderId <= 0 || request == null || request.Count == 0)
             {
@@ -140,7 +140,7 @@ namespace CreateTicketApi.Controllers
 
             try
             {
-                var result = await _stripeAccess.BuySalesItem(salesOrderId, stripeAccountId, request);
+                var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId, request);
                 //todo: update session id , order status, in db
                 if (result == null || string.IsNullOrEmpty(result.Item1) || string.IsNullOrEmpty(result.Item2))
                 {
@@ -182,7 +182,7 @@ namespace CreateTicketApi.Controllers
                 // Handle the event
                 if (stripeEvent.EventType.Contains("CheckoutSessionCompleted"))
                 {
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentInitiated, stripeEvent.SessionId);
+                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentSucceeded, stripeEvent.SessionId);
                     // Process the completed checkout session (e.g., update order status)
                    _logger.LogInformation($"Checkout Session Completed for SalesOrder: {stripeEvent.SalesOrderId}");
                 }
