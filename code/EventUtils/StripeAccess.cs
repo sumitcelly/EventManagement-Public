@@ -210,8 +210,9 @@ public class StripeAccess
             {
                 ApplicationFeeAmount = CalculateApplicationFee(lineItems),
             },
+            //one time payment
             Mode = "payment",
-            UiMode = "hosted"
+            UiMode = "embedded"
 
         };
         // options.Metadata = new Dictionary<string, string>
@@ -279,17 +280,17 @@ public class StripeAccess
         {
             throw new InvalidOperationException("Failed to construct Stripe event from the request.");
         }
-        else if (stripeEvent.Data.Object is Session session)
+        else if (stripeEvent.Data.Object is Session session && session!=null)
         {
             return new StripeWebHookData
             {
                 EventType = stripeEvent.Type,
                 SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
                 SessionId = session.Id,
-               // CustomerId = int.TryParse(session.CustomerId
+                PaymentSucceeded = session.PaymentStatus == "paid" ?true:false
             };
         }
-        else if (stripeEvent.Data.Object is Account account)
+        else if (stripeEvent.Data.Object is Account account && account!=null)
         {
             account.Metadata.TryGetValue("CustomerId", out string tempId);
             int.TryParse(tempId, out int customerId);
@@ -321,6 +322,7 @@ public class StripeWebHookData
     public string SessionId { get; set; } = string.Empty;
     public int CustomerId { get; set; } =0;
 
+    public bool PaymentSucceeded { get; set; } = false;
    public string AccountId { get; set; }= string.Empty;
 
     public bool DetailsSubmitted { get; set; } = false;

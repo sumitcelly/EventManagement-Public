@@ -10,7 +10,11 @@ import { useState } from "react";
 import EventSummary from "../components/EventSummary";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
-
+import {loadStripe} from '@stripe/stripe-js';
+import {
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout
+} from '@stripe/react-stripe-js';
    
 export default function OrderSummary() {
   const history = useHistory();
@@ -20,6 +24,9 @@ export default function OrderSummary() {
   const  cart = useAppSelector((state:RootState) => state.cart);
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
   const user = useAppSelector((state:RootState) =>state.auth);
+  
+  const stripeAccountId = eventHeaderInfo.organizerStripeAccountId;
+  console.log(`stripe account id is ${stripeAccountId}`);
 
   console.log(cart); 
   if (cart.tickets.length === 0) {
@@ -38,6 +45,24 @@ export default function OrderSummary() {
   }
  
   const paymentRequired =cart.tickets.some((t) => t.cost && t.cost > 0);
+
+  if (paymentRequired && !stripeAccountId)
+  {
+    return (
+      <div className="p-4"> 
+        <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order due to incomplete organizer setup. 
+          Please only select tickets that do not require a payment.</h2>
+          <Button
+            className="align-bottom mt-auto align-center ml-4"
+              size="xs"
+              onClick={() => history.push(`/buytickets/${id}`)}>
+              Back to Cart
+          </Button>
+        {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
+      </div>
+    );
+  }
+
   let totalAmount = cart.tickets.reduce((total, ticket) => total + (ticket.quantity ? ticket.quantity * ticket.cost : 0), 0);
   const stripeFees = parseFloat((totalAmount * 0.03).toFixed(2));
   const platformFees = 1;

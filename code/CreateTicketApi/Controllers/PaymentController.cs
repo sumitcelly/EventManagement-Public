@@ -198,7 +198,7 @@ namespace CreateTicketApi.Controllers
                         return NotFound($"SalesOrder with ID {stripeEvent.SalesOrderId} not found.");
                     }
                     await  _emailUtils.SendOrderConfirmationEmail(order);
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.OrderCompleted, stripeEvent.SessionId);
+                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentSucceeded, stripeEvent.SessionId);
                     
                     _logger.LogInformation($"Payment succeeded for SalesOrder: {stripeEvent.SalesOrderId}");
                 }

@@ -18,4 +18,5 @@ export interface EventHeader {
   duration?:number; //in hours
   isLive?:boolean;
   eventBannerUrl?:string;
+  organizerStripeAccountId?:string;
 }
