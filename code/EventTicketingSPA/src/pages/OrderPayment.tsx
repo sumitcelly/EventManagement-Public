@@ -4,7 +4,7 @@ import { useHistory, Link } from "react-router-dom";
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { Button } from "flowbite-react";
 import { useState } from "react";
 import EventSummary from "../components/EventSummary";
@@ -15,8 +15,11 @@ import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout
 } from '@stripe/react-stripe-js';
-   
-export default function OrderSummary() {
+
+const pkStripe =  import.meta.env.VITE_STRIPE_PK;
+const stripePromise = loadStripe(pkStripe);
+
+export default function OrderPayment() {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [error,setError] = useState("");
@@ -28,7 +31,25 @@ export default function OrderSummary() {
   const stripeAccountId = eventHeaderInfo.organizerStripeAccountId;
   console.log(`stripe account id is ${stripeAccountId}`);
 
-  console.log(cart); 
+  const location = useLocation();
+  const salesOrderData:any = location.state || {};
+  console.log('sales order',salesOrderData);
+  
+  if (!salesOrderData || !salesOrderData.checkoutSessionSecret || !salesOrderData.checkoutSessionId) {
+    return (
+      <div className="p-4"> 
+        <h2 className="text-xl font-bold mb-2">No payment session found. Please try again.</h2>
+          <Button
+            className="align-bottom mt-auto align-center ml-4"
+              size="xs"
+              onClick={() => history.push(`/buytickets/${id}`)}>
+              Back to Cart
+          </Button>
+        {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
+      </div>
+    );
+  } 
+ 
   if (cart.tickets.length === 0) {
     return (
       <div className="p-4"> 
@@ -58,8 +79,22 @@ export default function OrderSummary() {
               onClick={() => history.push(`/buytickets/${id}`)}>
               Back to Cart
           </Button>
-        {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
-      </div>
+        </div>
+    );
+  }
+
+  if (!paymentRequired)
+  {
+    return (
+      <div className="p-4"> 
+        <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order. Please try again!</h2>
+          <Button
+            className="align-bottom mt-auto align-center ml-4"
+              size="xs"
+              onClick={() => history.push(`/buytickets/${id}`)}>
+              Back to Cart
+          </Button>
+        </div>
     );
   }
 
@@ -71,29 +106,7 @@ export default function OrderSummary() {
   }
   console.log("totalAmount", totalAmount);
   console.log("paymentRequired", paymentRequired);
-  const handleconfirmOrder = () => {      
-    //history.push(`/orderconfirmation/event/${id}/salesOrderCode/ABCDEF12345`);   
-    axiosClient.post("/salesOrder", {
-      userId: user.user?.id, // Replace with actual user ID
-      eventId: id,
-      customerId: eventHeaderInfo.eventOrganizerId,
-      emailAddress: cart.email,
-      name: cart.fullname,
-      deliveryType :"Email",
-      paymentRequired: paymentRequired,
-      salesOrderItemsError:[],
-      salesOrderItems: cart.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity, cost: t.cost })),
-    }).then((res) => {
-      console.log("Order created:", res.data);  
-      
-      history.push(`/orderconfirmation/event/${id}`, res.data);
-    }).catch((error) => {
-      console.error("Error creating order:", error);
-      setError("Error creating order. Please try again."+error.message);
-      //return(<p className="text-red-500">Error creating order. Please try again.</p>)
-      // Handle error (e.g., show error message to user)
-    });
-  }
+
   return (
     <IonPage>
       <IonHeader>
@@ -148,14 +161,25 @@ export default function OrderSummary() {
           </div>
         )}
       </div>
+      <div id="checkout">
+          <EmbeddedCheckoutProvider
+            stripe={stripePromise}
+            options={{       
+              clientSecret: salesOrderData.checkoutSessionSecret || "",   
+          
+            }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+      </div>
       {/* Button */}
-      <div className="ml-auto mt-4">
+      {/* <div className="ml-auto mt-4">
         <Button
               className="ml-auto ml-4"
               onClick={() =>handleconfirmOrder()}>
-              {paymentRequired? "Buy Tickets": "Confirm Order"}
+             "Pay"
         </Button>
-      </div>
+      </div> */}
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
     </div>
     </IonContent>

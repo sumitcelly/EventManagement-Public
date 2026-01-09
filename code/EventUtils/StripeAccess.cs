@@ -16,8 +16,7 @@ public class StripeAccess
     private readonly Microsoft.Extensions.Logging.ILogger<StripeAccess> _logger;
     private readonly string _connectReturnUrl = "http://localhost:5173/organizermanager/customerId/stripe";
     private readonly string _connectRefreshUrl = "http://localhost:5173/organizermanager/customerId/stripe";
-    private readonly string _paymentReturnUrl = "https://yourapp.com/stripe/payment/success";
-    private readonly string _cancelUrl = "https://yourapp.com/stripe/payment/cancel";
+    private readonly string _paymentReturnUrl = "http://localhost:5173/orderpayment?session_id={CHECKOUT_SESSION_ID}";
 
     private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
 
@@ -204,8 +203,7 @@ public class StripeAccess
         _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {lineItems.Count} line items.");
         var options = new Stripe.Checkout.SessionCreateOptions
         {
-            SuccessUrl = _paymentReturnUrl,
-            CancelUrl = _cancelUrl,
+            ReturnUrl = _paymentReturnUrl,
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
                 ApplicationFeeAmount = CalculateApplicationFee(lineItems),

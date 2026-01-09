@@ -39,6 +39,7 @@ public class SalesOrderConductor
         _ticketDbAccess = ticketAccess;
         _eventItemTypeDbAccess = eventItemTypeDbAccess;
         this.userDbAccess = attendeeDbAccess;
+        _stripeAccess = stripeAccess;
         _emailUtils = emailUtils;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
@@ -202,9 +203,9 @@ public class SalesOrderConductor
                 string error = result == -1 ? "Ticket are sold out for this item." : "An error occurred while creating ticket.";
                 errorItems.Add(new  ErrorResponseSalesOrderItems
                             {
-                            EventItemTypeId=  item.EventTicketTypeId,
-                            PaymentRequired = item.Cost>0,
-                            Error= error 
+                                EventItemTypeId=  item.EventTicketTypeId,
+                                PaymentRequired = item.Cost>0,
+                                Error= error 
                             });
             }
             _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");

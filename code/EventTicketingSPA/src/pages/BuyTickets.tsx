@@ -8,17 +8,18 @@ import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
 import { useHistory, useParams } from "react-router";
-import OrderSummary from "./OrderSummary";
+import OrderSummary from "./OrderSummaryDefunct";
 import EventSummary from "../components/EventSummary";
 import axiosClient from "../api/axiosClient";
 import { useQuery } from "react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
-
+import toast, { Toaster } from 'react-hot-toast';
+import { SalesOrderErrors } from "../types/Order";
 
 const schema = yup.object({
-  email: yup.string().required("Email is required"),
+  email: yup.string().required("Email is required").email("Invalid email format"),
   fullname: yup.string().required("Fullname is required"),
   tickets: yup
     .array()
@@ -62,11 +63,15 @@ const schema = yup.object({
 
 export default function BuyTickets() {
 
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const  cart = useAppSelector((state:RootState) => state.cart);
+  const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
+  const user = useAppSelector((state:RootState) =>state.auth);
+  
   const ionRouter = useIonRouter();
   const { id } = useParams<{ id: string }>();
-
+  const [checkoutError,setcheckoutError] = useState([]);
   
   const {
         data: ticketTypesList = [], // provide default empty array
@@ -106,9 +111,9 @@ export default function BuyTickets() {
   useEffect(() => {
     if (ticketTypesList && ticketTypesList.length > 0) {
       reset({
-        fullname: cart.fullname || '',
-        email: cart.email || '',
-        tickets: cart.tickets.length > 0 
+        fullname: user.user?.name || cart.fullname || '',
+        email: user.user?.email || cart.email || '',
+        tickets: cart.tickets?.length > 0 
           ? cart.tickets 
           : ticketTypesList.map((t: Ticket) => ({ 
               eventItemTypeId: t.eventItemTypeId, 
@@ -120,7 +125,7 @@ export default function BuyTickets() {
               totalAllowed: t.totalAllowed,
               ticketsSold: t.ticketsSold,
             }))
-      });
+        });
     }
   }, [ticketTypesList, cart.tickets, cart.fullname, cart.email, reset]);
 
@@ -128,23 +133,84 @@ export default function BuyTickets() {
   if (error) console.error('Error fetching ticket types:', error);
   if (isLoading) return <p>Loading...</p>;
 
-  
-  
-  const onSubmit = (data: TicketFormValues) => {
+  const onSubmit = async  (data: TicketFormValues) => {
     console.log(errors);
-    console.log('submite',data);
+    console.log('submit',data);
     dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
     dispatch(updatetickets({ tickets: data.tickets }));
-    ionRouter.push(`/ordersummary/${id}`);
+    //ionRouter.push(`/ordersummary/${id}`);
+    await checkout(data);
   };
  
+  const paymentNeeded =  ()=> ticketTypesList.some((t:any) => t.cost && t.cost > 0);
+  const checkout = async (formData:TicketFormValues) => {       
+    try
+    {
+      const result = await axiosClient.post("/salesOrder", {
+        userId: user.user?.id, 
+        eventId: id,
+        customerId: eventHeaderInfo.eventOrganizerId,
+        emailAddress: formData.email,
+        name: formData.fullname,
+        deliveryType :"Email",
+        stripeConnectedAccountId: eventHeaderInfo.organizerStripeAccountId,
+        paymentRequired: paymentNeeded(),
+        salesOrderItemsError:[],
+        salesOrderItems: formData.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity, cost: t.cost })),
+      });
+      if (result.status !=200)
+      {
+        toast.error("Order could not be created successfully." +result.status);
+      }
+      else
+      {
+        console.log(`Received 200 from order creation. checking error array...`);
+        if (result.data && result.data?.SalesOrderItemsError && result.data?.SalesOrderItemsError >0)
+        {
+          setcheckoutError(result.data?.SalesOrderItemsError);
+          // let errorStr= 'Your order could not be completed due to the following errors:';
+          // result.data?.SalesOrderItemsError.forEach(function(orderError:any) {
+          //   console.log(orderError);
+          //   const itemName =cart.tickets.find(t=>t.eventItemTypeId == orderError.EventTicketTypeId)?.name;
+          //   console.log(`Item name with error is ${itemName}`);
+          //   errorStr += `Item ${itemName} had error ${orderError.Error}`;
+          // });
+          // setcheckoutError(errorStr);
+        }
+        else if (result.data)
+        {
+          console.log('Successfully created order with orderCode:'+result.data.SalesOrderCode);
+          if (!paymentNeeded())
+          {
+             history.push(`/orderconfirmation/event/${id}`, result.data);
+          }
+          else
+          {
+            if (!result.data?.checkoutSessionSecret || !result.data?.checkoutSessionId)
+            {
+              console.log('Unable to proceed to payment due to incomplete setup.');
+              toast.error("Unable to proceed to payment due to incomplete setup. Please try again later.");
+              return;
+            }
+            
+            history.push(`/orderpayment/event/${id}`, result.data);
+          }
+        }
+      }
+    }
+    catch(error:any)
+    {
+      toast.error("There was an error creating your order.Please try again." + error.message);
+      console.log("Error creating order. Please try again."+error.message);
+    }
+  }
 return (
    <IonPage>
          <IonHeader>
            <AppNavbar />
          </IonHeader>
        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-   
+       <Toaster position="top-right" />
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
           <EventSummary/>
@@ -158,9 +224,7 @@ return (
                 <div  key={item.eventItemTypeId} className="flex flex-col">
                   <div className="flex flex-row">
                       <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
-                      <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost}</div>
-                      
-                        
+                      <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
                         <div className="text-l text-center text-secondary-color">
                           <input
                             key={item.eventItemTypeId}
@@ -200,31 +264,34 @@ return (
                   </p>
                 )}
 
+            
             <div className="flex flex-row mt-4 space-x-4">
+              {user.user == null && (
+              <div className="w-1/2 flex flex-col border-gray-300 justify-center">
+                {/* Fullname control*/}
+                <label className="text-sm font-medium">Full Name</label>
+                  <input
+                    type="text"
+                    {...register("fullname")}
+                    className="border rounded px-3 py-2"
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm">{errors.fullname?.message}</p>
+                  )}
+                
+                  {/* Email control*/}
+                  <label className="mt-3 block text-sm font-medium">Email</label>
+                  <input
+                    type="text"
+                    {...register("email")}
+                    className="border rounded px-3 py-2"
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm">{errors.email.message}</p>
+                  )}
+                </div>
+              )}
 
-             <div className="w-1/2 flex flex-col border-gray-300 justify-center">
-              {/* Fullname control*/}
-              <label className="text-sm font-medium">Full Name</label>
-                <input
-                  type="text"
-                  {...register("fullname")}
-                  className="border rounded px-3 py-2"
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm">{errors.email.message}</p>
-                )}
-              
-                {/* Email control*/}
-                <label className="mt-3 block text-sm font-medium">Email</label>
-                <input
-                  type="text"
-                  {...register("email")}
-                  className="border rounded px-3 py-2"
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm">{errors.email.message}</p>
-                )}
-              </div>
               {/* Cart total and checkout */}
               <div className="ml-auto mt-auto w-1/2 flex flex-col mt-2 ">
                 <div className="ml-auto"><CartTotal control={control}/></div>
@@ -232,10 +299,23 @@ return (
                     type="submit"                         
                     className="mt-3  ml-auto bg-brand-dark text-white px-4 
                         py-2 rounded hover:bg-blue-700">
-                    Checkout
+                    {!paymentNeeded()?'Confirm Order':'Proceed to payment'}
                 </button>
                 {/* By clicking "Checkout", you agree to our Terms of Service and Privacy Policy. */}
             </div>
+           
+            {checkoutError && checkoutError.length>0 &&  (
+                <div className="text-center mb-4">
+                    Your order could not be processed:
+                    
+                    {checkoutError && 
+                       checkoutError.map((item:SalesOrderErrors)=>
+                      (
+                        <div key={item.eventItemTypeId} className="text-xs">{item.error}: {cart.tickets.find(i=>i.eventItemTypeId === item.eventItemTypeId)?.name}</div>
+                      )
+                    )}  
+                </div>
+            )}
           </div>
            
         </form>

@@ -25,7 +25,7 @@ namespace CreateTicketApi.Controllers
             if (order == null)
                 return BadRequest("Order is null.");
 
-            var result = await _salesOrderConductor.CreateSalesOrder(order);
+            CustomerSalesOrder result = await _salesOrderConductor.CreateSalesOrder(order);
             if (result == null || result.SalesOrderCode == null)
                 return StatusCode(500, "Failed to create sales order.");
             else

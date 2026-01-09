@@ -19,7 +19,7 @@ export default function OrderConfirmation() {
   
 
   const [cartTickets,setCartTickets] = useState<Ticket[]>([]);
-
+  const user = useAppSelector((state:RootState) =>state.auth);
   const ionRouter = useIonRouter();
   //const { eventId } = useParams();
   
@@ -63,7 +63,7 @@ export default function OrderConfirmation() {
                 <div className="text-center mb-4">
                   Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
                 </div>
-                 {salesOrderData.salesOrderItemsError && salesOrderData.salesOrderItemsError.length > 0 && 
+                {salesOrderData.salesOrderItemsError && salesOrderData.salesOrderItemsError.length > 0 && 
                 (
                   <div className="text-center mb-4 text-secondary-color">
                       One or more of your tickets could not be processed:
@@ -84,7 +84,7 @@ export default function OrderConfirmation() {
                 <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={salesOrderData.salesOrderItemsError} salesOrderCode={salesOrderData.salesOrderCode || ""} 
                                   qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
                 <div className="text-center mb-4 mt-2">
-                  You will receive an email confirmation to {cart.email} shortly with your e-tickets.
+                  You will receive an email confirmation to <span className="font-bold"> {user.user?.email || cart.email}</span> shortly with your e-tickets.
                 </div>
                 <div>
                {/*This maybe confusing since we are already showing order receipt with qr code at top*/}

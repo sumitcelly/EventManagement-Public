@@ -11,7 +11,7 @@ import AppNavbar from "./components/Navbarnew";
 import SearchEvents from "./pages/SearchEvents";
 import EventDetails from "./pages/EventDetails";
 import BuyTickets  from "./pages/BuyTickets";
-import OrderSummary from "./pages/OrderSummary";
+import OrderSummary from "./pages/OrderSummaryDefunct";
 import OrderConfirmation from "./pages/OrderConfirmation";
 
 import Dashboard  from "./pages/Organizer/Dashboard";
@@ -31,6 +31,7 @@ import { IonContent, IonHeader, IonPage, IonRouterOutlet,IonTab,setupIonicReact 
 import SalesOrderTicket from "./components/SalesOrderTicket";
 import ScannerDashboard from "./pages/Scanner/Dashboard";
 import ScanTicket from "./pages/Scanner/ScanTicket";
+import OrderPayment from "./pages/OrderPayment";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -130,15 +131,28 @@ export default function App() {
         />
 
         <Route
+          path="/orderpayment/event/:id"
+           render={() =>
+               <OrderPayment /> 
+          }
+        />
+
+        <Route
+          path="/orderpayment"
+           render={() =>
+               <OrderPayment /> 
+          }
+        />
+        {/* <Route
           path="/ordersummary/:id"
            render={() =>
                <OrderSummary /> 
           }
-        />
+        /> */}
          <Route
           path="/orderconfirmation/event/:eventId"
            render={() =>
-               isAuthenticated ? <OrderConfirmation /> : <LoginPage/>
+               <OrderConfirmation /> 
           }
         /> 
 

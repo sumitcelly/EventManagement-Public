@@ -1,4 +1,5 @@
 export type SalesOrderErrors = {
   error:string,
-  eventItemTypeId: number
+  eventItemTypeId: number,
+  paymentRequired: boolean
 }

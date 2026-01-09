@@ -8,6 +8,7 @@ import { EventHeader} from "../types/Event";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import  { updateEvent} from "../features/auth/eventSlice";
+import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
@@ -60,6 +61,8 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       return;
 
     dispatch(updateEvent({event}));
+    //need to think if this needs to be done after checking if the event id is different than the above?
+    dispatch(resetCart());
     ionRouter.push(`/buytickets/${id}`);
   }
   

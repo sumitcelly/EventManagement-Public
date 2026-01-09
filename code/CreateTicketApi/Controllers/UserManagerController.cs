@@ -83,7 +83,8 @@ namespace CreateTicketApi.Controllers
             return Ok(new
             {
                 accessToken = _accessToken,
-                user = new { id = user.UserId, email = request.Email, role = role ?? null, customerId = orgMember?.CustomerId ?? 0 }
+                user = new { id = user.UserId, email = request.Email, role = role ?? null, customerId = orgMember?.CustomerId ?? 0, 
+                            name = user.Name ?? string.Empty }
             });
         }
 
