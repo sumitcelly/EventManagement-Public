@@ -51,6 +51,6 @@ public enum SalesOrderStatus
     CheckoutSessionCreated, // Payment initiated by user, wating for confirmation from Stripe
     PaymentFailed,
     PaymentSucceeded,
-    OrderCompleted, // Payment succeeded and order is completed
+    OrderCompleted, //  and order is completed(payment was not required)
     Refunded
 }

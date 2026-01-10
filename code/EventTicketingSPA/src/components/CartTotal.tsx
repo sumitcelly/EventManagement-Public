@@ -11,8 +11,8 @@ export default function CartTotal({ control }: CartTotalProps) {
   console.log('tickets is',tickets);
   const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
   console.log('cart total',total);
-  const processingFees = parseFloat((total *.03).toFixed(2));
-  const platformFees =1;
+  const processingFees = parseFloat((total *.029).toFixed(2));
+  const platformFees = parseFloat((total *.03).toFixed(2));
   const finalTotal = (total + processingFees + platformFees).toFixed(2);
   console.log(processingFees);
   console.log(finalTotal);

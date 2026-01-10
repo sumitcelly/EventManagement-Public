@@ -236,8 +236,8 @@ public class SalesOrderConductor
                          EventTicketTypeId = item.EventTicketTypeId,
                          Price = item.Cost,
                          Quantity = item.Quantity,
-                         Description =checkoutItems?
-                                        .FirstOrDefault(x => x.EventTicketTypeId == item.EventTicketTypeId)?
+                         Description =itemTypes?
+                                        .FirstOrDefault(x => x.EventItemTypeId == item.EventTicketTypeId)?
                                         .Description ?? "No description available"
                     });
                     

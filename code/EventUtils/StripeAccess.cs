@@ -49,7 +49,7 @@ public class StripeAccess
         {
             throw new ArgumentException("Stripe webhook secret is not configured.");
         }
-        _applicationFeePercentage = Convert.ToDecimal(configuration["Stripe:ApplicationFeePercentage"]);
+       // _applicationFeePercentage = Convert.ToDecimal(configuration["Stripe:ApplicationFeePercentage"]);
         logger.LogInformation("Initializing Stripe API with provided configuration.");
     }
 
@@ -179,6 +179,7 @@ public class StripeAccess
         return i;
     }
 
+    
     /// <summary>
     /// Processes the purchase of sales items using Stripe Checkout.Initiates a Stripe Checkout session.
     /// 
@@ -200,23 +201,24 @@ public class StripeAccess
             throw new ArgumentException("Line items cannot be null or empty.", nameof(lineItems));
         }
 
+        long appFees = CalculateApplicationFee(lineItems);
+        long totalItemsUnitPrice = (long)lineItems.Sum(item => item.Price * item.Quantity * 100);
+        _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
+        var (finalTotal, updatedAppFee) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees);
+
         _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {lineItems.Count} line items.");
         var options = new Stripe.Checkout.SessionCreateOptions
         {
             ReturnUrl = _paymentReturnUrl,
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
-                ApplicationFeeAmount = CalculateApplicationFee(lineItems),
+                ApplicationFeeAmount = updatedAppFee,
             },
             //one time payment
             Mode = "payment",
             UiMode = "embedded"
 
         };
-        // options.Metadata = new Dictionary<string, string>
-        // {
-        //     { "SalesOrderId", salesOrderId.ToString() }
-        // };
         options.ClientReferenceId = salesOrderId.ToString();
         options.LineItems = new List<SessionLineItemOptions>();
         foreach (var item in lineItems)
@@ -236,6 +238,15 @@ public class StripeAccess
 
             });
         }
+
+        options.LineItems.Add(new SessionLineItemOptions {
+            PriceData = new SessionLineItemPriceDataOptions {
+                UnitAmount = finalTotal - totalItemsUnitPrice, // The remaining "Service Fee" (approx $1.95)
+                Currency = "usd",
+                ProductData = new SessionLineItemPriceDataProductDataOptions { Name = "Service Fee" }
+            },
+            Quantity = 1
+        });
 
         var requestOptions = new RequestOptions
         {

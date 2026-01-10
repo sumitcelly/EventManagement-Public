@@ -1,0 +1,12 @@
+The Golden Rule for Connect:
+Stripe always takes its processing fee out of the total amount charged to the customer. 
+
+It then sends your application_fee_amount to you, and the "leftovers" go to the organizer.
+
+The Financial Math:
+When organizer absorbs all fees
+
+Total Charged: $21.00
+Minus your Fee: -$1.00 (Goes to your Stripe Balance)
+Minus Stripe's Fee: -$0.91 (Estimated 2.9% + 30¢ on the $21 total)
+Organizer's Net Payout: $19.09

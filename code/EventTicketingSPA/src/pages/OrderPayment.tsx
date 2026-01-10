@@ -99,8 +99,8 @@ export default function OrderPayment() {
   }
 
   let totalAmount = cart.tickets.reduce((total, ticket) => total + (ticket.quantity ? ticket.quantity * ticket.cost : 0), 0);
-  const stripeFees = parseFloat((totalAmount * 0.03).toFixed(2));
-  const platformFees = 1;
+  const stripeFees = parseFloat((totalAmount * 0.029).toFixed(2));
+  const platformFees =  parseFloat((totalAmount * 0.03).toFixed(2));
   if (paymentRequired) {
     totalAmount += stripeFees + platformFees;
   }
