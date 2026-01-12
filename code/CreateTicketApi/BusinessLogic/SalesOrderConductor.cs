@@ -121,6 +121,9 @@ public class SalesOrderConductor
         if ((string.IsNullOrEmpty(customerSalesOrder.EmailAddress) ||
                 string.IsNullOrWhiteSpace(customerSalesOrder.Name)) && customerSalesOrder.UserId <= 0)
             throw new ArgumentException("EmailAddress  and Name should be provided if there is no signed in Attendee", nameof(customerSalesOrder.EmailAddress));
+        
+        //Todo:Need to compare price of item from ui with price in db for eventitemtype table and warn user if there is a mismatch.
+        //
 
         EventUser attendee;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))

@@ -116,8 +116,19 @@ export default function OrderPayment() {
 
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
         <EventSummary/>
-        <div className="bg-brand-neutral p-4 rounded">
-          <div className="text-xl font-bold mb-4 text-primary-color text-center">Order Summary</div>
+        <div className="bg-brand-neutral rounded">
+        <div id="checkout">
+          <EmbeddedCheckoutProvider
+            stripe={stripePromise}
+            options={{       
+              clientSecret: salesOrderData.checkoutSessionSecret || "",   
+          
+            }}
+          >
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </div>
+          {/* <div className="text-xl font-bold mb-4 text-primary-color text-center">Order Summary</div>
           {
             cart.tickets.filter(t=>t.quantity && t.quantity>0).map((ticket:Ticket) => (
               <div key={ticket.eventItemTypeId} className="flex justify-between mb-2">
@@ -125,9 +136,9 @@ export default function OrderPayment() {
                 <span>${ticket.quantity*ticket.cost}</span>
               </div>
             ))
-          }
+          } */}
          
-            {paymentRequired && (
+            {/* {paymentRequired && (
               <>
                 <div className="flex justify-between pt-2">
                   <span>Stripe fees:</span>
@@ -139,18 +150,15 @@ export default function OrderPayment() {
                 </div>
               </>
               
-            )}
-             <div className="flex justify-between font-bold mb-2 pt-2">
+            )} */}
+             {/* <div className="flex justify-between font-bold mb-2 pt-2">
                <span>Total:</span>
                  <span>${totalAmount}</span>
-             
-              {/* <span className="text-sm text-gray-500 italic"> (incl. fees if applicable)</span> */}
-              
-          </div>
+            </div> */}
         </div>
         
       {/*Payment summary */}
-      <div>
+      {/* <div>
         {paymentRequired && (
           <div className="mt-6 border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
             <div className="text-xl font-bold mb-4 text-primary-color text-center">Payment Summary</div>
@@ -160,18 +168,8 @@ export default function OrderPayment() {
             </div>
           </div>
         )}
-      </div>
-      <div id="checkout">
-          <EmbeddedCheckoutProvider
-            stripe={stripePromise}
-            options={{       
-              clientSecret: salesOrderData.checkoutSessionSecret || "",   
-          
-            }}
-          >
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
-      </div>
+      </div> */}
+      
       {/* Button */}
       {/* <div className="ml-auto mt-4">
         <Button

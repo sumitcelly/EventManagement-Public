@@ -175,7 +175,7 @@ public class StripeAccess
             totalAmount += item.Price * item.Quantity;
         }
         long i = Convert.ToInt64(totalAmount * _applicationFeePercentage *100); // Example: 10% application fee
-        _logger.LogInformation($"fees amount is {i}");
+        _logger.LogInformation($"application fees amount is {i} using fees percent {_applicationFeePercentage}.");
         return i;
     }
 
@@ -190,7 +190,8 @@ public class StripeAccess
     /// <returns>Tuple containing client secret to be used by UI (Item1) and
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems)
+    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems,
+                                             bool passOnAllFeesToCustomer = false)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
         {
@@ -204,15 +205,27 @@ public class StripeAccess
         long appFees = CalculateApplicationFee(lineItems);
         long totalItemsUnitPrice = (long)lineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
-        var (finalTotal, updatedAppFee) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees);
+        long finalTotal=0, totalFeesForTrans=0;
+        if (passOnAllFeesToCustomer)
+        {
+           (finalTotal, totalFeesForTrans) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees);
+        }
+        //absorb the stripe fees but pass on the application fees
+        else
+        {
+            finalTotal = totalItemsUnitPrice + appFees;
+            totalFeesForTrans = appFees;
+        }
+        
+        _logger.LogInformation($"Fees after stripe calculation is {finalTotal} {totalFeesForTrans}");
 
         _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {lineItems.Count} line items.");
-        var options = new Stripe.Checkout.SessionCreateOptions
+        var options = new SessionCreateOptions
         {
             ReturnUrl = _paymentReturnUrl,
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
-                ApplicationFeeAmount = updatedAppFee,
+                ApplicationFeeAmount = appFees,
             },
             //one time payment
             Mode = "payment",

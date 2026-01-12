@@ -4,9 +4,22 @@ Stripe always takes its processing fee out of the total amount charged to the cu
 It then sends your application_fee_amount to you, and the "leftovers" go to the organizer.
 
 The Financial Math:
-When organizer absorbs all fees
+When organizer absorbs stripe fees
 
-Total Charged: $21.00
-Minus your Fee: -$1.00 (Goes to your Stripe Balance)
-Minus Stripe's Fee: -$0.91 (Estimated 2.9% + 30¢ on the $21 total)
-Organizer's Net Payout: $19.09
+This is actually the simplest way to configure Stripe Connect.
+The Financial Workflow
+Ticket Price: $20.00
+Platform Fee (Line Item): $1.00
+Customer Pays: $21.00
+ApplicationFeeAmount: $1.00 (This goes to you).
+Stripe Fee: ~$0.91 (Calculated on the $21.00).
+Organizer Receives: $19.09 ($21.00 - $1.00 - $0.91)
+
+
+When organizer passes Stripe fees to customer:
+Ticket: $20.00
+Service Fee: $1.95 (Your $1.00 profit + $0.95 to cover Stripe)
+Customer Pays: $21.95
+Organizer Gets: ~$20.01 (They are happy)
+
+
