@@ -6,7 +6,7 @@ import { RootState } from "../app/store";
 import { useAppSelector } from "../app/hook";
 import { useLocation, useParams } from "react-router";
 import { Button } from "flowbite-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EventSummary from "../components/EventSummary";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
@@ -15,6 +15,8 @@ import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout
 } from '@stripe/react-stripe-js';
+import toast from "react-hot-toast";
+import EventDetails from "./EventDetails";
 
 const pkStripe =  import.meta.env.VITE_STRIPE_PK;
 const stripePromise = loadStripe(pkStripe);
@@ -22,7 +24,8 @@ const stripePromise = loadStripe(pkStripe);
 export default function OrderPayment() {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
-  const [error,setError] = useState("");
+
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null);
   
   const  cart = useAppSelector((state:RootState) => state.cart);
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
@@ -34,67 +37,183 @@ export default function OrderPayment() {
   const location = useLocation();
   const salesOrderData:any = location.state || {};
   console.log('sales order',salesOrderData);
-  
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+  const orderId = params.get('salesOrderId');
+
+  console.log('session id and orderid from url', sessionId, orderId);
+
+  const getSessionStatus = async (sessionId:string, stripeAcctId:string) => 
+  {
+    try 
+    {
+      const response = await axiosClient.get<string>(`/payment/checkout-session-status/${sessionId}/${stripeAcctId}`);
+      console.log("Session status response:", response.data);
+      if (response.data =="paid")
+      {
+        toast.success("Payment successful! Your order is confirmed.");
+        const salesData = await axiosClient.get(`/SalesOrderQrImage/${orderId}`);
+        if (salesData && salesData.data) {
+          console.log('sales order data', salesData.data);
+          history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { salesOrderCode: salesData.data.salesOrderCode, salesOrderQrCodeImage: salesData.data.salesOrderQrCodeImage });
+        }
+      }
+      if (response.data =="unpaid")
+      {
+        toast.error("Payment is still being processed. Please wait sometime.");
+        console.log("Payment is still being processed. Please wait sometime.");
+        history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, {  salesOrderId: orderId, paymentPending:true});
+      }
+      toast.error("Invalid payment session status. Please try again.");
+      //setSessionStatus(response.data);
+      return response.data;
+    } 
+    catch (error) {
+      console.error("Error fetching session status:", error);
+      toast.error("Error fetching session status. Please try again." +error);
+    }
+  }
+
+  useEffect(() => {
+    if (sessionId && stripeAccountId) {
+      getSessionStatus(sessionId, stripeAccountId);
+    }
+  }, [sessionId, stripeAccountId]);
+
+  // if (sessionId && sessionStatus) {
+  //   return (
+  //     <IonPage>
+  //       <IonHeader>
+  //         <AppNavbar />
+  //       </IonHeader>
+  //       <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+  //         <div className="p-4"> 
+  //           {sessionStatus === 'paid' && (
+  //           <>            
+  //             <h2 className="text-xl font-bold mb-2">Your order is confirmed</h2>
+  //             <Button
+  //               className="align-bottom mt-auto align-center ml-4"
+  //                 size="xs"
+  //                 onClick={() => history.push(`/buytickets/${id}`)}
+  //                 >
+  //                 View your Tickets
+  //             </Button>
+  //           </>
+  //           )}
+            
+  //           {sessionStatus !== 'unpaid' && (
+  //           <>
+  //             <h2 className="text-xl text-secondary-color font-bold mb-2">Your order is still under process.</h2>
+  //             <Button
+  //               className="align-bottom mt-auto align-center ml-4"
+  //                 size="xs"
+  //                 disabled={sessionStatus === 'unpaid'}  
+  //                 onClick={() => history.push(`/buytickets/${id}`)}
+  //                 >
+  //                 View your Tickets
+  //             </Button>
+  //           </>
+  //           )}
+  //        </div>
+  //       </IonContent>
+  //     </IonPage>
+  //   );
+  // }
+
   if (!salesOrderData || !salesOrderData.checkoutSessionSecret || !salesOrderData.checkoutSessionId) {
     return (
-      <div className="p-4"> 
-        <h2 className="text-xl font-bold mb-2">No payment session found. Please try again.</h2>
-          <Button
-            className="align-bottom mt-auto align-center ml-4"
-              size="xs"
-              onClick={() => history.push(`/buytickets/${id}`)}>
-              Back to Cart
-          </Button>
-        {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
-      </div>
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <div className="p-4"> 
+            <h2 className="text-xl font-bold mb-2">No payment session found. Please try again.</h2>
+              <Button
+                className="align-bottom mt-auto align-center ml-4"
+                  size="xs"
+                  onClick={() => history.push(`/buytickets/${id}`)}
+                  >
+                  Back to Cart
+              </Button>
+            {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
+          </div>
+        </IonContent>
+      </IonPage>
     );
   } 
  
-  if (cart.tickets.length === 0) {
-    return (
-      <div className="p-4"> 
-        <h2 className="text-xl font-bold mb-2">No tickets in cart</h2>
-          <Button
-            className="align-bottom mt-auto align-center ml-4"
-              size="xs"
-              onClick={() => history.push(`/buytickets/${id}`)}>
-              Back to Cart
-          </Button>
-        {/* <Link to={`/buytickets/${id}`} className="text-primary-color underline">Get Tickets</Link> */}
-      </div>
-    );
-  }
+  
  
   const paymentRequired =cart.tickets.some((t) => t.cost && t.cost > 0);
 
   if (paymentRequired && !stripeAccountId)
   {
     return (
-      <div className="p-4"> 
-        <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order due to incomplete organizer setup. 
-          Please only select tickets that do not require a payment.</h2>
-          <Button
-            className="align-bottom mt-auto align-center ml-4"
-              size="xs"
-              onClick={() => history.push(`/buytickets/${id}`)}>
-              Back to Cart
-          </Button>
-        </div>
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <div className="p-4"> 
+            <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order due to incomplete organizer setup. 
+              Please only select tickets that do not require a payment.</h2>
+              <Button
+                className="align-bottom mt-auto align-center ml-4"
+                  size="xs"
+                  onClick={() => history.push(`/buytickets/${id}`)}
+                  >
+                  Back to Cart
+              </Button>
+            </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   if (!paymentRequired)
   {
     return (
-      <div className="p-4"> 
-        <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order. Please try again!</h2>
-          <Button
-            className="align-bottom mt-auto align-center ml-4"
-              size="xs"
-              onClick={() => history.push(`/buytickets/${id}`)}>
-              Back to Cart
-          </Button>
-        </div>
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <div className="p-4"> 
+            <h2 className="text-xl text-secondary-color font-bold mb-2">Unable to proceed with order. Please try again!</h2>
+              <Button
+                className="align-bottom mt-auto align-center ml-4"
+                  size="xs"
+                  onClick={() => history.push(`/buytickets/${id}`)}
+                  >
+                  Back to Cart
+              </Button>
+            </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (cart.tickets.length === 0)
+  {
+    return (
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <div className="p-4"> 
+            <h2 className="text-xl font-bold mb-2">No tickets in cart</h2>
+              <Button
+                className="align-bottom mt-auto align-center ml-4"
+                  size="xs"
+                  onClick={() => history.push(`/buytickets/${id}`)}
+                  >
+                  Back to Cart
+              </Button>
+            </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
@@ -128,57 +247,10 @@ export default function OrderPayment() {
             <EmbeddedCheckout />
           </EmbeddedCheckoutProvider>
         </div>
-          {/* <div className="text-xl font-bold mb-4 text-primary-color text-center">Order Summary</div>
-          {
-            cart.tickets.filter(t=>t.quantity && t.quantity>0).map((ticket:Ticket) => (
-              <div key={ticket.eventItemTypeId} className="flex justify-between mb-2">
-                <span> {ticket.quantity} @ {ticket.name} </span>
-                <span>${ticket.quantity*ticket.cost}</span>
-              </div>
-            ))
-          } */}
-         
-            {/* {paymentRequired && (
-              <>
-                <div className="flex justify-between pt-2">
-                  <span>Stripe fees:</span>
-                  <span>${stripeFees}</span>
-                </div>
-                <div className="flex justify-between  mb-2">
-                  <span>Platform fees:</span>
-                  <span>${platformFees}</span>
-                </div>
-              </>
-              
-            )} */}
-             {/* <div className="flex justify-between font-bold mb-2 pt-2">
-               <span>Total:</span>
-                 <span>${totalAmount}</span>
-            </div> */}
-        </div>
+      </div>
         
-      {/*Payment summary */}
-      {/* <div>
-        {paymentRequired && (
-          <div className="mt-6 border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
-            <div className="text-xl font-bold mb-4 text-primary-color text-center">Payment Summary</div>
-            <div className="flex justify-between mb-2">
-              <span>Amount to be charged:</span>
-              <span>${totalAmount}</span>
-            </div>
-          </div>
-        )}
-      </div> */}
-      
-      {/* Button */}
-      {/* <div className="ml-auto mt-4">
-        <Button
-              className="ml-auto ml-4"
-              onClick={() =>handleconfirmOrder()}>
-             "Pay"
-        </Button>
-      </div> */}
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+    
+      {/* {error && <p className="text-red-500 text-sm mt-2">{error}</p>} */}
     </div>
     </IonContent>
     </IonPage>

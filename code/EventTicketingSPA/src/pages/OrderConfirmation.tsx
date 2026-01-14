@@ -57,31 +57,20 @@ export default function OrderConfirmation() {
         <div className="bg-brand-neutral p-4 rounded mb-4 font-body">  
           <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center">Order Confirmation</div>
           {
-            salesOrderData.salesOrderCode?
+            salesOrderData.salesOrderCode &&
             (
               <>
                 <div className="text-center mb-4">
                   Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
                 </div>
-                {salesOrderData.salesOrderItemsError && salesOrderData.salesOrderItemsError.length > 0 && 
-                (
-                  <div className="text-center mb-4 text-secondary-color">
-                      One or more of your tickets could not be processed:
-                    
-                      {salesOrderData.salesOrderItemsError.map((item:SalesOrderErrors)=>
-                        (
-                          <div key={item.eventItemTypeId} className="text-xs">{item.error}: {cartTickets.find(i=>i.eventItemTypeId === item.eventItemTypeId)?.name}</div>
-                        )
-                      )
-                     }  
-                  </div>
-                )}
+                
                 <div className="text-center mb-4">
                   Your order reference code is <span className="font-bold">{salesOrderData.salesOrderCode}</span>
                 </div>
 
                
-                <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={salesOrderData.salesOrderItemsError} salesOrderCode={salesOrderData.salesOrderCode || ""} 
+                <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
+                        salesOrderCode={salesOrderData.salesOrderCode || ""} 
                                   qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
                 <div className="text-center mb-4 mt-2">
                   You will receive an email confirmation to <span className="font-bold"> {user.user?.email || cart.email}</span> shortly with your e-tickets.
@@ -96,22 +85,18 @@ export default function OrderConfirmation() {
                   </Button>
                 </div>
               </>    
-            ):
-            (
-              <div className="text-center mb-4">
-                  Your order could not be processed:
-                 
-                  {salesOrderData.salesOrderItemsError && 
-                      salesOrderData.salesOrderItemsError.map((item:SalesOrderErrors)=>
-                    (
-                      <div key={item.eventItemTypeId} className="text-xs">{item.error}: {cartTickets.find(i=>i.eventItemTypeId === item.eventItemTypeId)?.name}</div>
-                     )
-                  )}  
-              </div>
             )
           }
-        </div>
-       
+    
+          {salesOrderData.salesOrderCode == null && salesOrderData.paymentPending === true &&
+            (
+              <div className="text-center mb-4">
+                  We are still awaiting confirmation of your payment. 
+                  Once the payment is confirmed, you will receive an email with your order details and e-tickets.
+              </div>   
+            )
+          }
+        </div>      
       </div>
       </IonContent>
       </IonPage>

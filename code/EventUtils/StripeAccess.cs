@@ -16,7 +16,7 @@ public class StripeAccess
     private readonly Microsoft.Extensions.Logging.ILogger<StripeAccess> _logger;
     private readonly string _connectReturnUrl = "http://localhost:5173/organizermanager/customerId/stripe";
     private readonly string _connectRefreshUrl = "http://localhost:5173/organizermanager/customerId/stripe";
-    private readonly string _paymentReturnUrl = "http://localhost:5173/orderpayment?session_id={CHECKOUT_SESSION_ID}";
+    private readonly string _paymentReturnUrl = "http://localhost:5173/orderpayment/event/event_id?salesOrderId=order_Id&session_id={CHECKOUT_SESSION_ID}";
 
     private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
 
@@ -179,6 +179,35 @@ public class StripeAccess
         return i;
     }
 
+    public async Task<string> GetCheckOutSessionStatus(string sessionId, string stripeAccountID)
+    {
+        if (string.IsNullOrEmpty(stripeAccountID))
+        {
+            throw new ArgumentException("Stripe customer ID cannot be null or empty.", nameof(stripeAccountID));
+        }
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            throw new ArgumentException("Session ID cannot be null or empty.", nameof(sessionId));
+        }
+
+        var requestOptions = new RequestOptions
+        {
+            StripeAccount = stripeAccountID,
+
+        };
+        var service = new Stripe.Checkout.SessionService();
+        Stripe.Checkout.Session session = await service.GetAsync(sessionId, null, requestOptions);
+        if (session == null)
+        {
+            throw new InvalidOperationException($"No session found for session ID: {sessionId}");
+        }
+        else
+        {
+            _logger.LogInformation($"Session details: ID={session.Id}, Status={session.Status}, PaymentStatus={session.PaymentStatus}");
+            return session.PaymentStatus;
+        }
+        
+    }
     
     /// <summary>
     /// Processes the purchase of sales items using Stripe Checkout.Initiates a Stripe Checkout session.
@@ -190,8 +219,9 @@ public class StripeAccess
     /// <returns>Tuple containing client secret to be used by UI (Item1) and
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems,
-                                            string customerEmailAddress="",
+    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, int eventId,
+                                            List<PaymentLineItemModel> lineItems,
+                                             string customerEmailAddress="",
                                              bool passOnAllFeesToCustomer = false)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
@@ -223,7 +253,7 @@ public class StripeAccess
         _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {lineItems.Count} line items.");
         var options = new SessionCreateOptions
         {
-            ReturnUrl = _paymentReturnUrl,
+            ReturnUrl = _paymentReturnUrl.Replace("event_id", eventId.ToString()).Replace("order_Id", salesOrderId.ToString()),
     
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {

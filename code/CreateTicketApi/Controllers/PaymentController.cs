@@ -130,8 +130,15 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [HttpGet("checkout-session-status/{sessionId}/{stripAcctId}")]
+        public async Task<string> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
+        {
+            return await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId);
+        }
+
+
         [HttpPost("createcheckoutsession")]
-        public async Task<IActionResult> CreateCheckoutSession(int salesOrderId, string stripeAccountId, List<PaymentLineItemModel> request)
+        public async Task<IActionResult> CreateCheckoutSession(int salesOrderId, string stripeAccountId, int eventId,List<PaymentLineItemModel> request)
         {
             if (salesOrderId <= 0 || request == null || request.Count == 0)
             {
@@ -140,7 +147,7 @@ namespace CreateTicketApi.Controllers
 
             try
             {
-                var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId, request);
+                var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId,eventId, request);
                 //todo: update session id , order status, in db
                 if (result == null || string.IsNullOrEmpty(result.Item1) || string.IsNullOrEmpty(result.Item2))
                 {

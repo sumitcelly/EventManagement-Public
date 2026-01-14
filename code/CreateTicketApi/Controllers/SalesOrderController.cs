@@ -61,7 +61,23 @@ namespace CreateTicketApi.Controllers
 
         }
 
-   
+        [HttpGet("/SalesOrderQrImage/{orderId}")]
+        public async Task<ActionResult> GetSalesOrderQrImage(int orderId)
+        {
+            if (orderId <= 0)
+                return BadRequest("Invalid order id.");
+
+            try
+            {
+                var retData = await _dbAccess.GetSalesOrderQrImage(orderId);
+                return Ok(new { SalesOrderQrCodeImage = retData.Item2, SalesOrderCode = retData.Item1 });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving QR code image: {ex.Message}");
+            }
+        }
+
         [HttpGet("/SalesOrderByCustomer/{customerId}")]
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", string orderStatus = "",

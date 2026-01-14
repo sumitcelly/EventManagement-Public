@@ -95,6 +95,44 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<Tuple<string,string>> GetSalesOrderQrImage(int orderId)
+        {
+            try
+            {
+                if (orderId <= 0)
+                    throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT SalesOrderCode FROM salesorder WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+                
+            
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    int ordinal = reader.GetOrdinal("SalesOrderCode");
+                    if (reader.IsDBNull(ordinal))
+                        throw new Exception($"Sales order code for id {orderId} is null in database");
+                    string salesOrderCode = reader.GetString(ordinal);
+                    if (string.IsNullOrWhiteSpace(salesOrderCode))
+                        throw new Exception($"Sales order code for id {orderId} is empty");
+                    return new Tuple<string,string>(salesOrderCode, System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)));             
+                }   
+                throw new Exception($"Sales order for id {orderId} not found");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving sales order qr image: {ex.Message}");
+                throw;
+            }
+        }
+
+
+
+
         public async Task<SalesOrder> GetSalesOrderByQrCodeAndEventId(int eventId,string qrCode)
         {
             try
