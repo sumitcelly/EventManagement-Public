@@ -191,6 +191,7 @@ public class StripeAccess
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
     public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, List<PaymentLineItemModel> lineItems,
+                                            string customerEmailAddress="",
                                              bool passOnAllFeesToCustomer = false)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
@@ -223,6 +224,7 @@ public class StripeAccess
         var options = new SessionCreateOptions
         {
             ReturnUrl = _paymentReturnUrl,
+    
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
                 ApplicationFeeAmount = appFees,
@@ -260,13 +262,15 @@ public class StripeAccess
             },
             Quantity = 1
         });
-
+       options.CustomerEmail = customerEmailAddress;
+       
         var requestOptions = new RequestOptions
         {
             StripeAccount = stripeAccountID,
-
+            
         };
         var service = new Stripe.Checkout.SessionService();
+        
         Stripe.Checkout.Session session = await service.CreateAsync(options, requestOptions);
         _logger.LogInformation($"Stripe session created with ID: {session.Id}");
         _logger.LogInformation($"session details {session.ReturnUrl}", session.Url);
