@@ -187,32 +187,20 @@ namespace CreateTicketApi.Controllers
 
                // _logger.LogInformation($"Received Stripe webhook event: {stripeEvent.EventType} for SalesOrder ID: {stripeEvent.SalesOrderId}");
                 // Handle the event
-                if (stripeEvent.EventType.Contains("CheckoutSessionCompleted"))
+                if (stripeEvent.EventType.Contains("checkout.session.completed"))
                 {
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentSucceeded, stripeEvent.SessionId);
+                    await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                    stripeEvent.SalesOrderId,
+                                    stripeEvent.PaymentSucceeded?  SalesOrderStatus.PaymentSucceeded : SalesOrderStatus.PaymentFailed,
+                                    stripeEvent.SessionId);
                     // Process the completed checkout session (e.g., update order status)
-                   _logger.LogInformation($"Checkout Session Completed for SalesOrder: {stripeEvent.SalesOrderId}");
+                   _logger.LogInformation($"Checkout Session Completed for SalesOrder: {stripeEvent.SalesOrderId} with status {(stripeEvent.PaymentSucceeded? "PaymentSucceeded":"PaymentFailed")} ");
                 }
-                // Handle other event types as needed
-                else if (stripeEvent.EventType.Contains("PaymentSucceeded"))
+                // Handle other event types as needed       
+                else if (stripeEvent.EventType.Contains("async_payment_failed"))
                 {
-                    //update  order status, in db
-                    //send email?   
-                    SalesOrder order = await _salesOrderDbAccess.GetSalesOrderById(stripeEvent.SalesOrderId);
-                    if (order == null)
-                    {
-                        _logger.LogError($"SalesOrder with ID {stripeEvent.SalesOrderId} not found.");
-                        return NotFound($"SalesOrder with ID {stripeEvent.SalesOrderId} not found.");
-                    }
-                    await  _emailUtils.SendOrderConfirmationEmail(order);
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentSucceeded, stripeEvent.SessionId);
-                    
-                    _logger.LogInformation($"Payment succeeded for SalesOrder: {stripeEvent.SalesOrderId}");
-                }
-                else if (stripeEvent.EventType.Contains("PaymentFailed"))
-                {
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentFailed, stripeEvent.SessionId);
-   
+                    await _salesOrderDbAccess.UpdateSalesOrderStatus(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentFailed, stripeEvent.SessionId);
+                    //todo: notify user of payment failure
                     _logger.LogError($"Payment failed for SalesOrder: {stripeEvent.SalesOrderId}");
                 }
                 else if (stripeEvent.EventType.Contains("account.updated"))

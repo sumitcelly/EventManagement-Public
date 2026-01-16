@@ -113,13 +113,55 @@ namespace EventManagementDbAccess
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    int ordinal = reader.GetOrdinal("SalesOrderCode");
-                    if (reader.IsDBNull(ordinal))
-                        throw new Exception($"Sales order code for id {orderId} is null in database");
-                    string salesOrderCode = reader.GetString(ordinal);
-                    if (string.IsNullOrWhiteSpace(salesOrderCode))
-                        throw new Exception($"Sales order code for id {orderId} is empty");
+                 
+                    string salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
+                                            reader.GetString(reader.GetOrdinal("SalesOrderCode"));
                     return new Tuple<string,string>(salesOrderCode, System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)));             
+                }   
+                throw new Exception($"Sales order for id {orderId} not found");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving sales order qr image: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async  Task<(bool paid, string SalesOrderCode, string QrImage)>  GetSalesOrderPaymentStatus(int orderId)
+        {
+            try
+            {
+                if (orderId <= 0)
+                    throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT SalesOrderCode, SalesOrderStatus FROM salesorder WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+                
+            
+                using var reader = await cmd.ExecuteReaderAsync();
+                SalesOrderStatus status = SalesOrderStatus.InProgress;
+                if (await reader.ReadAsync())
+                {
+                    int enumStatus = reader.GetInt32(reader.GetOrdinal("SalesOrderStatus"));
+                    if (Enum.IsDefined(typeof(SalesOrderStatus), enumStatus))
+                        status =  (SalesOrderStatus)enumStatus;
+                    _logger.LogInformation($"Sales order status for order id {orderId} is {status}");
+                    if (status == SalesOrderStatus.PaymentSucceeded)
+                    {
+                        string salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?
+                                                string.Empty:
+                                                reader.GetString(reader.GetOrdinal("SalesOrderCode"));
+
+                        return (true, salesOrderCode, System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)));             
+                    }
+                    else
+                    {
+                        return (false, string.Empty, string.Empty);
+                    }
                 }   
                 throw new Exception($"Sales order for id {orderId} not found");
             }
@@ -255,10 +297,41 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"UPDATE salesorder 
-                                 SET SalesOrderStatus = @status, 
-                                     StripeSessionId = @stripeSessionId, 
-                                     ModifiedAt = @modifiedAt
-                                 WHERE OrderId = @orderId";
+                                    SET SalesOrderStatus = @status, 
+                                        StripeSessionId = @stripeSessionId, 
+                                        ModifiedAt = @modifiedAt
+                                    WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@status", (int)status);
+                cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId ?? string.Empty);
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating sales order: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateSalesOrderStatus(int orderId, SalesOrderStatus status, string stripeSessionId)
+        {
+            if (orderId <= 0)
+                throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE salesorder 
+                                    SET SalesOrderStatus = @status,                         
+                                        ModifiedAt = @modifiedAt
+                                    WHERE OrderId = @orderId and StripeSessionId=@stripeSessionId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@status", (int)status);

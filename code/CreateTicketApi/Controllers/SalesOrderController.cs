@@ -78,6 +78,25 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [HttpGet("/SalesOrderStatus/{orderId}")]
+        
+        public async Task<ActionResult> GetSalesOrderStatus(int orderId)
+        {
+            if (orderId <= 0)
+                return BadRequest("Invalid order id.");
+
+            try
+            {
+                var retData = await _dbAccess.GetSalesOrderPaymentStatus(orderId);
+                return Ok(new { Paid = retData.paid , SalesOrderCode = retData.SalesOrderCode, SalesOrderQrCodeImage = retData.QrImage });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving sales order status: {ex.Message}");
+            }
+        }
+
+
         [HttpGet("/SalesOrderByCustomer/{customerId}")]
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", string orderStatus = "",

@@ -254,7 +254,11 @@ public class StripeAccess
         var options = new SessionCreateOptions
         {
             ReturnUrl = _paymentReturnUrl.Replace("event_id", eventId.ToString()).Replace("order_Id", salesOrderId.ToString()),
-    
+            PaymentMethodTypes = new List<string>
+            {
+              "card"
+            
+            },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
                 ApplicationFeeAmount = appFees,
