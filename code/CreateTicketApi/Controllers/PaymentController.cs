@@ -157,7 +157,7 @@ namespace CreateTicketApi.Controllers
                 {
                     _logger.LogInformation($"Payment session ID {result.Item2} created  successfully for sales order ID {salesOrderId}.");
                     // Update the sales order with the Stripe session ID
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(salesOrderId, SalesOrderStatus.PaymentPending, result.Item2);
+                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(salesOrderId, SalesOrderStatus.Reserved, result.Item2);
                     return Ok(result.Item1);
                 }
                 

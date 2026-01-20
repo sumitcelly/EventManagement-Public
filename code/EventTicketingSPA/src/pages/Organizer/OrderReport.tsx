@@ -262,9 +262,10 @@ export default function OrderReport() {
           >
             <option value="">Any Status</option>
             <option value="InProgress">In Progress</option>
-            <option value="PaymentRequired">Payment Required</option>
-            <option value="PaymentPending">Payment Pending</option>
-            <option value="PaymentFailed">Payment Failed</option>
+            <option value="Reserved">Reserved</option>
+            <option value="Timedout">Timedout</option>
+            <option value="Replaced">Replaced</option>
+            <option value="Abandoned">Abandoned</option>
             <option value="PaymentSucceeded">Payment Succeeded</option>
             <option value="OrderCompleted">Order Completed</option>
             <option value="Refunded">Refunded</option>

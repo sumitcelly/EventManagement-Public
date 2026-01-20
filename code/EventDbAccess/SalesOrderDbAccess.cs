@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using Mysqlx.Crud;
 using System;
 using System.Threading.Tasks;
 
@@ -8,8 +9,10 @@ namespace EventManagementDbAccess
 {
     public class SalesOrderDbAccess :BaseDbAccess
     {
-        public SalesOrderDbAccess(IConfiguration connectionString, ILogger<SalesOrderDbAccess> logger) : base(connectionString, logger)
+        private EventItemTypeDbAccess _eventTypeAccess;
+        public SalesOrderDbAccess(IConfiguration connectionString, ILogger<SalesOrderDbAccess> logger, EventItemTypeDbAccess eventItemTypeDbAccess) : base(connectionString, logger)
         {
+            _eventTypeAccess = eventItemTypeDbAccess;
         }
 
         public async Task<int> CreateSalesOrder(SalesOrder order)
@@ -349,6 +352,72 @@ namespace EventManagementDbAccess
             }
         }
 
+
+    /// <summary>
+    /// This method updates the sales order status.
+    /// This method will also return tickets to pool if order is being cancelled,timedout,refunded or payment failed
+    /// </summary>
+    /// <param name="status"></param>
+    /// <param name="orderId"></param>
+    /// <param name="eventId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, int orderId, int eventId)
+    {
+        if (orderId <= 0)
+            throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+
+      if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
+            throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));
+        try
+        {
+            using var connection = new MySqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            string query=@"select eventitemtypeid, count(*) as ticketcount
+                            from eventsalesitem
+                            where salesorderid=@orderID
+                            group by eventitemtypeid";
+            using var cmd = new MySqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("orderId",orderId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            Dictionary<int,int> ticketsToReturn = new Dictionary<int,int>();
+            while (await reader.ReadAsync())
+            {
+                int itemTypeId = reader.GetInt32(reader.GetOrdinal("eventitemtypeid"));
+                int ticketCount = reader.GetInt32(reader.GetOrdinal("ticketcount"));
+                ticketsToReturn[itemTypeId]= ticketCount;
+            }
+            reader.Close();
+            
+            //return tickets to pool
+            foreach (var item in ticketsToReturn)
+            {
+                _logger.LogInformation($"Returning {item.Value} tickets to pool for event {eventId} and item type {item.Key}");
+               await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId, item.Key, -item.Value,null); 
+            }
+            
+            _logger.LogInformation($"Updating sales order status for order id {orderId} to status {status}");
+
+            query = @"UPDATE salesorder
+                    SET SalesOrderStatus = @status,                         
+                        ModifiedAt = @modifiedAt
+                        WHERE OrderId = @orderId";
+            cmd.CommandText = query;
+            cmd.Parameters.Clear();
+            cmd.Parameters.AddWithValue("@status", (int)status);
+            cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("@orderId", orderId);
+
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            _logger.LogInformation($"Sales order status updated for order id {orderId} to status {status} with rows affected {rowsAffected}");
+            return rowsAffected > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating sales order: {ex.Message}");
+            throw;
+        }
+    }
     public async Task<List<SalerOrderReportItems>> SearchByCustomer(int customerId, int eventId,DateOnly startDate, DateOnly endDate,
                                                         string emailAddress, string name, int orderStatus,
                                                         string orderByColumn= "createat", bool isAscending =false,
@@ -479,7 +548,8 @@ namespace EventManagementDbAccess
                         salesOrders.Add(new SalerOrderReportItems
                         {
                             OrderId = reader.GetInt32("OrderId"),
-                            SalesOrderStatus = int.TryParse(reader.GetString("SalesOrderStatus"), out int statusValue) ? ((SalesOrderStatus)statusValue).ToString() : SalesOrderStatus.InProgress.ToString(),
+                            SalesOrderStatus = int.TryParse(reader.GetString("SalesOrderStatus"), out int statusValue) ? ((SalesOrderStatus)statusValue).ToString() : SalesOrderStatus.InProgress
+                            .ToString(),
                             OrderDate = reader.GetDateTime("CreatedAt"),
                             EventName = reader.GetString("EventName"),
                             FullName = reader.GetString("FullName"),

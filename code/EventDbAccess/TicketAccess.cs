@@ -240,7 +240,13 @@ namespace EventManagementDbAccess
             }
         }
 
-
+        /// <summary>
+        /// Here the assumption is all tickets are for same event and same item type
+        /// </summary>
+        /// <param name="tickets"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
         public async Task<int> AddEventTickets(List<EventSalesItem> tickets)
         {
             int retVal =0;
@@ -269,30 +275,31 @@ namespace EventManagementDbAccess
                 try
                 {
                     StringBuilder sb = new StringBuilder();
+                    _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, transaction).Wait();
                     //update count
-                    sb.Append(@"update eventmanagement.eventitemtype 
-                        set ticketssold=ticketssold+@quantity,
-                        ModifiedAt=@modifiedAt
-                        where ticketssold+@quantity <= totalallowed and
-                        eventitemtypeid=@itemType");
-                    Console.WriteLine($"query for update count is:{sb}");
+                    // sb.Append(@"update eventmanagement.eventitemtype 
+                    //     set ticketssold=ticketssold+@quantity,
+                    //     ModifiedAt=@modifiedAt
+                    //     where ticketssold+@quantity <= totalallowed and
+                    //     eventitemtypeid=@itemType");
+                    // Console.WriteLine($"query for update count is:{sb}");
 
-                    using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
-                    {
-                        cmd.Parameters.AddWithValue("@quantity", tickets.Count);
-                        cmd.Parameters.AddWithValue("@itemType", itemType);
-                        cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                    // using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
+                    // {
+                    //     cmd.Parameters.AddWithValue("@quantity", tickets.Count);
+                    //     cmd.Parameters.AddWithValue("@itemType", itemType);
+                    //     cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
-                        int i = await cmd.ExecuteNonQueryAsync();
-                        if (i <= 0)
-                        {
-                            _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
-                            throw new Exception($"Not enough tickets available for {itemType}");
-                        }
-                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
-                    }
+                    //     int i = await cmd.ExecuteNonQueryAsync();
+                    //     if (i <= 0)
+                    //     {
+                    //         _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
+                    //         throw new Exception($"Not enough tickets available for {itemType}");
+                    //     }
+                    //     await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
+                    // }
 
-                    sb.Clear();
+                    // sb.Clear();
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");

@@ -187,6 +187,27 @@ namespace CreateTicketApi.Controllers
             return value;
         }
 
+        [HttpPost]
+        [Route("/SalesOrder/ReturnTickets/{orderId}/{eventId}/{orderStatus}")]
+        public async Task<IActionResult> ReturnTicketsToPool(int orderId, int eventId, string orderStatus)
+        {
+            if (orderId <= 0 || eventId <= 0)
+                return BadRequest("Invalid order id or event id.");
+            if (Enum.TryParse<SalesOrderStatus>(orderStatus, true, out SalesOrderStatus tempStatus))  
+            {
+                var result = await _dbAccess.ReturnTicketsToPool(SalesOrderStatus.Cancelled, orderId, eventId);
+                if (result)
+                    return Ok("Tickets returned to pool and sales order updated.");
+                else
+                    return StatusCode(500, "Failed to return tickets to pool.");
+            }
+            else
+            {
+                return BadRequest("Invalid Status value:"+orderStatus);
+            }
+        }       
+
+
         [Authorize] 
         [HttpGet]
         [Route("/SalesOrder/ByUserId/{id}")]

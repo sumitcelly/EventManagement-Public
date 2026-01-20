@@ -232,7 +232,8 @@ public class SalesOrderConductor
             {
                 List<EventItemType> itemTypes = await _eventItemTypeDbAccess.GetAllEventItemTypesByEventId(salesOrder.EventId);
                 List<PaymentLineItemModel> checkoutItems = [];
-                foreach (var item in customerSalesOrder.SalesOrderItems.Where(item => item.Cost>0))
+                //sending an item to stripe even if 0 cost since the some items are free and some are paid in the order.
+                foreach (var item in customerSalesOrder.SalesOrderItems)
                 {
                     checkoutItems?.Add(new PaymentLineItemModel()
                     {
@@ -248,7 +249,7 @@ public class SalesOrderConductor
                 Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(orderId, customerSalesOrder.StripeConnectedAccountId,customerSalesOrder.EventId, checkoutItems, customerSalesOrder.EmailAddress);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
-                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.CheckoutSessionCreated,result.Item2);
+                await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.Reserved,result.Item2);
                 _logger.LogInformation($"Sales order {orderId} checkout created with session id {result.Item2}");
             }
             salesOrderReturn.SalesOrderCode = salesOrder.SalesOrderCode;

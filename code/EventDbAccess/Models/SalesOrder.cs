@@ -45,12 +45,14 @@ public class SalerOrderReportItems
 }
 public enum SalesOrderStatus
 {
-    InProgress, // No payment initiated yet
-    PaymentRequired, //s Payment required but not initiated
-    PaymentPending,//Payment session created, awaiting payment from customer
-    CheckoutSessionCreated, // Payment initiated by user, wating for confirmation from Stripe
+    InProgress, // User is building the order(this is just the default status)
+    Reserved, // /Payment session created, awaiting payment from customer
+    Timedout, // USer did nt complete payment in time
+    Cancelled,//User hit cancel on the UI
+    Abandoned, // User  closed the browser 
+    Replaced, // New order created to replace this one
     PaymentFailed,
-    PaymentSucceeded,
+    PaymentSucceeded,//stripe confirmed payment
     OrderCompleted, //  and order is completed(payment was not required)
     Refunded
 }

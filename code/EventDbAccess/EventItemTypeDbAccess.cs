@@ -214,6 +214,45 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<bool> UpdateEventItemTypesSoldCount(int eventId, int itemType, int quantity, MySqlTransaction? transaction)
+        {
+            if (itemType <= 0)
+                throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(itemType));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"update eventmanagement.eventitemtype 
+                        set ticketssold=ticketssold+@quantity,
+                        ModifiedAt=@modifiedAt
+                        where ticketssold+@quantity <= totalallowed and
+                        eventitemtypeid=@itemType";
+                _logger.LogInformation($"query for update count is:{query}");
+                
+                using (MySqlCommand cmd = new(query, connection, transaction))
+                {
+                    cmd.Parameters.AddWithValue("@quantity", quantity);
+                    cmd.Parameters.AddWithValue("@itemType", itemType);
+                    cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+
+                    int i = await cmd.ExecuteNonQueryAsync();
+                    if (i <= 0)
+                    {
+                        _logger.LogWarning($"{quantity} ticket is  not available for evenitemtype {itemType}.");
+                        throw new Exception($"Not enough tickets available for {itemType}");
+                    }
+                    await UpdateTicketSoldCountInCache(eventId, itemType, quantity);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Error updating EventItemType sold count: {ex.Message}");
+                throw;
+            }
+        }
         public async Task<bool> UpdateEventItemType(EventItemType item)
         {
             if (item == null)
