@@ -188,14 +188,14 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost]
-        [Route("/SalesOrder/ReturnTickets/{orderId}/{eventId}/{orderStatus}")]
-        public async Task<IActionResult> ReturnTicketsToPool(int orderId, int eventId, string orderStatus)
+        [Route("/SalesOrder/ReturnTickets/{stripeSessionId}/{orderStatus}")]
+        public async Task<IActionResult> ReturnTicketsToPool(string stripeSessionId, string orderStatus)
         {
-            if (orderId <= 0 || eventId <= 0)
-                return BadRequest("Invalid order id or event id.");
+            if (string.IsNullOrEmpty(stripeSessionId) || string.IsNullOrEmpty(orderStatus))
+                return BadRequest("Invalid session id or order status.");
             if (Enum.TryParse<SalesOrderStatus>(orderStatus, true, out SalesOrderStatus tempStatus))  
             {
-                var result = await _dbAccess.ReturnTicketsToPool(SalesOrderStatus.Cancelled, orderId, eventId);
+                var result = await _dbAccess.ReturnTicketsToPool(tempStatus, stripeSessionId);
                 if (result)
                     return Ok("Tickets returned to pool and sales order updated.");
                 else

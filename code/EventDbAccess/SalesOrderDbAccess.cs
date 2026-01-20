@@ -98,6 +98,44 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<SalesOrder> GetSalesOrderByStripeSessionId(string sessionId)
+        {
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT * FROM salesorder WHERE StripeSessionId = @sessionId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@sessionId", sessionId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new SalesOrder
+                    {
+                        OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
+                        SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
+                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
+                    };
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Error retrieving sales order by stripesesion id: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<Tuple<string,string>> GetSalesOrderQrImage(int orderId)
         {
             try
@@ -362,15 +400,17 @@ namespace EventManagementDbAccess
     /// <param name="eventId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, int orderId, int eventId)
+    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId)
     {
-        if (orderId <= 0)
-            throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+        if (string.IsNullOrEmpty(stripeSessionId))
+            throw new ArgumentException("Invalid stripe session id provided", nameof(stripeSessionId));
 
       if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
             throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));
         try
         {
+            SalesOrder order = await GetSalesOrderByStripeSessionId(stripeSessionId);
+            
             using var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
             string query=@"select eventitemtypeid, count(*) as ticketcount
@@ -378,7 +418,7 @@ namespace EventManagementDbAccess
                             where salesorderid=@orderID
                             group by eventitemtypeid";
             using var cmd = new MySqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("orderId",orderId);
+            cmd.Parameters.AddWithValue("orderId",order.OrderId);
             using var reader = await cmd.ExecuteReaderAsync();
             Dictionary<int,int> ticketsToReturn = new Dictionary<int,int>();
             while (await reader.ReadAsync())
@@ -392,11 +432,11 @@ namespace EventManagementDbAccess
             //return tickets to pool
             foreach (var item in ticketsToReturn)
             {
-                _logger.LogInformation($"Returning {item.Value} tickets to pool for event {eventId} and item type {item.Key}");
-               await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId, item.Key, -item.Value,null); 
+                _logger.LogInformation($"Returning {item.Value} tickets to pool for event {order.EventId} and item type {item.Key}");
+               await _eventTypeAccess.UpdateEventItemTypesSoldCount(order.EventId, item.Key, -item.Value,null); 
             }
             
-            _logger.LogInformation($"Updating sales order status for order id {orderId} to status {status}");
+            _logger.LogInformation($"Updating sales order status for order id {order.OrderId} to status {status}");
 
             query = @"UPDATE salesorder
                     SET SalesOrderStatus = @status,                         
@@ -406,10 +446,10 @@ namespace EventManagementDbAccess
             cmd.Parameters.Clear();
             cmd.Parameters.AddWithValue("@status", (int)status);
             cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
-            cmd.Parameters.AddWithValue("@orderId", orderId);
+            cmd.Parameters.AddWithValue("@orderId", order.OrderId);
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
-            _logger.LogInformation($"Sales order status updated for order id {orderId} to status {status} with rows affected {rowsAffected}");
+            _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
             return rowsAffected > 0;
         }
         catch (Exception ex)
