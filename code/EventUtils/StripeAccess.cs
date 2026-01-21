@@ -222,7 +222,7 @@ public class StripeAccess
     public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, int eventId,
                                             List<PaymentLineItemModel> lineItems,
                                              string customerEmailAddress="",
-                                             bool passOnAllFeesToCustomer = false)
+                                             bool passOnAllFeesToCustomer = true)
     {
         if (string.IsNullOrEmpty(stripeAccountID))
         {

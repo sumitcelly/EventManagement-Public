@@ -16,7 +16,7 @@ import {
   EmbeddedCheckout
 } from '@stripe/react-stripe-js';
 import toast from "react-hot-toast";
-import EventDetails from "./EventDetails";
+import CountdownMinutes from "../components/CountdownMinutes";
 
 const pkStripe =  import.meta.env.VITE_STRIPE_PK;
 const stripePromise = loadStripe(pkStripe);
@@ -37,6 +37,8 @@ export default function OrderPayment() {
   const location = useLocation();
   const salesOrderData:any = location.state || {};
   console.log('sales order',salesOrderData);
+
+  //these will obtain from the url params after redirection from stripe checkout
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get('session_id');
   const orderId = params.get('salesOrderId');
@@ -80,46 +82,7 @@ export default function OrderPayment() {
     }
   }, [sessionId, stripeAccountId]);
 
-  // if (sessionId && sessionStatus) {
-  //   return (
-  //     <IonPage>
-  //       <IonHeader>
-  //         <AppNavbar />
-  //       </IonHeader>
-  //       <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-  //         <div className="p-4"> 
-  //           {sessionStatus === 'paid' && (
-  //           <>            
-  //             <h2 className="text-xl font-bold mb-2">Your order is confirmed</h2>
-  //             <Button
-  //               className="align-bottom mt-auto align-center ml-4"
-  //                 size="xs"
-  //                 onClick={() => history.push(`/buytickets/${id}`)}
-  //                 >
-  //                 View your Tickets
-  //             </Button>
-  //           </>
-  //           )}
-            
-  //           {sessionStatus !== 'unpaid' && (
-  //           <>
-  //             <h2 className="text-xl text-secondary-color font-bold mb-2">Your order is still under process.</h2>
-  //             <Button
-  //               className="align-bottom mt-auto align-center ml-4"
-  //                 size="xs"
-  //                 disabled={sessionStatus === 'unpaid'}  
-  //                 onClick={() => history.push(`/buytickets/${id}`)}
-  //                 >
-  //                 View your Tickets
-  //             </Button>
-  //           </>
-  //           )}
-  //        </div>
-  //       </IonContent>
-  //     </IonPage>
-  //   );
-  // }
-
+  
   if (!salesOrderData || !salesOrderData.checkoutSessionSecret || !salesOrderData.checkoutSessionId) {
     return (
       <IonPage>
@@ -236,7 +199,23 @@ export default function OrderPayment() {
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
         <EventSummary/>
         <div className="bg-brand-neutral rounded">
-        <div id="checkout">
+        <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center mt-2">Complete your Payment</div>
+        <div className="text-center text-bold mb-4">
+        <CountdownMinutes displayString="Payment window expires in" initialMinutes={5} timerExpiredCallback={()=>
+          {
+            toast.error("Payment window has expired. Please try again.");
+            axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.checkoutSessionId}/Timedout`)
+            .then(() => {
+              history.replace(`/buytickets/${eventHeaderInfo.eventId}`);
+            })
+            .catch((error) => {
+              console.error("Error cancelling checkout session:", error);
+              history.replace(`/buytickets/${eventHeaderInfo.eventId}`);
+            });
+          }
+        }/>
+        </div>
+        <div id="checkout" className="mt-4">
           <EmbeddedCheckoutProvider
             stripe={stripePromise}
             options={{       

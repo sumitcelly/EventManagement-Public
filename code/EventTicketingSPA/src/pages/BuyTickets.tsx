@@ -69,9 +69,12 @@ export default function BuyTickets() {
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
   const user = useAppSelector((state:RootState) =>state.auth);
   
+  const [stripeSessionId,setStripeSessionId] = useState<string | null>(null);
+
   const ionRouter = useIonRouter();
   const { id } = useParams<{ id: string }>();
   const [checkoutError,setcheckoutError] = useState([]);
+  console.log('stripe session id in buy tickets',stripeSessionId);
   
   const {
         data: ticketTypesList = [], // provide default empty array
@@ -146,6 +149,21 @@ export default function BuyTickets() {
   const checkout = async (formData:TicketFormValues) => {       
     try
     {
+      if (stripeSessionId)
+      {
+        console.log('Existing stripe session id found. User most likely pressed back button:'+stripeSessionId);
+        const resetTickets = await axiosClient.post(`/SalesOrder/ReturnTickets/${stripeSessionId}/Replaced`);
+        if (resetTickets && resetTickets.status ===200)
+        {
+          console.log('Previous tickets associated with session returned to pool successfully.');
+        }
+        else
+        {
+          console.log('Unable to return previous tickets associated with session. Proceeding may result in overbooking.');
+          toast.error("Unable to return previous tickets associated with session. Proceeding may result in overbooking.");
+          return;
+        }
+      }
       const result = await axiosClient.post("/salesOrder", {
         userId: user.user?.id, 
         eventId: id,
@@ -168,14 +186,9 @@ export default function BuyTickets() {
         if (result.data && result.data?.SalesOrderItemsError && result.data?.SalesOrderItemsError >0)
         {
           setcheckoutError(result.data?.SalesOrderItemsError);
-          // let errorStr= 'Your order could not be completed due to the following errors:';
-          // result.data?.SalesOrderItemsError.forEach(function(orderError:any) {
-          //   console.log(orderError);
-          //   const itemName =cart.tickets.find(t=>t.eventItemTypeId == orderError.EventTicketTypeId)?.name;
-          //   console.log(`Item name with error is ${itemName}`);
-          //   errorStr += `Item ${itemName} had error ${orderError.Error}`;
-          // });
-          // setcheckoutError(errorStr);
+          console.log('Order creation returned errors:', result.data?.SalesOrderItemsError);
+          toast.error("There were issues with some items in your order. Please review.");
+          return;
         }
         else if (result.data)
         {
@@ -192,7 +205,9 @@ export default function BuyTickets() {
               toast.error("Unable to proceed to payment due to incomplete setup. Please try again later.");
               return;
             }
-            
+
+            setStripeSessionId(result.data.checkoutSessionId);
+            console.log('Proceeding to payment with session id:'+result.data.checkoutSessionId);
             history.push(`/orderpayment/event/${id}`, result.data);
           }
         }
