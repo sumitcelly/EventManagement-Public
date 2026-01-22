@@ -52,6 +52,9 @@ export default function OrderConfirmation() {
 
   useEffect(() => {
     //return if payment is not pending and order is already generated
+    //ordercode generation can be delayed if webhook processing is delayed
+    //so this component will check for order status until payment is confirmed by webhook
+    //which should have generated the order already
     if  (!salesOrderData.paymentPending && salesOrderData.salesOrderCode) return;
     let attempts = 0;
     setCheckingPaymentStatus(true);

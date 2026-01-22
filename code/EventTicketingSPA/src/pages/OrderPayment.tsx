@@ -57,6 +57,10 @@ export default function OrderPayment() {
         const salesData = await axiosClient.get(`/SalesOrderQrImage/${orderId}`);
         if (salesData && salesData.data) {
           console.log('sales order data', salesData.data);
+          //We only gnerate order after payment is confirmed by the webhook. The return url coming back from stripe
+          //should find the order already generated. But if the webhook is delayed we may not have the ordercode in the db yet.
+          //In that case we redirect to order confirmation page and let that check 
+          // for order status since ordercode will be empty.
           history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
             { paymentPending: false,
                salesOrderCode: salesData.data?.salesOrderCode, 
