@@ -90,7 +90,7 @@ namespace EventManagementDbAccess
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
-                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        SalesOrderCode =reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty: reader.GetString(reader.GetOrdinal("SalesOrderCode")),
                         DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
                         SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
                         StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
@@ -128,7 +128,7 @@ namespace EventManagementDbAccess
             using var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
             
-            using MySqlTransaction mySqlTransaction =  new MySqlConnection(ConnectionString).BeginTransaction();
+            using MySqlTransaction mySqlTransaction =  connection.BeginTransaction();
             try
             { 
                 using var cmd = new MySqlCommand(query, connection);
@@ -146,7 +146,8 @@ namespace EventManagementDbAccess
                     _logger.LogWarning($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
                     throw new Exception($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
                 }
-                bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId, mySqlTransaction);
+                
+                bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId,connection, mySqlTransaction);
                 if (!result)
                 {
                     throw new Exception($"Failed to finalize tickets for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
@@ -165,6 +166,8 @@ namespace EventManagementDbAccess
 
         public async Task<SalesOrder> GetSalesOrderByStripeSessionId(string sessionId)
         {
+            if (string.IsNullOrEmpty(sessionId))
+                throw new ArgumentException("Invalid session id provided", nameof(sessionId));
             try
             {
                 using var connection = new MySqlConnection(ConnectionString);
@@ -186,13 +189,13 @@ namespace EventManagementDbAccess
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
-                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        SalesOrderCode =reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty: reader.GetString(reader.GetOrdinal("SalesOrderCode")),
                         DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
                         SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
-                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
+                        StripeSessionId =  reader.GetString(reader.GetOrdinal("StripeSessionId"))
                     };
                 }
-                return null;
+                throw new Exception(string.Format("Unable to retrieve by session id {0}",sessionId));
             }
             catch (Exception ex)
             {
@@ -201,7 +204,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<Tuple<string,string>> GetSalesOrderQrImage(int orderId)
+        public async Task<(string SalesOrderCode, string QrImageBase64)> GetSalesOrderQrImage(int orderId)
         {
             try
             {
@@ -217,14 +220,22 @@ namespace EventManagementDbAccess
                 
             
                 using var reader = await cmd.ExecuteReaderAsync();
+                string salesOrderCode = string.Empty;
                 if (await reader.ReadAsync())
                 {
                  
-                    string salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
+                    salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
                                             reader.GetString(reader.GetOrdinal("SalesOrderCode"));
-                    return new Tuple<string,string>(salesOrderCode, System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)));             
-                }   
-                throw new Exception($"Sales order for id {orderId} not found");
+                }
+                if (!string.IsNullOrEmpty(salesOrderCode))
+                {
+                    string qrImageBase64 = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode));
+                    return (salesOrderCode, qrImageBase64);
+                }
+                else
+                {
+                    return (salesOrderCode, string.Empty);
+                }
             }
             catch (Exception ex)
             {
@@ -262,7 +273,7 @@ namespace EventManagementDbAccess
                                                 string.Empty:
                                                 reader.GetString(reader.GetOrdinal("SalesOrderCode"));
 
-                        return (true, salesOrderCode, System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)));             
+                        return (true, salesOrderCode, !string.IsNullOrEmpty(salesOrderCode)?System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)):string.Empty);             
                     }
                     else
                     {

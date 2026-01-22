@@ -153,6 +153,7 @@ public class SalesOrderConductor
             attendee = await userDbAccess.GetUserById(customerSalesOrder.UserId);
         }
 
+        bool paymentRequired = customerSalesOrder.SalesOrderItems.Any(item => item.Cost > 0);
         // Create the sales order
         var salesOrder = new SalesOrder
         {
@@ -160,7 +161,9 @@ public class SalesOrderConductor
             EventId = customerSalesOrder.EventId,
             UserId = customerSalesOrder.UserId,
             DeliveryType = customerSalesOrder.DeliveryType,
-            SalesOrderCode = PasswordGenerator.GetPassword(), // Generate a unique sales order code
+            //generate sales order code only if payment is not required
+            //otherwise will generate after payment is confirmed
+            SalesOrderCode = !paymentRequired?PasswordGenerator.GetPassword():null, // Generate a unique sales order code
         };
         // Save the sales order to the database
         int orderId = await _dbAccess.CreateSalesOrder(salesOrder);
@@ -192,7 +195,9 @@ public class SalesOrderConductor
                         EventItemTypeId = item.EventTicketTypeId,
 
                     },
-                    TicketCode = EventUtils.PasswordGenerator.GetPassword()// Generate a unique ticket code
+                    TicketCode = !paymentRequired?EventUtils.PasswordGenerator.GetPassword():null
+                    // Generate a unique ticket code only if payment is not required otherwise
+                    //wait until payment is confirmed
                 };
                 itemList.Add(salesItem);
             }
@@ -248,8 +253,11 @@ public class SalesOrderConductor
                 await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.Reserved,result.Item2);
                 _logger.LogInformation($"Sales order {orderId} checkout created with session id {result.Item2}");
             }
-            salesOrderReturn.SalesOrderCode = salesOrder.SalesOrderCode;
-            salesOrderReturn.SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode));
+            if (!string.IsNullOrEmpty(salesOrder.SalesOrderCode))
+            {
+                salesOrderReturn.SalesOrderCode = salesOrder.SalesOrderCode;            
+                salesOrderReturn.SalesOrderQrCodeImage = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrder.SalesOrderCode));      
+            }
             
         }
         salesOrderReturn.SalesOrderItemsError = errorItems;

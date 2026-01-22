@@ -11,7 +11,7 @@ public class SalesOrder
 
     public int UserId { get; set; }
 
-    public string SalesOrderCode { get; set; } = string.Empty;
+    public string? SalesOrderCode { get; set; }
 
     public string DeliveryType { get; set; } = "Email"; // Default to Email
 

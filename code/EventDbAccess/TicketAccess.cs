@@ -165,7 +165,7 @@ namespace EventManagementDbAccess
             return ticket;
         }
 
-        public async Task<bool> FinalizeTicketsForOrder(int orderID, MySqlTransaction transaction)
+        public async Task<bool> FinalizeTicketsForOrder(int orderID, MySqlConnection mySqlConnection, MySqlTransaction transaction)
         {
             if (orderID <= 0)
             {
@@ -174,8 +174,7 @@ namespace EventManagementDbAccess
             try
             {
                 string query = @"select ticketid from eventmanagement.eventsalesitem where SalesOrderId=@orderID";
-                using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
-                mySqlConnection.Open();
+                
                 MySqlCommand cmd = new MySqlCommand(query, mySqlConnection, transaction);
                 cmd.Parameters.AddWithValue("@orderID", orderID);
                 using DbDataReader reader = await cmd.ExecuteReaderAsync();
@@ -183,29 +182,39 @@ namespace EventManagementDbAccess
                 {
                     throw new KeyNotFoundException($"No tickets found for order id {orderID}");
                 }
+                List<int> ticketIds = new List<int>();
                 while (await reader.ReadAsync())
                 {
-                    int ticketId = reader.GetInt32(0);
-                    // Placeholder for any ticket finalization logic
-                    _logger.LogInformation($"Finalizing ticket with ID: {ticketId} for Order ID: {orderID}");
-                    query = @"update eventmanagement.eventsalesitem 
-                            set ModifiedAt=@modifiedAt,
-                            ticketcode = @ticketCode
-                            where TicketId=@ticketId";
-                    using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
-                    updateCmd.Parameters.AddWithValue("modifiedAt",DateTime.UtcNow);
-                    updateCmd.Parameters.AddWithValue("ticketCode",PasswordGenerator.GetPassword());
-                    updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
-                    int rowsAffected = await updateCmd.ExecuteNonQueryAsync();
-                    if (rowsAffected != 1)
-                    {
-                        throw new Exception($"Failed to finalize ticket with ID: {ticketId} for Order ID: {orderID}");
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Succeeded in finalizing ticket with ID: {ticketId} for Order ID: {orderID}");
-                    }                    
+                    ticketIds.Add(reader.GetInt32(0));
                 }
+                reader.Close();
+                if (ticketIds.Count > 0)
+                {
+                    _logger.LogInformation($"Finalizing {ticketIds.Count} tickets for order id {orderID}");
+                    ticketIds.ForEach(ticketId =>
+                    {
+                        _logger.LogInformation($"Ticket ID to finalize: {ticketId}");
+                         query = @"update eventmanagement.eventsalesitem 
+                            set ModifiedAt=@modifiedAt,
+                            TicketCode = @ticketCode
+                            where TicketId=@ticketId";
+                        using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
+                        updateCmd.Parameters.AddWithValue("@modifiedAt",DateTime.UtcNow);
+                        updateCmd.Parameters.AddWithValue("@ticketCode",PasswordGenerator.GetPassword());
+                        updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
+                        int rowsAffected = updateCmd.ExecuteNonQuery();
+                        if (rowsAffected != 1)
+                        {
+                            throw new Exception($"Failed to finalize ticket with ID: {ticketId} for Order ID: {orderID}");
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"Succeeded in finalizing ticket with ID: {ticketId} for Order ID: {orderID}");
+                        }                        
+                    });
+                }
+                    // Placeholder for any ticket finalization logic
+                 
                 _logger.LogInformation($"All tickets finalized for order id {orderID}");
               
             }
@@ -299,7 +308,7 @@ namespace EventManagementDbAccess
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        public async Task<int> AddEventTickets(List<EventSalesItem> tickets)
+        public async Task<int> AddEventTickets(List<EventSalesItem> tickets, bool insertTicketCode = true)
         {
             int retVal =0;
             if (tickets == null)
@@ -444,7 +453,9 @@ namespace EventManagementDbAccess
 
                             ticket.CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"));
                             ticket.ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"));
-                            ticket.TicketCode = reader.GetString(reader.GetOrdinal("TicketCode"));
+                            ticket.TicketCode = !reader.IsDBNull(reader.GetOrdinal("TicketCode"))?
+                                                reader.GetString(reader.GetOrdinal("TicketCode")):
+                                                 string.Empty;
                             ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
                             ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()
@@ -497,7 +508,9 @@ namespace EventManagementDbAccess
                         while (await reader.ReadAsync())
                         {
                             EventSalesItem ticket = new EventSalesItem();
-                            ticket.TicketCode = reader.GetString(reader.GetOrdinal("TicketCode"));
+                            ticket.TicketCode = !reader.IsDBNull(reader.GetOrdinal("TicketCode"))?
+                                                reader.GetString(reader.GetOrdinal("TicketCode")):
+                                                 string.Empty;
                             ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
                             ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()

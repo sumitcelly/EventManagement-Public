@@ -4,7 +4,7 @@ namespace EventManagementDbAccess
 
     public class EventSalesItem
     {
-        public string TicketCode { get; set; } = string.Empty;
+        public string? TicketCode { get; set; }
 
         public string QRBase64Image { get; set; } = string.Empty;
 

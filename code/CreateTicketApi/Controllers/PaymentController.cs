@@ -200,7 +200,10 @@ namespace CreateTicketApi.Controllers
                     }
                     if (stripeEvent.PaymentSucceeded)
                     {
+                        try
+                        {
                         // Finalize the sales order. generate tickets etc
+                        //Task.Delay(10000).Wait();
                         result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, stripeEvent.SessionId);
                         if (!result)
                         {
@@ -215,6 +218,12 @@ namespace CreateTicketApi.Controllers
                         _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
                         // Send confirmation email to customer
                         //await _emailUtils.SendOrderConfirmationEmail();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError("Error in checkoutsession completed {0} for order id {1}", ex,stripeEvent.SalesOrderId );
+                            return StatusCode(500,$"Error in checkoutsession completed {ex} for order id {stripeEvent.SalesOrderId}");
+                        }
                     }
                     
                     // Process the completed checkout session (e.g., update order status)

@@ -57,7 +57,12 @@ export default function OrderPayment() {
         const salesData = await axiosClient.get(`/SalesOrderQrImage/${orderId}`);
         if (salesData && salesData.data) {
           console.log('sales order data', salesData.data);
-          history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { salesOrderCode: salesData.data.salesOrderCode, salesOrderQrCodeImage: salesData.data.salesOrderQrCodeImage });
+          history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
+            { paymentPending: false,
+               salesOrderCode: salesData.data?.salesOrderCode, 
+               salesOrderQrCodeImage: salesData.data?.salesOrderQrCodeImage,
+               salesOrderId: orderId
+             });
         }
       }
       if (response.data =="unpaid")

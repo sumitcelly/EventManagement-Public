@@ -25,9 +25,11 @@ export default function OrderConfirmation() {
   const location = useLocation();
   const [salesOrderData,setSalesOrderData] = useState<any>(location.state || {});
   const [checkingPaymentStatus,setCheckingPaymentStatus] = useState<boolean>(false);
-  const [orderStatus,setOrderStatus] = useState<string>(salesOrderData.paymentPending === true? "Pending":"Success");
+  const [orderStatus,setOrderStatus] = useState<string>(salesOrderData.paymentPending === true || 
+                                                        !salesOrderData.salesOrderCode
+                                                        ? "Pending":"Success");
 
-  console.log('sales order receipt', salesOrderData.salesOrderCode, salesOrderData);
+  console.log('sales order receipt order code and data', salesOrderData.salesOrderCode, salesOrderData);
 
 
   const  event = useAppSelector((state:RootState) => state.event);
@@ -49,7 +51,8 @@ export default function OrderConfirmation() {
   }, [dispatch]);
 
   useEffect(() => {
-    if  (!salesOrderData.paymentPending) return;
+    //return if payment is not pending and order is already generated
+    if  (!salesOrderData.paymentPending && salesOrderData.salesOrderCode) return;
     let attempts = 0;
     setCheckingPaymentStatus(true);
     const interval = setInterval(async () => {
@@ -62,7 +65,7 @@ export default function OrderConfirmation() {
         const data = res?.data;
         if (data) {
           console.log('sales order status check', res.data);
-        if (res.data.paid || attempts > 20) {
+        if ((res.data.paid) || attempts > 20) {
           clearInterval(interval);
           setCheckingPaymentStatus(false);
           setOrderStatus(data.paid ? 'Success' : 'Timeout');
@@ -121,8 +124,10 @@ export default function OrderConfirmation() {
             ):
             (
               <div className="animate-in fade-in duration-500">
-                {orderStatus === 'Success' ? (
+              {orderStatus === 'Success' ? (
               <>
+                {salesOrderData.salesOrderCode ? (
+                  <>
                   <div className="text-center mb-4">
                     Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
                   </div>
@@ -144,6 +149,13 @@ export default function OrderConfirmation() {
                           View your Tickets
                     </Button>
                   </div>
+                  </>
+                ) : (
+                   <div className="text-red-600">
+                    <h2 className="text-2xl font-bold">Order Delayed</h2>
+                    <p className="mt-2">Your payment succeeded but there is a delay in order generation. Please check your email in a few minutes.</p>
+                  </div>
+                )}
                 </>
                 ) : (
                   <div className="text-red-600">
