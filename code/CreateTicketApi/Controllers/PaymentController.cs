@@ -189,10 +189,34 @@ namespace CreateTicketApi.Controllers
                 // Handle the event
                 if (stripeEvent.EventType.Contains("checkout.session.completed"))
                 {
-                    await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                    bool result =await _salesOrderDbAccess.UpdateSalesOrderStatus(
                                     stripeEvent.SalesOrderId,
                                     stripeEvent.PaymentSucceeded?  SalesOrderStatus.PaymentSucceeded : SalesOrderStatus.PaymentFailed,
                                     stripeEvent.SessionId);
+                    if (!result)
+                    {
+                        _logger.LogError($"Failed to update sales order status for SalesOrder ID: {stripeEvent.SalesOrderId}");
+                        return StatusCode(500,"Failed to update sales order status order id "+ stripeEvent.SalesOrderId); 
+                    }
+                    if (stripeEvent.PaymentSucceeded)
+                    {
+                        // Finalize the sales order. generate tickets etc
+                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, stripeEvent.SessionId);
+                        if (!result)
+                        {
+                            _logger.LogError($"Failed to finalize sales order for SalesOrder ID: {stripeEvent.SalesOrderId}");
+                            await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                    stripeEvent.SalesOrderId,
+                                    SalesOrderStatus.OrderFinalizationError,
+                                    stripeEvent.SessionId);
+                            //stripe will retry webhook for us with 500 error
+                            return StatusCode(500, "Failed to finalize sales order for order id " + stripeEvent.SalesOrderId);
+                        }   
+                        _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
+                        // Send confirmation email to customer
+                        //await _emailUtils.SendOrderConfirmationEmail();
+                    }
+                    
                     // Process the completed checkout session (e.g., update order status)
                    _logger.LogInformation($"Checkout Session Completed for SalesOrder: {stripeEvent.SalesOrderId} with status {(stripeEvent.PaymentSucceeded? "PaymentSucceeded":"PaymentFailed")} ");
                 }

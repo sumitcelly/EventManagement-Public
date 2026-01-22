@@ -1,8 +1,10 @@
+using EventUtils;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Mysqlx.Crud;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace EventManagementDbAccess
@@ -10,9 +12,14 @@ namespace EventManagementDbAccess
     public class SalesOrderDbAccess :BaseDbAccess
     {
         private EventItemTypeDbAccess _eventTypeAccess;
-        public SalesOrderDbAccess(IConfiguration connectionString, ILogger<SalesOrderDbAccess> logger, EventItemTypeDbAccess eventItemTypeDbAccess) : base(connectionString, logger)
+        private readonly TicketAccess _ticketAccess;
+        public SalesOrderDbAccess(IConfiguration connectionString, 
+                                    ILogger<SalesOrderDbAccess> logger, 
+                        EventItemTypeDbAccess eventItemTypeDbAccess,
+                        TicketAccess ticketAccess) : base(connectionString, logger)
         {
             _eventTypeAccess = eventItemTypeDbAccess;
+            _ticketAccess = ticketAccess;
         }
 
         public async Task<int> CreateSalesOrder(SalesOrder order)
@@ -89,13 +96,71 @@ namespace EventManagementDbAccess
                         StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
                     };
                 }
-                return null;
+               throw new Exception($"Unable to retrieve order for order id {orderId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error retrieving sales order: {ex.Message}");
+                _logger.LogCritical($"Error retrieving sales order: {ex.Message}");
                 throw;
             }
+        }
+        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId)
+        {
+            if (salesOrderId < 0 && String.IsNullOrEmpty(stripeSessionId))
+                throw new ArgumentException("Either salesOrderId or stripeSessionId must be provided.");
+            string query = string.Empty;
+            if (salesOrderId > 0)
+            {
+                query = @"UPDATE salesorder 
+                            SET SalesOrderStatus = @status, 
+                                SalesOrderCode =@orderCode,
+                                ModifiedAt = @modifiedAt
+                            WHERE OrderId = @orderId";
+            }
+            else
+            {
+                query = @"UPDATE salesorder 
+                            SET SalesOrderStatus = @status, 
+                                SalesOrderCode = @orderCode
+                                ModifiedAt = @modifiedAt
+                            WHERE StripeSessionId = @stripeSessionId";
+            }       
+            using var connection = new MySqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            
+            using MySqlTransaction mySqlTransaction =  new MySqlConnection(ConnectionString).BeginTransaction();
+            try
+            { 
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@status", (int)SalesOrderStatus.PaymentSucceeded);
+                cmd.Parameters.AddWithValue("@orderCode",PasswordGenerator.GetPassword()); 
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                if (salesOrderId > 0)
+                    cmd.Parameters.AddWithValue("@orderId", salesOrderId);
+                else
+                    cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
+                    throw new Exception($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
+                }
+                bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId, mySqlTransaction);
+                if (!result)
+                {
+                    throw new Exception($"Failed to finalize tickets for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
+                }
+                mySqlTransaction.Commit();
+                
+            }
+            catch (Exception ex)
+            {   
+                mySqlTransaction.Rollback();
+                _logger.LogCritical($"Error finalizing sales order for salesOrderid {salesOrderId} or stripesession {stripeSessionId}: {0}", ex.Message);            
+                throw;
+            }
+            return true;
         }
 
         public async Task<SalesOrder> GetSalesOrderByStripeSessionId(string sessionId)
@@ -359,7 +424,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> UpdateSalesOrderStatus(int orderId, SalesOrderStatus status, string stripeSessionId)
+        public async Task<bool> UpdateSalesOrderStatus(int orderId,SalesOrderStatus status, string stripeSessionId)
         {
             if (orderId <= 0)
                 throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
@@ -389,7 +454,7 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
-
+     
 
     /// <summary>
     /// This method updates the sales order status.

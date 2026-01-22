@@ -152,10 +152,6 @@ public class SalesOrderConductor
             _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
             attendee = await userDbAccess.GetUserById(customerSalesOrder.UserId);
         }
-        //Create attendee
-
-        //attendee = new EventUser() { UserId = customerSalesOrder.UserId };
-
 
         // Create the sales order
         var salesOrder = new SalesOrder

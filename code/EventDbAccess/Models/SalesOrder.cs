@@ -53,6 +53,8 @@ public enum SalesOrderStatus
     Replaced, // New order created to replace this one
     PaymentFailed,
     PaymentSucceeded,//stripe confirmed payment
+
+    OrderFinalizationError, // There was an error finalizing the order(tickets couldnt be issued etc)
     OrderCompleted, //  and order is completed(payment was not required)
     Refunded
 }

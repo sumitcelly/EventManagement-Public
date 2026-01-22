@@ -165,6 +165,58 @@ namespace EventManagementDbAccess
             return ticket;
         }
 
+        public async Task<bool> FinalizeTicketsForOrder(int orderID, MySqlTransaction transaction)
+        {
+            if (orderID <= 0)
+            {
+                throw new ArgumentException("OrderId must be greater than zero.", nameof(orderID));
+            }
+            try
+            {
+                string query = @"select ticketid from eventmanagement.eventsalesitem where SalesOrderId=@orderID";
+                using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
+                mySqlConnection.Open();
+                MySqlCommand cmd = new MySqlCommand(query, mySqlConnection, transaction);
+                cmd.Parameters.AddWithValue("@orderID", orderID);
+                using DbDataReader reader = await cmd.ExecuteReaderAsync();
+                if (!reader.HasRows)
+                {
+                    throw new KeyNotFoundException($"No tickets found for order id {orderID}");
+                }
+                while (await reader.ReadAsync())
+                {
+                    int ticketId = reader.GetInt32(0);
+                    // Placeholder for any ticket finalization logic
+                    _logger.LogInformation($"Finalizing ticket with ID: {ticketId} for Order ID: {orderID}");
+                    query = @"update eventmanagement.eventsalesitem 
+                            set ModifiedAt=@modifiedAt,
+                            ticketcode = @ticketCode
+                            where TicketId=@ticketId";
+                    using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
+                    updateCmd.Parameters.AddWithValue("modifiedAt",DateTime.UtcNow);
+                    updateCmd.Parameters.AddWithValue("ticketCode",PasswordGenerator.GetPassword());
+                    updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
+                    int rowsAffected = await updateCmd.ExecuteNonQueryAsync();
+                    if (rowsAffected != 1)
+                    {
+                        throw new Exception($"Failed to finalize ticket with ID: {ticketId} for Order ID: {orderID}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Succeeded in finalizing ticket with ID: {ticketId} for Order ID: {orderID}");
+                    }                    
+                }
+                _logger.LogInformation($"All tickets finalized for order id {orderID}");
+              
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Unable to finalize tickets for order id {orderID} due to error {ex.Message}");
+                throw;
+            }
+            return true;
+        }
+        
         public async Task<int> AddEventTicket(EventSalesItem ticket)
         {
             if (ticket == null)
@@ -276,30 +328,7 @@ namespace EventManagementDbAccess
                 {
                     StringBuilder sb = new StringBuilder();
                     _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, transaction).Wait();
-                    //update count
-                    // sb.Append(@"update eventmanagement.eventitemtype 
-                    //     set ticketssold=ticketssold+@quantity,
-                    //     ModifiedAt=@modifiedAt
-                    //     where ticketssold+@quantity <= totalallowed and
-                    //     eventitemtypeid=@itemType");
-                    // Console.WriteLine($"query for update count is:{sb}");
-
-                    // using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
-                    // {
-                    //     cmd.Parameters.AddWithValue("@quantity", tickets.Count);
-                    //     cmd.Parameters.AddWithValue("@itemType", itemType);
-                    //     cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
-
-                    //     int i = await cmd.ExecuteNonQueryAsync();
-                    //     if (i <= 0)
-                    //     {
-                    //         _logger.LogWarning($"{tickets.Count()} ticket is  not available for evenitemtype {itemType}.");
-                    //         throw new Exception($"Not enough tickets available for {itemType}");
-                    //     }
-                    //     await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
-                    // }
-
-                    // sb.Clear();
+                  
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");
