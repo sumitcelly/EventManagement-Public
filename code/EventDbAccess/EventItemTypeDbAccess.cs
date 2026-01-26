@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Tls;
 using Stripe;
 using System;
 using System.Collections.Generic;
@@ -214,15 +215,13 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> UpdateEventItemTypesSoldCount(int eventId, int itemType, int quantity, MySqlTransaction? transaction)
+        public async Task<bool> UpdateEventItemTypesSoldCount(int eventId, int itemType, int quantity,MySqlConnection connection,  MySqlTransaction transaction)
         {
             if (itemType <= 0)
                 throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(itemType));
 
             try
             {
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
 
                 string query = @"update eventmanagement.eventitemtype 
                         set ticketssold=ticketssold+@quantity,

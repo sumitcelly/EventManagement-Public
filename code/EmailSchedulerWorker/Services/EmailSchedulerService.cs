@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using MySqlConnector;
 using Mysqlx.Crud;
 using Org.BouncyCastle.Crypto.Prng;
+using System.Collections.Generic;
 
 namespace EmailSchedulerWorker.Services
 {
@@ -24,10 +25,6 @@ namespace EmailSchedulerWorker.Services
         private readonly string _queueUrl;
         private readonly int _pollIntervalSeconds;
 
-        private readonly EmailCampaignDbAccess _emailCampaignDbAccess;
-        private readonly EmailRecipientsDbAccess _emailRecipientsDbAccess;
-        private readonly NotificationTemplateAccess _templateAccess;
-        private readonly EventDbAccess _eventDBAccess;
         private readonly SQSHelper _sqsClient;
 
         private readonly EventOrganizerDBAccess _organizerDBAccess;
@@ -41,11 +38,7 @@ namespace EmailSchedulerWorker.Services
             _logger = logger;
             _config = config;
             _serviceProvider = serviceProvider;
-            // _emailCampaignDbAccess = emailCampaignDbAccess;
-            // _emailRecipientsDbAccess = emailRecipientsDbAccess;
-            // _templateAccess = templateAccess;
-            // _eventDBAccess = eventDbAccess;
-            // _organizerDBAccess = eventOrganizerDBAccess;
+        
             _sqsClient = sqsClient;
 
             _connectionString = config.GetConnectionString("Default") 

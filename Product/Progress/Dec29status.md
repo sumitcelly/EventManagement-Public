@@ -21,6 +21,7 @@ Whats left in Organizer:
 * Email marketing to imported list of users.
 * How does someone become an organizer in the system? Whats the flow for that?
 
+
 Mobile:
 * iphone app
 * finalize and package apps.
@@ -30,11 +31,15 @@ Architectural Stuff around whats left:
     * Stripe UI for attendees to pay. Refunds and how they work.
     * Stripe setup for Organizers.
 * Role validation at backend and also front end.
+* Urls  contain ids. Check on that. Storing user friendly name for event/organizer and using it.
 * Logging  to disk at least
 * Deployment
     * Need to revisit plan and acquire resources.
     * ec2/container, DB, cloudfront pointing to s3 etc.
     * pipelines.
+
+Support:
+* Whats the plan?
 
 
 

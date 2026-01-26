@@ -336,7 +336,7 @@ namespace EventManagementDbAccess
                 try
                 {
                     StringBuilder sb = new StringBuilder();
-                    _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, transaction).Wait();
+                    await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction);
                   
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,

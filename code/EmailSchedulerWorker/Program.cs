@@ -22,9 +22,13 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<NotificationTemplateAccess>();
         services.AddScoped<EventDbAccess>();
         services.AddScoped<EventOrganizerDBAccess>();
+        services.AddScoped<EventItemTypeDbAccess>();
+        services.AddScoped<TicketAccess>();
+        services.AddScoped<SalesOrderDbAccess>();
         services.AddSingleton<SQSHelper>();
         services.AddDistributedMemoryCache();
-        services.AddHostedService<EmailSchedulerService>();
+        //services.AddHostedService<EmailSchedulerService>();
+        services.AddHostedService<OrderCleanupService>();
        
     })
     .ConfigureLogging(logging =>

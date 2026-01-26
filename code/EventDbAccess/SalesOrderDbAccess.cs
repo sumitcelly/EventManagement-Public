@@ -21,7 +21,7 @@ namespace EventManagementDbAccess
             _eventTypeAccess = eventItemTypeDbAccess;
             _ticketAccess = ticketAccess;
         }
-
+        
         public async Task<int> CreateSalesOrder(SalesOrder order)
         {
             if (order == null)
@@ -355,6 +355,8 @@ namespace EventManagementDbAccess
                 {
                     while (reader.Read())
                     {
+                        if (reader.IsDBNull(reader.GetOrdinal("SalesOrderCode")))
+                            continue;
                         events.Add(new UserSalesOrders()
                         {
                             SalesOrderCode =  reader.GetString("SalesOrderCode"),
@@ -403,6 +405,69 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<bool> MarkAllReservedOrdersAsAbandoned(int timeoutMinutes)
+        {
+            timeoutMinutes = timeoutMinutes <= 0 ? 10 : timeoutMinutes;
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+                string query = @"select orderid, stripeSessionId from SalesOrder  
+                                WHERE SalesOrderStatus = @reservedStatus 
+                               AND DATE_ADD(ReservedAt, INTERVAL @timeoutThreshold MINUTE) < UTC_TIMESTAMP()";
+                // string query = @"UPDATE salesorder 
+                //                 SET SalesOrderStatus = @abandonedStatus,                         
+                //                     ModifiedAt = @modifiedAt
+                //                 WHERE SalesOrderStatus = @reservedStatus 
+                //                 AND DATE_ADD(ReservedAt, INTERVAL @timeoutThreshold MINUTE) < UTC_TIMESTAMP()";
+            
+                using var cmd = new MySqlCommand(query, connection);
+            
+                cmd.Parameters.AddWithValue("@reservedStatus", (int)SalesOrderStatus.Reserved);
+                cmd.Parameters.AddWithValue("@timeoutThreshold", timeoutMinutes);
+                var reader = await cmd.ExecuteReaderAsync();
+                List<string> sessionIds = new List<string>();
+                while (await reader.ReadAsync())
+                {
+                    int orderid = reader.GetInt32(reader.GetOrdinal("orderid"));
+                    string sessionid =reader.IsDBNull(reader.GetOrdinal("stripeSessionId"))?
+                                      string.Empty:
+                                      reader.GetString(reader.GetOrdinal("stripeSessionId"));
+                    if (string.IsNullOrWhiteSpace(sessionid))
+                    {
+                        _logger.LogCritical($"For order id {orderid} session id does not exist even thoug status is Reserved");
+                    }
+                    else
+                    {
+                        sessionIds.Add(sessionid);
+                    }
+                }
+                reader.Close();
+                sessionIds.ForEach(async session =>
+                {
+                    _logger.LogInformation($"Returning tickets to pool for session id {session}");
+                    bool retVal = await ReturnTicketsToPool(SalesOrderStatus.Abandoned, session);
+                    if (!retVal)
+                    {
+                        _logger.LogCritical($"Unable to return tickets to pool for session id {session}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Succefully returned tickets to pool for {session} which was Abandoned");
+                    }
+                });
+               
+              
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"Error marking reserved orders as timed out: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> UpdateSalesOrderStatusAndStripeSessionId(int orderId, SalesOrderStatus status, string stripeSessionId)
         {
             if (orderId <= 0)
@@ -413,18 +478,30 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"UPDATE salesorder 
-                                    SET SalesOrderStatus = @status, 
-                                        StripeSessionId = @stripeSessionId, 
+                string query = string.Empty;
+                if (status != SalesOrderStatus.Reserved)
+                    query = @"UPDATE salesorder 
+                                    SET SalesOrderStatus = @status,                         
                                         ModifiedAt = @modifiedAt
                                     WHERE OrderId = @orderId";
+                else
+                    query = @"UPDATE salesorder 
+                                    SET SalesOrderStatus = @status, 
+                                        StripeSessionId = @stripeSessionId,
+                                        ReservedAt = @reservedAt,
+                                        ModifiedAt = @modifiedAt
+                                    WHERE OrderId = @orderId";
+               
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@status", (int)status);
                 cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId ?? string.Empty);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
-
+                if (status == SalesOrderStatus.Reserved)
+                {
+                    cmd.Parameters.AddWithValue("@reservedAt", DateTime.UtcNow);
+                }
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0;
             }
@@ -483,17 +560,23 @@ namespace EventManagementDbAccess
 
       if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
             throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));
+      
+        
+        SalesOrder order = await GetSalesOrderByStripeSessionId(stripeSessionId);
+        if (order == null)
+            throw new Exception($"Unable to find order with session id {stripeSessionId}");
+
+        using var connection = new MySqlConnection(ConnectionString);   
+        await connection.OpenAsync();
+
+        using MySqlTransaction mySqlTransaction =  connection.BeginTransaction();
         try
         {
-            SalesOrder order = await GetSalesOrderByStripeSessionId(stripeSessionId);
-            
-            using var connection = new MySqlConnection(ConnectionString);
-            await connection.OpenAsync();
             string query=@"select eventitemtypeid, count(*) as ticketcount
                             from eventsalesitem
                             where salesorderid=@orderID
                             group by eventitemtypeid";
-            using var cmd = new MySqlCommand(query, connection);
+            using var cmd = new MySqlCommand(query, connection,mySqlTransaction);
             cmd.Parameters.AddWithValue("orderId",order.OrderId);
             using var reader = await cmd.ExecuteReaderAsync();
             Dictionary<int,int> ticketsToReturn = new Dictionary<int,int>();
@@ -509,7 +592,7 @@ namespace EventManagementDbAccess
             foreach (var item in ticketsToReturn)
             {
                 _logger.LogInformation($"Returning {item.Value} tickets to pool for event {order.EventId} and item type {item.Key}");
-               await _eventTypeAccess.UpdateEventItemTypesSoldCount(order.EventId, item.Key, -item.Value,null); 
+               await _eventTypeAccess.UpdateEventItemTypesSoldCount(order.EventId, item.Key, -item.Value,connection, mySqlTransaction); 
             }
             
             _logger.LogInformation($"Updating sales order status for order id {order.OrderId} to status {status}");
@@ -519,18 +602,30 @@ namespace EventManagementDbAccess
                         ModifiedAt = @modifiedAt
                         WHERE OrderId = @orderId";
             cmd.CommandText = query;
+            cmd.Transaction = mySqlTransaction;
             cmd.Parameters.Clear();
             cmd.Parameters.AddWithValue("@status", (int)status);
             cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@orderId", order.OrderId);
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
-            _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
-            return rowsAffected > 0;
+            if (rowsAffected > 0)
+            {
+                _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
+                await mySqlTransaction.CommitAsync();
+                return rowsAffected > 0;
+            }
+            else
+            {
+                return false;
+                //throw new Exception($"Unable to update order for id {order.OrderId} to status {status}");
+            }
+            
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating sales order: {ex.Message}");
+            await mySqlTransaction.RollbackAsync();
+            _logger.LogCritical($"Error updating sales order: {ex.Message}");
             throw;
         }
     }

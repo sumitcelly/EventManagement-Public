@@ -149,21 +149,26 @@ export default function BuyTickets() {
   const checkout = async (formData:TicketFormValues) => {       
     try
     {
-      if (stripeSessionId)
-      {
-        console.log('Existing stripe session id found. User most likely pressed back button:'+stripeSessionId);
-        const resetTickets = await axiosClient.post(`/SalesOrder/ReturnTickets/${stripeSessionId}/Replaced`);
-        if (resetTickets && resetTickets.status ===200)
-        {
-          console.log('Previous tickets associated with session returned to pool successfully.');
-        }
-        else
-        {
-          console.log('Unable to return previous tickets associated with session. Proceeding may result in overbooking.');
-          toast.error("Unable to return previous tickets associated with session. Proceeding may result in overbooking.");
-          return;
-        }
-      }
+      //todo:revisit this logic since stripesessionid seems to exist even if we come after timeout
+      //so a timeout  order gets replaced status and ticket sold is decremented twice.
+      //we can comment this out since  if a user pressed back button , the order will stay in reserved status
+      //amnd get picked up by the worker to clean. A new order will be creaed here.
+      //reserced
+      // if (stripeSessionId)
+      // {
+      //   console.log('Existing stripe session id found. User most likely pressed back button:'+stripeSessionId);
+      //   const resetTickets = await axiosClient.post(`/SalesOrder/ReturnTickets/${stripeSessionId}/Replaced`);
+      //   if (resetTickets && resetTickets.status ===200)
+      //   {
+      //     console.log('Previous tickets associated with session returned to pool successfully.');
+      //   }
+      //   else
+      //   {
+      //     console.log('Unable to return previous tickets associated with session. Proceeding may result in overbooking.');
+      //     toast.error("Unable to return previous tickets associated with session. Proceeding may result in overbooking.");
+      //     return;
+      //   }
+      // }
       const result = await axiosClient.post("/salesOrder", {
         userId: user.user?.id, 
         eventId: id,

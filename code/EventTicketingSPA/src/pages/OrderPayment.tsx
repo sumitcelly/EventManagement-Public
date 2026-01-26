@@ -215,7 +215,7 @@ export default function OrderPayment() {
             toast.error("Payment window has expired. Please try again.");
             axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.checkoutSessionId}/Timedout`)
             .then(() => {
-              history.replace(`/buytickets/${eventHeaderInfo.eventId}`);
+              history.replace(`/eventDetails/${eventHeaderInfo.eventId}`);
             })
             .catch((error) => {
               console.error("Error cancelling checkout session:", error);
