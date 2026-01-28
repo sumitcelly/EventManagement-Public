@@ -22,6 +22,16 @@ public class SalesOrder
     public SalesOrderStatus SalesOrderStatus { get; set; } = SalesOrderStatus.InProgress;
 
     public string  StripeSessionId { get; set; } = string.Empty;
+
+    public string PaymentIntentId { get; set; } =string.Empty;
+
+    public string RefundId { get; set; } =string.Empty;
+
+
+    public int RefundAmount { get; set; }
+
+    public DateTime RefundedAt {get;set; }
+
 }
 
 public class UserSalesOrders : EventHeader
@@ -56,5 +66,8 @@ public enum SalesOrderStatus
 
     OrderFinalizationError, // There was an error finalizing the order(tickets couldnt be issued etc)
     OrderCompleted, //  and order is completed(payment was not required)
-    Refunded
+    RefundSuccess,
+    RefundedPartially,
+    RefundFailed,
+    RefundUpdateDbError
 }

@@ -24,6 +24,7 @@ public class StripeAccess
 
     private static string WebhookSecret { get; set; }
 
+
     public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<StripeAccess> logger)
     {
         if (configuration == null)
@@ -208,6 +209,56 @@ public class StripeAccess
         }
         
     }
+
+    /// <summary>
+    /// Refunds the amount in cents for sales order id. The amount is expected to be the total price of the ticket(s), 
+    /// no fees included since fees are not refunded.
+    /// </summary>
+    /// <param name="amount"></param>
+    /// <param name="salesOrderId"></param>
+    /// <param name="paymentIntentId"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(int amount, int salesOrderId,string paymentIntentId)
+    {
+        if (amount <=0 || string.IsNullOrWhiteSpace(paymentIntentId))
+        {
+            _logger.LogError($"Cannot process refund if amount {amount} is 0 or payment intent id {paymentIntentId} is empty ");
+            throw new ArgumentException("Either amount or payment intentId is invalid");
+        }
+        try
+        {
+            RefundService _refundService = new RefundService();
+            var options = new RefundCreateOptions
+            {
+                PaymentIntent = paymentIntentId,
+                Amount = amount,
+                // Amount is optional here; Stripe refunds the full remaining amount by default
+                Reason = "RequestedByCustomer",
+                Metadata = new Dictionary<string, string>
+                {
+                    { "SalesOrderId", salesOrderId.ToString() },
+                   
+                }
+            };   
+            Refund refund =  await _refundService.CreateAsync(options);
+           
+            _logger.LogInformation($"Status of refund for order id {salesOrderId} is {refund.Status}");
+            _logger.LogInformation($"Refund object for sales order id {salesOrderId} is {refund.ToJson()}");
+            if (refund.Amount < amount)
+            {
+                _logger.LogCritical(@$"Amount refunded is less than requested for order id {salesOrderId}. 
+                    Request is {amount} and refunded is {refund.Amount}");
+            }
+            return (refund.Status == "succeeded", refund.Id, refund.Amount < amount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical($"Exception when processing refund {ex}");
+            throw;
+        }
+
+    }
     
     /// <summary>
     /// Processes the purchase of sales items using Stripe Checkout.Initiates a Stripe Checkout session.
@@ -347,7 +398,27 @@ public class StripeAccess
                 EventType = stripeEvent.Type,
                 SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
                 SessionId = session.Id,
+                PaymentIntentId = session.PaymentIntentId,
                 PaymentSucceeded = session.PaymentStatus == "paid" ?true:false
+            };
+        }
+        else if (stripeEvent.Data.Object is Refund refund && refund!=null)
+        {
+            int orderId=0;
+           
+            if (refund.Metadata.TryGetValue("SalesOrderId", out string? tempId))
+            {
+                int.TryParse(tempId, out orderId);
+            }
+            return new StripeWebHookData
+            {
+                EventType = stripeEvent.Type,
+                SalesOrderId = orderId,
+                RefundId = refund.Id,
+                PaymentIntentId = refund.PaymentIntentId,
+                RefundStatus = refund.Status,
+                RefundAmount = refund.Amount,
+                
             };
         }
         else if (stripeEvent.Data.Object is Account account && account!=null)
@@ -380,6 +451,8 @@ public class StripeWebHookData
     public string EventType { get; set; } = string.Empty;
     public int SalesOrderId { get; set; } = 0;
     public string SessionId { get; set; } = string.Empty;
+
+    public string PaymentIntentId {get; set;} = string.Empty;
     public int CustomerId { get; set; } =0;
 
     public bool PaymentSucceeded { get; set; } = false;
@@ -388,6 +461,12 @@ public class StripeWebHookData
     public bool DetailsSubmitted { get; set; } = false;
 
     public bool RequirementsPending { get; set; } = false;
+
+    public string RefundId {get;set; } = string.Empty;
+
+    public long RefundAmount { get; set;} = 0;
+
+    public string RefundStatus { get; set; } = string.Empty;
    public override string ToString()
     {
         return @$"EventType:{EventType} SalesOrderId: {SalesOrderId} Sessionid { SessionId} 

@@ -93,7 +93,13 @@ namespace EventManagementDbAccess
                         SalesOrderCode =reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty: reader.GetString(reader.GetOrdinal("SalesOrderCode")),
                         DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
                         SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
-                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
+                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId")),
+                        PaymentIntentId = reader.IsDBNull(reader.GetOrdinal("PaymentIntentId")) ? string.Empty : reader.GetString(reader.GetOrdinal("PaymentIntentId")),
+                        RefundId = reader.IsDBNull(reader.GetOrdinal("RefundId")) ? string.Empty : reader.GetString(reader.GetOrdinal("RefundId")),
+                        RefundAmount = reader.IsDBNull(reader.GetOrdinal("RefundAmount")) ? 0 : reader.GetInt16(reader.GetOrdinal("RefundAmount")),
+                        RefundedAt = reader.IsDBNull(reader.GetOrdinal("RefundedAt")) ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("RefundedAt")),
+                     
+                        
                     };
                 }
                throw new Exception($"Unable to retrieve order for order id {orderId}");
@@ -104,25 +110,32 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
-        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId)
+
+      
+
+        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId, string paymentIntentId)
         {
             if (salesOrderId < 0 && String.IsNullOrEmpty(stripeSessionId))
                 throw new ArgumentException("Either salesOrderId or stripeSessionId must be provided.");
+            if (string.IsNullOrWhiteSpace(paymentIntentId))
+                throw new ArgumentException("Payment Intent id cannot be empty when finalizing order.");
             string query = string.Empty;
             if (salesOrderId > 0)
             {
                 query = @"UPDATE salesorder 
                             SET SalesOrderStatus = @status, 
                                 SalesOrderCode =@orderCode,
-                                ModifiedAt = @modifiedAt
+                                ModifiedAt = @modifiedAt,
+                                PaymentIntentId= @paymentIntentId
                             WHERE OrderId = @orderId";
             }
             else
             {
                 query = @"UPDATE salesorder 
                             SET SalesOrderStatus = @status, 
-                                SalesOrderCode = @orderCode
-                                ModifiedAt = @modifiedAt
+                                SalesOrderCode = @orderCode,
+                                ModifiedAt = @modifiedAt,
+                                PaymentIntentId= @paymentIntentId
                             WHERE StripeSessionId = @stripeSessionId";
             }       
             using var connection = new MySqlConnection(ConnectionString);
@@ -135,6 +148,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@status", (int)SalesOrderStatus.PaymentSucceeded);
                 cmd.Parameters.AddWithValue("@orderCode",PasswordGenerator.GetPassword()); 
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@paymentIntentId", paymentIntentId);
                 if (salesOrderId > 0)
                     cmd.Parameters.AddWithValue("@orderId", salesOrderId);
                 else
@@ -512,7 +526,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> UpdateSalesOrderStatus(int orderId,SalesOrderStatus status, string stripeSessionId)
+        public async Task<bool> UpdateSalesOrderStatus(int orderId,SalesOrderStatus status)
         {
             if (orderId <= 0)
                 throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
@@ -525,11 +539,11 @@ namespace EventManagementDbAccess
                 string query = @"UPDATE salesorder 
                                     SET SalesOrderStatus = @status,                         
                                         ModifiedAt = @modifiedAt
-                                    WHERE OrderId = @orderId and StripeSessionId=@stripeSessionId";
+                                    WHERE OrderId = @orderId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@status", (int)status);
-                cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId ?? string.Empty);
+                //cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId ?? string.Empty);
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
 
@@ -539,6 +553,42 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating sales order: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<bool> UpdateSalesOrderRefundStatus(int orderId,SalesOrderStatus status, string refundId, int refundAmount)
+        {
+            if (orderId <= 0)
+                throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE salesorder 
+                                    SET SalesOrderStatus = @status,                         
+                                        ModifiedAt = @modifiedAt,
+                                        RefundId= @refundId,
+                                        RefundAmount = @refundAmount,
+                                        RefundedAt = @refundedAt
+                                    WHERE OrderId = @orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@status", (int)status);
+                cmd.Parameters.AddWithValue("@refundId", refundId );
+                cmd.Parameters.AddWithValue("@refundAmount", refundAmount );
+                cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@refundedAt", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+               _logger.LogError($"Error updating sales order for refund: {ex.Message}");
                 throw;
             }
         }
@@ -553,7 +603,7 @@ namespace EventManagementDbAccess
     /// <param name="eventId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId)
+    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId,int orderId=0)
     {
         if (string.IsNullOrEmpty(stripeSessionId))
             throw new ArgumentException("Invalid stripe session id provided", nameof(stripeSessionId));
@@ -562,7 +612,13 @@ namespace EventManagementDbAccess
             throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));
       
         
-        SalesOrder order = await GetSalesOrderByStripeSessionId(stripeSessionId);
+        SalesOrder? order =null;
+        if(!string.IsNullOrWhiteSpace(stripeSessionId))
+            order  = await GetSalesOrderByStripeSessionId(stripeSessionId);
+        else if (orderId >0)
+        {
+            order = await GetSalesOrderById(orderId);
+        }
         if (order == null)
             throw new Exception($"Unable to find order with session id {stripeSessionId}");
 

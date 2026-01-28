@@ -3,6 +3,7 @@ using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
 using Microsoft.AspNetCore.Authorization;
 using System.Text;
+using Mysqlx.Crud;
 
 namespace CreateTicketApi.Controllers
 {
@@ -13,10 +14,13 @@ namespace CreateTicketApi.Controllers
         private readonly SalesOrderConductor _salesOrderConductor;
         private readonly SalesOrderDbAccess _dbAccess;
 
+
+
         public SalesOrderController(SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess)
         {
             _salesOrderConductor = salesOrderConductor;
             _dbAccess = dbAccess;
+     
         }
 
         [HttpPost]
@@ -186,6 +190,7 @@ namespace CreateTicketApi.Controllers
 
             return value;
         }
+      
 
         [HttpPost]
         [Route("/SalesOrder/ReturnTickets/{stripeSessionId}/{orderStatus}")]

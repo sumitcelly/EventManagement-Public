@@ -21,20 +21,22 @@ namespace CreateTicketApi.Controllers
 
         private readonly EventOrganizerDBAccess _eventOrganizerDbAccess;
         private readonly EmailUtils _emailUtils;
-
+        private readonly TicketAccess _ticketAccess;
         public PaymentController(
             ILogger<PaymentController> logger,
             StripeAccess stripeAccess,
             IConfiguration configuration,
             SalesOrderDbAccess salesOrderDbAccess,
             EventOrganizerDBAccess eventOrganizerDbAccess,
-            EmailUtils emailUtils)
+            EmailUtils emailUtils,
+            TicketAccess ticketAccess)
         {
             _logger = logger;
             _stripeAccess = stripeAccess;
             _configuration = configuration;
             _salesOrderDbAccess = salesOrderDbAccess;
             _eventOrganizerDbAccess = eventOrganizerDbAccess;
+            _ticketAccess = ticketAccess;
             _emailUtils = emailUtils ?? throw new ArgumentNullException(nameof(emailUtils), "EmailUtils cannot be null.");  
         }
 
@@ -169,6 +171,40 @@ namespace CreateTicketApi.Controllers
             }
         }
         
+        [HttpPost]
+        [Route("/SalesOrder/RefundOrder/{orderId}")]
+        public async Task<IActionResult> RefundOrder(int orderId)
+        {
+            if (orderId <=0)
+                return StatusCode(400,"Invalid order id sent");
+            SalesOrder order =  await _salesOrderDbAccess.GetSalesOrderById(orderId);
+            if (order == null)
+            {
+              return StatusCode(404,"Unable to find salesorder for id {orderId}");
+            }
+            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded || order.SalesOrderStatus != SalesOrderStatus.RefundedPartially)
+            {
+                return StatusCode(409,"Order is in invalid state to start refund");
+            }
+            if (string.IsNullOrWhiteSpace(order.PaymentIntentId))
+            {
+                return StatusCode(409,"No paymentintentid found");
+            }
+            int total = await _ticketAccess.GetOrderTotalPrice(orderId);
+            if (total == 0)
+                return StatusCode(404,"Unable to start refund as total paid is 0");
+
+            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId );
+            if (result.refundStatus)
+            {
+                return StatusCode(200,"Initiated refund successfully");
+            }
+            else
+            {
+                return StatusCode(500,"There was an issue initiating your refund");
+            }
+            
+        }
         [HttpPost("stripewebhook")]
         public async Task<IActionResult> HandleWebhook()
         {
@@ -191,8 +227,8 @@ namespace CreateTicketApi.Controllers
                 {
                     bool result =await _salesOrderDbAccess.UpdateSalesOrderStatus(
                                     stripeEvent.SalesOrderId,
-                                    stripeEvent.PaymentSucceeded?  SalesOrderStatus.PaymentSucceeded : SalesOrderStatus.PaymentFailed,
-                                    stripeEvent.SessionId);
+                                    stripeEvent.PaymentSucceeded?  SalesOrderStatus.PaymentSucceeded : SalesOrderStatus.PaymentFailed
+                                   );
                     if (!result)
                     {
                         _logger.LogError($"Failed to update sales order status for SalesOrder ID: {stripeEvent.SalesOrderId}");
@@ -204,14 +240,14 @@ namespace CreateTicketApi.Controllers
                         {
                         // Finalize the sales order. generate tickets etc
                         //Task.Delay(10000).Wait();
-                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, stripeEvent.SessionId);
+                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, stripeEvent.SessionId,stripeEvent.PaymentIntentId);
                         if (!result)
                         {
                             _logger.LogError($"Failed to finalize sales order for SalesOrder ID: {stripeEvent.SalesOrderId}");
                             await _salesOrderDbAccess.UpdateSalesOrderStatus(
                                     stripeEvent.SalesOrderId,
-                                    SalesOrderStatus.OrderFinalizationError,
-                                    stripeEvent.SessionId);
+                                    SalesOrderStatus.OrderFinalizationError
+                                    );
                             //stripe will retry webhook for us with 500 error
                             return StatusCode(500, "Failed to finalize sales order for order id " + stripeEvent.SalesOrderId);
                         }   
@@ -232,9 +268,44 @@ namespace CreateTicketApi.Controllers
                 // Handle other event types as needed       
                 else if (stripeEvent.EventType.Contains("async_payment_failed"))
                 {
-                    await _salesOrderDbAccess.UpdateSalesOrderStatus(stripeEvent.SalesOrderId, SalesOrderStatus.PaymentFailed, stripeEvent.SessionId);
-                    //todo: notify user of payment failure
-                    _logger.LogError($"Payment failed for SalesOrder: {stripeEvent.SalesOrderId}");
+                }
+                // Handle other event types as needed       
+                else if (stripeEvent.EventType.Contains("refund.created"))
+                {
+                    SalesOrderStatus tempStatus = stripeEvent.RefundStatus=="succeeded"?
+                                                    SalesOrderStatus.RefundSuccess
+                                                    :SalesOrderStatus.RefundFailed;
+                    _logger.LogInformation($"refund.created received for order id {stripeEvent.SalesOrderId} with refundid {stripeEvent.RefundId} and status {stripeEvent.RefundStatus}");
+                       
+                    if (tempStatus == SalesOrderStatus.RefundSuccess)
+                    {
+                       bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus, "",stripeEvent.SalesOrderId);
+                       if (ret)
+                       {
+                            _logger.LogInformation($"Returned tickets to pool status for {stripeEvent.SalesOrderId} in db is success");
+
+                            ret =await _salesOrderDbAccess.UpdateSalesOrderRefundStatus(stripeEvent.SalesOrderId, tempStatus,
+                                    stripeEvent.RefundId, (int)stripeEvent.RefundAmount);
+                            _logger.LogInformation($"Refund update  for SalesOrder: {stripeEvent.SalesOrderId} in db is {ret}");
+                       }
+                       if (!ret)
+                        {
+                            _logger.LogError(@$"Failed to update refund status or return tickets to pool
+                                         for SalesOrder ID: {stripeEvent.SalesOrderId}");
+                            await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                    stripeEvent.SalesOrderId,
+                                    SalesOrderStatus.RefundUpdateDbError
+                                  );
+                            //stripe will retry webhook for us with 500 error
+                            return StatusCode(500, "Failed to finalize sales order for order id " + stripeEvent.SalesOrderId);
+                        }            
+                    }
+                    else
+                    {
+                        await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                stripeEvent.SalesOrderId,
+                                tempStatus);
+                    }
                 }
                 else if (stripeEvent.EventType.Contains("account.updated"))
                 {

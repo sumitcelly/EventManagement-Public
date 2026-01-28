@@ -301,6 +301,47 @@ namespace EventManagementDbAccess
             }
         }
 
+          /// <summary>
+        /// Calculates the total of the pricepaid field in eventsalesitem table for a given order ID
+        /// </summary>
+        /// <param name="orderId">The sales order ID</param>
+        /// <returns>The total amount paid for all items in the order</returns>
+        public async Task<int> GetOrderTotalPrice(int orderId)
+        {
+            if (orderId <= 0)
+                throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                //retrieves total only if order status is paymentcompleted or partiallyrefunded
+                // string query = @"SELECT COALESCE(SUM(pricepaid), 0) AS TotalPricePaid FROM eventsalesitem es
+                //                 INNER JOIN salesorder so ON es.salesorderid = so.orderid
+                //                 WHERE so.orderid = @orderId and
+                //                 AND (so.salesorderstatus = 7 or so.salesorderstatus=11)";
+
+                string query=@"SELECT COALESCE(SUM(pricepaid), 0) AS TotalPricePaid FROM eventsalesitem where
+                             salesorderid=@orderId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return reader.GetInt16(0);
+                }
+
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error calculating total price paid for order {orderId}: {ex.Message}");
+                throw;
+            }
+        }
         /// <summary>
         /// Here the assumption is all tickets are for same event and same item type
         /// </summary>
