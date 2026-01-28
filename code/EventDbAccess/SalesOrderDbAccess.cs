@@ -605,8 +605,8 @@ namespace EventManagementDbAccess
     /// <exception cref="ArgumentException"></exception>
     public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId,int orderId=0)
     {
-        if (string.IsNullOrEmpty(stripeSessionId))
-            throw new ArgumentException("Invalid stripe session id provided", nameof(stripeSessionId));
+        if (string.IsNullOrEmpty(stripeSessionId) && orderId <= 0)
+            throw new ArgumentException("Invalid stripe session id and order id provided");
 
       if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
             throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));

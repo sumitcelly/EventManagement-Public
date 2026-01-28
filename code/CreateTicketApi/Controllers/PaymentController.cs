@@ -182,7 +182,7 @@ namespace CreateTicketApi.Controllers
             {
               return StatusCode(404,"Unable to find salesorder for id {orderId}");
             }
-            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded || order.SalesOrderStatus != SalesOrderStatus.RefundedPartially)
+            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded && order.SalesOrderStatus != SalesOrderStatus.RefundedPartially)
             {
                 return StatusCode(409,"Order is in invalid state to start refund");
             }
@@ -193,8 +193,10 @@ namespace CreateTicketApi.Controllers
             int total = await _ticketAccess.GetOrderTotalPrice(orderId);
             if (total == 0)
                 return StatusCode(404,"Unable to start refund as total paid is 0");
-
-            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId );
+            EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);
+            if (organizer == null)
+                return StatusCode(404,"Unable to locate organizer to start refund.");
+            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId,organizer.StripeAccountId );
             if (result.refundStatus)
             {
                 return StatusCode(200,"Initiated refund successfully");
@@ -326,7 +328,8 @@ namespace CreateTicketApi.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                _logger.LogError($"error in webhook {e}");
+                return  StatusCode(500,$"Error in processing {e}");
             }
         }
     }

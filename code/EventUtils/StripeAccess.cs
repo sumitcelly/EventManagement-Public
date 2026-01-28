@@ -219,12 +219,16 @@ public class StripeAccess
     /// <param name="paymentIntentId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(int amount, int salesOrderId,string paymentIntentId)
+    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(int amount, int salesOrderId,string paymentIntentId, string stripAcctId)
     {
         if (amount <=0 || string.IsNullOrWhiteSpace(paymentIntentId))
         {
             _logger.LogError($"Cannot process refund if amount {amount} is 0 or payment intent id {paymentIntentId} is empty ");
             throw new ArgumentException("Either amount or payment intentId is invalid");
+        }
+        if (string.IsNullOrWhiteSpace(stripAcctId))
+        {
+            throw new ArgumentNullException(stripAcctId, nameof(stripAcctId));
         }
         try
         {
@@ -234,14 +238,19 @@ public class StripeAccess
                 PaymentIntent = paymentIntentId,
                 Amount = amount,
                 // Amount is optional here; Stripe refunds the full remaining amount by default
-                Reason = "RequestedByCustomer",
+                Reason = "requested_by_customer",
                 Metadata = new Dictionary<string, string>
                 {
                     { "SalesOrderId", salesOrderId.ToString() },
                    
                 }
-            };   
-            Refund refund =  await _refundService.CreateAsync(options);
+            };  
+
+            var requestOptions = new RequestOptions
+            {
+                StripeAccount = stripAcctId// The organizer's Connect account ID
+            }; 
+            Refund refund =  await _refundService.CreateAsync(options,requestOptions);
            
             _logger.LogInformation($"Status of refund for order id {salesOrderId} is {refund.Status}");
             _logger.LogInformation($"Refund object for sales order id {salesOrderId} is {refund.ToJson()}");
