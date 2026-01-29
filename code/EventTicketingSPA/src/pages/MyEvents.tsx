@@ -98,21 +98,7 @@ export default function MyEvents() {
             >
               View tickets
             </div>
-            {/* <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                history.push(`/ticketdetails`,{
-                  eventId: event.eventId,
-                  salesOrderCode: event.salesOrderCode,
-                  salesOrderId:event.salesOrderId,
-                  salesOrderStatus: event.salesOrderStatus
-                });
-              }
-              }
-              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
-            >
-              View Tickets
-            </Button> */}
+          
             
         </div>
           </ListGroupItem>

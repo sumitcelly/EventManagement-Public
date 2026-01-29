@@ -76,7 +76,7 @@ export default function TicketDetails() {
       cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
-      //enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
+      enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
   });
    
   useEffect(() => {

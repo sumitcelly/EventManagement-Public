@@ -149,14 +149,18 @@ export default function OrderConfirmation() {
                     <Button
                           className="align-bottom ml-auto align-center"
                           size="xs"
-                          onClick={() => history.push(`/ticketdetails`,
+                          onClick={(e) => 
+                          {
+                            e.stopPropagation();
+                            history.push(`/ticketdetails`,
                             {
                                 eventId: event.eventId,
                                 salesOrderCode: salesOrderData.salesOrderCode,
                                 salesOrderId:salesOrderData.salesOrderId,
                                 salesOrderStatus: orderSuccessStatus
-                            }
-                          )}>
+                            });
+                          }}
+                          >
                           View your Tickets
                     </Button>
                   </div>
