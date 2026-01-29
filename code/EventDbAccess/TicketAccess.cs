@@ -37,14 +37,15 @@ namespace EventManagementDbAccess
                 {
                     return "Ticket not found";
                 }
-                if (item.TicketScanned == 1)
+                if (item.TicketStatus != TicketStatus.Live.ToString())
                 {
-                    return "Ticket already scanned";
+                    return $"Unable to proceed since ticket is in {item.TicketStatus}";
                 }
+
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$"Update eventmanagement.eventsalesitem set TicketScanned=1  where
-                                EventId='{eventId}' and TicketCode='{code}'";
+                    string sql = @$"Update eventmanagement.eventsalesitem set TicketStatus='{TicketStatus.Scanned.ToString()}'
+                                  where EventId='{eventId}' and TicketCode='{code}'";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     int val = await cmd.ExecuteNonQueryAsync();
@@ -53,7 +54,7 @@ namespace EventManagementDbAccess
                     if (retVal)
                     {
                         _logger.LogInformation($"Ticket with code {code} validated successfully.");
-                        item.TicketScanned = 1;
+                        item.TicketStatus = TicketStatus.Scanned.ToString();
                         _cache.AddOrUpdateCache<EventSalesItem>(item, $"{eventId}:{code}", TimeSpan.FromMinutes(base._cacheDurationInMinutes));
                     }
                     else
@@ -122,7 +123,7 @@ namespace EventManagementDbAccess
                 {
                     string sql = @$"Select a.FullName, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
-                                b.TicketCode, b.TicketScanned , b.PricePaid
+                                b.TicketCode, b.TicketStatus , b.PricePaid
                                 from eventmanagement.EventUser a, 
                                 eventmanagement.EventSalesItem b where
                                 a.UserId=b.UserId and
@@ -150,7 +151,7 @@ namespace EventManagementDbAccess
                             ticket.CreatedAt = reader.GetDateTime(3);
                             ticket.ModifiedAt = reader.GetDateTime(4);
                             ticket.TicketCode = reader.GetString(5);
-                            ticket.TicketScanned = reader.GetInt32(6);
+                            ticket.TicketStatus = reader.GetString(6);
                             ticket.PricePaid = reader.GetDecimal(7);
 
                         }
@@ -196,12 +197,14 @@ namespace EventManagementDbAccess
                         _logger.LogInformation($"Ticket ID to finalize: {ticketId}");
                          query = @"update eventmanagement.eventsalesitem 
                             set ModifiedAt=@modifiedAt,
-                            TicketCode = @ticketCode
+                            TicketCode = @ticketCode,
+                            TicketStatus=@status
                             where TicketId=@ticketId";
                         using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
                         updateCmd.Parameters.AddWithValue("@modifiedAt",DateTime.UtcNow);
                         updateCmd.Parameters.AddWithValue("@ticketCode",PasswordGenerator.GetPassword());
                         updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
+                        updateCmd.Parameters.AddWithValue("@status", TicketStatus.Live.ToString());
                         int rowsAffected = updateCmd.ExecuteNonQuery();
                         if (rowsAffected != 1)
                         {
@@ -239,7 +242,7 @@ namespace EventManagementDbAccess
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                        TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
+                        TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                         CreatedAt,ModifiedAt) ");
                 sb.Append(" VALUES (");
 
@@ -249,7 +252,7 @@ namespace EventManagementDbAccess
                 sb.Append(ticket.User.UserId);
                 sb.Append("'");
                 sb.Append(",");
-                sb.Append(ticket.TicketScanned);
+                sb.Append(ticket.TicketStatus);
                 sb.Append(",");
                 sb.Append("'");
                 sb.Append(ticket.TicketCode);
@@ -380,19 +383,19 @@ namespace EventManagementDbAccess
                     await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction);
                   
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                    TicketScanned,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
+                    TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");
                     int index = 0;
                     var parameters = new List<MySqlParameter>();
                     foreach (var ticket in tickets)
                     {
                         if (index > 0) sb.Append(","); // comma between VALUES
-                        sb.Append($@"(@EventId{index}, @UserId{index}, @TicketScanned{index},@TicketCode{index},
+                        sb.Append($@"(@EventId{index}, @UserId{index}, @TicketStatus{index},@TicketCode{index},
                                         @SalesOrderId{index}, @EventItemTypeId{index},@PricePaid{index},@CreatedAt{index},@ModifiedAt{index})");
 
                         parameters.Add(new MySqlParameter($"@EventId{index}", ticket.EventId));
                         parameters.Add(new MySqlParameter($"@UserId{index}", ticket.User.UserId));
-                        parameters.Add(new MySqlParameter($"@TicketScanned{index}", ticket.TicketScanned));
+                        parameters.Add(new MySqlParameter($"@TicketStatus{index}", ticket.TicketStatus));
                         parameters.Add(new MySqlParameter($"@TicketCode{index}", ticket.TicketCode));
                         parameters.Add(new MySqlParameter($"@SalesOrderId{index}", ticket.SalesOrderId));
                         parameters.Add(new MySqlParameter($"@EventItemTypeId{index}", ticket.EventItemType.EventItemTypeId));
@@ -464,7 +467,7 @@ namespace EventManagementDbAccess
                     string sql = @"SELECT a.FullName, a.Email, a.Sms,a.UserId, c.Description,
                                 c.EventItemTypeId,c.Name as ItemName, b.PricePaid,
                                 b.CreatedAt, b.ModifiedAt, 
-                                b.TicketCode, b.TicketScanned 
+                                b.TicketCode, b.TicketStatus 
                                 from eventmanagement.EventUser a, 
                                 eventmanagement.EventSalesItem b,
                                 eventmanagement.EventItemType c
@@ -497,7 +500,9 @@ namespace EventManagementDbAccess
                             ticket.TicketCode = !reader.IsDBNull(reader.GetOrdinal("TicketCode"))?
                                                 reader.GetString(reader.GetOrdinal("TicketCode")):
                                                  string.Empty;
-                            ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
+                            ticket.TicketStatus = !reader.IsDBNull(reader.GetOrdinal("TicketStatus"))?
+                                                reader.GetString(reader.GetOrdinal("TicketStatus")):
+                                                 string.Empty;
                             ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()
                             {
@@ -532,7 +537,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketScanned, b.PricePaid, c.EventItemTypeId,c.Name 
+                    string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketStatus, b.PricePaid, c.EventItemTypeId,c.Name 
                                     from SalesOrder a, EventSalesItem b, EventItemType c
                                     where a.OrderId=b.SalesOrderId and
                                     b.EventItemTypeId=c.EventItemTypeId and
@@ -552,7 +557,9 @@ namespace EventManagementDbAccess
                             ticket.TicketCode = !reader.IsDBNull(reader.GetOrdinal("TicketCode"))?
                                                 reader.GetString(reader.GetOrdinal("TicketCode")):
                                                  string.Empty;
-                            ticket.TicketScanned = reader.GetInt32(reader.GetOrdinal("TicketScanned"));
+                            ticket.TicketStatus = !reader.IsDBNull(reader.GetOrdinal("TicketStatus"))?
+                                                  reader.GetString(reader.GetOrdinal("TicketStatus")):
+                                                  string.Empty;
                             ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
                             ticket.EventItemType = new EventItemType()
                             {

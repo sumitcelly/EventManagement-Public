@@ -14,7 +14,7 @@ namespace EventManagementDbAccess
          
         public EventItemType EventItemType { get; set; } = new EventItemType();
 
-        public int TicketScanned { get; set; } = 0;
+        //public int TicketScanned { get; set; } = 0;
 
         public int SalesOrderId { get; set; } = 0;
 
@@ -23,5 +23,13 @@ namespace EventManagementDbAccess
         public DateTime ModifiedAt { get; set; } = DateTime.MinValue;
 
         public decimal PricePaid {get;set;} = 0;
+
+        public string? TicketStatus {get;set; }
+    }
+
+    public enum TicketStatus
+    {
+        Scanned,
+        Live
     }
 }

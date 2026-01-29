@@ -100,7 +100,7 @@ public class SalesOrderConductor
             //item.SalesOrderId = salesOrder.OrderId;
             item.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(item.TicketCode));
             item.TicketCode = item.TicketCode;
-            item.TicketScanned = item.TicketScanned;
+            item.TicketStatus = item.TicketStatus;
             item.EventItemType.Name = item.EventItemType.Name;
             item.EventItemType.EventItemTypeId = item.EventItemType.EventItemTypeId;
              // Clear the ticket code for security reasons
@@ -186,7 +186,7 @@ public class SalesOrderConductor
                 var salesItem = new EventSalesItem
                 {
                     SalesOrderId = orderId,
-                    TicketScanned = 0, // Assuming ticket is not scanned initially
+                    TicketStatus = !paymentRequired?TicketStatus.Live.ToString():null, // Assuming ticket is not scanned initially
                     EventId = customerSalesOrder.EventId,
                     User = attendee,
                     PricePaid = item.Cost,

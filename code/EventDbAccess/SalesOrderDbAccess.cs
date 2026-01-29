@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using Mysqlx.Crud;
 using System;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -665,7 +666,8 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@orderId", order.OrderId);
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
-            if (rowsAffected > 0)
+            if (rowsAffected > 0 && 
+                await UpdateTicketStatusForSalesOrder(status.ToString(), order.OrderId, connection, mySqlTransaction))
             {
                 _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
                 await mySqlTransaction.CommitAsync();
@@ -673,8 +675,8 @@ namespace EventManagementDbAccess
             }
             else
             {
-                return false;
-                //throw new Exception($"Unable to update order for id {order.OrderId} to status {status}");
+                //return false;
+                throw new Exception($"Unable to update order for id {order.OrderId} to status {status}");
             }
             
         }
@@ -683,6 +685,54 @@ namespace EventManagementDbAccess
             await mySqlTransaction.RollbackAsync();
             _logger.LogCritical($"Error updating sales order: {ex.Message}");
             throw;
+        }
+    }
+
+    public async Task<bool> UpdateTicketStatusForSalesOrder(string status, int orderId, MySqlConnection conn, MySqlTransaction trans)
+    {
+        if (string.IsNullOrEmpty(status) || orderId<=0)
+        {
+            throw new ArgumentException($"Invalid args for Updating ticket status status: {status} or orderid: {orderId}");
+        }
+        bool disposeConn =false;
+        try
+        {
+            if (conn == null)
+            {
+                conn= new MySqlConnection(ConnectionString);   
+                await conn.OpenAsync();
+                disposeConn = true;
+            }
+            
+            string query = @"UPDATE eventsalesitem
+                            SET ticketstatus = @status,                         
+                            ModifiedAt = @modifiedAt
+                            WHERE SalesOrderId = @orderId";
+            using MySqlCommand cmd = new MySqlCommand(query, conn, trans);
+            cmd.CommandText = query;
+            
+            cmd.Parameters.AddWithValue("@status", status);
+            cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("@orderId", orderId);
+
+            int rowsAffected = await cmd.ExecuteNonQueryAsync();
+            if (rowsAffected > 0)
+            {
+                _logger.LogInformation($"Tickets update to status {status} for order id {orderId}");
+                return true;
+            }
+            throw new Exception($"Unable to updatr tickets for order {orderId}");
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error updating ticket status {ex}");
+            throw;
+        }
+        finally
+        {
+            if (disposeConn)
+            {conn.Dispose();}
         }
     }
     public async Task<List<SalerOrderReportItems>> SearchByCustomer(int customerId, int eventId,DateOnly startDate, DateOnly endDate,
