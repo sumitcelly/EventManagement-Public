@@ -32,6 +32,7 @@ import SalesOrderTicket from "./components/SalesOrderTicket";
 import ScannerDashboard from "./pages/Scanner/Dashboard";
 import ScanTicket from "./pages/Scanner/ScanTicket";
 import OrderPayment from "./pages/OrderPayment";
+import RefundOrder from "./pages/RefundOrder";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -61,17 +62,31 @@ export default function App() {
             isAuthenticated ? <MyEvents /> :<LoginPage />
           }
         />
-          <Route
+        {/* <Route
          
-          path="/ticketdetails/:eventId/:salesOrderCode"
+          path="/ticketdetails/:eventId/:salesOrderCode/:salesOrderId/:salesOrderStatus"
            render={() =>
             isAuthenticated ? <TicketDetails/> : <LoginPage/>
           }
-          />
+          /> */}
+
+         <Route       
+          path="/ticketdetails"
+           render={() =>
+            isAuthenticated ? <TicketDetails/> : <LoginPage/>
+          }
+          /> 
+
         <Route
           path="/eventdetails/:id"
            render={() =>
             <EventDetails /> 
+          }
+        />
+         <Route
+          path="/refundorder"
+           render={() =>
+            <RefundOrder /> 
           }
         />
         <Route path="/Organizer/SalesOrderReport"       

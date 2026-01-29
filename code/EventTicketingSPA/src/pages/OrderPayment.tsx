@@ -15,7 +15,7 @@ import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout
 } from '@stripe/react-stripe-js';
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import CountdownMinutes from "../components/CountdownMinutes";
 
 const pkStripe =  import.meta.env.VITE_STRIPE_PK;
@@ -65,7 +65,8 @@ export default function OrderPayment() {
             { paymentPending: false,
                salesOrderCode: salesData.data?.salesOrderCode, 
                salesOrderQrCodeImage: salesData.data?.salesOrderQrCodeImage,
-               salesOrderId: orderId
+               salesOrderId: orderId,
+               paymentNeeded:true
              });
         }
       }
@@ -73,7 +74,7 @@ export default function OrderPayment() {
       {
         toast.error("Payment is still being processed. Please wait sometime.");
         console.log("Payment is still being processed. Please wait sometime.");
-        history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, {  salesOrderId: orderId, paymentPending:true});
+        history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { paymentNeeded:true, salesOrderId: orderId, paymentPending:true});
       }
       toast.error("Invalid payment session status. Please try again.");
       //setSessionStatus(response.data);
@@ -99,6 +100,7 @@ export default function OrderPayment() {
           <AppNavbar />
         </IonHeader>
         <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <Toaster position="top-right" />
           <div className="p-4"> 
             <h2 className="text-xl font-bold mb-2">No payment session found. Please try again.</h2>
               <Button

@@ -172,7 +172,7 @@ namespace CreateTicketApi.Controllers
         }
         
         [HttpPost]
-        [Route("/SalesOrder/RefundOrder/{orderId}")]
+        [Route("/Payment/RefundOrder/{orderId}")]
         public async Task<IActionResult> RefundOrder(int orderId)
         {
             if (orderId <=0)

@@ -36,8 +36,9 @@ public class SalesOrder
 
 public class UserSalesOrders : EventHeader
 {
+    public required string SalesOrderStatus { get; set; }
     public required string SalesOrderCode { get; set; }
-    public int SalesOrdeId { get; set; }
+    public int SalesOrderId { get; set; }
 }
 
 public class SalerOrderReportItems

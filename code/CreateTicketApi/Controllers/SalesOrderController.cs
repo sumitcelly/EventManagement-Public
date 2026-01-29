@@ -13,13 +13,15 @@ namespace CreateTicketApi.Controllers
     {
         private readonly SalesOrderConductor _salesOrderConductor;
         private readonly SalesOrderDbAccess _dbAccess;
+        private readonly TicketAccess _ticketAccess;
 
 
 
-        public SalesOrderController(SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess)
+        public SalesOrderController(SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess)
         {
             _salesOrderConductor = salesOrderConductor;
             _dbAccess = dbAccess;
+            _ticketAccess = ticketAccess;
      
         }
 
@@ -97,6 +99,24 @@ namespace CreateTicketApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error retrieving sales order status: {ex.Message}");
+            }
+        }
+
+        [HttpGet("/SalesOrderRefundAmount/{orderId}")]
+        
+        public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId)
+        {
+            if (orderId <= 0)
+                return BadRequest("Invalid order id.");
+
+            try
+            {
+                var retData = await _ticketAccess.GetOrderTotalPrice(orderId);
+                return Ok(retData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving sales order refund amount: {ex.Message}");
             }
         }
 

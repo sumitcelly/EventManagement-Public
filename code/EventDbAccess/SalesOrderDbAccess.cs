@@ -356,12 +356,12 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"select a.EventId, a.SalesOrderCode,b.EventName,
+                string query = @"select a.EventId, a.SalesOrderCode,a.SalesOrderStatus, a.OrderId,b.EventName,
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
                                 b.EventSummary,b.Free
                                 from SalesOrder a, Events b
                                 where a.EventId = b.EventId and
-                                a.UserId=@userId and b.eventDate>UTC_DATE()";
+                                a.UserId=@userId and b.eventDate>UTC_DATE() order by a.CreatedAt desc";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@userId", userId);
@@ -374,7 +374,10 @@ namespace EventManagementDbAccess
                             continue;
                         events.Add(new UserSalesOrders()
                         {
+                            SalesOrderStatus = reader.IsDBNull(reader.GetOrdinal("SalesOrderStatus"))?string.Empty:
+                                                ((SalesOrderStatus)reader.GetInt16(reader.GetOrdinal("SalesOrderStatus"))).ToString(),
                             SalesOrderCode =  reader.GetString("SalesOrderCode"),
+                            SalesOrderId = reader.GetInt16("OrderId"),
                             EventId = reader.GetInt32("EventId"),
                             EventName = reader.GetString("EventName"),
                             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),

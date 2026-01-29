@@ -1,7 +1,7 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 
-import { useLocation, useParams } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
 import { EventTickets } from "../types/Tickets";
 import EventSummary from "../components/EventSummary";
 import { useEffect, useState } from "react";
@@ -13,20 +13,32 @@ import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
+import { Button } from "flowbite-react";
 
 export default function TicketDetails() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const history = useHistory();
   const onPageChange = (page: number)=>{
         console.log("onpagechange",page);
         setCurrentPage(page);
   }
 
-  const { eventId, salesOrderCode } = useParams<{ eventId: string; salesOrderCode: string }>();
-  console.log('eventId and salesOrderCode from params', eventId, salesOrderCode);
+  const location =useLocation();
+  //const { eventId, salesOrderCode,salesOrderId,salesOrderStatus } =
+  //useParams<{ eventId: string; salesOrderCode: string; salesOrderId: string;salesOrderStatus:string}>();
+  //console.log('eventId and salesOrderCode from params', eventId, salesOrderCode);
   //const  eventDetails = useAppSelector((state:RootState) => state.event);
+  const salesOrderData:any = location.state || {};
+  console.log('Sales order data received',salesOrderData);
+  const eventId = salesOrderData.eventId || 0;
+  const salesOrderCode = salesOrderData.salesOrderCode || '';
+  const salesOrderId = salesOrderData.salesOrderId || '';
+  const salesOrderStatus = salesOrderData.salesOrderStatus || '';
   
+
+
   //console.log('sales order code and event id',salesOrderCode, eventId );
 
   const {
@@ -93,10 +105,19 @@ export default function TicketDetails() {
             
             </SalesOrderTicket>
           }
-                
+          
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
+          {salesOrderStatus=="PaymentSucceeded" && (
+            <div className="ml-auto mt-4">
+              <button onClick={()=>history.push(`/refundorder`,salesOrderId)}
+                  className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                  Initiate refund
+              </button>
+            </div>
+          )}
           
     </div>
     </IonContent>

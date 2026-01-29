@@ -326,10 +326,11 @@ namespace EventManagementDbAccess
                 //                 AND (so.salesorderstatus = 7 or so.salesorderstatus=11)";
 
                 string query=@"SELECT COALESCE(SUM(pricepaid), 0) AS TotalPricePaid FROM eventsalesitem where
-                             salesorderid=@orderId";
+                             salesorderid=@orderId and ticketstatus=@status";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
+                cmd.Parameters.AddWithValue("@status", TicketStatus.Live.ToString());
 
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())

@@ -18,7 +18,7 @@ import { set } from "react-hook-form";
 
 export default function OrderConfirmation() {
   
-
+  const history=useHistory();
   const [cartTickets,setCartTickets] = useState<Ticket[]>([]);
   const user = useAppSelector((state:RootState) =>state.auth);
   const ionRouter = useIonRouter();
@@ -36,6 +36,7 @@ export default function OrderConfirmation() {
   const cart  = useAppSelector((state:RootState) => state.cart);
   const dispatch = useAppDispatch();
  
+  const orderSuccessStatus = salesOrderData.paymentNeeded ? "PaymentSucceeded":"OrderCompleted";
 
  //do not use dispatch directly in the function body
  //as it will be called on every render causing infinite loop
@@ -148,7 +149,14 @@ export default function OrderConfirmation() {
                     <Button
                           className="align-bottom ml-auto align-center"
                           size="xs"
-                          onClick={() => ionRouter.push(`/ticketdetails/${event.eventId}/${salesOrderData.salesOrderCode}`)}>
+                          onClick={() => history.push(`/ticketdetails`,
+                            {
+                                eventId: event.eventId,
+                                salesOrderCode: salesOrderData.salesOrderCode,
+                                salesOrderId:salesOrderData.salesOrderId,
+                                salesOrderStatus: orderSuccessStatus
+                            }
+                          )}>
                           View your Tickets
                     </Button>
                   </div>

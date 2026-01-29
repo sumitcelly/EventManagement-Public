@@ -6,6 +6,7 @@ import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import { IonContent, IonPage, IonRouterLink } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
+import { useHistory } from "react-router";
 // 
 interface UserSalesOrder {
   eventId: number;
@@ -15,6 +16,8 @@ interface UserSalesOrder {
   eventOrganizer: number;
   eventLocation: string;
   salesOrderCode: string;
+  salesOrderStatus:String;
+  salesOrderId:number;
   eventHeadline:string;
 }
 
@@ -23,6 +26,7 @@ interface UserSalesOrder {
 export default function MyEvents() {
   //const navigate = useNavigate();
   const router = useIonRouter();
+  const history = useHistory();
   const  user = useAppSelector((state:RootState) => state.auth);
   const userId= user.user?.id;
 
@@ -60,7 +64,7 @@ export default function MyEvents() {
             key={event.salesOrderCode}
             onClick={(e) =>{ 
               console.log("Navigating to event details for eventId:", event.eventId);
-              router.push(`/eventdetails/${event.eventId}`,'forward'); }}
+              history.push(`/eventdetails/${event.eventId}`,'forward'); }}
             className="cursor-pointer"
           >
           <div className="flex items-center justify-between gap-4 w-full">
@@ -72,17 +76,37 @@ export default function MyEvents() {
               <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
             </div>
             {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
-            <IonRouterLink
-              routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}`}
+            {/* <IonRouterLink
+              routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}/${event.salesOrderId}/${event.salesOrderStatus}`}
+              
               onClick={(e) => e.stopPropagation()}
               className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
             >
               View tickets
-            </IonRouterLink>
+            </IonRouterLink> */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                history.push(`/ticketdetails`, {
+                  eventId: event.eventId,
+                  salesOrderCode: event.salesOrderCode,
+                  salesOrderId: event.salesOrderId,
+                  salesOrderStatus: event.salesOrderStatus
+                });
+              }}
+              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
+            >
+              View tickets
+            </div>
             {/* <Button
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/ticketdetails/${event.eventId}/${event.salesOrderCode}`, 'forward');
+                history.push(`/ticketdetails`,{
+                  eventId: event.eventId,
+                  salesOrderCode: event.salesOrderCode,
+                  salesOrderId:event.salesOrderId,
+                  salesOrderStatus: event.salesOrderStatus
+                });
               }
               }
               className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
