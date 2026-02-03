@@ -15,6 +15,9 @@ namespace EventManagementDbAccess
     {
         public int Id { get; set; }
         public int TemplateId { get; set; }
+        public string? TemplateName { get; set; }
+
+        public string? EventName {get;set;}
         public int? EventId { get; set; }
         public DateTime SendAt { get; set; }
         public string? Status { get; set; }

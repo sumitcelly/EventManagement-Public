@@ -88,6 +88,41 @@ namespace EventManagementDbAccess
             return campaigns;
         }
 
+        public async Task<List<EmailCampaign>> GetEmailCampaignsByOrganizerId(int organizerId)
+        {
+            if (organizerId <= 0)
+            {
+                throw new ArgumentException("organizerId must be greater than zero.", nameof(organizerId));
+            }
+
+            var campaigns = new List<EmailCampaign>();
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, 
+                        b.templatename, b.Id as TemplateId from 
+                        emailcampaign a,
+                        notificationtemplates b,
+                        events c
+                        where a.TemplateId = b.id and a.EventId=c.EventId and
+                        b.OrganizerId=@organizerId";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@organizerId", organizerId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                campaigns.Add(new EmailCampaign
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
+                    TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),                
+                    EventName = reader.IsDBNull(reader.GetOrdinal("EventName")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventName")),
+                    SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
+                    Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                });
+            }
+            return campaigns;
+        }
+
         public async Task<bool> UpdateEmailCampaign(EmailCampaign campaign)
         {
             using var conn = new MySqlConnection(this.ConnectionString);
