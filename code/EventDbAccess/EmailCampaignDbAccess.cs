@@ -88,6 +88,46 @@ namespace EventManagementDbAccess
             return campaigns;
         }
 
+
+        public async Task<EmailCampaign> GetEmailCampaignsByCampaignId(int campaignId)
+        {
+            if (campaignId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(campaignId));
+            }
+
+            
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,
+                          b.Templatename,b.templatecontent,b.templatedescription,b.subject,b.isdefault,
+                          c.eventname
+                          FROM emailcampaign a, notificationtemplates b, events c
+                          where a.templateid =b.id and a.eventid=c.eventid and 
+                          a.id = @campaignid";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@campaignid", campaignId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                return new EmailCampaign
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
+                    EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
+                    SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
+                    Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
+                    EventName = reader.GetString(reader.GetOrdinal("EventName")),
+                    TemplateContent = reader.GetString(reader.GetOrdinal("templatecontent")),
+                    TemplateDescription = reader.GetString(reader.GetOrdinal("templatedescription")),
+                    Subject = reader.GetString(reader.GetOrdinal("Subject"))  ,
+                    IsDefault = reader.GetBoolean(reader.GetOrdinal("isdefault")),              
+
+                };
+            }
+           throw new Exception($"Unable to find campaign for id {campaignId}");
+        }
+
         public async Task<List<EmailCampaign>> GetEmailCampaignsByOrganizerId(int organizerId)
         {
             if (organizerId <= 0)
@@ -99,12 +139,11 @@ namespace EventManagementDbAccess
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             var query = @"select a.Id, c.EventName, a.SendAt, a.Status, 
-                        b.templatename, b.Id as TemplateId from 
-                        emailcampaign a,
-                        notificationtemplates b,
-                        events c
-                        where a.TemplateId = b.id and a.EventId=c.EventId and
-                        b.OrganizerId=@organizerId";
+                        b.templatename, b.Id as TemplateId, b.IsDefault  from 
+                        emailcampaign a
+                        JOIN notificationtemplates b ON a.TemplateId = b.id
+                        JOIN events c ON a.EventId = c.EventId
+                        WHERE a.eventid IN (SELECT eventid FROM events WHERE eventorganizer = @organizerId)";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@organizerId", organizerId);
             using var reader = await cmd.ExecuteReaderAsync();
@@ -114,7 +153,8 @@ namespace EventManagementDbAccess
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
-                    TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),                
+                    TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),   
+                    IsDefault = reader.GetBoolean(reader.GetOrdinal("IsDefault")),         
                     EventName = reader.IsDBNull(reader.GetOrdinal("EventName")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventName")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),

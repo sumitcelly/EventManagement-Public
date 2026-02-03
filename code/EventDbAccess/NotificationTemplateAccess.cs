@@ -75,13 +75,12 @@ namespace EventManagementDbAccess
                 throw new ArgumentNullException("templateName");
             }
 
-            string cacheKey = customerId.HasValue ? CacheHelper.GetCacheKey<Event>(customerId + ":" + templateName.ToString())
-                                                    : CacheHelper.GetCacheKey<Event>(templateName.ToString());
-            Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByNameFromDb(templateName, customerId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            string cacheKey = CacheHelper.GetCacheKey<Event>(templateName.ToString());
+            Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByNameFromDb(templateName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return templateData ?? throw new KeyNotFoundException($"template  with name  {templateName} not found.");
         }
 
-        public async Task<Tuple<string, string>> GetTemplateByNameFromDb(string templateName, int? customerId = null)
+        public async Task<Tuple<string, string>> GetTemplateByNameFromDb(string templateName)
         {
             if (string.IsNullOrEmpty(templateName))
             {
@@ -97,8 +96,8 @@ namespace EventManagementDbAccess
                 using (MySqlConnection connection = new(this.ConnectionString))
                 {
                     string sql = @$"Select TemplateContent,Subject from eventmanagement.notificationtemplates where
-                                    TemplateName='{templateName}'
-                                    and OrganizerId<=>{(customerId.HasValue ? customerId.Value : "NULL")}";
+                                    TemplateName='{templateName}'";
+                                    
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using DbDataReader reader = await cmd.ExecuteReaderAsync();

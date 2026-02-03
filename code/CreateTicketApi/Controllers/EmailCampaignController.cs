@@ -35,5 +35,21 @@ namespace CreateTicketApi.Controllers
 
         }
 
+        [HttpGet("/bycampaignId/{campaignId}")]
+        public async Task<IActionResult> GetByCampaignId(int campaignId)
+        {
+            try
+            {
+               EmailCampaign retVal = await  _campaignDbAccess.GetEmailCampaignsByCampaignId(campaignId);
+               return  Ok(retVal);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"error in retrieving campaigns by org id, {ex}"    );
+                return StatusCode(500, "Exception in retrieving campaings by campaignId ID");
+            }
+
+        }
+
       }
 }
