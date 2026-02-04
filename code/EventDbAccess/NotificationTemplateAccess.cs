@@ -27,7 +27,7 @@ namespace EventManagementDbAccess
                 throw new ArgumentNullException("templateId");
             }
 
-            string cacheKey = CacheHelper.GetCacheKey<Event>(templateId.ToString());
+            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateId.ToString());
             Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return templateData ?? throw new KeyNotFoundException($"template with id {templateId} not found.");
         }
@@ -116,6 +116,113 @@ namespace EventManagementDbAccess
                 Console.WriteLine(ex.Message);
             }
             return new Tuple<string, string>(templateContent, subject);
+        }
+
+        public async Task<int> AddEmailTemplate(EmailTemplate template)
+        {
+            if (template == null)
+            {
+                throw new ArgumentNullException("Exception adding templated",nameof(template));
+            }
+             try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"INSERT INTO notificationtemplates 
+                    (TemplateName, TemplateContent, TemplateDescription,Subject,IsDefault)
+                    VALUES (@templateName, @templateContent, @templateDescription, @subject,@isDefault,@createdat,@modifiedat)";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@templateName", template.TemplateName);
+                cmd.Parameters.AddWithValue("@templateContent", template.TemplateContent);
+                cmd.Parameters.AddWithValue("@templateDescription", template.TemplateDescription);
+                cmd.Parameters.AddWithValue("@subject", template.Subject);
+                cmd.Parameters.AddWithValue("@isDefault", template.IsDefault);
+                cmd.Parameters.AddWithValue("@createdat",DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@modifiedat",DateTime.UtcNow);
+
+                
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning($"Error adding template {template.TemplateName}");
+                    return 0;
+                }
+                else
+                {
+                    template.Id = Convert.ToInt16(cmd.LastInsertedId);
+                    // Invalidate cache for this member
+                    string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(cmd.LastInsertedId.ToString());
+                    await _cache.SetOnlyAsync<EmailTemplate>(cacheKey, template);
+                    _logger.LogInformation($"Templated with id {template.Id} has  been created.");
+                    return Convert.ToInt16(cmd.LastInsertedId);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding template: {ex.Message}");
+                throw;
+            }
+
+        }
+
+        public async Task<int> UpdateEmailTemplate(EmailTemplate template)
+        {
+            if (template == null)
+            {
+                throw new ArgumentNullException("Exception adding templated",nameof(template));
+            }
+            if (template.Id <=0)
+            {
+                throw new ArgumentException("Invalid id of email template to update");
+        
+            }
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"update notificationtemplates 
+                                set templateName=@templateName,
+                                TemplateContent=@templateContent,
+                                TemplateDescription=@templateDescription, 
+                                Subject=@subject,
+                                ModidiedAt=@modifiedat
+                                where id=@templateid";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@templateName", template.TemplateName);
+                cmd.Parameters.AddWithValue("@templateContent", template.TemplateContent);
+                cmd.Parameters.AddWithValue("@templateDescription", template.TemplateDescription);
+                cmd.Parameters.AddWithValue("@subject", template.Subject);        
+                cmd.Parameters.AddWithValue("@modifiedat",DateTime.UtcNow);
+
+                
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning($"Error updating template {template.TemplateName}");
+                    return 0;
+                }
+                else
+                {
+                    
+                    // Invalidate cache for this member
+                    string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(template.Id.ToString());
+                    await _cache.SetOnlyAsync<EmailTemplate>(cacheKey, template);
+                    _logger.LogInformation($"Templated with id {template.Id} has  been updated.");
+                    return rowsAffected;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding template: {ex.Message}");
+                throw;
+            }
+
         }
     }
 }

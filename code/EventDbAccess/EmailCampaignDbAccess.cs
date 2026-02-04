@@ -167,14 +167,14 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"UPDATE emailcampaign SET TemplateId = @TemplateId, EventId = @EventId, SendAt = @SendAt, Status = @Status, ModifiedAt = @ModifiedAt WHERE Id = @Id";
+            var query = @"UPDATE emailcampaign SET EventId = @EventId, SendAt = @SendAt, Status = @Status, 
+                        ModifiedAt = @ModifiedAt WHERE Id = @Id";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Id", campaign.Id);
-            cmd.Parameters.AddWithValue("@TemplateId", campaign.TemplateId);
             cmd.Parameters.AddWithValue("@EventId", campaign.EventId);
             cmd.Parameters.AddWithValue("@SendAt", campaign.SendAt);
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
-            cmd.Parameters.AddWithValue("@ModifiedAt", campaign.ModifiedAt);
+            cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;
         }
