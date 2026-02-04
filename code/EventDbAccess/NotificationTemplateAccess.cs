@@ -106,6 +106,16 @@ namespace EventManagementDbAccess
             return new Tuple<string, string>(templateContent, subject);
         }
 
+        public async Task<bool> DeleteTemplate(int id)
+        {
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = "DELETE FROM notificationtemplates WHERE Id = @Id";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@Id", id);
+            var rows = await cmd.ExecuteNonQueryAsync();
+            return rows > 0;
+        }
         public async Task<Tuple<string, string>> GetTemplateByName(string templateName, int? customerId = null)
         {
             if (string.IsNullOrEmpty(templateName))

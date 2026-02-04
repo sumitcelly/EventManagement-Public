@@ -22,8 +22,8 @@ namespace CreateTicketApi.Controllers
             _templateAccess = templateAccess;
         }
 
-        [HttpGet("/byorganizerid/{organizerId}")]
-        public async Task<IActionResult> GetByOrgaizerId(int organizerId)
+        [HttpGet("/EmailCampaign/{organizerId}")]
+        public async Task<IActionResult> GetByOrganizerId(int organizerId)
         {
             try
             {
@@ -34,6 +34,42 @@ namespace CreateTicketApi.Controllers
             {
                 _logger.LogCritical($"error in retrieving campaigns by org id, {ex}"    );
                 return StatusCode(500, "Exception in retrieving campaings by organizer ID");
+            }
+
+        }
+
+        [HttpDelete("/EmailCampaign/{campaignId}")]
+        public async Task<IActionResult> Delete(int campaignId)
+        {
+            
+            try
+            {
+               EmailCampaign campaign =  await _campaignDbAccess.GetEmailCampaignsByCampaignId(campaignId);
+               if (campaign == null)
+                {
+                    return StatusCode(500, "Failed to retrieve campaign to delete");
+                }
+                bool result = false;
+                if (!(await _templateAccess.GetDefaultTemplatesIds()).Contains(campaign.TemplateId))
+                {
+                    _logger.LogInformation($"Delete template as well since it is not default");
+                    await _templateAccess.DeleteTemplate(campaign.TemplateId);
+                    if (!result)
+                    {
+                      return StatusCode(500, "Unable to delete associated template");   
+                    }
+                }
+               result =await _campaignDbAccess.DeleteEmailCampaign(campaignId);
+               if (!result)
+               {
+                    return StatusCode(500, "Unable to delete associated template");   
+               }
+              return  Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"error in deleting campaign by  id, {ex}");
+                return StatusCode(500, $"Exception in campaignId {ex}");
             }
 
         }

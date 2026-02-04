@@ -33,6 +33,7 @@ import ScannerDashboard from "./pages/Scanner/Dashboard";
 import ScanTicket from "./pages/Scanner/ScanTicket";
 import OrderPayment from "./pages/OrderPayment";
 import RefundOrder from "./pages/RefundOrder";
+import CampaignList from "./pages/Organizer/CampaignList";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -76,7 +77,12 @@ export default function App() {
             isAuthenticated ? <TicketDetails/> : <LoginPage/>
           }
           /> 
-
+        <Route
+          path="/emailcampaigns"
+           render={() =>
+            <CampaignList /> 
+          }
+        />
         <Route
           path="/eventdetails/:id"
            render={() =>
