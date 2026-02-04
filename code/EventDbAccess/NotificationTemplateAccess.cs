@@ -16,6 +16,7 @@ namespace EventManagementDbAccess
 {
     public class NotificationTemplateAccess : BaseDbAccess
     {
+        public static readonly string[] _defaultTemplateName=new string[] { "EventReminder5Day", "EventReminder1Day",};
         public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger, IDistributedCache cache) : base(connectionString, logger, cache)
         {
         }
@@ -30,6 +31,43 @@ namespace EventManagementDbAccess
             string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateId.ToString());
             Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return templateData ?? throw new KeyNotFoundException($"template with id {templateId} not found.");
+        }
+
+        public async Task<List<int>> GetDefaultTemplatesIds()
+        {
+           
+            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>("_default");
+            List<int>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetDefaultTemplateIdsFromDb(), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return templateData ?? throw new KeyNotFoundException($"template with _default id not found.");
+        }
+
+        public async Task<List<int>> GetDefaultTemplateIdsFromDb()
+        {
+            try
+            {
+                List<int> templateIds = new List<int>();
+                using (MySqlConnection connection = new(this.ConnectionString))
+                {
+                    string sql = @$"Select Id from  eventmanagement.notificationtemplates where
+                                    IsDefault=1";
+                    await connection.OpenAsync();
+                    MySqlCommand cmd = new MySqlCommand(sql, connection);
+                    using DbDataReader reader = await cmd.ExecuteReaderAsync();
+                    
+                    
+                    while (await reader.ReadAsync())
+                    {
+                        templateIds.Add(reader.GetInt16(0));
+                    }
+                    
+                }
+                return templateIds;
+            }
+            catch (Exception ex)
+            {
+               _logger.LogCritical("Could not retrive templates ids for default {0}",ex);
+               throw;
+            }
         }
 
         public async Task<Tuple<string, string>> GetTemplateByIdFromDb(int templateId)
@@ -130,7 +168,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO notificationtemplates 
-                    (TemplateName, TemplateContent, TemplateDescription,Subject,IsDefault)
+                    (TemplateName, TemplateContent, TemplateDescription,Subject,IsDefault,CreatedAt,ModifiedAt)
                     VALUES (@templateName, @templateContent, @templateDescription, @subject,@isDefault,@createdat,@modifiedat)";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -189,7 +227,7 @@ namespace EventManagementDbAccess
                                 TemplateContent=@templateContent,
                                 TemplateDescription=@templateDescription, 
                                 Subject=@subject,
-                                ModidiedAt=@modifiedat
+                                ModifiedAt=@modifiedat
                                 where id=@templateid";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -198,6 +236,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@templateDescription", template.TemplateDescription);
                 cmd.Parameters.AddWithValue("@subject", template.Subject);        
                 cmd.Parameters.AddWithValue("@modifiedat",DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@templateId",template.Id);
 
                 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();

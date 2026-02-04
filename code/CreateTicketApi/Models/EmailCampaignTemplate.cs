@@ -17,5 +17,7 @@ public class EmailCampaignTemplate
 
     public string? Status {get; set;}
 
+    public bool TemplateContentChange {get;set;}
+
 
 }

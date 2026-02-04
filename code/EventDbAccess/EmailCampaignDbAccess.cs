@@ -28,8 +28,8 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@EventId", campaign.EventId);
             cmd.Parameters.AddWithValue("@SendAt", campaign.SendAt);
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
-            cmd.Parameters.AddWithValue("@CreatedAt", campaign.CreatedAt);
-            cmd.Parameters.AddWithValue("@ModifiedAt", campaign.ModifiedAt);
+            cmd.Parameters.AddWithValue("@CreatedAt",DateTime.UtcNow);
+            cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
             var result = await cmd.ExecuteScalarAsync();
             return Convert.ToInt32(result);
         }
