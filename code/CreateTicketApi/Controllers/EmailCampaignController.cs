@@ -50,6 +50,11 @@ namespace CreateTicketApi.Controllers
                     return StatusCode(500, "Failed to retrieve campaign to delete");
                 }
                 bool result = false;
+                result =await _campaignDbAccess.DeleteEmailCampaign(campaignId);
+                if (!result)
+                {
+                    return StatusCode(500, "Unable to delete campaign");   
+                }
                 if (!(await _templateAccess.GetDefaultTemplatesIds()).Contains(campaign.TemplateId))
                 {
                     _logger.LogInformation($"Delete template as well since it is not default");
@@ -59,11 +64,7 @@ namespace CreateTicketApi.Controllers
                       return StatusCode(500, "Unable to delete associated template");   
                     }
                 }
-               result =await _campaignDbAccess.DeleteEmailCampaign(campaignId);
-               if (!result)
-               {
-                    return StatusCode(500, "Unable to delete associated template");   
-               }
+              
               return  Ok();
             }
             catch (Exception ex)
@@ -101,10 +102,10 @@ namespace CreateTicketApi.Controllers
                 {
                     _logger.LogInformation($"No campaign id found. Processing new campaign.");
                     
-                    if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
-                    {
-                        return StatusCode(500,$"Please change name of template since it matches default template");
-                    }
+                    // if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
+                    // {
+                    //     return StatusCode(500,$"Please change name of template since it matches default template");
+                    // }
                     //new template as well. Should always be true for a new campaign
                     //unless at some point we add clone functionality for existing reminder templates
                     if (emailCampaign.TemplateContentChange)
@@ -113,7 +114,7 @@ namespace CreateTicketApi.Controllers
                         {
                             Subject = emailCampaign.Subject,
                             TemplateContent = emailCampaign.TemplateContent,
-                            TemplateName = emailCampaign.EmailTemplateName,
+                            TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
                             IsDefault= false,
                             TemplateDescription=emailCampaign.Description
                         });
@@ -124,6 +125,8 @@ namespace CreateTicketApi.Controllers
                         int createdID =await _campaignDbAccess.CreateEmailCampaign(new EmailCampaign()
                         {
                            EventId = emailCampaign.EventId,
+                           Name = emailCampaign.EmailCampaignName,
+                           Description =emailCampaign.Description,
                            SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddMinutes(2):emailCampaign.SendAt,
                            Status ="Pending",
                            TemplateId = templateId
@@ -158,7 +161,7 @@ namespace CreateTicketApi.Controllers
                             {
                                 Subject = emailCampaign.Subject,
                                 TemplateContent = emailCampaign.TemplateContent,
-                                TemplateName = string.Format("{0}_{1}",emailCampaign.EmailTemplateName,PasswordGenerator.GetPassword()),
+                                TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
                                 IsDefault= false,
                                 TemplateDescription=emailCampaign.Description
                             });
@@ -169,16 +172,16 @@ namespace CreateTicketApi.Controllers
                         }
                         else
                         {
-                            if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
-                            {
-                                return StatusCode(500,$"Please change name of template since it matches default template");
-                            }
+                            // if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
+                            // {
+                            //     return StatusCode(500,$"Please change name of template since it matches default template");
+                            // }
                             await _templateAccess.UpdateEmailTemplate(new EmailTemplate()
                             {
                                 Id=templateId,
                                 Subject = emailCampaign.Subject,
                                 TemplateContent = emailCampaign.TemplateContent,
-                                TemplateName = emailCampaign.EmailTemplateName,
+                                TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
                                 IsDefault= false,
                                 TemplateDescription=emailCampaign.Description,
                                 
@@ -187,6 +190,8 @@ namespace CreateTicketApi.Controllers
                         bool result  = await _campaignDbAccess.UpdateEmailCampaign(new EmailCampaign()
                         {
                                 Id =  campaignId,
+                                Name = emailCampaign.EmailCampaignName,
+                                Description = emailCampaign.Description,
                                 SendAt = emailCampaign.SendNow? DateTime.UtcNow : emailCampaign.SendAt,
                                 TemplateId = templateId,
                                 Status ="Pending",

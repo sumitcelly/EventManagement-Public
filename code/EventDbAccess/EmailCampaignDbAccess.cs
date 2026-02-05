@@ -21,13 +21,16 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status, CreatedAt, ModifiedAt) VALUES (@TemplateId, @EventId, @SendAt, @Status, @CreatedAt, @ModifiedAt); 
+            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status,Name,Description, CreatedAt, ModifiedAt) 
+                        VALUES (@TemplateId, @EventId, @SendAt, @Status,@Name,@Description, @CreatedAt, @ModifiedAt); 
                         SELECT LAST_INSERT_ID();";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@TemplateId", campaign.TemplateId);
             cmd.Parameters.AddWithValue("@EventId", campaign.EventId);
             cmd.Parameters.AddWithValue("@SendAt", campaign.SendAt);
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
+            cmd.Parameters.AddWithValue("@Name", campaign.Name);
+            cmd.Parameters.AddWithValue("@Description", campaign.Description);
             cmd.Parameters.AddWithValue("@CreatedAt",DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
             var result = await cmd.ExecuteScalarAsync();
@@ -47,6 +50,9 @@ namespace EventManagementDbAccess
                 campaigns.Add(new EmailCampaign
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name= reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
+
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
@@ -77,6 +83,8 @@ namespace EventManagementDbAccess
                 campaigns.Add(new EmailCampaign
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name= reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
@@ -99,7 +107,7 @@ namespace EventManagementDbAccess
             
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,
+            var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,a.Name,a.Description,
                           b.Templatename,b.templatecontent,b.templatedescription,b.subject,b.isdefault,
                           c.eventname
                           FROM emailcampaign a, notificationtemplates b, events c
@@ -113,6 +121,9 @@ namespace EventManagementDbAccess
                 return new EmailCampaign
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    Name= reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
+
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
@@ -138,7 +149,7 @@ namespace EventManagementDbAccess
             var campaigns = new List<EmailCampaign>();
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, 
+            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, a.Name,a.Description,
                         b.templatename, b.Id as TemplateId, b.IsDefault  from 
                         emailcampaign a
                         JOIN notificationtemplates b ON a.TemplateId = b.id
@@ -154,6 +165,8 @@ namespace EventManagementDbAccess
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),   
+                    Name= reader.GetString(reader.GetOrdinal("Name")),
+                    Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
                     IsDefault = reader.GetBoolean(reader.GetOrdinal("IsDefault")),         
                     EventName = reader.IsDBNull(reader.GetOrdinal("EventName")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventName")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
@@ -168,10 +181,13 @@ namespace EventManagementDbAccess
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             var query = @"UPDATE emailcampaign SET EventId = @EventId, SendAt = @SendAt, Status = @Status, 
-                        ModifiedAt = @ModifiedAt WHERE Id = @Id";
+                        ModifiedAt = @ModifiedAt, Name=@Name, Description=@Description
+                         WHERE Id = @Id";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Id", campaign.Id);
             cmd.Parameters.AddWithValue("@EventId", campaign.EventId);
+            cmd.Parameters.AddWithValue("@Name", campaign.Name);
+            cmd.Parameters.AddWithValue("@Description", campaign.Description);
             cmd.Parameters.AddWithValue("@SendAt", campaign.SendAt);
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);

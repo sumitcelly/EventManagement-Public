@@ -76,7 +76,7 @@ export default function CampaignList() {
             campaigns.push({
               id:temp.id,
               templateId:temp.templateId,
-              templateName:temp.templateName,
+              name:temp.name,
               isDefault: temp.isDefault,
               eventName: temp.eventName,
               sendAt: temp.sendAt,
@@ -137,9 +137,9 @@ export default function CampaignList() {
                   className="grid grid-cols-1 sm:grid-cols-4 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
                 >
                   <div className="truncate pr-2" title={campaign.eventName}>{campaign.eventName}</div>
-                  <div>{campaign.templateName}</div>
-                  <div>{campaign.sendAt}</div>
-                  <div>{campaign.status}</div>
+                  <div className="truncate pr-2" title={campaign.name}>{campaign.name}</div>
+                  <div>{new Date(campaign.sendAt).toLocaleDateString()}</div>
+                  
                   {/* <div>
                     <span
                       className={`px-2 py-1 text-xs rounded-full ${
@@ -153,7 +153,8 @@ export default function CampaignList() {
                       {member.status}
                     </span>
                   </div> */}
-                  {/* <div className="flex flex-row justify-between"> */}
+                  <div className="flex flex-row justify-between">
+                    <div>{campaign.status}</div>
                     <div onClick={(e)=>e.stopPropagation()}>
                       <ListMenu
                         linkData={{
@@ -164,7 +165,7 @@ export default function CampaignList() {
                         }}
                       />
                     </div>
-                  {/* </div> */}
+                  </div>
                 </div>
       ))}
     </div>
