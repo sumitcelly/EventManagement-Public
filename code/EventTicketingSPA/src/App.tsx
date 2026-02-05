@@ -34,6 +34,7 @@ import ScanTicket from "./pages/Scanner/ScanTicket";
 import OrderPayment from "./pages/OrderPayment";
 import RefundOrder from "./pages/RefundOrder";
 import CampaignList from "./pages/Organizer/CampaignList";
+import CampaignAdd from "./pages/Organizer/CampaignAdd";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -81,6 +82,12 @@ export default function App() {
           path="/emailcampaigns"
            render={() =>
             <CampaignList /> 
+          }
+        />
+        <Route
+          path="/managecampaign"
+           render={() =>
+            <CampaignAdd /> 
           }
         />
         <Route
