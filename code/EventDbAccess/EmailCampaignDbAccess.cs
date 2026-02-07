@@ -129,7 +129,7 @@ namespace EventManagementDbAccess
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
                     EventName = reader.GetString(reader.GetOrdinal("EventName")),
-                    TemplateContent = reader.GetString(reader.GetOrdinal("templatecontent")),
+                    TemplateContent = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.GetString(reader.GetOrdinal("templatecontent")))),
                     TemplateDescription = reader.GetString(reader.GetOrdinal("templatedescription")),
                     Subject = reader.GetString(reader.GetOrdinal("Subject"))  ,
                     IsDefault = reader.GetBoolean(reader.GetOrdinal("isdefault")),              

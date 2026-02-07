@@ -114,7 +114,7 @@ export default function CampaignList() {
           <div className="flex flex-row mt-4">
               <button
                     className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 mb-2 rounded hover:bg-blue-700"
-                    onClick={()=> history.push(`/EmailCampaign/${organizerId}/new`)}
+                    onClick={()=> history.push(`/ManageCampaign`)}
                   >
                     New Campaign
               </button> 
@@ -159,7 +159,7 @@ export default function CampaignList() {
                       <ListMenu
                         linkData={{
                           viewLink: "",
-                          editLink: `/EmailCampaign/${campaign.id}/edit`,
+                          editLink: `/ManageCampaign`,
                           delete:()=>deleteCampaign(Number(campaign.id)),
                           editData: campaign
                         }}

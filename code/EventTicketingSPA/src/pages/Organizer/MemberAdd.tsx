@@ -33,7 +33,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
 
   const history = useHistory();
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state: RootState) => state.auth.user);
+  const user = useAppSelector((state: RootState) => state?.auth.user);
   const queryClient = useQueryClient();
 
   const {

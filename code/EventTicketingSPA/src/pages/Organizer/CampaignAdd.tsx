@@ -26,7 +26,18 @@ const memberSchema = yup.object({
   eventName:  yup.string().required("Event name is required.").default(""),
   sendAt: yup.string().default(new Date().toISOString().split('T')[0]),
   sendNow :yup.bool().default(true)
-  });
+  }).test("schedule", "Select Send at or check SendNow to schedule", function(value) {
+  const { sendAt, sendNow } = value;
+  
+  if (!sendNow && !sendAt) {
+    // Now 'this' is defined and you can point the error to a path
+    return this.createError({ 
+      path: "scheduleError", 
+      message: "Select Send at or check SendNow to schedule" 
+    });
+  }
+  return true;
+});
 
 type FormValues = {
   name: string;
@@ -47,8 +58,10 @@ export default function CampaignAdd(){
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient = useQueryClient();
-  const campaignId = useState<any>(location.state || {});
+  const campaignData :any = location.state || {};
   const customerId = user?.customerId;
+  const campaignId = campaignData?.id || 0;
+  console.log('campaign id and customer id is', campaignData?.id,customerId);
 
   const { data:events, isLoading:isEventsLoading } = 
   useQuery(['EventsByCustomerId',customerId], async () => {
@@ -89,7 +102,7 @@ export default function CampaignAdd(){
      console.log("Fetching campaign for id", campaignId);
      try
      {
-      const res = await axiosClient.get(`/byCampaignId/${customerId}`);
+      const res = await axiosClient.get(`/byCampaignId/${campaignId}`);
       if (res?.data && res.status===200)
       {
           console.log('campign fetched from backend',res.data);
@@ -106,16 +119,16 @@ export default function CampaignAdd(){
     {
         console.error(`Error fetching campaing for id: ${campaignId}`, error);
         toast.error("Error loading campaign data");
-        return [];
+        return {};
     }
     },
     {
-      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       refetchOnMount: false,      // don’t always re-fetch on mount
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
-      enabled: !!customerId //  only run query if we have an id
+      enabled: !!campaignId //  only run query if we have an id
     }
   );
 
@@ -131,8 +144,9 @@ export default function CampaignAdd(){
       name:campaign?.name || "",
       description: campaign?.description || "",
       subject: campaign?.subject || "",
-      sendAt: campaign?.sendAt,
+      sendAt: campaign?.sendAt || new Date().toLocaleDateString('en-CA').split('T')[0],
       body: campaign?.templateContent,
+      //sendNow: campaign ? false:true,
       eventName:campaign?.eventName
       },   
       mode: "onChange",          // 👈 validates as user types or changes field
@@ -143,7 +157,8 @@ export default function CampaignAdd(){
   const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
-    
+    console.log('campaign id', campaignId);
+    //return;
     const postData={
       eventId:data?.eventName,
       emailCampaignName: data?.name,
@@ -151,7 +166,7 @@ export default function CampaignAdd(){
       templateId:campaign?.templateId,
       templateContent:data?.body,
       sendAt: data?.sendAt,
-      sendNow: data?.sendNow,
+      sendNow: data?.sendNow || new Date().toString(),
       subject: data?.subject,
       templateContentChange: true
     };
@@ -159,6 +174,7 @@ export default function CampaignAdd(){
     console.log('post data for campaign is',postData);
     try
     {
+      
       const result = await axiosClient.post(`/EmailCampaign/addupdatecampaign/${campaignId}`,postData);
       if (result && result.status==200)
       {
@@ -179,11 +195,11 @@ export default function CampaignAdd(){
     
       const values = {
         name: campaign?.name || '',
-        description: campaign?.email || '',
+        description: campaign?.description || campaign?.templateDescription || '',
         subject: campaign?.subject || '',
-        body: campaign?.body || '',
-        sendAt: campaign?.sendAt || '',
-        eventName:campaign?.eventName || ''
+        body: campaign?.templateContent || '',
+        sendAt: campaign?.sendAt ?new Date(campaign.sendAt).toLocaleDateString('en-CA').split('T')[0]:new Date().toLocaleDateString('en-CA').split('T')[0],
+        eventName:campaign?.eventId || ''
   
       };
       console.log('Resetting form with:', values);
@@ -205,9 +221,9 @@ export default function CampaignAdd(){
          <div
               onClick={(e) => {
                 e.stopPropagation();
-                history.push(`/campaignlist`);
+                history.push(`/emailcampaigns`);
               }}
-              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
+              className="mr-auto px-3 py-1 mb-2 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
             >
               Back To Campaigns
           </div>
@@ -226,7 +242,7 @@ export default function CampaignAdd(){
             )}
           </div>
         </div>
-          <div className="space-y-1">
+        <div className="space-y-1 mb-4">
           <label className="font-semibold mb-1">Description</label>
           <input
             type="text"
@@ -234,11 +250,6 @@ export default function CampaignAdd(){
             className="w-full border rounded p-2"
             placeholder="Enter description"
           />
-          {/* <div className="min-h-[20px]">
-            {errors.name && (
-              <p className="text-red-600 text-sm mt-1">{errors.ndesame.message}</p>
-            )}
-          </div> */}
         </div>
         <div className="space-y-1">
           <label className="font-semibold mb-1">Select events</label>
@@ -246,7 +257,7 @@ export default function CampaignAdd(){
             {...register("eventName")}
             className="w-full border rounded p-2">
             <option value="">{"Select an event"}</option>
-            {events.map((event:any) => (
+            {events?.map((event:any) => (
               <option key={event.eventId} value={event.eventId}>
                 {event.eventName}
               </option>
@@ -287,29 +298,40 @@ export default function CampaignAdd(){
               <p className="text-red-600 text-sm mt-1">{errors.body.message}</p>
             )}
         </div>
-        <div className="space-y-1">
-          <label className="font-semibold mb-1">Schedule</label>
-          <input type="checkbox"   
-            className="ml-2 mt-1"
-            {...register("sendNow")}>
-          </input>
-          <div className="flex flex-col mt-2">
-          <label className="font-semibold mb-1">Event Date</label>
-            <input
-              type="datetime-local"
-              {...register("sendAt")}
-              className="border rounded p-2"
-              placeholder="Select event date and time"
-            />
-            {errors.sendAt && (
+        <div className="ml-auto mt-4 space-y-2">
+          <label className="font-semibold ml-auto mt-4">Schedule</label>
+          <div className="space-y-1 m-2 ml-auto border p-2 rounded">
+            {/*  */}
+            <div className="flex flex row">
+              <label className="font-semibold mb-1 mr-2">Send Now</label>
+              <input type="checkbox"   
+                className="ml-2 mt-1"
+                {...register("sendNow")}>
+              </input>
+            </div>
+          
+            <div className="flex flex-col mt-2">
+              <label className="font-semibold mb-1">Send At</label>
+                <input
+                  type="date"
+                  {...register("sendAt")}
+                  className="border rounded p-2"
+                  placeholder="Select event date and time"
+                />      
+            </div>
+             <div className="min-h-[20px] max-w-[200px]">
+             {(errors as any).scheduleError?.message && (
               <p className="text-red-600 text-sm mt-1">
-                {errors.sendAt.message}
+                {(errors as any).scheduleError.message}
               </p>
             )}
+            </div>
+          </div>
+             
+
         </div>
-      </div>
-   
-    <div className="ml-auto">
+      <div className="ml-auto mt-4">
+        
       <button
         type="submit"
         className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
