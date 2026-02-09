@@ -23,7 +23,19 @@ const memberSchema = yup.object({
   subject: yup.string().required("Subject is required."),
   body:  yup.string().required("Body is required."),
   eventName:  yup.string().required("Event name is required.").default(""),
-  sendAt: yup.string().default(new Date().toISOString().split('T')[0]),
+  sendAt: yup.string().default(new Date().toISOString().split('T')[0])
+  .test("sendAt", "Send At must be a valid date in the future", function(value) {
+    const { sendNow } = this.parent;
+    if (sendNow) {
+      return true; // If sendNow is checked, we don't need to validate sendAt
+    }
+    if (!value) {
+      return true; // If sendAt is not provided, it will be caught by the required validation
+    }
+    const selectedDate = new Date(value);
+    const now = new Date();
+    return selectedDate > now; // sendAt must be in the future
+  }),
   sendNow :yup.bool().default(true)
   }).test("schedule", "Select Send at or check SendNow to schedule", function(value) {
   const { sendAt, sendNow } = value;
@@ -51,6 +63,7 @@ type FormValues = {
 export default function CampaignAdd(){
 
   const [contentChange] = useState(false);
+  const[sendNow,setSendNow] = useState(false);
 
   const location = useLocation();
   const history = useHistory();
@@ -322,25 +335,43 @@ export default function CampaignAdd(){
               <label className="font-semibold mb-1 mr-2">Send Now</label>
               <input type="checkbox"   
                 className="ml-2 mt-1"
+                onClick={(e)=>{
+                  setSendNow(e.currentTarget.checked);
+                }}
                 {...register("sendNow")}>
               </input>
             </div>
-          
-            <div className="flex flex-col mt-2">
+            
+            {sendNow && (
+              <p className="text-sm text-gray-600  min-h-[20px] max-w-[200px]">The email campaign will be sent immediately after saving.</p>
+            )}
+            {!sendNow && (
+             <div className="flex flex-col mt-2">
+              <>
               <label className="font-semibold mb-1">Send At</label>
                 <input
                   type="date"
                   {...register("sendAt")}
                   className="border rounded p-2"
+                  disabled={sendNow}
+                
                   placeholder="Select event date and time"
-                />      
-            </div>
+                />  
+                <div className="min-h-[20px] max-w-[150px]">
+                 {errors.sendAt && (
+                  <p className="text-red-600 text-sm mt-1">{errors.sendAt?.message}</p>
+                )} 
+                </div>   
+              </>
+            </div>)}
+           
              <div className="min-h-[20px] max-w-[200px]">
              {(errors as any).scheduleError?.message && (
               <p className="text-red-600 text-sm mt-1">
                 {(errors as any).scheduleError.message}
               </p>
             )}
+            
             </div>
           </div>
              
