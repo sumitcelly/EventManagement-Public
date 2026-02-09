@@ -423,6 +423,41 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<OrderEmailDetails> GetSampleOrderEmailDetails(int eventId)
+        {
+            if (eventId <= 0)
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                //make sure to get valid salesorder status
+                string query = @"SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b 
+                                WHERE b.EventId = @eventId and a.UserId=b.UserId   limit 1";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@eventId", eventId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new OrderEmailDetails
+                    {
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        FullName = reader.GetString(reader.GetOrdinal("FullName")),
+                        SalesOrderId = reader.GetInt32(reader.GetOrdinal("OrderId"))
+                    };
+                }
+                throw new Exception($"Unable to retrieve order email details for event id {eventId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving order email details: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> MarkAllReservedOrdersAsAbandoned(int timeoutMinutes)
         {
             timeoutMinutes = timeoutMinutes <= 0 ? 10 : timeoutMinutes;

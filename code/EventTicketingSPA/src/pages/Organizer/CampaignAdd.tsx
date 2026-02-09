@@ -281,7 +281,7 @@ export default function CampaignAdd(){
           />
         </div>
         <div className="space-y-1">
-          <label className="font-semibold mb-1">Select events</label>
+          <label className="font-semibold mb-1">Send to (Pick event for attendees)</label>
           <select
             {...register("eventName")}
             className="w-full border rounded p-2">

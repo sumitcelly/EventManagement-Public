@@ -3,6 +3,7 @@ using EventUtils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace CreateTicketApi.Controllers
@@ -15,11 +16,21 @@ namespace CreateTicketApi.Controllers
         private readonly EmailCampaignDbAccess _campaignDbAccess;
         private readonly NotificationTemplateAccess _templateAccess;
 
-        public EmailCampaignController(ILogger<EmailCampaignController> logger, EmailCampaignDbAccess dbAccess, NotificationTemplateAccess templateAccess)
+        private readonly EventOrganizerDBAccess _eventOrganizerDBAccess;
+        private readonly EventDbAccess _eventDbAccess;
+
+        private readonly SalesOrderDbAccess _salesOrderDbAccess;
+
+        public EmailCampaignController(ILogger<EmailCampaignController> logger, EmailCampaignDbAccess dbAccess,
+         NotificationTemplateAccess templateAccess, EventOrganizerDBAccess eventOrganizerDBAccess,
+          EventDbAccess eventDbAccess, SalesOrderDbAccess salesOrderDbAccess)
         {
             _logger = logger;
             _campaignDbAccess = dbAccess;
             _templateAccess = templateAccess;
+            _eventOrganizerDBAccess =  eventOrganizerDBAccess;
+            _salesOrderDbAccess = salesOrderDbAccess;
+            _eventDbAccess = eventDbAccess;
         }
 
         [HttpGet("/EmailCampaign/{organizerId}")]
@@ -37,14 +48,75 @@ namespace CreateTicketApi.Controllers
             }
 
         }
+        [HttpGet("/EmailCampaign/Resolve/{eventId}")]
+        public async Task<IActionResult> ResolveTemplateId(int eventId,[FromBody] string templateContent)
+        {
+            // if (templateId == 0)
+            // {
+            //     return StatusCode(500, "Invalid template ID");
+            // }   
+            if (eventId == 0)
+            {
+                return StatusCode(500, "Invalid event ID");
+            }
+            if (string.IsNullOrEmpty(templateContent))
+            {
+                return StatusCode(500, "Template content is required for resolving template ID");
+            }
 
-        [HttpDelete("/EmailCampaign/{campaignId}")]
+            try
+            {
+               string rawContent = Encoding.UTF8.GetString(Convert.FromBase64String(templateContent));
+               EventHeader evt = await _eventDbAccess.GetEventHeaderById(eventId);
+               if (evt == null)                {
+                    return StatusCode(500, "Unable to find event for given event ID");
+                }
+                _logger.LogInformation($"Event details for id {eventId} are name {evt.EventName} date {evt.EventDate} location {evt.EventLocation} organizer id {evt.EventOrganizerId}");
+                EventOrganizer organizer = await _eventOrganizerDBAccess.GetOrganizerById(evt.EventOrganizerId);
+                if (organizer == null)
+                {
+                    return StatusCode(500, "Unable to find organizer for given event");
+                }
+                OrderEmailDetails orderEmailData = await  _salesOrderDbAccess.GetSampleOrderEmailDetails(eventId);
+                string resolvedContent = GetEmailContentToSend(rawContent, evt, organizer, orderEmailData);
+                return Ok(resolvedContent);
+             
+            }
+            catch (Exception ex)
+            {
+                _logger.LogCritical($"error in resolving template by id, {ex}"    );
+                return StatusCode(500, $"Exception in resolving template for event ID {eventId}");
+            }
+          
+        }
+
+        private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
+                OrderEmailDetails? orderEmailData)
+        {
+            var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
+            {
+                Attendee = orderEmailData?.FullName ?? "Attendee",
+                EventDate = eventHeader.EventDate,
+                EventLocation = eventHeader.EventLocation,
+                EventName = eventHeader.EventName,
+                EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
+                EventOrganizerName = eventOrganizer.OrganizationName,
+                EventTicketLink = orderEmailData?.SalesOrderId>0?
+                                    $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
+                                    :string.Empty
+            });
+            
+            var tokenReplacer = new EmailTokenReplacement();
+            return tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
+        }
+
         public async Task<IActionResult> Delete(int campaignId)
         {
             
             try
             {
-               EmailCampaign campaign =  await _campaignDbAccess.GetEmailCampaignsByCampaignId(campaignId);
+               EmailCampaign campaign =  await _campaignDbAccess.GetEmailCampaignByCampaignId(campaignId);
                if (campaign == null)
                 {
                     return StatusCode(500, "Failed to retrieve campaign to delete");
@@ -80,7 +152,7 @@ namespace CreateTicketApi.Controllers
         {
             try
             {
-               EmailCampaign retVal = await  _campaignDbAccess.GetEmailCampaignsByCampaignId(campaignId);
+               EmailCampaign retVal = await  _campaignDbAccess.GetEmailCampaignByCampaignId(campaignId);
                return  Ok(retVal);
             }
             catch (Exception ex)

@@ -97,7 +97,7 @@ namespace EventManagementDbAccess
         }
 
 
-        public async Task<EmailCampaign> GetEmailCampaignsByCampaignId(int campaignId)
+        public async Task<EmailCampaign> GetEmailCampaignByCampaignId(int campaignId)
         {
             if (campaignId <= 0)
             {
