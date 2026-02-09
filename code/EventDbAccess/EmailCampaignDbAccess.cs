@@ -129,7 +129,8 @@ namespace EventManagementDbAccess
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
                     EventName = reader.GetString(reader.GetOrdinal("EventName")),
-                    TemplateContent = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.GetString(reader.GetOrdinal("templatecontent")))),
+                    TemplateContent = reader.IsDBNull(reader.GetOrdinal("templatecontent"))?null
+                                        :System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(reader.GetString(reader.GetOrdinal("templatecontent")))),
                     TemplateDescription = reader.GetString(reader.GetOrdinal("templatedescription")),
                     Subject = reader.GetString(reader.GetOrdinal("Subject"))  ,
                     IsDefault = reader.GetBoolean(reader.GetOrdinal("isdefault")),              
@@ -180,7 +181,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"UPDATE emailcampaign SET EventId = @EventId, SendAt = @SendAt, Status = @Status, 
+            var query = @"UPDATE emailcampaign SET EventId = @EventId, SendAt = @SendAt, Status = @Status, TemplateId = @TemplateId,
                         ModifiedAt = @ModifiedAt, Name=@Name, Description=@Description
                          WHERE Id = @Id";
             using var cmd = new MySqlCommand(query, conn);
@@ -189,6 +190,7 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@Name", campaign.Name);
             cmd.Parameters.AddWithValue("@Description", campaign.Description);
             cmd.Parameters.AddWithValue("@SendAt", campaign.SendAt);
+            cmd.Parameters.AddWithValue("@TemplateId", campaign.TemplateId);
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
             var rows = await cmd.ExecuteNonQueryAsync();

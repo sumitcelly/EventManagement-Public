@@ -12,7 +12,6 @@ import { useLocation, useParams } from "react-router";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
-import { TeamMember } from "../../types/Teams";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
@@ -166,7 +165,7 @@ export default function CampaignAdd(){
       templateId:campaign?.templateId,
       templateContent:data?.body,
       sendAt: data?.sendAt,
-      sendNow: data?.sendNow || new Date().toString(),
+      sendNow: data?.sendNow,
       subject: data?.subject,
       templateContentChange: true
     };
@@ -178,9 +177,13 @@ export default function CampaignAdd(){
       const result = await axiosClient.post(`/EmailCampaign/addupdatecampaign/${campaignId}`,postData);
       if (result && result.status==200)
       {
-        console.log('Campaign updated successfully:', result.data);
-        toast.success("Member updated");
+        console.log('Campaign updated/created successfully:', result.data);
+        toast.success(campaignId?"Campaign updated":"Campaign created");
         queryClient.invalidateQueries(['CampaignByOrganizer', customerId]);
+        if (campaignId)
+        {
+          queryClient.invalidateQueries(['CampaignByCampaignId', campaignId]);
+        }
       }
     }
     catch(error)
@@ -206,6 +209,19 @@ export default function CampaignAdd(){
       reset(values);
  
   }, [events, campaign,reset]);
+
+  if (isCampaignLoading || isEventsLoading) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+          <p>Loading...</p>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>

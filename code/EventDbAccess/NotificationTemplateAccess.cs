@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Unicode;
 namespace EventManagementDbAccess
 {
     public class NotificationTemplateAccess : BaseDbAccess
@@ -183,7 +184,9 @@ namespace EventManagementDbAccess
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@templateName", template.TemplateName);
-                cmd.Parameters.AddWithValue("@templateContent", template.TemplateContent);
+                cmd.Parameters.AddWithValue("@templateContent", string.IsNullOrWhiteSpace(template.TemplateContent)?
+                                                                string.Empty:
+                                                                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(template.TemplateContent)));
                 cmd.Parameters.AddWithValue("@templateDescription", template.TemplateDescription);
                 cmd.Parameters.AddWithValue("@subject", template.Subject);
                 cmd.Parameters.AddWithValue("@isDefault", template.IsDefault);
@@ -242,7 +245,10 @@ namespace EventManagementDbAccess
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@templateName", template.TemplateName);
-                cmd.Parameters.AddWithValue("@templateContent", template.TemplateContent);
+                cmd.Parameters.AddWithValue("@templateContent", string.IsNullOrWhiteSpace(template.TemplateContent)?
+                                                                string.Empty:
+                                                                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(template.TemplateContent)));
+            
                 cmd.Parameters.AddWithValue("@templateDescription", template.TemplateDescription);
                 cmd.Parameters.AddWithValue("@subject", template.Subject);        
                 cmd.Parameters.AddWithValue("@modifiedat",DateTime.UtcNow);
