@@ -2,12 +2,20 @@ using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 
 namespace CreateTicketApi.Controllers
 {
+    public class TemplateContentRequest
+    {
+        public string TemplateContent { get; set; }
+    }
+
     [ApiController]
     [Route("[controller]")]
     public class EmailCampaignController : ControllerBase
@@ -48,8 +56,8 @@ namespace CreateTicketApi.Controllers
             }
 
         }
-        [HttpGet("/EmailCampaign/Resolve/{eventId}")]
-        public async Task<IActionResult> ResolveTemplateId(int eventId,[FromBody] string templateContent)
+        [HttpPost("/EmailCampaign/Resolve/{eventId}")]
+        public async Task<IActionResult> ResolveReminderTemplate(int eventId, [FromBody] TemplateContentRequest request)
         {
             // if (templateId == 0)
             // {
@@ -59,14 +67,17 @@ namespace CreateTicketApi.Controllers
             {
                 return StatusCode(500, "Invalid event ID");
             }
-            if (string.IsNullOrEmpty(templateContent))
+            if (string.IsNullOrEmpty(request?.TemplateContent))
             {
                 return StatusCode(500, "Template content is required for resolving template ID");
             }
 
             try
             {
-               string rawContent = Encoding.UTF8.GetString(Convert.FromBase64String(templateContent));
+                //byte[] fileBytes = System.IO.File.ReadAllBytes(@"C:\temp\projects\eventmgmt\code\CreateTicketApi\Content\EventReminder5day.html");
+                //string base64String = Convert.ToBase64String(fileBytes);
+               //string rawContent = Encoding.UTF8.GetString(Convert.FromBase64String(request.TemplateContent));
+               //string rawContent = base64String;
                EventHeader evt = await _eventDbAccess.GetEventHeaderById(eventId);
                if (evt == null)                {
                     return StatusCode(500, "Unable to find event for given event ID");
@@ -78,8 +89,8 @@ namespace CreateTicketApi.Controllers
                     return StatusCode(500, "Unable to find organizer for given event");
                 }
                 OrderEmailDetails orderEmailData = await  _salesOrderDbAccess.GetSampleOrderEmailDetails(eventId);
-                string resolvedContent = GetEmailContentToSend(rawContent, evt, organizer, orderEmailData);
-                return Ok(resolvedContent);
+                string resolvedContent = GetEmailContentToSend(request?.TemplateContent, evt, organizer, orderEmailData);
+                return Ok(Convert.ToBase64String(UTF8Encoding.UTF8.GetBytes(resolvedContent)));
              
             }
             catch (Exception ex)
@@ -111,6 +122,7 @@ namespace CreateTicketApi.Controllers
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
         }
 
+        [HttpDelete("/EmailCampaign/{campaignId}")]
         public async Task<IActionResult> Delete(int campaignId)
         {
             

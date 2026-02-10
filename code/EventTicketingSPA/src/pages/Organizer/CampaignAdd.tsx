@@ -4,6 +4,7 @@ import { useForm, Controller, set } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
+import { RichTextEditorModal } from "../../components/RichTextEditorModal";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
@@ -15,6 +16,7 @@ import { RootState } from "../../app/store";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
+import axios from "axios";
 
 
 const memberSchema = yup.object({
@@ -64,6 +66,8 @@ export default function CampaignAdd(){
 
   const [contentChange] = useState(false);
   const[sendNow,setSendNow] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewContent, setPreviewContent] = useState("");
 
   const location = useLocation();
   const history = useHistory();
@@ -150,6 +154,7 @@ export default function CampaignAdd(){
     reset,
     register,
     formState: { errors },
+    getValues
   } = useForm<FormValues>({
     resolver: yupResolver(memberSchema),
     defaultValues: {
@@ -165,6 +170,39 @@ export default function CampaignAdd(){
       reValidateMode: "onChange"
   });
 
+
+  const onPreview = async () => {
+    const values = getValues();
+    const bodyValue = values.body;
+    const eventId = values.eventName;
+    console.log('preview values',  eventId, bodyValue);
+    if (!bodyValue) {
+      toast.error("Body content is required for preview");
+      return;
+    }
+    if (!eventId) {
+      toast.error("Event must be selected for preview");
+      return;
+    }
+
+    try {
+     
+      const base64Content = btoa(bodyValue);
+       console.log('Sending preview request with body content and event id', base64Content, eventId);
+      const result = await axiosClient.post(`/EmailCampaign/Resolve/${eventId}`, {
+        templateContent: base64Content
+      });
+      console.log('Preview result from backend', result.data);
+      if (result && result.status === 200) {
+        console.log('Decoded preview content', atob(result.data));
+        setPreviewContent(atob(result.data));
+        setIsPreviewModalOpen(true);
+      }
+    } catch (error) {
+      console.error('Error previewing template:', error);
+      toast.error("Error previewing email template");
+    }
+  };
 
   const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
@@ -323,6 +361,13 @@ export default function CampaignAdd(){
                 <RichTextEditor value={field.value ?? ""} onChange={field.onChange} />
               )}
             />
+            <button
+              type="button"
+              onClick={onPreview}
+              className="mt-2 px-3 py-1 text-sm font-body text-white bg-blue-500 rounded hover:bg-blue-600 inline-flex cursor-pointer"
+            >
+              Preview
+            </button>
             {errors.body && (
               <p className="text-red-600 text-sm mt-1">{errors.body.message}</p>
             )}
@@ -389,6 +434,13 @@ export default function CampaignAdd(){
     </div>
               
     </form>
+    <RichTextEditorModal
+      modalTitle="Email Preview"
+      openModal={isPreviewModalOpen}
+      onClose={() => setIsPreviewModalOpen(false)}
+      onConfirm={() => setIsPreviewModalOpen(false)}
+      initialContent={previewContent}
+    />
     </IonContent>
   </IonPage>
   );
