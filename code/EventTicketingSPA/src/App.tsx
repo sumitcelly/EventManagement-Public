@@ -78,6 +78,12 @@ export default function App() {
             isAuthenticated ? <TicketDetails/> : <LoginPage/>
           }
           /> 
+           <Route       
+          path="/ticketdetails/:encryptedOrderId"
+           render={() =>
+            isAuthenticated ? <TicketDetails/> : <LoginPage/>
+          }
+          /> 
         <Route
           path="/emailcampaigns"
            render={() =>

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.Unicode;
 using System.Threading.Tasks;
@@ -113,7 +114,7 @@ namespace CreateTicketApi.Controllers
                 EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
-                                    $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
+                                    $"http://localhost:5173/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString()))}"
                                     :string.Empty
             });
             

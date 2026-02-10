@@ -4,6 +4,7 @@ using EventManagementDbAccess;
 using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using Mysqlx.Crud;
+using System.Net;
 
 namespace CreateTicketApi.Controllers
 {
@@ -15,13 +16,15 @@ namespace CreateTicketApi.Controllers
         private readonly SalesOrderDbAccess _dbAccess;
         private readonly TicketAccess _ticketAccess;
 
+        private readonly ILogger<SalesOrderController> _logger;
 
 
-        public SalesOrderController(SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess)
+        public SalesOrderController(ILogger<SalesOrderController> logger, SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess)
         {
             _salesOrderConductor = salesOrderConductor;
             _dbAccess = dbAccess;
             _ticketAccess = ticketAccess;
+            _logger = logger;
      
         }
 
@@ -120,6 +123,30 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [HttpGet("/SalesOrder/byEmailLinkId/{encryptedOrderId}")]
+        public async Task<ActionResult> GetSalesOrderByEmailLinkId(string encryptedOrderId)
+        {
+            if (string.IsNullOrEmpty(encryptedOrderId))
+                return BadRequest("Invalid encrypted order id.");
+            string decodedId = WebUtility.UrlDecode(encryptedOrderId);
+            if (string.IsNullOrEmpty(decodedId))
+                return BadRequest("Invalid encrypted order id after decoding.");
+            try
+            {
+                var result = await _dbAccess.GetEmailLinkOrderDetails(decodedId);
+                if (result != null)
+                {
+                    _logger.LogInformation("Sales order details retrieved for email link ID: {0} {1}", encryptedOrderId, result.SalesOrderCode);
+                    return Ok(result);
+                }
+                else
+                    return NotFound("Sales order not found for the provided email link ID.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving sales order: {ex.Message}");
+            }
+        }
 
         [HttpGet("/SalesOrderByCustomer/{customerId}")]
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,

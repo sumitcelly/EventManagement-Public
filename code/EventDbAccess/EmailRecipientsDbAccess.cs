@@ -173,6 +173,17 @@ namespace EventManagementDbAccess
         }
     }
 
+    public class DecryptedOrderDetails
+    {
+        public int SalesOrderId { get; set; }
+
+        public string SalesOrderStatus { get; set; } = string.Empty;
+
+        public int EventId { get; set; }
+
+        public string SalesOrderCode { get; set; } = string.Empty;
+    }
+
     public class OrderEmailDetails
     {
         public string FullName { get; set; } = string.Empty;

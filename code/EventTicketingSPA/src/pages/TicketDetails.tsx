@@ -32,25 +32,52 @@ export default function TicketDetails() {
   //const  eventDetails = useAppSelector((state:RootState) => state.event);
   const salesOrderData:any = location.state || {};
   console.log('Sales order data received',salesOrderData);
-  const eventId = salesOrderData.eventId || 0;
-  const salesOrderCode = salesOrderData.salesOrderCode || '';
-  const salesOrderId = salesOrderData.salesOrderId || '';
-  const salesOrderStatus = salesOrderData.salesOrderStatus || '';
-  
+  let eventId = 0, salesOrderCode = '', salesOrderId='', salesOrderStatus='';
+
+  if (salesOrderData){
+    eventId = salesOrderData.eventId || 0;
+    salesOrderCode = salesOrderData.salesOrderCode || '';
+    salesOrderId = salesOrderData.salesOrderId || '';
+    salesOrderStatus = salesOrderData.salesOrderStatus || '';
+  }
+   const {encryptedOrderId} = useParams<{ encryptedOrderId: string }>();
+   console.log('Encrypted order id from params', encryptedOrderId);
 
 
-  //console.log('sales order code and event id',salesOrderCode, eventId );
+  const {
+        data: orderDetails, // provide default empty array
+        isLoading:orderLoading,
+
+  } = 
+  useQuery(
+    ['orderDetails', encryptedOrderId], // structured query key
+    async () => {
+    
+      const urlDecodedOrderId = encryptedOrderId ? decodeURIComponent(encryptedOrderId) : ''; 
+      console.log('URL decoded order id', urlDecodedOrderId);
+      const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${encryptedOrderId}`);
+      console.log('salesDetails details from backend', res?.data);
+      return res.data;
+    },
+    {
+      //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      enabled: !!encryptedOrderId && eventId ===0//  only run query if we have an id
+    }
+  );
 
   const {
         data: eventDetails, // provide default empty array
-        isLoading:eventLoading,
-        error
+        isLoading:eventLoading
   } = 
   useQuery(
-    ['eventDetails', eventId], // structured query key
+    ['eventDetails', orderDetails?.eventId || eventId], // structured query key
     async () => {
     
-      const res = await axiosClient.get(`/events/details/${eventId}`);
+      const idToUse = orderDetails?.eventId || eventId;
+      const res = await axiosClient.get(`/events/details/${idToUse}`);
       console.log('Event id details from backend', res?.data);
       return res.data;
     },
@@ -59,12 +86,14 @@ export default function TicketDetails() {
       //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       refetchOnMount: false,
       refetchOnWindowFocus: false,
-      enabled: !!eventId //  only run query if we have an id
+      enabled: (orderDetails?.eventId || eventId) > 0 && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
     }
   );
 
-  const { data, isLoading } = useQuery( ['ticketDetails', eventId,salesOrderCode], async () => {
-    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
+  const { data, isLoading } = useQuery( ['ticketDetails', orderDetails?.eventId || eventId, orderDetails?.salesOrderCode || salesOrderCode], async () => {
+    const idToUse = orderDetails?.eventId || eventId;
+    const codeToUse = orderDetails?.salesOrderCode || salesOrderCode;
+    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${idToUse}/${codeToUse}`);
     console.log('user tickets from backend', res?.data);
     if (currentPage === 1)
         setTotalItems(res.data?.length);
@@ -76,7 +105,7 @@ export default function TicketDetails() {
       cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
-      enabled: !!eventId  && !!salesOrderCode//  only run query if we have an id
+      enabled: (orderDetails?.eventId || eventId) > 0 && !!(orderDetails?.salesOrderCode || salesOrderCode) && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
   });
    
   useEffect(() => {
@@ -85,7 +114,7 @@ export default function TicketDetails() {
    
  
   }, []);
-  if (isLoading) return <p>Loading...</p>;
+  if ((encryptedOrderId && orderLoading) || eventLoading || isLoading) return <p>Loading...</p>;
 
   return ( 
       <IonPage>
@@ -109,9 +138,9 @@ export default function TicketDetails() {
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
-          {salesOrderStatus=="PaymentSucceeded" && (
+          {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" && (
             <div className="ml-auto mt-4">
-              <button onClick={()=>history.push(`/refundorder`,salesOrderId)}
+              <button onClick={()=>history.push(`/refundorder`, orderDetails?.salesOrderId || salesOrderId)}
                   className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                   >
                   Initiate refund

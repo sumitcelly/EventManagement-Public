@@ -423,6 +423,36 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<DecryptedOrderDetails> GetEmailLinkOrderDetails(string encryptedId)
+        {
+            if (string.IsNullOrEmpty(encryptedId))
+                throw new ArgumentException("EncryptedId cannot be null or empty.", nameof(encryptedId));
+            try
+            {
+                string decryptedString = EncryptionHelper.Decrypt(encryptedId);
+                if (!int.TryParse(decryptedString, out int orderId))
+                    throw new Exception("Invalid encrypted id format.");
+                
+                SalesOrder order = await GetSalesOrderById(orderId);
+                if (order == null)
+                    throw new Exception($"Sales Order could not be retrieved for id {orderId}");
+               
+                
+                return new DecryptedOrderDetails
+                {
+                    SalesOrderId = orderId,
+                    EventId = order.EventId,
+                    SalesOrderCode = order.SalesOrderCode ?? "",
+                    SalesOrderStatus = ((SalesOrderStatus)order.SalesOrderStatus).ToString(),
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error decrypting order details: {ex.Message}");
+                throw;
+            }
+        }
+       
         public async Task<OrderEmailDetails> GetSampleOrderEmailDetails(int eventId)
         {
             if (eventId <= 0)
