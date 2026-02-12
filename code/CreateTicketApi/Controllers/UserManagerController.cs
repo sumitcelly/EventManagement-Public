@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -43,6 +44,11 @@ namespace CreateTicketApi.Controllers
             _templateDbAccess = templateDbAccess;
         }
 
+        /// <summary>
+        /// Not used so far. mark obsolete later.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         [HttpGet("{email}")]
         public async Task<ActionResult<EventUser>> GetUserByEmail(string email)
         {
@@ -54,6 +60,11 @@ namespace CreateTicketApi.Controllers
             return user;
         }
 
+        /// <summary>
+        /// Main login method that validates user credentials and returns a JWT token.  
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
@@ -132,6 +143,11 @@ namespace CreateTicketApi.Controllers
             Response.Cookies.Append(name, value, options);
         }
 
+        /// <summary>
+        /// not being used so far. But need to send in the original password as well for verification.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [Authorize]
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] LoginRequest request)
@@ -150,6 +166,11 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to reset password.");
         }
 
+        /// <summary>
+        /// This method is for verifying the email code sent to user for login or signup.  If code is valid, it will return a JWT token for authentication.  For signup, if user does not exist, it will create a new user record.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost("VerifyEmailCode")]
         public async Task<IActionResult> VerifyEmailCode([FromBody] LoginRequest request)
         {
@@ -201,7 +222,13 @@ namespace CreateTicketApi.Controllers
             });
         }
 
-     
+
+        /// <summary>
+        /// Called during signup to check if user already exists.  If exists, return true.
+        /// If exists, the true is passed in the next call to GenerateEmailCode to continue login flow.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         [HttpGet("CheckUserExists/{email}")]
         public async Task<bool> CheckUserExists(string email)
         {
@@ -209,6 +236,12 @@ namespace CreateTicketApi.Controllers
             return user != null;
         }
 
+        /// <summary>
+        /// Generates a one-time email code for login or signup and sends it to the user's email address.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="signup"></param>
+        /// <returns></returns>
         [HttpGet("GenerateEmailCode/{email}/{signup?}")]
         public async Task<ActionResult<string>> GenerateEmailCode(string email, bool? signup = false)
         {
@@ -221,7 +254,7 @@ namespace CreateTicketApi.Controllers
             if (user == null && signup == true)
             {
                 _logger.LogInformation($"User with email {email} not found, continuing since this is signup.");
-               //create a temporary user record for signup
+               //temp user is created during VerifyEmailCode step not here.
             }
             if (user != null && signup == true)
             {
@@ -284,11 +317,26 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to create user.");
         }
 
+        /// <summary>
+        /// After the user verifies their email code as part of login or signup, this method called to set their password and maybe other data in the future.
+        ///   For now, it only updates password but can be extended to update other user info as well.  It requires the email in the URL to match the email in the body for security check, and also requires authentication to make sure only logged in user can update their info.
+        ///  /// </summary>
+        /// <param name="email"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        /// 
+        [Authorize]
         [HttpPut("/user/{email}")]
         public async Task<IActionResult> Update(string email, [FromBody] EventUser user)
         {
+            //verify if user id in claim matches userid in the body, and email in the body matches email in the URL for security check
             if (user == null || string.IsNullOrEmpty(email) || user.Email != email)
                 return BadRequest("Invalid user or email mismatch.");
+            
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null || userId != user.UserId.ToString())
+                return Unauthorized("User ID mismatch.");
+
             var result = await _userDbAccess.UpdateUserByEmail(user);
             if (result)
                 return Ok();

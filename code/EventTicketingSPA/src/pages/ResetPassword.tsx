@@ -36,7 +36,7 @@ export default function ResetPassword()  {
     );
   }
   //console.log("SignupForm for email:", email);
-
+  const userId  = useAppSelector((state) => state.auth.user?.id);
   const { register, handleSubmit, formState:{errors} } = useForm<FormValues>();
   const [passwordState, setPasswordState] = useState<PasswordStatus>({
     password: "",
@@ -54,7 +54,8 @@ export default function ResetPassword()  {
 
     axiosClient.put(`/user/${email}`,  { 
       email: email,
-      password: passwordState.password
+      password: passwordState.password,
+      userId: userId
     },
     { headers: {
         'Content-Type': 'application/json'}
@@ -90,7 +91,7 @@ export default function ResetPassword()  {
             <button type="submit" 
                 className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                 disabled={!passwordState.valid || !email}>
-                Sign Up
+                Reset Password
             </button>
         </div>
         </form>

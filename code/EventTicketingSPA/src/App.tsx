@@ -35,6 +35,7 @@ import OrderPayment from "./pages/OrderPayment";
 import RefundOrder from "./pages/RefundOrder";
 import CampaignList from "./pages/Organizer/CampaignList";
 import CampaignAdd from "./pages/Organizer/CampaignAdd";
+import ResetPassword from "./pages/ResetPassword";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -146,7 +147,8 @@ export default function App() {
         <Route path="/Auth/SendSecureCode/:returnUrl?"><SendSecureCode/></Route>
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" ><ValidateSecureCode/></Route>       
         <Route path="/Signup" ><SignupForm/></Route>  
-
+        <Route path="/ResetPassword"  render={() =>isAuthenticated?<ResetPassword/>:<LoginPage/>}/>
+        
         <Route path="/EventManager"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId/:mode"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>

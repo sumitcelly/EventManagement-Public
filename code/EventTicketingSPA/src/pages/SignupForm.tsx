@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import axiosClient from "../api/axiosClient";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbarnew";
+import { useAppSelector } from "../app/hook";
 interface FormValues {
   name: string;
   password: string;
@@ -18,7 +19,23 @@ export default function SignupForm()  {
   const params = new URLSearchParams(location.search);
   const email = params.get("email") || "";
   const ionRouter = useIonRouter();
-
+  const user =  useAppSelector((state) => state.auth.user);
+  if (!user || !user.id) {
+    return (
+      <IonPage>
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+          <IonContent className="ion-padding flex flex-col justify-center items-center h-full"> 
+          <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+            <h1 className="text-2xl font-bold mb-4 text-center">Error</h1>
+            <p className="text-red-500 text-center">No authenticated user found. Please complete secure code validation first.</p>
+          </div>
+          </IonContent>
+      </IonPage>
+    );
+  }
+    
   console.log("SignupForm for email:", email);
 
   const { register, handleSubmit, formState:{errors} } = useForm<FormValues>({
@@ -46,6 +63,7 @@ export default function SignupForm()  {
     axiosClient.put(`/user/${email}`,  { 
       name: data.name,
       email: email,
+      userId: user.id,
       password: passwordState.password
     },
     { headers: {
