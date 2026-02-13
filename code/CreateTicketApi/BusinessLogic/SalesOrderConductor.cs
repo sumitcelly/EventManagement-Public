@@ -86,13 +86,13 @@ public class SalesOrderConductor
         return await CreateSalesOrder(order);      
     }
 
-    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderByQrCode(int id,string salesOrderQrCode)
+    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderByQrCode(int id,string salesOrderQrCode, int userId)
     {
-        if (id <= 0)
-            throw new ArgumentException("Event id cannot be null or empty.", nameof(id));
-
+        if (id <= 0 ||userId<=0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
+            throw new ArgumentNullException($"Invalid argument sent evenid {id} or userId {userId} or salesordercode {salesOrderQrCode}");
+        
         // Fetch the event sales items associated with the sales order
-        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBasicsBySalesOrderQrCodeFromDb(salesOrderQrCode,id);
+        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBasicsBySalesOrderQrCodeFromDb(salesOrderQrCode,id,userId);
         if (eventSalesItems == null || !eventSalesItems.Any())
             throw new Exception($"No event sales items found for sales order ID {salesOrderQrCode}.");
         eventSalesItems.ToList().ForEach(item =>

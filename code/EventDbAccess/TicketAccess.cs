@@ -528,7 +528,7 @@ namespace EventManagementDbAccess
             return ticketList;
         }
 
-        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBasicsBySalesOrderQrCodeFromDb(string salesOrderCode, int eventId)
+        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBasicsBySalesOrderQrCodeFromDb(string salesOrderCode, int eventId, int userId)
         {
             if (string.IsNullOrWhiteSpace(salesOrderCode) || eventId <= 0)
                 throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
@@ -543,11 +543,12 @@ namespace EventManagementDbAccess
                                     where a.OrderId=b.SalesOrderId and
                                     b.EventItemTypeId=c.EventItemTypeId and
                                     a.SalesOrderCode=@salesOrderCode and 
-                                    a.eventId=@eventId";
+                                    a.eventId=@eventId and a.userId=@userId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);
                     cmd.Parameters.AddWithValue("@salesOrderCode", salesOrderCode);
                     cmd.Parameters.AddWithValue("@eventId", eventId);
+                    cmd.Parameters.AddWithValue("@userId", userId);
 
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {

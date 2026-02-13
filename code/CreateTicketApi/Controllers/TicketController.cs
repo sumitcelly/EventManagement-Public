@@ -1,8 +1,10 @@
 using CreateTicketApi.BusinessLogic;
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -36,22 +38,29 @@ public class TicketController : ControllerBase
         return QRCodeUtils.GetQRText(Convert.FromBase64String(qrCode));
     }
 
+    [Authorize]
     [HttpGet("ByEventIdAndSalesOrderQrCode/{id}/{salesOrderQrCode}")]
     public async Task<IActionResult> Get(int id,string salesOrderQrCode)
     {
         if (id <= 0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
             return BadRequest("Id is null.");
-        var order = await _salesOrderConductor.GetSalesOrderByQrCode(id, salesOrderQrCode);
+        //Check if user owns this salesorder or not by passing it to the next method call
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId))
+        {
+            return Unauthorized("Unable to retrieve user id");
+        }
+
+        var order = await _salesOrderConductor.GetSalesOrderByQrCode(id, salesOrderQrCode,userId);
         if (order == null)
             return NotFound();
         return Ok(order);
     }
 
-    [HttpGet]
-    public async Task<EventSalesItem> GetTicketByQRCode(string qrCode, int eventId)
-    {
-        return await _ticketContext.GetEventTicketByQRCode(qrCode, eventId);
-    }
+    // [HttpGet]
+    // public async Task<EventSalesItem> GetTicketByQRCode(string qrCode, int eventId)
+    // {
+    //     return await _ticketContext.GetEventTicketByQRCode(qrCode, eventId);
+    // }
 
     [HttpPost]
     [Route("/Ticket/Validate")]
