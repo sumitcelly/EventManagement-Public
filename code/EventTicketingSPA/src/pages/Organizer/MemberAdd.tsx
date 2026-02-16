@@ -12,20 +12,20 @@ import { useParams, useHistory } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
-import { TeamMember } from "../../types/Teams";
+import { TeamMember,TeamRoles } from "../../types/Teams";
 import toast, { Toaster } from 'react-hot-toast';
 import Permissions from "../../components/Permissions";
 
 const memberSchema = yup.object({
   name: yup.string().required("Name is required."),
   email: yup.string().email("Invalid email address format.").required("Email is required.")  ,
-  permissions: yup.string().required("Permissions is required")
+  role: yup.string().required("Permissions is required")
   });
 
 type FormValues = {
   name: string;
   email:string;
-  permissions:string;
+  role:string;
   
 };
 
@@ -48,7 +48,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     defaultValues: {
       name:memberInfo?.name || "",
       email: memberInfo?.email || "",
-      permissions: memberInfo?.permissions?.join(",") || "",
+      role: memberInfo?.role || "",
       },   
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
@@ -63,7 +63,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       organizerMemberId:memberInfo?.orgMemberId,
       customerId: organizerId,
       userId: memberInfo?.userId,
-      role: data?.permissions,
+      role: data?.role,
       email: data?.email,
       fullName: data?.name,
       isActive: memberInfo?.status=="Active"?true:false
@@ -117,7 +117,8 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       const values = {
         name: memberInfo?.name || '',
         email: memberInfo?.email || '',
-        permissions: memberInfo?.permissions?.join(",")  || ''
+        role: memberInfo?.role || ''
+        //permissions: memberInfo?.permissions?.join(",")  || ''
       };
       console.log('Resetting form with:', values);
       setIsAdding(memberInfo?.orgMemberId?false:true);
@@ -174,32 +175,43 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       </div>
      
       <div className="flex flex-col">
-        <label className="font-semibold mb-1">Permissions</label>
-        <Controller
-          name="permissions"
-          control={control}
-          render={({ field }) => (
-            <Permissions permissionsList={field.value} onChange={field.onChange} />
-          )}
-        />
+        <label className="font-semibold mb-1">Role</label>
+       <select
+            {...register("role")}
+            className="w-full border rounded p-2">
+            <option value="">{"Select a role"}</option>
+            {Object.values(TeamRoles).map((role:any) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+        </select>
         <div className="min-h-[20px]">
-          {errors.permissions && (
+          {errors.role && (
             <p className="text-red-600 text-sm mt-1">
-              {errors.permissions.message}
+              {errors.role.message}
             </p>
           )}
         </div>
       
       </div>
-      
-     
-      <div className="ml-auto">
-        <button
-          type="submit"
-          className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Save
-        </button>
+      <div className="flex flex-row">
+        
+        <div className="space-y-2 max-w-[300px]">
+          
+          <div className="font-semibold  text-accent-dark">FullAdmin: Can access anything on site except the Stripe connection.</div>
+          <div className="font-semibold text-accent-dark">RestrictedAdmin: Manages events but has no access to sales or financial data.</div>
+          <div className="font-semibold text-accent-dark">ScanningAgent: Can only access the check-in app and has no access to dashboard.</div>
+        
+        </div>
+        <div className="ml-auto">
+          <button
+            type="submit"
+            className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Save
+          </button>
+        </div>
       </div>
       {serverStatus && <p className="text-green-600 text-sm mt-2">{serverStatus}</p>}
     </div>

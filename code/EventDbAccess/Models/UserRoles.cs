@@ -2,8 +2,9 @@ namespace EventManagementDbAccess
 {
     public enum UserRoles
     {
-        Admin,
-        Organizer,
+        Owner,
+        FullAdmin,
+        ResrictedAdmin,
         ScanningAgent,
         Attendee
     }

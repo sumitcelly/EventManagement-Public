@@ -127,7 +127,7 @@ namespace EventManagementDbAccess
 
                 string query = @"SELECT a.UserId,a.Role,a.IsActive,a.OrganizerMemberId, b.email,b.fullname
                                 FROM eventorganizermembers a, eventuser b WHERE
-                                 a.userid=b.userid and CustomerId = @customerId";
+                                 a.userid=b.userid and a.CustomerId = @customerId and a.Role != 'Owner'";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@customerId", customerId);

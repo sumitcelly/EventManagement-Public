@@ -73,7 +73,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
               userId:temp.userId,
               email:temp.email,
               name:temp.fullName,
-              permissions:temp.role?.split(','),
+              role:temp.role,
               status: temp.isActive?"Active":"Pending",
               orgMemberId:temp.organizerMemberId
             });
@@ -118,7 +118,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       <div>Email</div>
       <div>Name</div>
       <div>Status</div>
-      <div>Permissions</div>
+      <div>Role</div>
       
     </div>
 
@@ -147,7 +147,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
           </div>
           <div className="flex flex-row justify-between">
             <div>
-              {member.permissions?.join(", ")}
+              {member.role}
             </div>
             <div onClick={(e)=>e.stopPropagation()}>
               <ListMenu
