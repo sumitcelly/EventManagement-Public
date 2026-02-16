@@ -32,9 +32,10 @@ type FormValues = {
 export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamMember, organizerId?:string}) {
 
   const history = useHistory();
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state?.auth.user);
   const queryClient = useQueryClient();
+  const [serverStatus, setServerStatus] = useState("");
+  const [isAdding, setIsAdding] = useState(memberInfo?.orgMemberId?false:true);
 
   const {
     control,
@@ -54,12 +55,10 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
   });
 
 
-  const onSubmit = (data: FormValues,errors:any) => {
+  const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
-    // if (!memberInfo)
-    //   return;
     const orgAPi={
       organizerMemberId:memberInfo?.orgMemberId,
       customerId: organizerId,
@@ -69,21 +68,26 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       fullName: data?.name,
       isActive: memberInfo?.status=="Active"?true:false
     }
-    if (memberInfo?.orgMemberId)
+    if (isAdding==false)
     {
-      console.log('member data sent to server', orgAPi);
-      axiosClient.put(`/EventOrganizerMembers`,orgAPi)
-      .then(response => {
-      console.log('User updated successfully:', response.data);
-      toast.success("Member updated");
-      queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
-     
-      })
-      .catch(error => {
+      console.log('member data being to server', orgAPi);
+      try
+      {
+        const response = await axiosClient.put(`/EventOrganizerMembers`,orgAPi);
+        if (response.status==200)
+        {
+          console.log('User updated successfully:', response.data);
+          toast.success("Member updated");
+          setServerStatus("Member updated successfully.");
+          queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
+        }
+      }
+      catch(error)
+      {
         console.error('Error creating/updating event:', error);
-         toast.error("Error updating member");
-        // Handle error (e.g., show notification to user)
-      });
+        toast.error("Error updating member");
+        setServerStatus("Error updating member");
+      }
     }
     else
     {
@@ -91,16 +95,18 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       .then(response => {
       console.log('Member created successfully:', response.data);
       toast.success("Member created");
+      setServerStatus("Member created successfully.");
       queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
-      // reset();
-      // setTimeout(() => {
-      //   navigate(`/TeamManager/${organizerId}`)
-      // }, 1000);
+      setIsAdding(false);
+    
+      setTimeout(() => {
+        history.push(`/TeamManager`);
+      }, 2000);
       })
       .catch(error => {
         console.error('Error creating/updating event:', error);
         toast.error("Error creating member");
-        // Handle error (e.g., show notification to user)
+        setServerStatus("Error creating member");
       });
     }
   }
@@ -114,21 +120,25 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
         permissions: memberInfo?.permissions?.join(",")  || ''
       };
       console.log('Resetting form with:', values);
+      setIsAdding(memberInfo?.orgMemberId?false:true);
+      setServerStatus("");
       reset(values);
  
   }, [memberInfo]);
 
   return (
+    <>
+     <Toaster position="top-right" />
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
-    <Toaster position="top-right" />
+   
     <div className="flex flex-col">
      
       <a href={`/teammanager/${organizerId}`} className="mr-auto text-accent-color hover:underline mb-3" 
         onClick={(e=>{
           e.preventDefault();
-          history.push(`/teammanager/${organizerId}`);
+          history.push(`/teammanager`);
         })}>
           Back to member list
       </a>
@@ -139,7 +149,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           {...register("name")}
           className="w-full border rounded p-2"
           placeholder="Enter name"
-          disabled={memberInfo !=null}
+          disabled={memberInfo ==null}
         />
         <div className="min-h-[20px]">
           {errors.name && (
@@ -154,7 +164,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           {...register("email")}
           className="w-full border rounded p-2"
           placeholder="Enter email..."
-          disabled={memberInfo !=null}
+          disabled={memberInfo ==null}
         />
         <div className="min-h-[20px]">
           {errors.email && (
@@ -191,8 +201,10 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
           Save
         </button>
       </div>
+      {serverStatus && <p className="text-green-600 text-sm mt-2">{serverStatus}</p>}
     </div>
             
     </form>
+    </>
   );
 }

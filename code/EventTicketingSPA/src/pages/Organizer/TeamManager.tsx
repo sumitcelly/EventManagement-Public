@@ -10,6 +10,8 @@ import TeamList from "./TeamList";
 import MemberAdd from "./MemberAdd";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
+import { useAppSelector } from "../../app/hook";
+import { RootState } from "../../app/store";
 
 interface TeamManagerParams {
   organizerId?: string;
@@ -20,10 +22,11 @@ export function TeamManager() {
   const tabsRef = useRef<TabsRef>(null);
   const location = useLocation();
   const history = useHistory();
-  const {organizerId, mode} = useParams<TeamManagerParams>();
+  const customerId = useAppSelector((state:RootState) => state.auth.user)?.customerId;
+  // const {organizerId, mode} = useParams<TeamManagerParams>();
 
-  //mode valid values are ticketlist,new,edit
-  console.log('organizer id, mode from params',organizerId),mode;
+  // //mode valid values are ticketlist,new,edit
+  // 
 
   //if we have ticket id or mode, means we are on the ticket tab
  
@@ -31,10 +34,9 @@ export function TeamManager() {
   //console.log('active tab in state is',activeTab);
   let memberInfo:any = location.state;
   console.log('Member Info is ', memberInfo);
-
-//  useEffect(()=>{
-//       tabsRef.current?.setActiveTab(localActiveTab);
-//   },[localActiveTab]);
+  const organizerId = memberInfo?.organizerId ||  customerId;
+  const mode= memberInfo?.mode;
+  console.log('organizer id, mode from params',organizerId,mode);
 
   useEffect(() => {
     if (mode === "newmember" || mode ==="edit")
@@ -48,7 +50,7 @@ export function TeamManager() {
       console.log("list tab");
       tabsRef.current?.setActiveTab(0);
     }
-  }, [mode, organizerId]);
+  }, [mode, organizerId, memberInfo]);
 
  
 
@@ -64,18 +66,18 @@ export function TeamManager() {
       className="max-w-2xl mx-auto "
       variant="underline" onActiveTabChange={(tab) =>{
                                         setLocalActiveTab(tab);
-                                        if (tab==0)
-                                        {
-                                           window.history.pushState({}, "", `/teammanager/${organizerId}`);
-                                        }
-                                        if (tab ===1 && mode)
-                                        {
-                                            window.history.pushState({}, "", `/teammanager/${organizerId}/${mode}`);
-                                        }
-                                        if (tab ===1 && !mode)
-                                        {
-                                            window.history.pushState({}, "", `/teammanager/${organizerId}/newmember`);
-                                        }
+                                        // if (tab==0)
+                                        // {
+                                        //    window.history.pushState({}, "", `/teammanager/${organizerId}`);
+                                        // }
+                                        // if (tab ===1 && mode)
+                                        // {
+                                        //     window.history.pushState({}, "", `/teammanager/${organizerId}/${mode}`);
+                                        // }
+                                        // if (tab ===1 && !mode)
+                                        // {
+                                        //     window.history.pushState({}, "", `/teammanager/${organizerId}/newmember`);
+                                        // }
                                         console.log("active tab change called",tab);
                                         }}>
     

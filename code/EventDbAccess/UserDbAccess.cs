@@ -366,6 +366,39 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<bool> UpdateUserBasicsById(EventUser user)
+        {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventuser SET
+                                    FullName = @name,
+                                    Email=@email,
+                                    ModifiedAt = @modifiedAt
+                                 WHERE UserId = @userId";
+
+                using var cmd = new MySqlCommand(query, connection);
+
+                cmd.Parameters.AddWithValue("@name", user.Name);
+                cmd.Parameters.AddWithValue("@email", user.Email);
+                cmd.Parameters.AddWithValue("@userId", user.UserId);
+                cmd.Parameters.AddWithValue("@modifiedAt",DateTime.UtcNow);
+                
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task<bool> DeleteUserByEmail(string email)
         {
             if (string.IsNullOrEmpty(email))

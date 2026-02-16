@@ -97,15 +97,17 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
   if (isLoading) return <p>Loading...</p>;
 
   return (
+    <>
+    <Toaster position="top-right" />
     <div className="max-w-l mx-auto">
-      <Toaster position="top-right" />
+   
       <h2 className="text-xl font-semibold mb-4 text-center">Build your team</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
       
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 mb-2 rounded hover:bg-blue-700"
-                onClick={()=> history.push(`/teammanager/${organizerId}/newmember`)}
+                onClick={()=> history.push(`/teammanager`,{organizerId: organizerId, mode: "newmember"})}
               >
                 Add member
           </button> 
@@ -124,9 +126,10 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
     <div className="space-y-2">
       {data && data.map((member) => (
         <div
-          key={member.userId}
+          key={member.orgMemberId}
           className="grid grid-cols-1 sm:grid-cols-4 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
         >
+        
           <div className="truncate pr-2" title={member.email}>{member.email}</div>
           <div>{member.name}</div>
           <div>
@@ -150,9 +153,9 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
               <ListMenu
                 linkData={{
                   viewLink: "",
-                  editLink: `/teammanager/${organizerId}/edit`,
+                  editLink: `/teammanager`,
                   delete:()=>deleteUser(Number(member.userId)),
-                  editData: member
+                  editData: {...member, organizerId:organizerId,mode:"edit"}
                 }}
               />
             </div>
@@ -166,5 +169,6 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
   </div>
 
   </div>
+  </>
   );
 }

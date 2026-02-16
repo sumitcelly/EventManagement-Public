@@ -156,9 +156,9 @@ export default function App() {
 
      
         <Route path="/OrganizerManager/:organizerId/:mode?"  render={() =>isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
-        <Route path="/TeamManager/:organizerId"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
-        <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
-        
+        <Route path="/TeamManager"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
+        {/* <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
+         */}
         <Route
           path="/buytickets/:id"
            render={() =>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Net;
 using System.Threading.Tasks;
 using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
@@ -12,9 +13,13 @@ namespace EventManagementDbAccess
 {
     public class EventOrganizerMembersDbAccess : BaseDbAccess
     {
-        public EventOrganizerMembersDbAccess(IConfiguration config, ILogger<EventOrganizerMembersDbAccess> logger, IDistributedCache cache = null)
+        private static  UserDbAccess userDbAccess;
+
+        public EventOrganizerMembersDbAccess(IConfiguration config, 
+                    ILogger<EventOrganizerMembersDbAccess> logger, UserDbAccess userDb, IDistributedCache cache = null)
             : base(config, logger, cache)
         {
+            userDbAccess = userDb ?? throw new ArgumentNullException(nameof(userDb));
         }
 
         public async Task<int> AddMember(EventOrganizerMembers member)
@@ -179,8 +184,35 @@ namespace EventManagementDbAccess
                 }
                 else
                 {
+                    _logger.LogInformation($"Updated event organizer member permission and role.");
+                  
                     // Invalidate cache for this member
                     string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(member.CustomerId.ToString());
+                    var orgMembers  = await _cache.GetOnlyAsync<List<EventOrganizerMembers>>(cacheKey);
+                    bool updateUserInfo = false;
+                    if (orgMembers != null)
+                    {
+                        var tempmember = orgMembers.Find(x=>x.OrganizerMemberId == member.OrganizerMemberId);
+                        if (tempmember != null && 
+                            (tempmember.Email != member.Email || tempmember.FullName != member.FullName))
+                        {
+                            updateUserInfo = true;
+                        }
+                    }
+                    if (updateUserInfo)
+                    {
+                        _logger.LogInformation($"Updating user info for member id {member.OrganizerMemberId}   ");
+                        bool result = await userDbAccess.UpdateUserBasicsById(new EventUser()
+                        {
+                            UserId = member.UserId,
+                            Name = member.FullName,
+                            Email = member.Email,
+                        });
+                        if (result)
+                            _logger.LogInformation($"Result of user update is success");
+                        else
+                          _logger.LogCritical($"Result of user update is failure");
+                    }
                     await _cache.RemoveAsync(cacheKey);
                     _logger.LogInformation($"Member with OrganizerMemberId {member.OrganizerMemberId} updated successfully.");
                     return true;
