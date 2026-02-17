@@ -5,6 +5,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Org.BouncyCastle.Asn1.X509.Qualified;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authorization;
+
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(logging =>
@@ -42,30 +46,33 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured."))),
         };
     });
-    // )
-    // .AddCookie(options1 =>
-    // {
-    //     options1.LoginPath = "/user/login";
-    //     options1.Cookie.Name = "refreshToken";
-    //     options1.Cookie.HttpOnly = true;
-    //      // 1 hour expiration
-    //     //if (builder.Environment.IsDevelopment())
-       
-    //     options1.Cookie.SameSite = SameSiteMode.None; // Allows cross-site requests
-    //     options1.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Browser requires this for 'None'
     
-    //     options1.Events.OnRedirectToLogin = context => {
-    //         context.Response.StatusCode = 401; // Prevents 302 redirects in APIs
-    //         return Task.CompletedTask;
-    //     };
-
 
 
 
         // FOR LOCAL EMULATOR DEVELOPMENT:
             
     //});
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorization(options =>
+{
+    // Define a policy that requires Owner level access
+    options.AddPolicy("OwnerOnly", policy => 
+        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.Owner)));
+    options.AddPolicy("FullAdminMinimum", policy => 
+        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.FullAdmin)));
+    options.AddPolicy("RestrictedAdminMinimum", policy => 
+        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.ResrictedAdmin)));
+    options.AddPolicy("ScanningAgent", policy => 
+        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.ScanningAgent)));
+    
+    options.AddPolicy("EventOwnedByCustomer", policy => 
+        policy.Requirements.Add(new OwnerRequirement("eventId")));
+
+    options.AddPolicy("OrderOwnedByUser", policy => 
+        policy.Requirements.Add(new OwnerRequirement("orderId")));
+});
+
 
 //builder.Services.AddControllers(x => x.Filters.Add<ApiKeyAuthFilter>());
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -84,6 +91,11 @@ builder.Services.AddScoped(typeof(EventOrganizerMembersDbAccess));
 builder.Services.AddScoped(typeof(EmailCampaignDbAccess));
 builder.Services.AddScoped(typeof(EmailRecipientsDbAccess));
 builder.Services.AddScoped(typeof(LoginCodesDbAccess));
+
+// Registering as Scoped allows the injection of a Scoped DbContext
+builder.Services.AddScoped<IAuthorizationHandler, GenericOwnerHandler>();
+
+builder.Services.AddSingleton<IAuthorizationHandler, AtleastRoleHandler>();
 
 builder.Services.AddSingleton(typeof(JwtUtils));
 builder.Services.AddSingleton<EncryptionHelper>();
@@ -123,6 +135,8 @@ builder.Services.AddSwaggerGen();
 //     c.AddSecurityRequirement(requirement);
 // });
 
+// This registers the IHttpContextAccessor so your handler can use it
+builder.Services.AddHttpContextAccessor(); 
 
 var app = builder.Build();
 

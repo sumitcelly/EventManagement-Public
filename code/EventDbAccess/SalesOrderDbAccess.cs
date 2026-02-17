@@ -67,7 +67,72 @@ namespace EventManagementDbAccess
             }
         }
 
-        
+        public async Task<bool> VerifySalesOrderUser(int orderId, int userId)
+        {
+            if (orderId <= 0 || userId <= 0)
+                throw new ArgumentException("OrderId and UserId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                string cacheKey = CacheHelper.GetCacheKey<int>(orderId.ToString());
+                if (string.IsNullOrEmpty(cacheKey))
+                {
+                    return false;
+                }
+                string tempUserId = await _cache.GetOrSetAsync(cacheKey, () => VerifySalesOrderUserFromDb(orderId, userId), TimeSpan.FromMinutes(_cacheDurationInMinutes), _logger) ?? string.Empty;
+                if (string.IsNullOrEmpty(tempUserId) || tempUserId == "-1" 
+                    || !int.TryParse(tempUserId, out int cachedUserId) || cachedUserId != userId)
+                {
+                    _logger.LogWarning($"User verification failed for sales order. OrderId: {orderId}, UserId: {userId}");
+                    return false;
+                }
+                else
+                {
+                    _logger.LogInformation($"User verification successful for sales order. OrderId: {orderId}, UserId: {userId}");
+                    return true;
+                }   
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error verifying sales order user: {ex.Message}");
+                throw;
+            }
+            
+        }
+        public async Task<string> VerifySalesOrderUserFromDb(int orderId, int userId)
+        {
+            if (orderId <= 0 || userId <= 0)
+                throw new ArgumentException("OrderId and UserId must be greater than zero.", nameof(orderId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = "SELECT COUNT(*) FROM salesorder WHERE OrderId = @orderId AND UserId = @userId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orderId", orderId);
+                cmd.Parameters.AddWithValue("@userId", userId);
+
+                int count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                if (count > 0)
+                {
+                    _logger.LogInformation($"User verification successful for sales order. OrderId: {orderId}, UserId: {userId}");
+                    return userId.ToString();
+                }
+                else
+                {
+                    _logger.LogWarning($"User verification failed for sales order. OrderId: {orderId}, UserId: {userId}");
+                    return "-1";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error verifying sales order user: {ex.Message}");
+                throw;
+            }
+        }
         public async Task<SalesOrder> GetSalesOrderById(int orderId)
         {
             try

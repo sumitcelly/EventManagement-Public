@@ -63,10 +63,13 @@ public class TicketController : ControllerBase
     // }
 
     [HttpPost]
-    [Route("/Ticket/Validate")]
-    public async Task<string> ValidateTicket([FromBody]ScanData data)
+    [Route("/Ticket/Validate/{eventId}")]
+    [Authorize(Policy = "ScanningAgent")]
+    [Authorize(Policy = "EventOwnedByCustomer")]
+    public async Task<string> ValidateTicket(int eventId,[FromBody]ScanData data)
     {
-        return await _ticketContext.ValidateTicket(data.qrCode, data.eventId);
+        _logger.LogInformation($"ValidateTicket called with eventId: {eventId} and qrCode: {data.qrCode}");
+        return await _ticketContext.ValidateTicket(data.qrCode, eventId);
     }
 
     
@@ -74,7 +77,7 @@ public class TicketController : ControllerBase
 
 public class ScanData
 {
-    public int eventId { get; set;}  
+    //public int eventId { get; set;}  
     public required string qrCode { get; set;}
 }
 

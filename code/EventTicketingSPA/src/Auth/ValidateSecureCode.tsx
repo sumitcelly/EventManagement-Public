@@ -39,7 +39,8 @@ export default function ValidateSecureCode() {
   
   console.log("validating secure code for email:", email,userExists);
   const {returnUrl} = useParams<{returnUrl: string}>();
-
+  console.log("returnUrl:", returnUrl);
+  
   const {
     register,
     handleSubmit,

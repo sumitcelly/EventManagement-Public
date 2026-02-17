@@ -24,8 +24,8 @@ export default function ScanTicket() {
       return "Invalid code or event ID";
     }
     try {
-      const result = await axiosClient.post('/ticket/validate', 
-      { qrCode: code, eventId:Number(eventId) });
+      const result = await axiosClient.post(`/ticket/validate/${Number(eventId)}`, 
+      { qrCode: code });
 
       return result.data;// Adjust based on your API response
     } catch (error) {

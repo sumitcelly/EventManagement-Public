@@ -14,7 +14,7 @@ export default function ScannerDashboard() {
   const history = useHistory();
   const user = useAppSelector((state: RootState) => state.auth);
   let validRole = false;
-  if (user &&  user.user?.role && user.user.role != 'attendee')
+  if (user &&  user.user?.role && user.user.role != 'Attendee')
     validRole = true;
 
   console.log('can scan tickets', validRole);

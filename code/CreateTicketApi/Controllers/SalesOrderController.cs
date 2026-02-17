@@ -276,25 +276,6 @@ namespace CreateTicketApi.Controllers
             else
                 return StatusCode(500, "Failed to delete sales order.");
         }
-        // [HttpPut("{id}")]
-        // public async Task<IActionResult> Update(int id, [FromBody] SalesOrder order)
-        // {
-        //     if (order == null || id != order.OrderId)
-        //         return BadRequest();
-
-        //     var result = await _dbAccess.UpdateSalesOrder(order);
-        //     if (result)
-        //         return Ok("Sales order updated.");
-        //     return StatusCode(500, "Failed to update sales order.");
-        // }
-
-        // [HttpDelete("{id}")]
-        // public async Task<IActionResult> Delete(int id)
-        // {
-        //     var result = await _dbAccess.DeleteSalesOrder(id);
-        //     if (result)
-        //         return Ok("Sales order deleted.");
-        //     return StatusCode(500, "Failed to delete sales order.");
-        // }
+        
     }
 }
