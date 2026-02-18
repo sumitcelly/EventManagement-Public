@@ -1,5 +1,5 @@
 import axios from "axios";
-import { refreshAccessToken, getAccessToken, logout } from "../features/auth/authSlice";
+import { refreshAccessToken, logout, setToken } from "../features/auth/authSlice";
 import { store } from "../app/store";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -13,7 +13,7 @@ const axiosClient = axios.create({
 
 axiosClient.interceptors.request.use(
   async (config) => {
-    const token = getAccessToken();
+    const token = store.getState().auth.token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -34,6 +34,7 @@ axiosClient.interceptors.response.use(
 
       const newToken = await refreshAccessToken();
       if (newToken) {
+        store.dispatch(setToken(newToken));
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosClient(originalRequest);
       } else {

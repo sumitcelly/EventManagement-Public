@@ -1,4 +1,5 @@
 using EventUtils;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
@@ -17,7 +18,7 @@ namespace EventManagementDbAccess
         public SalesOrderDbAccess(IConfiguration connectionString, 
                                     ILogger<SalesOrderDbAccess> logger, 
                         EventItemTypeDbAccess eventItemTypeDbAccess,
-                        TicketAccess ticketAccess) : base(connectionString, logger)
+                        TicketAccess ticketAccess,  IDistributedCache cache) : base(connectionString, logger,cache)
         {
             _eventTypeAccess = eventItemTypeDbAccess;
             _ticketAccess = ticketAccess;
@@ -118,7 +119,7 @@ namespace EventManagementDbAccess
                 int count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 if (count > 0)
                 {
-                    _logger.LogInformation($"User verification successful for sales order. OrderId: {orderId}, UserId: {userId}");
+                    _logger.LogInformation($"User verification successful for sales order from DB. OrderId: {orderId}, UserId: {userId}");
                     return userId.ToString();
                 }
                 else
@@ -737,7 +738,7 @@ namespace EventManagementDbAccess
     /// <param name="eventId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId,int orderId=0)
+    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId,int userId=0,int orderId=0)
     {
         if (string.IsNullOrEmpty(stripeSessionId) && orderId <= 0)
             throw new ArgumentException("Invalid stripe session id and order id provided");
@@ -755,6 +756,9 @@ namespace EventManagementDbAccess
         }
         if (order == null)
             throw new Exception($"Unable to find order with session id {stripeSessionId}");
+
+        if (userId > 0 && order.UserId != userId)
+            throw new Exception($"User {userId} is not authorized to update order {order.OrderId}");
 
         using var connection = new MySqlConnection(ConnectionString);   
         await connection.OpenAsync();

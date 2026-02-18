@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using Mysqlx.Crud;
 using System.Net;
+using System.Security.Claims;
 
 namespace CreateTicketApi.Controllers
 {
@@ -42,7 +43,7 @@ namespace CreateTicketApi.Controllers
         }
 
 
-
+        // Not being used currently
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] CustomerSalesOrder order)
         {
@@ -56,6 +57,7 @@ namespace CreateTicketApi.Controllers
                 return Ok(result);
         }
 
+        //Not being used currently
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -70,7 +72,9 @@ namespace CreateTicketApi.Controllers
 
         }
 
-        [HttpGet("/SalesOrderQrImage/{orderId}")]
+       
+        [HttpGet("/SalesOrderQrImage/{orderId}")] 
+        [Authorize(Policy="OrderOwnedByUser")]
         public async Task<ActionResult> GetSalesOrderQrImage(int orderId)
         {
             if (orderId <= 0)
@@ -87,8 +91,9 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+
         [HttpGet("/SalesOrderStatus/{orderId}")]
-        
+        [Authorize(Policy="OrderOwnedByUser")]        
         public async Task<ActionResult> GetSalesOrderStatus(int orderId)
         {
             if (orderId <= 0)
@@ -106,7 +111,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/SalesOrderRefundAmount/{orderId}")]
-        
+        [Authorize(Policy="OrderOwnedByUser")]        
         public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId)
         {
             if (orderId <= 0)
@@ -149,6 +154,8 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/SalesOrderByCustomer/{customerId}")]
+        [Authorize(Policy="FullAdminMinimum")]
+        [Authorize(Policy="MatchingCustomer")] 
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", string orderStatus = "",
                                                         string orderByColumn = "createat", bool isAscending = false,
@@ -157,7 +164,7 @@ namespace CreateTicketApi.Controllers
         {
             if (customerId <= 0)
                 return BadRequest("Invalid customer id.");
-            
+
             SalesOrderStatus orderStatusData = SalesOrderStatus.InProgress;
             Enum.TryParse(orderStatus, out orderStatusData);
             
@@ -176,6 +183,8 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/DownloadOrderReport/{customerId}")]
+        [Authorize(Policy="FullAdminMinimum")]  
+        [Authorize(Policy="MatchingCustomer")] 
         public  async Task<ActionResult> DownloadOrderReport(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", 
                                                         string orderStatus = "",
@@ -241,13 +250,17 @@ namespace CreateTicketApi.Controllers
 
         [HttpPost]
         [Route("/SalesOrder/ReturnTickets/{stripeSessionId}/{orderStatus}")]
+        [Authorize]
         public async Task<IActionResult> ReturnTicketsToPool(string stripeSessionId, string orderStatus)
         {
             if (string.IsNullOrEmpty(stripeSessionId) || string.IsNullOrEmpty(orderStatus))
                 return BadRequest("Invalid session id or order status.");
             if (Enum.TryParse<SalesOrderStatus>(orderStatus, true, out SalesOrderStatus tempStatus))  
             {
-                var result = await _dbAccess.ReturnTicketsToPool(tempStatus, stripeSessionId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var intUserId))
+                    return Unauthorized("User ID not found in token.");
+                var result = await _dbAccess.ReturnTicketsToPool(tempStatus, stripeSessionId, intUserId);
                 if (result)
                     return Ok("Tickets returned to pool and sales order updated.");
                 else
@@ -260,14 +273,15 @@ namespace CreateTicketApi.Controllers
         }       
 
 
-        [Authorize] 
+        
         [HttpGet]
-        [Route("/SalesOrder/ByUserId/{id}")]
-        public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int id)
+        [Route("/SalesOrder/ByUserId/{userId}")]
+        [Authorize(Policy="MatchingUserId")] 
+        public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int userId)
         {
-            if (id <= 0)
+            if (userId <= 0)
                 return BadRequest();
-            var result = await _dbAccess.GetUpcomingSalesOrdersForUser(id);
+            var result = await _dbAccess.GetUpcomingSalesOrdersForUser(userId);
             if (result != null)
             {
                 Console.WriteLine("retrieved orders");

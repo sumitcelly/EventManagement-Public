@@ -281,7 +281,7 @@ namespace CreateTicketApi.Controllers
                        
                     if (tempStatus == SalesOrderStatus.RefundSuccess)
                     {
-                       bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus, "",stripeEvent.SalesOrderId);
+                       bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus, "",0,stripeEvent.SalesOrderId);
                        if (ret)
                        {
                             _logger.LogInformation($"Returned tickets to pool status for {stripeEvent.SalesOrderId} in db is success");

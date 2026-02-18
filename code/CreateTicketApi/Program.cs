@@ -71,6 +71,11 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("OrderOwnedByUser", policy => 
         policy.Requirements.Add(new OwnerRequirement("orderId")));
+    
+    options.AddPolicy("MatchingCustomer", policy => 
+        policy.AddRequirements(new CustomerIdMatchRequirement()));
+    options.AddPolicy("MatchingUserId", policy => 
+        policy.AddRequirements(new UserIdMatchRequirement()));
 });
 
 
@@ -96,6 +101,8 @@ builder.Services.AddScoped(typeof(LoginCodesDbAccess));
 builder.Services.AddScoped<IAuthorizationHandler, GenericOwnerHandler>();
 
 builder.Services.AddSingleton<IAuthorizationHandler, AtleastRoleHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, CustomerIdMatchHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, UserIdMatchHandler>();
 
 builder.Services.AddSingleton(typeof(JwtUtils));
 builder.Services.AddSingleton<EncryptionHelper>();

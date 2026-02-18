@@ -4,10 +4,13 @@ import LoginPage from "./pages/Login";
 import MyEvents from "./pages/MyEvents";
 import TicketDetails from "./pages/TicketDetails";
 import { useSelector } from "react-redux";
+import { useEffect } from "react";
 
 //import { AuthState } from "./features/auth/authSlice";
 import { Reducer } from "@reduxjs/toolkit";
 import AppNavbar from "./components/Navbarnew";
+import { useAppDispatch } from "./app/hook";
+import { fetchUser } from "./features/auth/authSlice";
 import SearchEvents from "./pages/SearchEvents";
 import EventDetails from "./pages/EventDetails";
 import BuyTickets  from "./pages/BuyTickets";
@@ -39,6 +42,12 @@ import ResetPassword from "./pages/ResetPassword";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
+  const dispatch = useAppDispatch();
+  
+  useEffect(() => {
+    dispatch(fetchUser());
+  }, [dispatch]);
+  
   //setupIonicReact();
   return (
     <IonReactRouter>

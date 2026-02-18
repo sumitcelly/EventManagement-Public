@@ -277,7 +277,7 @@ export default function OrderReport() {
             {...register("eventName")}
             className="w-full border rounded p-2">
             <option value="">{"Select an option"}</option>
-            {events.map((event:any) => (
+            {events?.map((event:any) => (
               <option key={event.eventId} value={event.eventId}>
                 {event.eventName}
               </option>
@@ -294,20 +294,53 @@ export default function OrderReport() {
         </div>
         {recCount > 0 && (
             <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
-              onClick={(e)=>{
+              onClick= {async (e)=>{
                 e.preventDefault();
-                const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
-                startDate: filters.startDate,
-                endDate: filters.endDate,
-                emailAddress: filters.email || '',
-                name: filters.fullname || '',
-                orderStatus: filters.orderStatus || '',
-                eventId: filters.eventName == ''? '0': filters.eventName,
-                isAscending: (!filters.isDescending).toString()
-                }).toString() : ""}`;
-                console.log("Downloading report from",url);
                 
-                window.location.href = url;
+                // const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
+                // startDate: filters.startDate,
+                // endDate: filters.endDate,
+                // emailAddress: filters.email || '',
+                // name: filters.fullname || '',
+                // orderStatus: filters.orderStatus || '',
+                // eventId: filters.eventName == ''? '0': filters.eventName,
+                // isAscending: (!filters.isDescending).toString()
+                // }).toString() : ""}`;
+                // console.log("Downloading report from",url);
+                
+                // window.location.href = url;
+                if (filters)
+                {
+                  const queryParams = new URLSearchParams({
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    emailAddress: filters.email || '',
+                    name: filters.fullname || '',
+                    orderStatus: filters.orderStatus || '',
+                    eventId: filters.eventName === '' ? '0' : filters.eventName,
+                    isAscending: (!filters.isDescending).toString()
+                  });
+                  try {
+                    const response = await axiosClient.get(
+                      `/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
+                      { responseType: 'blob' }
+                    );
+                    console.log("Report downloaded successfully:", response);
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    console.log("Generated download URL:", url);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'order-report.csv');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.parentNode?.removeChild(link);
+                  } catch (error) {
+                    toast.error('Failed to download report');
+                  }
+
+                }
+
+
               }
               }>
               Download CSV

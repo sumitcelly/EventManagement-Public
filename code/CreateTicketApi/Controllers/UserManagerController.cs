@@ -143,6 +143,35 @@ namespace CreateTicketApi.Controllers
             Response.Cookies.Append(name, value, options);
         }
 
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized();
+        
+            if (!await _tokenUtils.ValidateJwtToken(refreshToken))
+                return Unauthorized("Invalid refresh token.");
+        
+            var claims = _tokenUtils.GetClaimsFromToken(refreshToken);
+            string userId = claims.Item1;
+            string role = claims.Item2;
+            string customerId = claims.Item3;
+        
+            var user = await _userDbAccess.GetUserById(int.Parse(userId));
+            if (user == null)
+                return NotFound("User not found.");
+        
+            return Ok(new
+            {
+                id = user.UserId,
+                email = user.Email,
+                role = role,
+                customerId = customerId,
+                name = user.Name
+            });
+        }
+        
         /// <summary>
         /// not being used so far. But need to send in the original password as well for verification.
         /// </summary>
