@@ -49,7 +49,7 @@ export default function OrderPayment() {
   {
     try 
     {
-      const response = await axiosClient.get<string>(`/payment/checkout-session-status/${sessionId}/${stripeAcctId}`);
+      const response = await axiosClient.get(`/payment/checkout-session-status/${sessionId}/${stripeAcctId}`);
       console.log("Session status response:", response.data);
       if (response.data =="paid")
       {

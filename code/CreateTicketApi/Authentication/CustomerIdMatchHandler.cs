@@ -21,7 +21,7 @@ public class CustomerIdMatchHandler : AuthorizationHandler<CustomerIdMatchRequir
         var jwtId = context.User.FindFirst("CustomerId")?.Value;
                     
 
-        // 2. Hardcoded lookup for "customerId" in the query string (?customerId=xxx)
+        // 2. Hardcoded lookup for "customerId" in the route
         var queryId = httpContext.GetRouteValue("customerId")?.ToString();
 
         // 3. Comparison

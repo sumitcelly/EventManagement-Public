@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CreateTicketApi.Controllers
 {
@@ -44,16 +45,24 @@ namespace CreateTicketApi.Controllers
             return events;
         }
 
-        [HttpGet("/Events/Basics/{id}")]
-        public async Task<ActionResult<EventHeader>> GetEventBasicsById(int id)
+        [HttpGet("/Events/Basics/{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        public async Task<ActionResult<EventHeader>> GetEventBasicsById(int eventId)
         {
-            var evt = await _EventDbAccess.GetEventHeaderById(id);
+            var evt = await _EventDbAccess.GetEventHeaderById(eventId);
             if (evt == null)
                 return NotFound();
+            if (evt.EventOrganizerId != int.Parse(User.FindFirst("CustomerId")?.Value ?? "0"))
+            {
+                return Forbid();
+            }
             return evt;
+           
         }
 
         [HttpGet("/Events/ByCustomer/{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
         public async Task<List<EventHeader>> GetEventsByCustomer(int customerId)
         {
             var evtList = await _EventDbAccess.GetEventListByCustomerId(customerId);
@@ -62,6 +71,8 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/Events/ForScanning/{customerId}")]
+        [Authorize(Policy = "ScanningAgent")]
+        [Authorize(Policy = "MatchingCustomer")]
         public async Task<List<EventHeader>> GetEventsForScanningByCustomer(int customerId)
         {
             var evtList = await _EventDbAccess.GetEventListForscanningByCustomerId(customerId);
@@ -84,43 +95,52 @@ namespace CreateTicketApi.Controllers
 
 
 
-        [HttpGet("/Events/LiveStatus/{id}")]
-        public async Task<ActionResult<EventLiveStatus>> GetEventLiveStatusById(int id)
+        [HttpGet("/Events/LiveStatus/{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "EventOwnedByCustomer")]
+        public async Task<ActionResult<EventLiveStatus>> GetEventLiveStatusById(int eventId)
         {
-            if (id<=0)
+            if (eventId<=0)
             {
                 return BadRequest("Invalid event."); 
             }
-            var evt = await _EventDbAccess.GetLiveStatusForEvent(id);
+            var evt = await _EventDbAccess.GetLiveStatusForEvent(eventId);
             if (evt == null)
                 return NotFound();
             return evt;
         }
 
-        [HttpPut("/Events/LiveStatus/{id}")]
-        public async Task<ActionResult<bool>> UpdateLiveStatus(int id, [FromBody] bool status)
+        [HttpPut("/Events/LiveStatus/{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "EventOwnedByCustomer")]
+        public async Task<ActionResult<bool>> UpdateLiveStatus(int eventId, [FromBody] bool status)
         {
-            if (id <= 0)
+            if (eventId <= 0)
                 return BadRequest("Invalid event.");
-            return (await _EventDbAccess.UpdatePublishStatus(id, status))?true:false;
+            return (await _EventDbAccess.UpdatePublishStatus(eventId, status))?true:false;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<int>> CreateEvent([FromBody] Event evt)
+        [HttpPost("/create/{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<ActionResult<int>> CreateEvent(int customerId, [FromBody] Event evt)
         {
-            if (evt == null)
+            if (evt == null || customerId <= 0 || customerId != evt.EventOrganizerId)
                 return BadRequest("Invalid event.");
+   
             var id = await _EventDbAccess.CreateEvent(evt);
             if (id > 0)
                 return Ok(id);
             return StatusCode(500, "Failed to create event.");
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event evt)
+        [HttpPut("{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "EventOwnedByCustomer")]
+        public async Task<IActionResult> UpdateEvent(int eventId, [FromBody] Event evt)
         {
-            Console.WriteLine($"event id {id} and event {evt} received for update");
-            if (evt == null || id != evt.EventId)
+            Console.WriteLine($"event id {eventId} and event {evt} received for update");
+            if (evt == null || eventId != evt.EventId)
                 return BadRequest("Invalid event or ID mismatch.");
             bool result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
@@ -129,10 +149,12 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to update event.");
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEvent(int id)
+        [HttpDelete("{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "EventOwnedByCustomer")]
+        public async Task<IActionResult> DeleteEvent(int eventId)
         {
-            var result = await _EventDbAccess.DeleteEvent(id);
+            var result = await _EventDbAccess.DeleteEvent(eventId);
             if (result)
                 return Ok();
             return StatusCode(500, "Failed to delete event.");

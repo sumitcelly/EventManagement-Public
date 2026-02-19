@@ -19,7 +19,29 @@ namespace EventManagementDbAccess
 
         }
 
-       
+       public async Task<int> GetOrganizerIdByStripeAccountId(string stripeAccountId)
+        {
+            if (string.IsNullOrWhiteSpace(stripeAccountId))
+                throw new ArgumentException("StripeAccountId cannot be null or empty.", nameof(stripeAccountId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"SELECT CustomerId FROM eventorganizer WHERE StripeAccountId = @stripeAccountId";
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@stripeAccountId", stripeAccountId);
+
+                var result = await cmd.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving organizer ID by Stripe account ID: {ex.Message}");
+                throw;
+            }
+        }
         public async Task<EventOrganizer> GetOrganizerById(int customerId)
         {
             if (customerId <= 0)

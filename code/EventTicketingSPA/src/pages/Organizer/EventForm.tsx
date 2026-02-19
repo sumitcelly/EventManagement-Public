@@ -215,7 +215,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     else
     {
       console.log("Creating new event");
-      axiosClient.post('/events',eventApi)
+      axiosClient.post(`/events/${eventApi.eventOrganizerId}`,eventApi)
       .then(async response => {
         console.log('Event created response:', response.data);
         if (response.data > 0)

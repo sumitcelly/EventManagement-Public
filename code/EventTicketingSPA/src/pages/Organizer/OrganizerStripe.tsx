@@ -40,7 +40,7 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
   const createStripeAccount = async()=>{
     try
     {
-        const res = await axiosClient.post(`/payment/create-account`,organizerId, { headers: {
+        const res = await axiosClient.post(`/payment/create-account/${organizerId}`, { headers: {
         'Content-Type': 'application/json'}
     });
         if (res.status == 200 && res.data)

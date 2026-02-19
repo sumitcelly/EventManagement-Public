@@ -5,7 +5,8 @@ using EventUtils;
 using Amazon.S3.Model;
 using static EventUtils.AmazonS3ContentUploader;
 using Stripe;
-using EventManagementDbAccess; // Adjust namespace if AmazonS3ContentUploader is elsewhere
+using EventManagementDbAccess;
+using Microsoft.AspNetCore.Authorization; // Adjust namespace if AmazonS3ContentUploader is elsewhere
 
 namespace CreateTicketApi.Controllers
 {
@@ -110,6 +111,7 @@ namespace CreateTicketApi.Controllers
         /// <returns></returns>
 
         [HttpGet("presigned-url")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         public async Task<IActionResult> GetPresignedUrl([FromQuery] string fileName, [FromQuery] int organizationId,
         [FromQuery] string contentType,
          [FromQuery] int eventId,[FromQuery] string filePurpose)

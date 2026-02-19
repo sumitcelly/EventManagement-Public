@@ -245,6 +245,12 @@ namespace EventManagementDbAccess
             return true;
         }
 
+        /// <summary>
+        /// Todo: Cache this method if we find it is being called frequently in a short span of time as part of payment status check in the frontend after checkout, and optimize the db call if needed as well.
+        /// </summary>
+        /// <param name="sessionId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<SalesOrder> GetSalesOrderByStripeSessionId(string sessionId)
         {
             if (string.IsNullOrEmpty(sessionId))

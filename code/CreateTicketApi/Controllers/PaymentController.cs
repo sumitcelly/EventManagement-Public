@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using EventUtils;
 using EventManagementDbAccess;
 using CreateTicketApi.BusinessLogic;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 // Ensure StripeAccess is in this namespace
 
 namespace CreateTicketApi.Controllers
@@ -40,8 +42,10 @@ namespace CreateTicketApi.Controllers
             _emailUtils = emailUtils ?? throw new ArgumentNullException(nameof(emailUtils), "EmailUtils cannot be null.");  
         }
 
-        [HttpPost("create-account")]
-        public async Task<IActionResult> CreateStripeAccount([FromBody]int customerId)
+        [HttpPost("create-account/{customerId}")]
+        [Authorize(Policy = "OwnerOnly")]
+        [Authorize(Policy = "CustomerIdMatch")]
+        public async Task<IActionResult> CreateStripeAccount(int customerId)
         {
             if (customerId <= 0)
             {
@@ -81,14 +85,22 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("connect-status/{stripeAccountId}")]
+        [Authorize(Policy = "FullAdminMinimum")]
         public async Task<IActionResult> GetStripeAccountConnectStatus(string stripeAccountId)
         {
-             if (string.IsNullOrEmpty(stripeAccountId))
+            if (string.IsNullOrEmpty(stripeAccountId))
             {
                 return BadRequest("Stripe account ID cannot be null or empty.");
             }
             try
             {
+                int customerId = await _eventOrganizerDbAccess.GetOrganizerIdByStripeAccountId(stripeAccountId); // just to check if the stripe account id is valid and belongs to an organizer in our system
+                string userCustomerId = User.FindFirst("CustomerId")?.Value.ToString() ?? "";
+                if (customerId <= 0 || customerId.ToString() != userCustomerId)
+                {
+                    return BadRequest("Invalid Stripe account ID.");
+                }
+
                 return  Ok(await  _stripeAccess.IsAccountOnboarded(stripeAccountId));
                 
             }
@@ -99,20 +111,22 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPost("initiate-account-link/{organizerId}")]
-        public async Task<IActionResult> InitiateAccountLink(int organizerId, [FromBody]string stripeAcctId)
+        [HttpPost("initiate-account-link/{customerId}")]
+        [Authorize(Policy = "OwnerOnly")]
+        [Authorize(Policy ="CustomerIdMatch")]
+        public async Task<IActionResult> InitiateAccountLink(int customerId, [FromBody]string stripeAcctId)
         {
             if (string.IsNullOrEmpty(stripeAcctId))
             {
                 return BadRequest("Stripe account ID cannot be null or empty.");
             }
-            if (organizerId <= 0)
+            if (customerId <= 0)
             {
                 return BadRequest("Invalid organizer ID.");
             }
             try
             {
-                var result = await _stripeAccess.InitiateAccountLink(organizerId,stripeAcctId);
+                var result = await _stripeAccess.InitiateAccountLink(customerId,stripeAcctId);
                 if (string.IsNullOrEmpty(result))
                 {
                     return StatusCode(500, "Failed to initiate account link.");
@@ -120,7 +134,7 @@ namespace CreateTicketApi.Controllers
                 else
                 {
                     _logger.LogInformation($"Stripe account link initiated successfully for account ID {stripeAcctId}.");
-                    await _eventOrganizerDbAccess.UpdateStripeAccountInfo(organizerId, stripeAcctId, StripeAccountStatus.LinkInitiated);
+                    await _eventOrganizerDbAccess.UpdateStripeAccountInfo(customerId, stripeAcctId, StripeAccountStatus.LinkInitiated);
                     return Ok(result);
                 }
                 
@@ -133,13 +147,27 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("checkout-session-status/{sessionId}/{stripAcctId}")]
-        public async Task<string> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
+        [Authorize]
+        public async Task<IActionResult> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
         {
-            return await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId);
+            //validate the  stripe session id belongs to the logged in user.
+            var tempOrder = await _salesOrderDbAccess.GetSalesOrderByStripeSessionId(sessionId);
+            if (tempOrder == null)
+            {
+                return BadRequest("Invalid session id.");
+            }
+            
+            string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            if (tempOrder.UserId <= 0 || tempOrder.UserId.ToString() != userId)
+            {
+                return BadRequest("Invalid session id");
+            }
+            return Ok(await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId));
         }
 
-
+        //This controller method is not called currently.
         [HttpPost("createcheckoutsession")]
+        [Authorize]
         public async Task<IActionResult> CreateCheckoutSession(int salesOrderId, string stripeAccountId, int eventId,List<PaymentLineItemModel> request)
         {
             if (salesOrderId <= 0 || request == null || request.Count == 0)
@@ -173,6 +201,7 @@ namespace CreateTicketApi.Controllers
         
         [HttpPost]
         [Route("/Payment/RefundOrder/{orderId}")]
+        [Authorize(Policy = "OrderOwnedByUser")]
         public async Task<IActionResult> RefundOrder(int orderId)
         {
             if (orderId <=0)
