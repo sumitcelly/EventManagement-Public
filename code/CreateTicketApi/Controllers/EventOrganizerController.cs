@@ -1,4 +1,5 @@
 using EventManagementDbAccess;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -40,8 +41,10 @@ namespace CreateTicketApi.Controllers
                 return NotFound();
             return organizer;
         }
-
+        
+        //todo: revisit this when we do the organizer workflow. 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<int>> Add([FromBody] EventOrganizer organizer)
         {
             if (organizer == null)
@@ -52,10 +55,12 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to add organizer.");
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] EventOrganizer organizer)
+        [HttpPut("{customerId}")]
+        [Authorize(Policy = "MatchingCustomer")]
+        [Authorize(Policy = "FullAdminMinimum")]
+        public async Task<IActionResult> Update(int customerId, [FromBody] EventOrganizer organizer)
         {
-            if (organizer == null || id != organizer.OrganizerId)
+            if (organizer == null || customerId != organizer.OrganizerId)
                 return BadRequest("Invalid organizer or ID mismatch.");
             var result = await _organizerDbAccess.UpdateOrganizer(organizer);
             if (result)
@@ -63,10 +68,12 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to update organizer.");
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpDelete("{customerId}")]
+        [Authorize(Policy = "MatchingCustomer")]
+        [Authorize(Policy = "OwnerOnly")]
+        public async Task<IActionResult> Delete(int customerId)
         {
-            var result = await _organizerDbAccess.DeleteOrganizer(id);
+            var result = await _organizerDbAccess.DeleteOrganizer(customerId);
             if (result)
                 return Ok();
             return StatusCode(500, "Failed to delete organizer.");

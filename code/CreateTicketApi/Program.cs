@@ -62,7 +62,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("FullAdminMinimum", policy => 
         policy.AddRequirements(new AtleastRoleRequirement(UserRoles.FullAdmin)));
     options.AddPolicy("RestrictedAdminMinimum", policy => 
-        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.ResrictedAdmin)));
+        policy.AddRequirements(new AtleastRoleRequirement(UserRoles.RestrictedAdmin)));
     options.AddPolicy("ScanningAgent", policy => 
         policy.AddRequirements(new AtleastRoleRequirement(UserRoles.ScanningAgent)));
     

@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using EventManagementDbAccess;
 using K4os.Compression.LZ4.Internal;
 using System.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize(Policy = "RestrictedAdminMinimum")]
     public class EventOrganizerMembersController : ControllerBase
     {
         private readonly EventOrganizerMembersDbAccess _dbAccess;
@@ -24,10 +26,11 @@ namespace CreateTicketApi.Controllers
             _userdbAccess = userDbAccess;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddMember([FromBody] EventOrganizerMembers member)
+        [HttpPost("{customerId}")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> AddMember(int customerId, [FromBody] EventOrganizerMembers member)
         {
-            if (member == null)
+            if (member == null || customerId <= 0 || member.CustomerId != customerId)
                 return BadRequest("Member cannot be null.");
 
             try
@@ -95,6 +98,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("bycustomer/{customerId:int}")]
+        [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> GetMembersByCustomerId(int customerId)
         {
             try
@@ -110,6 +114,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/byuserId/{userId:int}")]
+        [Authorize(Policy = "MatchingUserId")]
         public async Task<IActionResult> GetMemberByUserId(int userId)
         {
             try
@@ -126,10 +131,11 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPut]
-        public async Task<IActionResult> UpdateMember([FromBody] EventOrganizerMembers member)
+        [HttpPut("{customerId}")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> UpdateMember(int customerId,[FromBody] EventOrganizerMembers member)
         {
-            if (member == null)
+            if (member == null || customerId == 0 || member.CustomerId != customerId)
                 return StatusCode(500, "Bad input data");
 
             try
@@ -147,8 +153,9 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpDelete("{userId}")]
-        public async Task<IActionResult> DeleteMember(int userId, [FromBody]int customerId)
+        [HttpDelete("{customerId}")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> DeleteMember(int customerId,[FromBody] int userId)
         {
             try
             {

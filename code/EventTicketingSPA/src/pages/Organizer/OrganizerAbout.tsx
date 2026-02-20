@@ -128,7 +128,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
   const uploadImage = async ()=>{
     if (file)
     {
-      const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}&organizationId=${organizerId}&contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);    
+      const response = await axiosClient.get(`/FileUpload/presigned-url/${file.name}/0/${organizerId}?contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);    
       console.log('Response from presigned url is:',response.data);
       if (response.status !== 200)
       {

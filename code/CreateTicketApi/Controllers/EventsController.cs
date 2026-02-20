@@ -120,7 +120,7 @@ namespace CreateTicketApi.Controllers
             return (await _EventDbAccess.UpdatePublishStatus(eventId, status))?true:false;
         }
 
-        [HttpPost("/create/{customerId}")]
+        [HttpPost("/events/{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<ActionResult<int>> CreateEvent(int customerId, [FromBody] Event evt)

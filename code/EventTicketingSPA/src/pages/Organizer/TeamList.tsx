@@ -34,7 +34,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
         });
 
         // 2. Make API call
-        await axiosClient.delete(`/EventOrganizerMembers/${userId}`, { data: organizerId,headers: {
+        await axiosClient.delete(`/EventOrganizerMembers/${organizerId}`, { data: userId,headers: {
                   'Content-Type': 'application/json'}
                  },).then(response => {
           console.log('Delete successful:', response.data);

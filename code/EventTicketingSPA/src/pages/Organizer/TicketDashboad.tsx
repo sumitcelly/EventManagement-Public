@@ -36,7 +36,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         });
 
         // 2. Make API call
-        await axiosClient.delete(`/eventitemtype/${eventItemTypeId}`).then((response)=>{
+        await axiosClient.delete(`/eventitemtype/${eventId}/${eventItemTypeId}`).then((response)=>{
             if (response.data){
               toast.error(response.data);
             }

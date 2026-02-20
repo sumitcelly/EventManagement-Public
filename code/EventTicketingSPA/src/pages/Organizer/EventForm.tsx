@@ -245,8 +245,8 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
   const uploadImage = async (organizerId:any,eventId:any)=>{
     if (file)
     {
-      const response = await axiosClient.get(`/FileUpload/presigned-url?fileName=${file.name}` +
-                                `&eventId=${eventId}&organizationId=${organizerId}&` +
+      const response = await axiosClient.get(`/FileUpload/presigned-url/${file.name}/` +
+                                `${eventId}/${organizerId}?` +
                                 `contentType=${file.type}&filePurpose=EventBannerImage`);    
       
       console.log('Response from presigned url is:',response.data);

@@ -113,7 +113,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
 
 
   const { data:ticketDetails, isLoading:ticketLoading } = useQuery(`tickets/details/${eventId}/${ticketId}`, async () => {
-    let res = await axiosClient.get(`/eventitemtype/${ticketId}`);
+    let res = await axiosClient.get(`/eventitemtype/${eventId}/${ticketId}`);
     if (res.data)
     {
       res.data.salesStartDate+="Z";
@@ -199,7 +199,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     if (ticketDetails) {
       //update     
        
-        axiosClient.put(`/eventitemtype/${ticketDetails.eventItemTypeId}`, payload)
+        axiosClient.put(`/eventitemtype/${eventId}/${ticketDetails.eventItemTypeId}`, payload)
         .then(response => {
           toast.success("Ticket type updated!");
           console.log('Ticket updated successfully:', response.data);
@@ -214,7 +214,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     }
     else {
         //create
-      axiosClient.post(`/eventitemtype`, payload)
+      axiosClient.post(`/eventitemtype/${eventId}`, payload)
       .then(response => {
         console.log('Ticket created successfully:', response.data);
         toast.success("Ticket Type created!");

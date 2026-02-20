@@ -110,16 +110,17 @@ namespace CreateTicketApi.Controllers
         /// <param name="eventName"></param>
         /// <returns></returns>
 
-        [HttpGet("presigned-url")]
+        [HttpGet("presigned-url/{fileName}/{eventId}/{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
-        public async Task<IActionResult> GetPresignedUrl([FromQuery] string fileName, [FromQuery] int organizationId,
-        [FromQuery] string contentType,
-         [FromQuery] int eventId,[FromQuery] string filePurpose)
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> GetPresignedUrl(string fileName, int eventId, int customerId,
+                                    [FromQuery] string contentType,[FromQuery] string filePurpose)
         {
-            if (string.IsNullOrWhiteSpace(fileName) || organizationId <=0 )
-            return BadRequest("File, customerName, and eventName are required.");
+            if (string.IsNullOrWhiteSpace(fileName) || customerId <=0 )
+            return BadRequest("File, customerName are required.");
        
-
+        
+          
             if (!Enum.TryParse(filePurpose, out Purpose purpose))
                 return BadRequest("A valid file purpose is required.");
             try
@@ -127,19 +128,25 @@ namespace CreateTicketApi.Controllers
                 bool result = false;
                 if (purpose == Purpose.OrganizerAboutMeImage)
                 {
-                    result =await _evtOrganizerDbAccess.UpdateOrganizerImageUrl(organizationId,
-                    AmazonS3ContentUploader.GetFileKey(fileName,organizationId,purpose));
+                    result =await _evtOrganizerDbAccess.UpdateOrganizerImageUrl(customerId,
+                    AmazonS3ContentUploader.GetFileKey(fileName,customerId,purpose));
                 }
                 if (purpose == Purpose.EventBannerImage)
                 {
+                    if (eventId <= 0)
+                        return BadRequest("A valid event ID is required for event banner images.");
+                    var headerData = await _evtDbAccess.GetEventHeaderById(eventId); //just to validate if the event id is valid and belongs to the customer.
+                    if (headerData == null || headerData.EventOrganizerId != customerId)
+                        return BadRequest("Invalid event ID or event does not belong to the customer.");
+
                     result = await _evtDbAccess.UpdateEventBannerImageUrl(eventId,
-                    AmazonS3ContentUploader.GetFileKey(fileName,organizationId,purpose,eventId));
+                    AmazonS3ContentUploader.GetFileKey(fileName,customerId,purpose,eventId));
                 }
                 if (!result)
                 {
                     return StatusCode(500, "Failed to generate presigned URL due to DB issues");
                 }
-                var url = await _s3Uploader.GetPreSignedUrlForUpload(fileName, organizationId, purpose, contentType,eventId);
+                var url = await _s3Uploader.GetPreSignedUrlForUpload(fileName, customerId, purpose, contentType,eventId);
                 return Ok(new { url });
             }
             catch (Exception ex)

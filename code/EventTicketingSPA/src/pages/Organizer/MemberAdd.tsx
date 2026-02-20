@@ -73,7 +73,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
       console.log('member data being to server', orgAPi);
       try
       {
-        const response = await axiosClient.put(`/EventOrganizerMembers`,orgAPi);
+        const response = await axiosClient.put(`/EventOrganizerMembers/${organizerId}`,orgAPi);
         if (response.status==200)
         {
           console.log('User updated successfully:', response.data);
@@ -91,7 +91,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     }
     else
     {
-      axiosClient.post('/EventOrganizerMembers',orgAPi)
+      axiosClient.post(`/EventOrganizerMembers/${organizerId}`,orgAPi)
       .then(response => {
       console.log('Member created successfully:', response.data);
       toast.success("Member created");

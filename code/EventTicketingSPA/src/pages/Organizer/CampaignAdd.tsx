@@ -118,7 +118,7 @@ export default function CampaignAdd(){
      console.log("Fetching campaign for id", campaignId);
      try
      {
-      const res = await axiosClient.get(`/byCampaignId/${campaignId}`);
+      const res = await axiosClient.get(`/emailcampaign/byid/${user?.customerId}/${campaignId}`);
       if (res?.data && res.status===200)
       {
           console.log('campign fetched from backend',res.data);
@@ -225,7 +225,7 @@ export default function CampaignAdd(){
     try
     {
       
-      const result = await axiosClient.post(`/EmailCampaign/addupdatecampaign/${campaignId}`,postData);
+      const result = await axiosClient.post(`/EmailCampaign/addupdatecampaign/${user?.customerId}/${campaignId}`,postData);
       if (result && result.status==200)
       {
         console.log('Campaign updated/created successfully:', result.data);

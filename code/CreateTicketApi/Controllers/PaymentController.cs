@@ -160,7 +160,7 @@ namespace CreateTicketApi.Controllers
             string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
             if (tempOrder.UserId <= 0 || tempOrder.UserId.ToString() != userId)
             {
-                return BadRequest("Invalid session id");
+                return Forbid("Invalid session id");
             }
             return Ok(await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId));
         }

@@ -1,5 +1,6 @@
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -42,12 +43,20 @@ namespace CreateTicketApi.Controllers
             _eventDbAccess = eventDbAccess;
         }
 
-        [HttpGet("/EmailCampaign/{organizerId}")]
-        public async Task<IActionResult> GetByOrganizerId(int organizerId)
+        [HttpGet("/EmailCampaign/{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> GetByOrganizerId(int customerId)
         {
+            if (customerId <= 0)
+            {
+                return StatusCode(500, "Invalid customer ID");
+            }
+             _logger.LogInformation($"GetByOrganizerId called for customer id {customerId}");
+           
             try
             {
-               List<EmailCampaign> retVal = await  _campaignDbAccess.GetEmailCampaignsByOrganizerId(organizerId);
+               List<EmailCampaign> retVal = await  _campaignDbAccess.GetEmailCampaignsByOrganizerId(customerId);
                return  Ok(retVal);
             }
             catch (Exception ex)
@@ -58,6 +67,8 @@ namespace CreateTicketApi.Controllers
 
         }
         [HttpPost("/EmailCampaign/Resolve/{eventId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "EventOwnedByCustomer")]
         public async Task<IActionResult> ResolveReminderTemplate(int eventId, [FromBody] TemplateContentRequest request)
         {
             // if (templateId == 0)
@@ -123,10 +134,17 @@ namespace CreateTicketApi.Controllers
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
         }
 
-        [HttpDelete("/EmailCampaign/{campaignId}")]
-        public async Task<IActionResult> Delete(int campaignId)
+        [HttpDelete("/EmailCampaign/{customerId}/{campaignId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> Delete(int customerId, int campaignId)
         {
-            
+            if (campaignId <=0 || customerId <=0)
+            {
+                return StatusCode(500, "Invalid campaign ID or customer ID");
+            }
+            _logger.LogInformation($"Delete campaign called for campaign id {campaignId} and customer id {customerId}");
+        
             try
             {
                EmailCampaign campaign =  await _campaignDbAccess.GetEmailCampaignByCampaignId(campaignId);
@@ -160,9 +178,17 @@ namespace CreateTicketApi.Controllers
 
         }
 
-        [HttpGet("/bycampaignId/{campaignId}")]
-        public async Task<IActionResult> GetByCampaignId(int campaignId)
+
+        [HttpGet("byId/{customerId}/{campaignId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+
+        public async Task<IActionResult> GetByCampaignId(int customerId,int  campaignId)
         {
+            if (campaignId <=0 || customerId <=0)
+            {
+                return StatusCode(500, "Invalid campaign ID or customer ID");
+            }
             try
             {
                EmailCampaign retVal = await  _campaignDbAccess.GetEmailCampaignByCampaignId(campaignId);
@@ -176,11 +202,17 @@ namespace CreateTicketApi.Controllers
 
         }
 
-        [HttpPost("addupdatecampaign/{campaignId}")]
-        public async Task<IActionResult> Post(int campaignId,[FromBody]EmailCampaignTemplate emailCampaign)
+        [HttpPost("addupdatecampaign/{customerId}/{campaignId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> Post(int customerId, int campaignId,[FromBody]EmailCampaignTemplate emailCampaign)
         {
             try
             {
+                if (customerId <=0)
+                {
+                    return StatusCode(500, "Invalid customer ID");
+                }
                
                 //creating a new campaign
                 if (campaignId <= 0)
