@@ -42,12 +42,33 @@ import ResetPassword from "./pages/ResetPassword";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
+  const role = useSelector((state :any) => state.auth?.user?.role);
   const dispatch = useAppDispatch();
   
   useEffect(() => {
     dispatch(fetchUser());
   }, [dispatch]);
   
+  const checkScannerAccess = () => {
+    return isAuthenticated && role !== "Attendee";
+  }
+
+  const checkOwnerAccess = () => {
+      return isAuthenticated && role === "Owner";
+  }
+
+  const checkBasicAdminAccess = () => {
+    return isAuthenticated && (role === "Owner" || role === "FullAdmin" || role === "RestrictedAdmin");
+  }
+
+  const checkFullAdminAccess = () => {
+    return isAuthenticated && (role === "Owner" || role === "FullAdmin");
+  }
+
+  const checkAttendeeAccess = () => {
+    return isAuthenticated && role;
+  }
+
   //setupIonicReact();
   return (
     <IonReactRouter>
@@ -58,15 +79,30 @@ export default function App() {
         <Route
           path="/"
            render={() =>
-            isAuthenticated ? <MyEvents/> : <IonPage><IonHeader><AppNavbar/></IonHeader></IonPage>
+           {
+              if (isAuthenticated && checkBasicAdminAccess())
+                return <Dashboard />;
+              else if (isAuthenticated)
+                return <MyEvents />;
+              else
+                return <LoginPage />;
+           }
           }
         />
         <Route
           path="/login"
-          
-          render={()=> isAuthenticated ? <MyEvents/> : <LoginPage />}
+           render={() =>
+           {
+              if (isAuthenticated && checkBasicAdminAccess())
+                return <Dashboard />;
+              else if (isAuthenticated)
+                return <MyEvents />;
+              else
+                return <LoginPage />;
+           }
+          } 
         />
-        <Route path="/Dashboard"  render={() =>isAuthenticated?<Dashboard/>:<LoginPage/>}/>
+        <Route path="/Dashboard"  render={() =>checkBasicAdminAccess()?<Dashboard/>:<LoginPage/>}/>
         <Route
           path="/myevents"
   
@@ -74,14 +110,7 @@ export default function App() {
             isAuthenticated ? <MyEvents /> :<LoginPage />
           }
         />
-        {/* <Route
-         
-          path="/ticketdetails/:eventId/:salesOrderCode/:salesOrderId/:salesOrderStatus"
-           render={() =>
-            isAuthenticated ? <TicketDetails/> : <LoginPage/>
-          }
-          /> */}
-
+       
          <Route       
           path="/ticketdetails"
            render={() =>
@@ -96,14 +125,14 @@ export default function App() {
           /> 
         <Route
           path="/emailcampaigns"
-           render={() =>
-            <CampaignList /> 
+           render={() => checkBasicAdminAccess()?
+            <CampaignList /> : <LoginPage />
           }
         />
         <Route
           path="/managecampaign"
-           render={() =>
-            <CampaignAdd /> 
+           render={() => checkBasicAdminAccess()?
+            <CampaignAdd />  : <LoginPage />
           }
         />
         <Route
@@ -114,12 +143,11 @@ export default function App() {
         />
          <Route
           path="/refundorder"
-           render={() =>
-            <RefundOrder /> 
+           render={() => isAuthenticated? <RefundOrder /> : <LoginPage />
           }
         />
         <Route path="/Organizer/SalesOrderReport"       
-          render={() =>isAuthenticated?
+          render={() =>checkFullAdminAccess()?
           <OrderReport/>:<LoginPage/>}
         />
       
@@ -158,14 +186,14 @@ export default function App() {
         <Route path="/Signup" ><SignupForm/></Route>  
         <Route path="/ResetPassword"  render={() =>isAuthenticated?<ResetPassword/>:<LoginPage/>}/>
         
-        <Route path="/EventManager"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode/:ticketId"  render={() =>isAuthenticated?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode/:ticketId"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
 
      
-        <Route path="/OrganizerManager/:organizerId/:mode?"  render={() =>isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
-        <Route path="/TeamManager"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
+        <Route path="/OrganizerManager/:organizerId/:mode?"  render={() =>checkBasicAdminAccess()?<OrganizerManager/>:<LoginPage/>}/>
+        <Route path="/TeamManager"  render={() =>checkBasicAdminAccess()?<TeamManager/>:<LoginPage/>}/>
         {/* <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
          */}
         <Route
@@ -177,32 +205,20 @@ export default function App() {
 
         <Route
           path="/orderpayment/event/:id"
-           render={() =>
-               <OrderPayment /> 
-          }
+           render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
+        />
+         <Route
+          path="/orderpayment"
+           render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
         />
 
-        <Route
-          path="/orderpayment"
-           render={() =>
-               <OrderPayment /> 
-          }
-        />
-        {/* <Route
-          path="/ordersummary/:id"
-           render={() =>
-               <OrderSummary /> 
-          }
-        /> */}
          <Route
           path="/orderconfirmation/event/:eventId"
-           render={() =>
-               <OrderConfirmation /> 
-          }
-        /> 
+           render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
+        />
 
-        <Route path="/ScannerDashboard"  render={() =>isAuthenticated?<ScannerDashboard/>:<LoginPage/>}/>
-        <Route path="/ScanTicket/:eventId"  render={() =>isAuthenticated?<ScanTicket/>:<LoginPage/>}/>
+        <Route path="/ScannerDashboard"  render={() =>checkScannerAccess()?<ScannerDashboard/>:<LoginPage/>}/>
+        <Route path="/ScanTicket/:eventId"  render={() =>checkScannerAccess()?<ScanTicket/>:<LoginPage/>}/>
 
         </IonRouterOutlet>
       </IonReactRouter>
