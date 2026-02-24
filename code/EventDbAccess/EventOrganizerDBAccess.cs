@@ -326,9 +326,7 @@ namespace EventManagementDbAccess
                         OrganizerFullAddress = @fullAddress,
                         OrganizerInstagram = @instagram,
                         OrganizerFacebook = @facebook,
-                        OrganizerX= @organizerX,
-                        StripeAccountId = @StripeAccountId,
-                        StripeConnectStatus = @stripeConnectStatus
+                        OrganizerX= @organizerX                     
                     WHERE CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -349,8 +347,8 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@organizerX", organizer.OrganizerX);
                 cmd.Parameters.AddWithValue("@aboutMe", organizer.OrganizerAboutMe);
                 cmd.Parameters.AddWithValue("@fullAddress", organizer.OrganizationFullAddress);
-                cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@stripeConnectStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
+                //cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
+                //cmd.Parameters.AddWithValue("@stripeConnectStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 return rowsAffected > 0;
             }

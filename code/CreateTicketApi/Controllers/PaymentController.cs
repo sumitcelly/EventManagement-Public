@@ -44,7 +44,7 @@ namespace CreateTicketApi.Controllers
 
         [HttpPost("create-account/{customerId}")]
         [Authorize(Policy = "OwnerOnly")]
-        [Authorize(Policy = "CustomerIdMatch")]
+        [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> CreateStripeAccount(int customerId)
         {
             if (customerId <= 0)
@@ -113,7 +113,7 @@ namespace CreateTicketApi.Controllers
 
         [HttpPost("initiate-account-link/{customerId}")]
         [Authorize(Policy = "OwnerOnly")]
-        [Authorize(Policy ="CustomerIdMatch")]
+        [Authorize(Policy ="MatchingCustomer")]
         public async Task<IActionResult> InitiateAccountLink(int customerId, [FromBody]string stripeAcctId)
         {
             if (string.IsNullOrEmpty(stripeAcctId))

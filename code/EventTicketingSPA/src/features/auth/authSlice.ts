@@ -1,7 +1,6 @@
 // src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { RootState } from "../../app/store";
 
 interface User {
   id: number;
@@ -15,8 +14,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean | false,
   status: string |null,
-  error: string | null,
-  token: string | null 
+  error: string | null
 }
 
 const initialState: AuthState = {
@@ -24,7 +22,6 @@ const initialState: AuthState = {
   isAuthenticated: false,
   status: "idle",
   error: null,
-  token: null
 };
 
 interface LoginFormInputs {
@@ -33,6 +30,7 @@ interface LoginFormInputs {
   signup?: boolean;
 }
 
+let accessToken: string | null = null;
 let  baseApiUrl =import.meta.env.VITE_API_BASE_URL;
 console.log("baseApiUrl", baseApiUrl);
 
@@ -47,7 +45,8 @@ export const loginUser = createAsyncThunk(
         credentials,
         { withCredentials: true } // needed for HttpOnly cookies
       );
-      return res.data; // Return both user and accessToken
+      accessToken= res.data.accessToken; // Expecting { username: "john", ... }
+      return  res.data.user; // Adjust based on your API response
       
     } catch (err :any) {
       return rejectWithValue(err.response?.data || "Login failed");
@@ -64,7 +63,8 @@ export const loginUserWithSecureCode = createAsyncThunk(
         credentials,
         { withCredentials: true } // needed for HttpOnly cookies
       );
-      return res.data; // Return both user and accessToken
+      accessToken= res.data.accessToken; // Expecting { username: "john", ... }
+      return  res.data.user; // Adjust based on your API response
       
     } catch (err :any) {
       return rejectWithValue(err.response?.data || "Login failed");
@@ -79,13 +79,15 @@ export const refreshAccessToken = async () => {
       {},
       { withCredentials: true }
     );
-    return response.data.accessToken;
+    accessToken = response.data.accessToken;
+    return accessToken;
   } catch {
+    accessToken = null;
     return null;
   }
 };
 
-//export const getAccessToken = (state: RootState) => state.auth.token;
+export const getAccessToken = () => accessToken;
 
 
 // Async check user session
@@ -93,10 +95,9 @@ export const fetchUser = createAsyncThunk(
   "auth/fetchUser",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get(baseApiUrl+"/user/me", {
+      const res = await axios.get(baseApiUrl+"/api/auth/me", {
         withCredentials: true,
       });
-      console.log("fetch user response", res.data);
       return res.data;
     } catch (err) {
       return rejectWithValue(null);
@@ -111,10 +112,6 @@ const authSlice = createSlice({
     logout(state) {
       state.user = null;
       state.isAuthenticated = false;
-      state.token = null;
-    },
-     setToken(state, action: PayloadAction<string | null>) {
-      state.token = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -122,11 +119,10 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(loginUser.fulfilled, (state, action :PayloadAction<any>) => {
+      .addCase(loginUser.fulfilled, (state, action :PayloadAction<User>) => {
         state.status = "succeeded";
-        state.user = action.payload.user;
+        state.user = action.payload;
         state.isAuthenticated = true;
-        state.token = action.payload.accessToken || null; // Store token if returned by API
       })
       .addCase(loginUser.rejected, (state, action: any) => {
         state.status = "failed";
@@ -135,10 +131,9 @@ const authSlice = createSlice({
       .addCase(loginUserWithSecureCode.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(loginUserWithSecureCode.fulfilled, (state, action :PayloadAction<any>) => {
+      .addCase(loginUserWithSecureCode.fulfilled, (state, action :PayloadAction<User>) => {
         state.status = "succeeded";
-        state.user = action.payload.user;
-        state.token = action.payload.accessToken || null; // Store token if returned by API
+        state.user = action.payload;
         state.isAuthenticated = true;
       })
       .addCase(loginUserWithSecureCode.rejected, (state, action: any) => {
@@ -152,6 +147,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setToken } = authSlice.actions;
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;
 

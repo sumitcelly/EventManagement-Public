@@ -43,11 +43,11 @@ import ResetPassword from "./pages/ResetPassword";
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
   const role = useSelector((state :any) => state.auth?.user?.role);
-  const dispatch = useAppDispatch();
+  //const dispatch = useAppDispatch();
   
-  useEffect(() => {
-    dispatch(fetchUser());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   dispatch(fetchUser());
+  // }, [dispatch]);
   
   const checkScannerAccess = () => {
     return isAuthenticated && role !== "Attendee";
@@ -214,7 +214,7 @@ export default function App() {
 
          <Route
           path="/orderconfirmation/event/:eventId"
-           render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
+           render={() => isAuthenticated ? <OrderConfirmation /> : <LoginPage />}
         />
 
         <Route path="/ScannerDashboard"  render={() =>checkScannerAccess()?<ScannerDashboard/>:<LoginPage/>}/>
