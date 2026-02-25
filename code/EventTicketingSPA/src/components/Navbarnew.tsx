@@ -61,6 +61,7 @@ export function AppNavbar() {
       { withCredentials: true }
     );
     dispatch(logout());
+    history.push("/login");
   }
 
     const {

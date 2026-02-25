@@ -183,7 +183,7 @@ export default function App() {
         /> 
         <Route path="/Auth/SendSecureCode/:returnUrl?"><SendSecureCode/></Route>
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" ><ValidateSecureCode/></Route>       
-        <Route path="/Signup" ><SignupForm/></Route>  
+        <Route path="/Signup" render={() =>isAuthenticated?<SignupForm/>:<LoginPage/>}/>
         <Route path="/ResetPassword"  render={() =>isAuthenticated?<ResetPassword/>:<LoginPage/>}/>
         
         <Route path="/EventManager"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>

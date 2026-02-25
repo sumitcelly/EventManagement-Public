@@ -14,10 +14,6 @@ interface FormValues {
 
 
 export default function SignupForm()  {
-
-  
-  const params = new URLSearchParams(location.search);
-  const email = params.get("email") || "";
   const ionRouter = useIonRouter();
   const user =  useAppSelector((state) => state.auth.user);
   if (!user || !user.id) {
@@ -35,7 +31,8 @@ export default function SignupForm()  {
       </IonPage>
     );
   }
-    
+
+  const email = user.email;
   console.log("SignupForm for email:", email);
 
   const { register, handleSubmit, formState:{errors} } = useForm<FormValues>({

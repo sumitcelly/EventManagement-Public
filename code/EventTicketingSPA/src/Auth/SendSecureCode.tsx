@@ -31,6 +31,7 @@ export default function SendSecureCode() {
   const params = new URLSearchParams(location.search);
   const email = params.get('email') || '';
   const {returnUrl} = useParams<{returnUrl: string}>();
+  const history = useHistory();
  
   console.log("SendSecureCode returnUrl:", returnUrl);
 
@@ -60,32 +61,32 @@ export default function SendSecureCode() {
         {
             url+="/true";
             console.log("Checking if user exists for signup flow");
-            axiosClient.get(`/user/checkuserexists/${data.email}`).then(res=>{
-                if(res?.status===200 && res.data===true){
-                    userExists=true;
-                    console.log("User exists with email:", data.email);
-                }
-            }).
-            catch(err=>{
-                if(err.response && err.response.status===404){
-                    // email does not exist, proceed    
-                    setStatus("idle");
-                    //navigate(`/auth/validatesecurecode/${returnUrl}`,{state:{email:data.email}}); 
-                }
-            });
+            try
+            {
+              const res = await axiosClient.get(`/user/checkuserexists/${data.email}`);
+              if(res?.status===200 && res.data===true){
+                  userExists=true;
+                  console.log("User exists with email:", data.email);
+              }
+              else if (res.status == 404)
+              {
+                setStatus("idle");
+              }
+            }
+            catch(err)
+            {
+              console.log('Error checking user exists',err);
+              setStatus("idle");
+            }
         }
         const res = await axiosClient.get(url);
         console.log("API response for generate email code:", res);
-
-        if (res?.status === 200) {
-            setApiStatus("Secure code sent to your email.");
-            ionRouter.push(`/auth/validatesecurecode/${returnUrl}?email=${data.email}&userExists=${userExists}`);
-               //{ email: data.email, userExists: userExists }
-            
-        } 
-        else  if (res?.status === 404 ) {
-            setApiStatus("Email not found. Please check and try again.");
-        } 
+        
+        //if 200 or 404 we show the same message to avoid email enumeration. Only if it's other error we show generic failure message.
+        if (res?.status === 200 || res?.status === 404) {
+            setApiStatus("If an email exists for your account, you will receive an authentication code to login.");
+            history.push(`/auth/validatesecurecode/${returnUrl}`,{userExists: userExists, email: data.email});
+          }
         else {
             setApiStatus("Failed to send secure code. Please try again later.");
         }

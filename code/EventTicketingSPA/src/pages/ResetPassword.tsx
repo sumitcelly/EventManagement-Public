@@ -6,6 +6,8 @@ import axios from "axios";
 import toast, { Toaster } from 'react-hot-toast';
 import axiosClient from "../api/axiosClient";
 import { useAppSelector } from "../app/hook";
+import AppNavbar from "../components/Navbarnew";
+import { IonContent, IonHeader, IonPage } from "@ionic/react";
 
 interface FormValues {
   password: string;
@@ -15,26 +17,20 @@ interface FormValues {
 export default function ResetPassword()  {
 
   //const [error,setError] = useState<string | null>(null);
-  const params = new URLSearchParams(location.search);
-  const email = params.get("email") || "";
-  
-  if (!email) {
+
+
+  const user =  useAppSelector((state) => state.auth.user);
+  if (!user || !user.email) {
     return (
       <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
         <h1 className="text-2xl font-bold mb-4 text-center">Error</h1>
-        <p className="text-red-500 text-center">No email provided for password reset.</p>
+        <p className="text-red-500 text-center">No authenticated user found. Please complete secure code validation first.</p>
       </div>
     );
   }
-   const {  isAuthenticated } = useAppSelector((state) => state.auth);
-   if (!isAuthenticated) {
-    return (
-      <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-        <h1 className="text-2xl font-bold mb-4 text-center">Error</h1>  
-        <p className="text-red-500 text-center">You must be logged in to reset your password.</p>
-      </div>
-    );
-  }
+  const email = user.email;
+  console.log("ResetPassword for email:", email);
+  
   //console.log("SignupForm for email:", email);
   const userId  = useAppSelector((state) => state.auth.user?.id);
   const { register, handleSubmit, formState:{errors} } = useForm<FormValues>();
@@ -71,31 +67,39 @@ export default function ResetPassword()  {
   };
 
   return (
-     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-        <Toaster position="top-right" />
-        <h1 className="text-2xl font-bold mb-4 text-center">Reset Password</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        
-        <div className="text-center">
-        <label className="text-l font-accent text-accent-color">Please enter the new password for <span className="text-xl text-tertiary-color">{email}</span></label>
-        </div>
+    <IonPage>
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+      <IonContent className="ion-padding flex flex-col justify-center items-center h-full"> 
+        <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+            <Toaster position="top-right" />
+            <h1 className="text-2xl font-bold mb-4 text-center">Reset Password</h1>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            
+            <div className="text-center">
+            <label className="text-l font-accent text-accent-color">Please enter the new password for <span className="text-xl text-tertiary-color">{email}</span></label>
+            </div>
 
-        {/* PASSWORD COMPONENT 
-        receives state from passwordfields 
-        to update state locally*/}
-        
-        <PasswordFields onChange={(state) => setPasswordState(state)} />
+            {/* PASSWORD COMPONENT 
+            receives state from passwordfields 
+            to update state locally*/}
+            
+            <PasswordFields onChange={(state) => setPasswordState(state)} />
 
-        <div className="flex flex-row">
-        {/* SUBMIT BUTTON */}
-            <button type="submit" 
-                className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-                disabled={!passwordState.valid || !email}>
-                Reset Password
-            </button>
+            <div className="flex flex-row">
+            {/* SUBMIT BUTTON */}
+                <button type="submit" 
+                    className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    disabled={!passwordState.valid || !email}>
+                    Reset Password
+                </button>
+            </div>
+            </form>
         </div>
-        </form>
-    </div>
+    </IonContent>
+  </IonPage>
+
   );
 };
 

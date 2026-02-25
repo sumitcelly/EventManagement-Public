@@ -6,7 +6,7 @@ import { loginUser, loginUserWithSecureCode } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { use, useEffect, useState } from "react";
-import { useLocation,  useParams } from "react-router-dom";
+import { useHistory, useLocation,  useParams } from "react-router-dom";
 import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
@@ -30,13 +30,13 @@ export default function ValidateSecureCode() {
   const [apiStatus,setApiStatus] = useState("");
   const [codeStatus,setcodeStatus]=useState<"idle"|"loading"|"error">("idle");
   const [timerExpired,setTimerExpired]=useState(false);
-  const ionRouter = useIonRouter();
+  const history = useHistory();
 
   const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const email = params.get("email") || "";
-  const  userExists = params.get("userExists") || false;
-  
+  const  userData:any = location.state || {};
+  console.log(' data from user user', userData);
+  const {email,userExists} =userData;
+
   console.log("validating secure code for email:", email,userExists);
   const {returnUrl} = useParams<{returnUrl: string}>();
   console.log("returnUrl:", returnUrl);
@@ -86,14 +86,17 @@ export default function ValidateSecureCode() {
     if (isAuthenticated)
     {
       console.log("login succeeded - navigating to returnUrl:", returnUrl);
-      if (returnUrl === "signup" && userExists)
+      if (returnUrl === "signup")
       {
-        
-        ionRouter.push("/Myevents");
+        //if user exists and they came through signup flow, we take them to reset password page since they want to create new password. If user does not exist we take them to signup page.
+        if (userExists)
+          history.push("/resetpassword");
+        else
+          history.push("/" + "Signup");
       }
-      else
+      if (returnUrl === "resetpassword")
       {
-        ionRouter.push("/" + (returnUrl || "")+"?email="+email);      
+        history.push("/" + (returnUrl || ""));      
       }
     }
   }
@@ -168,7 +171,7 @@ export default function ValidateSecureCode() {
         <a href="#" className="mr-auto text-accent-color hover:underline mb-3" 
             onClick={(e=>{
             e.preventDefault();
-            ionRouter.push("/auth/sendsecurecode?email="+email);
+            history.push(`/auth/sendsecurecode/${returnUrl}?email=`+email);
             })}>
             Back
         </a>

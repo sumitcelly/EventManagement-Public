@@ -8,6 +8,7 @@ import { useAppDispatch ,useAppSelector} from "../app/hook";
 
 import { IonPage, IonContent, IonHeader,IonRoute, useIonRouter } from '@ionic/react';
 import AppNavbar from "../components/Navbarnew";
+import { useHistory } from "react-router";
 
 interface LoginFormInputs {
   email: string;
@@ -23,8 +24,8 @@ const schema = yup.object({
 export default function Login() {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.auth);
-  //const navigate = useNavigate();
-  const router = useIonRouter();
+
+  const history = useHistory();
   
   const {
     register,
@@ -77,7 +78,7 @@ export default function Login() {
         <div className="flex flex-row items-center justify-between">
           <a href="#" className="text-sm text-blue-600 hover:underline"
           onClick={(e) => {e.preventDefault(); 
-                  router.push(`/auth/sendsecurecode/resetpassword?email`+getValues('email')); 
+                  history.push(`/auth/sendsecurecode/resetpassword?email=`+getValues('email')); 
                   
                 }}
           >Forgot Password?
