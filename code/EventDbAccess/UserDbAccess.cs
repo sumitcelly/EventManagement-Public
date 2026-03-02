@@ -319,6 +319,7 @@ namespace EventManagementDbAccess
             }
         }
 
+
         public async Task<bool> UpdateUserByEmail(EventUser user)
         {
             if (user == null)

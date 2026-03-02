@@ -49,6 +49,8 @@ const schema = yup
 
 export function AppNavbar() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const role = user?.role || "";
+  
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
  // const navigate = useNavigate();
@@ -209,9 +211,18 @@ export function AppNavbar() {
       
 
       <NavbarCollapse className="ml-auto mr-5">
-        <NavbarLink href="/dashboard" active>
-          Organize an Event
-        </NavbarLink>
+        {isAuthenticated && role === 'Attendee' &&
+        (
+            <NavbarLink href="/organizermanager" active>
+              Organize an Event
+            </NavbarLink>
+        )}
+        {isAuthenticated && role !== 'Attendee' &&
+        (
+            <NavbarLink href="/dashboard" active>
+              Organize an Event
+            </NavbarLink>
+        )}
         {isAuthenticated  ?
         (<>
           <NavbarLink href="/myevents">Find my tickets</NavbarLink>

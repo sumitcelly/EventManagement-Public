@@ -7,26 +7,96 @@ using EventManagementDbAccess;
 using K4os.Compression.LZ4.Internal;
 using System.Data;
 using Microsoft.AspNetCore.Authorization;
+using EventUtils;
+using System.Security.Claims;
 
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize(Policy = "RestrictedAdminMinimum")]
     public class EventOrganizerMembersController : ControllerBase
     {
         private readonly EventOrganizerMembersDbAccess _dbAccess;
         private readonly ILogger<EventOrganizerMembersController> _logger;
         private readonly UserDbAccess _userdbAccess;
+
+        private readonly EventOrganizerDBAccess _eventOrganizerDbAcces;
+
+         private readonly JwtUtils _tokenUtils;
         public EventOrganizerMembersController(EventOrganizerMembersDbAccess dbAccess, UserDbAccess userDbAccess,
+                        EventOrganizerDBAccess eventOrganizerDbAcces, JwtUtils jwtUtils,
                      ILogger<EventOrganizerMembersController> logger)
         {
             _dbAccess = dbAccess;
             _logger = logger;
             _userdbAccess = userDbAccess;
+            _eventOrganizerDbAcces = eventOrganizerDbAcces;
+            _tokenUtils = jwtUtils;
         }
 
+        [HttpPost("AddOwner/{userId}")]
+        [Authorize(Policy = "MatchingUserId")]
+        public async Task<IActionResult> AddOwner(int userId,EventOrganizerMembers data)
+        {
+            if (userId <= 0 || data == null || data.CustomerId <= 0)
+            {
+                return BadRequest("Invalid data sent");
+            }
+
+            int customerId = data.CustomerId;
+            string role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            if (role != UserRoles.Attendee.ToString())
+            {
+                return BadRequest($"Logged in role is incorrect in order to become an organizer: {role}");
+            }
+            
+            EventUser user = await _userdbAccess.GetUserById(userId);
+            if (user == null)
+            {
+                return NotFound("Unable to locate user sent");
+            }
+
+           
+            List<EventOrganizerMembers> members = await _dbAccess.GetMembersByCustomerId(customerId);
+            if (members?.Count > 0)
+            {
+                return Forbid("There can only be one owner for an organization");
+            }
+
+            DateTime createdDate = await _eventOrganizerDbAcces.GetOrganizerCreatedDate(customerId);
+            if ((DateTime.Now - createdDate).TotalSeconds > 20)
+            {
+                return Forbid("The organizer cannot be added as owner due to a security issue.");
+            }
+            EventOrganizerMembers member = new EventOrganizerMembers()
+            {
+                UserId = userId,
+                CustomerId = customerId,
+                IsActive= true,
+                Role = UserRoles.Owner.ToString()
+            };
+            int memberId = await _dbAccess.AddMember(member);
+            if (memberId >0)
+            {
+                _logger.LogInformation($"Added user {userId} as owner of org {customerId}");
+                var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);      
+                //SetSecureCookie("refreshToken", newRefreshToken);
+                var newAccessToken = _tokenUtils.GenerateJwtToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);
+                return Ok(new { accessToken = newAccessToken,
+                                user = new { id = userId, email = user.Email, role = UserRoles.Owner.ToString(), customerId = customerId, 
+                                name = user.Name ?? string.Empty } });
+            }
+            else
+            {
+                return  StatusCode(500,"Error adding member as owner");
+            }
+            
+        }
+      
+            
+
         [HttpPost("{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> AddMember(int customerId, [FromBody] EventOrganizerMembers member)
         {
@@ -81,6 +151,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("{organizerMemberId:int}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         public async Task<IActionResult> GetMemberById(int organizerMemberId)
         {
             try
@@ -98,6 +169,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("bycustomer/{customerId:int}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> GetMembersByCustomerId(int customerId)
         {
@@ -114,6 +186,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("/byuserId/{userId:int}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingUserId")]
         public async Task<IActionResult> GetMemberByUserId(int userId)
         {
@@ -132,6 +205,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPut("{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> UpdateMember(int customerId,[FromBody] EventOrganizerMembers member)
         {
@@ -154,6 +228,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpDelete("{customerId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> DeleteMember(int customerId,[FromBody] int userId)
         {

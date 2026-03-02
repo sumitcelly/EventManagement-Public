@@ -28,7 +28,7 @@ namespace CreateTicketApi.Controllers
 
         [HttpGet]
         [Route("/Events/Search")]
-        public async Task<List<EventHeader>> SearchEvents(string keyword = null,
+        public async Task<List<EventHeader>> SearchEvents(string keyword = null ,
                                                          DateOnly startDate = default,
                                                          int intervalDay = 0,
                                                          string city = null,

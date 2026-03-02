@@ -1,6 +1,7 @@
 // src/features/auth/authSlice.js
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import axiosClient from "../../api/axiosClient";
 
 interface User {
   id: number;
@@ -53,6 +54,24 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+// export const loginUserWithRoleChange = createAsyncThunk(
+//   "auth/loginUserWithRoleChange",
+//   async (data: any, { rejectWithValue }) => {
+//     try {
+//       const res = await axios.post(
+//         baseApiUrl+`/eventOrganizerMembers/AddOwner/${data.userId}`,
+//         {customerId: data.customerId},
+       
+//         { withCredentials: true } // needed for HttpOnly cookies
+//       );
+//       accessToken= res.data.accessToken; // Expecting { username: "john", ... }
+//       return  res.data.user; // Adjust based on your API response
+      
+//     } catch (err :any) {
+//       return rejectWithValue(err.response?.data || "Role change failed");
+//     }
+//   }
+// );
 
 export const loginUserWithSecureCode = createAsyncThunk(
   "auth/loginUserWithSecureCode",
@@ -113,6 +132,18 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
     },
+    changeUserRole(state, action){
+      console.log('data in change user role',action.payload);
+      accessToken = action.payload.accessToken;
+      
+      if (action.payload.user) {
+        state.user = {
+          ...state.user,          // Keep existing user data
+          ...action.payload.user  // Merge new user data
+        };
+      }
+     
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -140,6 +171,15 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload || "Login failed"  ;
       })
+      // .addCase(loginUserWithRoleChange.fulfilled, (state, action :PayloadAction<User>) => {
+      //   state.status = "succeeded";
+      //   state.user = action.payload;
+      //   state.isAuthenticated = true;
+      // })
+      // .addCase(loginUserWithRoleChange.rejected, (state, action: any) => {
+      //   state.status = "failed";
+      //   state.error = action.payload || "Role change failed"  ;
+      // })
       .addCase(fetchUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = !!action.payload;
@@ -147,6 +187,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout,changeUserRole } = authSlice.actions;
 export default authSlice.reducer;
 

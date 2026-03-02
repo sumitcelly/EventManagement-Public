@@ -120,10 +120,7 @@ namespace CreateTicketApi.Controllers
             
             //when stored in db, no need to store userId, role, customerId in token
             var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
-            //RefreshTokens.Remove(refreshToken);
-            //RefreshTokens[newRefreshToken] = userId;
-
-            //Response.Cookies.Append("refreshToken", newRefreshToken);
+            
             SetSecureCookie("refreshToken", newRefreshToken);
 
             var newAccessToken = _tokenUtils.GenerateJwtToken(userId, role, Convert.ToInt16(customerId));

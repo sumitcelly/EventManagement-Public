@@ -8,7 +8,7 @@ namespace EventManagementDbAccess
     {
         public int OrganizerId { get; set; }
         public required string OrganizationName { get; set; }
-        public required string OrganizerEmail { get; set; }
+        public string OrganizerEmail { get; set; } = string.Empty;
         public string OrganizerWebsite { get; set; } = string.Empty;
         public required string OrganizerEventBaseUrl { get; set; }
         public string OrganizerDescription { get; set; } = string.Empty;

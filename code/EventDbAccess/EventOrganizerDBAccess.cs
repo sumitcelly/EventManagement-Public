@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using Stripe;
 using System;
 using System.Threading.Tasks;
 using static EventManagementDbAccess.EventOrganizer;
@@ -41,6 +42,39 @@ namespace EventManagementDbAccess
                 Console.WriteLine($"Error retrieving organizer ID by Stripe account ID: {ex.Message}");
                 throw;
             }
+        }
+
+        public async Task<DateTime> GetOrganizerCreatedDate(int customerId)
+        {
+            if (customerId <= 0)
+                throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+                string query = @"SELECT CreatedAt FROM eventorganizer 
+                         WHERE CustomerId = @customerId";
+                 using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@customerId", customerId);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                   return reader.GetDateTime(reader.GetOrdinal("CreatedAt"));
+                }
+                else
+                {
+                    return DateTime.MinValue;
+                }
+            
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving organizer by CustomerId: {ex.Message}");
+                throw;
+            }
+
+
         }
         public async Task<EventOrganizer> GetOrganizerById(int customerId)
         {
@@ -317,7 +351,6 @@ namespace EventManagementDbAccess
                         OrganizerEventBaseUrl = @eventBaseUrl,
                         OrganizerDescription = @description,
                         OrganizerAboutMe = @aboutMe,
-                        OrganizerImageUrl = @imageUrl,
                         OrganizerCity = @city,
                         OrganizerCountry = @country,
                         OrganizerPhone = @phone,
@@ -335,7 +368,6 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@website", organizer.OrganizerWebsite ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@eventBaseUrl", organizer.OrganizerEventBaseUrl ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@description", organizer.OrganizerDescription ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@imageUrl", organizer.OrganizerImageUrl ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@city", organizer.OrganizerCity ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@country", organizer.OrganizerCountry ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@phone", organizer.OrganizerPhone ?? (object)DBNull.Value);

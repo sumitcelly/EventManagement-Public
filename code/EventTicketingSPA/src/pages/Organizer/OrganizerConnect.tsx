@@ -18,21 +18,18 @@ import Permissions from "../../components/Permissions";
 import { OrganizerInfo } from "../../types/Organizer";
 
 const memberSchema = yup.object({
-  organizerEmail: yup.string().email("Email is invalid").required("Email is required."),
   organizerWebsite: yup.string().nullable().url("url is invalid").default(null),
   organizerInstagram: yup.string().nullable().default(null),
   organizerFacebook: yup.string().nullable().default(null),
   organizerX: yup.string().nullable().default(null),
-  organizerPhone: yup.string().required("Phone")
+ 
   });
 
 type FormValues = {
-  organizerEmail: string;
   organizerWebsite:string | null;
   organizerInstagram:string | null;
   organizerFacebook:string | null;
   organizerX:string | null;
-  organizerPhone:string;
 };
 
 export default function OrganizerConnect({organizerInfo, organizerId}: {organizerInfo?: OrganizerInfo, organizerId?:string}) {
@@ -50,7 +47,7 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
   });
 
    const queryClient = useQueryClient();
-  const onSubmit = (data: FormValues,errors:any) => {
+   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
@@ -63,7 +60,6 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
         organizerId:organizerInfo.organizerId || 0,
         organizerName: organizerInfo.organizerName,
         organizationName: organizerInfo.organizationName,
-        organizerEmail: data.organizerEmail,
         organizerWebsite: data.organizerWebsite,
         organizerEventBaseUrl: organizerInfo.organizerEventBaseUrl ,
         organizerDescription: organizerInfo.organizerDescription,
@@ -72,7 +68,6 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
         organizerImageUrl: organizerInfo.organizerImageUrl ,
         organizerFacebook: data.organizerFacebook,
         organizerX: data.organizerX,
-        organizerPhone: data.organizerPhone,
         organizerCountry: organizerInfo.organizerCountry,
     };
 
@@ -110,12 +105,10 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     console.log('MemberInfo changed:', organizerInfo);
     if (organizerInfo) {
       const values = {
-        organizerEmail: organizerInfo.organizerEmail || '',
         organizerWebsite: organizerInfo.organizerWebsite || '',
         organizerFacebook: organizerInfo.organizerFacebook || '',
         organizerInstagram: organizerInfo.organizerInstagram || '',
-        organizerX: organizerInfo.organizerX || '',
-        organizerPhone: organizerInfo.organizerPhone || '',
+        organizerX: organizerInfo.organizerX || ''
       };
       console.log('Resetting form with:', values);
       reset(values);
@@ -138,35 +131,6 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     <div className="flex flex-col">
      <Toaster position="top-right" />
       
-      <div className="space-y-1">
-        <label className="font-semibold mb-1">Organizer Email</label>
-        <input
-          type="text"
-          {...register("organizerEmail")}
-          className="w-full border rounded p-2"
-          placeholder="Enter your contact email..."
-        />
-        <div className="min-h-[20px]">
-          {errors.organizerEmail && (
-            <p className="text-red-600 text-sm mt-1">{errors.organizerEmail.message}</p>
-          )}
-        </div>
-      </div>
-      <div className="space-y-1">
-        <label className="font-semibold mb-1">Organizer Phone</label>
-        <input
-          type="text"
-          {...register("organizerPhone")}
-          className="w-full border rounded p-2"
-          placeholder="Enter your contact phone..."
-        />
-        <div className="min-h-[20px]">
-          {errors.organizerPhone && (
-            <p className="text-red-600 text-sm mt-1">{errors.organizerPhone.message}</p>
-          )}
-        </div>
-      </div>
-
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organizer Website</label>
         <input

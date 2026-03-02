@@ -16,29 +16,28 @@ import axiosClient from "../../api/axiosClient";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
 import OrganizerStripe from "./OrganizerStripe";
+import { useAppSelector } from "../../app/hook";
+import { RootState } from "../../app/store";
+import { Toaster } from "react-hot-toast";
 
 export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
  // const location = useLocation();
   
-  const {organizerId,mode} = useParams<{organizerId: string; mode: string}>();
+  const {mode} = useParams<{mode: string}>();
+  const user =  useAppSelector((state: RootState) => state.auth?.user);
+  const role  = user?.role;
+  const organizerId =  user?.customerId;
 
   //mode valid values are ticketlist,new,edit
-  console.log('organizer id, mode from params',organizerId,mode);
-
- 
+  console.log('organizer id, customerId from auth',organizerId,role);
   const [localActiveTab, setLocalActiveTab] = useState(0);
-  //console.log('active tab in state is',activeTab);
-  // const organizerInfo = location.state;
-  // console.log('Organizer Info is ', organizerInfo);
 
    const { data, isLoading } = 
     useQuery(['Organizer',organizerId], async () => {
         console.log("Fetching organizer details", organizerId);
         const res = await axiosClient.get(`/eventorganizer/${organizerId}`);
         console.log('detail for organizer', res);
-      
-    
         return res.data;
       },
       {
@@ -70,13 +69,22 @@ export function OrganizerManager() {
     }
   }, [organizerId,mode]);
 
+  // if (isLoading)
+  // {
+  //   return (<h2>Loading...</h2>)
+  // }
+
   return (  
     <IonPage>
           <IonHeader>
             <AppNavbar />
           </IonHeader>
-        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    
+        <IonContent className="ion-padding fle  x flex-col justify-center items-center h-full">
+   
+    {role === "Attendee" &&(
+      <div className="flex text-wrap text-accent-dark text-lg font-body justify-center max-w-xl mx-auto mt-4">
+        We need some information from you so that you can organize events. Stripe information is manadatory for paid events.</div>
+    )}
     <Tabs aria-label="Organizer Manager" 
       ref={tabsRef}
       className="max-w-2xl mx-auto "

@@ -192,7 +192,7 @@ export default function App() {
         <Route path="/EventManager/:eventId/:mode/:ticketId"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
 
      
-        <Route path="/OrganizerManager/:organizerId/:mode?"  render={() =>checkBasicAdminAccess()?<OrganizerManager/>:<LoginPage/>}/>
+        <Route path="/OrganizerManager/:mode?"  render={() => isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>
         <Route path="/TeamManager"  render={() =>checkBasicAdminAccess()?<TeamManager/>:<LoginPage/>}/>
         {/* <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
          */}

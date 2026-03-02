@@ -22,7 +22,7 @@ public class JwtUtils
     }
 
     public string GenerateJwtToken(string userId, string role, int customerId = 0)
-    {
+    {   
         if (string.IsNullOrEmpty(userId))
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
         if (string.IsNullOrEmpty(role))

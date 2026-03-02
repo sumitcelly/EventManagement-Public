@@ -17,14 +17,18 @@ import Permissions from "../../components/Permissions";
 import { OrganizerInfo } from "../../types/Organizer";
 import FileUpload from "../../components/FileUpload";
 import axios from "axios";
+import { useDispatch } from "react-redux";
+import { changeUserRole, getAccessToken } from "../../features/auth/authSlice";
 
 const memberSchema = yup.object({
   orgName: yup.string().required("Organization name required."),
-  eventBaseUrl: yup.string().required("Event Base Url is required."),
+  eventBaseUrl: yup.string().required("Organizer Base Url is required.").default(window.location.origin),
   description: yup.string().required("Organizer company description is required"),
   country: yup.string().required("Country is required").default("USA"),
   aboutMe: yup.string().required("Organizer about me is required."),
-  imagePreview: yup.string().nullable().default(null)
+  imagePreview: yup.string().nullable().default(null),
+  organizerPhone: yup.string().required("Phone"),
+  organizerEmail: yup.string().email("Email is invalid").required("Email is required."),
   });
 
 type FormValues = {
@@ -34,6 +38,8 @@ type FormValues = {
   country: string;
   aboutMe:string;
   imagePreview: string | null;
+  organizerEmail: string;
+  organizerPhone: string;
 };
 
 export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId?:string,organizerInfo?:OrganizerInfo}) {
@@ -42,13 +48,17 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
   const [file, setFile] = useState<File | null>(null);
  
   const user = useAppSelector((state: RootState) => state.auth.user);
+  
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
   
   const {
     control,
     handleSubmit,
     reset,
     register,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(memberSchema),
@@ -56,34 +66,35 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       reValidateMode: "onChange"
   });
 
-  const onSubmit = (data: FormValues,errors:any) => {
+  const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
-    if (!organizerInfo)
-      return;
+    // if (!organizerInfo)
+    //   return;
 
     console.log('image data', imagePreview);
 
     const apiData={
-        organizerId:organizerInfo.organizerId || 0,
+        organizerId:organizerInfo?.organizerId || 0,
         organizationName: data.orgName,
-        organizerEmail: organizerInfo.organizerEmail,
-        organizerWebsite: organizerInfo.organizerWebsite,
+        organizerEmail: data.organizerEmail,
+        organizerWebsite: organizerInfo?.organizerWebsite,
         organizerEventBaseUrl: data.eventBaseUrl ,
         organizerDescription: data.description,
         organizerAboutMe: data.aboutMe,
-        organizerInstagram: organizerInfo.organizerInstagram ,
-        organizerFacebook: organizerInfo.organizerFacebook,
-        organizerX: organizerInfo.organizerX,
-        organizerPhone: organizerInfo.organizerPhone,
-        organizerCountry: organizerInfo.organizerCountry,
+        organizerInstagram: organizerInfo?.organizerInstagram ,
+        organizerFacebook: organizerInfo?.organizerFacebook,
+        organizerX: organizerInfo?.organizerX,
+        organizerPhone: data.organizerPhone,
+        organizerCountry: organizerInfo?.organizerCountry,
     };
 
-    if (organizerInfo.organizerId)
+    if (organizerInfo?.organizerId)
     {    
-      axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
-      .then(async response => {
+      try
+      {
+        const response = await axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
         if (response.status === 200)
         {
           console.log('Organizer updated successfully:', response.data);
@@ -95,40 +106,61 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         {
            toast.error(`Error saving organizer info ${response.status}`);
         }
-      })
-      .catch(error => {
+      }
+      catch(error)
+      {
         console.error('Error creating/updating organizer:', error);
         toast.error("Error saving organizer info");     
-      });
+      };
     }
     else
     {
-      axiosClient.post('/eventorganizer',apiData)
-      .then(async response => {
-        console.log('Organizer created successfully:', response.data);
-        if (response.status === 200)
+      try
+      {
+        const response = await axiosClient.post('/eventorganizer',apiData);
+        if (response.status == 200)
         {
-          toast.success("Organizer info saved");
-          await uploadImage();
-          queryClient.invalidateQueries(['Organizer',response.data]);
+            console.log('Organizer created successfully:', response.data);
+           
+            if (!response.data)
+            {
+              toast.error('Invalid return after creating organizer');
+              return;
+            }
+
+            await uploadImage(response.data.accessToken,response.data.user.customerId);
+            queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
+            toast.success("Congrats! You have successfully signed up as an organizer.");
+
+            dispatch(changeUserRole(response.data));        
+            
         }
         else
         {
-           toast.error(`Error saving organizer info ${response.status}`);
+          toast.error(`Error saving organizer info ${response.status}`);
         }
-      })
-      .catch(error => {
+      }
+      catch(error){
         console.error('Error creating/updating organizer:', error);
-         toast.error("Error saving organizer info");
+        toast.error("Error saving organizer info");
         // Handle error (e.g., show notification to user)
-      });
+      }
     }
   }
   
-  const uploadImage = async ()=>{
+  const uploadImage = async (token?: string,customerId?:string)=>{
     if (file)
     {
-      const response = await axiosClient.get(`/FileUpload/presigned-url/${file.name}/0/${organizerId}?contentType=${file.type}&filePurpose=OrganizerAboutMeImage`);    
+      const  baseApiUrl =import.meta.env.VITE_API_BASE_URL;
+      console.log('access token and customer uid',token, customerId);
+      const authToken = token ?? getAccessToken();
+      const orgId = customerId ?? organizerId;
+      const response = await axios.get(`${baseApiUrl}/FileUpload/presigned-url/${file.name}/0/${orgId}?contentType=${file.type}&filePurpose=OrganizerAboutMeImage`, 
+      { 
+        headers: {
+        'Authorization': `Bearer ${authToken}`,
+         'Accept': 'application/json'
+      }});
       console.log('Response from presigned url is:',response.data);
       if (response.status !== 200)
       {
@@ -171,18 +203,28 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       const values = {
         organizerId: organizerInfo.organizerId,
         orgName: organizerInfo.organizationName || '',
+        organizerEmail: organizerInfo.organizerEmail || '',
+
         eventBaseUrl: organizerInfo.organizerEventBaseUrl || window.location.origin+'/'+createUrlSlug(organizerInfo.organizationName),
         description: organizerInfo.organizerDescription || '',
         //imagePreview: organizerInfo.organizerImageUrl || '',
         aboutMe: organizerInfo.organizerAboutMe || '',
-        country: organizerInfo.organizerCountry || 'USA'
+        country: organizerInfo.organizerCountry || 'USA',
+        organizerPhone: organizerInfo.organizerPhone || '',
+        
       };
-      console.log('Resetting form with:', values);
-      
+      console.log('Resetting form with:', values); 
       reset(values);
       setImagePreview(organizerInfo.organizerImageUrl);
     }
+   
+     
   }, [organizerInfo]);
+
+  if (!user || !user.email)
+  {
+    return(<div className="text-accent-dark text-lg font-body justify-center max-w-xl mx-auto mt-4">You are not authorized!</div>);
+  }
 
   return (
     
@@ -196,8 +238,9 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
      >   
+      <Toaster position="top-right"/> 
     <div className="flex flex-col">
-       <Toaster position="top-right" />   
+       
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organization Name</label>
         <input
@@ -205,6 +248,13 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
           {...register("orgName")}
           className="w-full border rounded p-2"
           placeholder="Enter organization name..."
+          onChange={(e) => {
+            // Call the RHF onChange first
+            register("orgName").onChange(e); 
+            console.log('called on change',getValues("orgName"));
+            // Then run your custom logic
+            setValue("eventBaseUrl",window.location.origin+'/'+createUrlSlug(getValues("orgName")))
+        }}
         />
         <div className="min-h-[20px]">
           {errors.orgName && (
@@ -227,12 +277,13 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         </div>
       </div>
      <div className="space-y-1">
-        <label className="font-semibold mb-1">Event base url</label>
+        <label className="font-semibold mb-1">Organizer url</label>
         <input
           type="text"
           {...register("eventBaseUrl")}
           className="w-full border rounded p-2"
           placeholder="The base url for all your events..."
+          title="This is the base url that will be used for all your events."
           disabled
         />
         <div className="min-h-[20px]">
@@ -263,6 +314,35 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
           file={file}
           setFile={setFile}
         />
+      </div>
+
+      <div className="space-y-1 mt-4">
+        <label className="font-semibold mb-1">Organizer Email</label>
+        <input
+          type="text"
+          {...register("organizerEmail")}
+          className="w-full border rounded p-2"
+          placeholder="Enter your contact email..."
+        />
+        <div className="min-h-[20px]">
+          {errors.organizerEmail && (
+            <p className="text-red-600 text-sm mt-1">{errors.organizerEmail.message}</p>
+          )}
+        </div>
+      </div>
+      <div className="space-y-1">
+        <label className="font-semibold mb-1">Organizer Phone</label>
+        <input
+          type="text"
+          {...register("organizerPhone")}
+          className="w-full border rounded p-2"
+          placeholder="Enter your contact phone..."
+        />
+        <div className="min-h-[20px]">
+          {errors.organizerPhone && (
+            <p className="text-red-600 text-sm mt-1">{errors.organizerPhone.message}</p>
+          )}
+        </div>
       </div>
      
       <div className="ml-auto">
