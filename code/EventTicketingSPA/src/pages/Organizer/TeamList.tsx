@@ -98,7 +98,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
 
   return (
     <>
-    <Toaster position="top-right" />
+    {/* <Toaster position="top-right" /> */}
     <div className="max-w-l mx-auto">
    
       <h2 className="text-xl font-semibold mb-4 text-center">Build your team</h2>

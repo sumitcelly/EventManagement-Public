@@ -82,7 +82,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
     <div className="max-w-md mx-auto  text-center">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col">
-         <Toaster position="top-right" />
+         {/* <Toaster position="top-right" /> */}
          <label className="block font-semibold italic font-accent text-accent-color">Your event is in {data?.isLive?'Live':'Draft'} status</label>
          {data && !data.isLive?(
           <div className="bg-brand-neutral mt-6 p-3 text-center text-secondary-color rounded">

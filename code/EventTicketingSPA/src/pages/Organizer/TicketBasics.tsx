@@ -272,7 +272,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-2xl mx-auto p-6 space-y-6"
     > 
-     <Toaster position="top-right" />
+     {/* <Toaster position="top-right" /> */}
       <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color" 
         onClick={(e)=>{
           e.preventDefault();

@@ -129,7 +129,7 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
 
   return (
     <>
-     <Toaster position="top-right" />
+     {/* <Toaster position="top-right" /> */}
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  

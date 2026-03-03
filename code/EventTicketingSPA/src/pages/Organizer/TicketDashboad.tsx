@@ -98,7 +98,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
    
     
     <div className="max-w-md mx-auto">
-    <Toaster position="top-right" />
+    {/* <Toaster position="top-right" /> */}
       <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
       {event && !event.isLive && (

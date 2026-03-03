@@ -89,7 +89,7 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
     <div className="max-w-md mx-auto  text-center">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col items-center">
-         <Toaster position="top-right" />
+         {/* <Toaster position="top-right" /> */}
          {/**We have nothing with stripe*/}
          {(!stripeAcctId || !stripeStatus) &&(
             <div className="flex items-center">

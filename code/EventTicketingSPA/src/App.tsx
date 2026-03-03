@@ -39,6 +39,7 @@ import RefundOrder from "./pages/RefundOrder";
 import CampaignList from "./pages/Organizer/CampaignList";
 import CampaignAdd from "./pages/Organizer/CampaignAdd";
 import ResetPassword from "./pages/ResetPassword";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -72,7 +73,7 @@ export default function App() {
   //setupIonicReact();
   return (
     <IonReactRouter>
-     
+      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
       <IonRouterOutlet>
         {/* No idea why adding it at beginning works. If put at end, then I always see Myevents page for 
         any route. Tooke me a day. I would expect it be other way*/}

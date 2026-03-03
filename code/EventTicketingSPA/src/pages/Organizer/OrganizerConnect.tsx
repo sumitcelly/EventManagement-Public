@@ -106,9 +106,9 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
   return (
 
     <>
-     <Toaster position="top-right"  containerStyle={{
+     {/* <Toaster position="top-right"  containerStyle={{
     zIndex: 99999, // Ensure it's higher than Flowbite's default tab/modal layers
-  }} />
+  }} /> */}
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
