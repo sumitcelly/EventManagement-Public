@@ -17,7 +17,7 @@ import Permissions from "../../components/Permissions";
 import { OrganizerInfo } from "../../types/Organizer";
 import FileUpload from "../../components/FileUpload";
 import axios from "axios";
-import { useDispatch } from "react-redux";
+import { InfoModal } from "../../components/InfoModal";
 import { changeUserRole, getAccessToken } from "../../features/auth/authSlice";
 
 const memberSchema = yup.object({
@@ -44,6 +44,7 @@ type FormValues = {
 
 export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId?:string,organizerInfo?:OrganizerInfo}) {
 
+  const [openModal, setOpenModal] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
  
@@ -131,7 +132,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
             await uploadImage(response.data.accessToken,response.data.user.customerId);
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
             toast.success("Congrats! You have successfully signed up as an organizer.");
-
+            setOpenModal(true);
             dispatch(changeUserRole(response.data));        
             
         }
@@ -354,6 +355,14 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         </button>
       </div>
     </div>
+    {openModal && (
+                <InfoModal 
+                    modalText="Congrats! You have signed up as an owner.Please complete the information in the other sections. 
+                              Connect your account to Stripe if you want to host paid events." 
+                    openModal={openModal}
+                    onClose={() =>  setOpenModal(false)}
+                />
+        )}
             
     </form>
   );
