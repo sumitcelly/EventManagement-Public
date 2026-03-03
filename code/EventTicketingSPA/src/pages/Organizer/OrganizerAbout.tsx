@@ -74,7 +74,6 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     //   return;
 
     console.log('image data', imagePreview);
-
     const apiData={
         organizerId:organizerInfo?.organizerId || 0,
         organizationName: data.orgName,
@@ -98,9 +97,10 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         if (response.status === 200)
         {
           console.log('Organizer updated successfully:', response.data);
-          toast.success("Organizer info saved");
+      
           await uploadImage();
           queryClient.invalidateQueries(['Organizer',organizerId]);
+          toast.success("Organizer info saved");
         }
         else
         {
@@ -238,7 +238,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
      >   
-      <Toaster position="top-right"/> 
+
     <div className="flex flex-col">
        
       <div className="space-y-1">

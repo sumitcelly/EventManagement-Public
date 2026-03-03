@@ -69,6 +69,8 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
         organizerFacebook: data.organizerFacebook,
         organizerX: data.organizerX,
         organizerCountry: organizerInfo.organizerCountry,
+        organizerEmail: organizerInfo.organizerEmail,
+        organizerPhone: organizerInfo.organizerPhone,
     };
 
     if (organizerInfo.organizerId)
@@ -83,20 +85,6 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
         console.error('Error creating/updating organizer:', error);
         toast.error("Error saving organizer info");
       
-      });
-    }
-    else
-    {
-      axiosClient.post(`/eventorganizer`,apiData)
-      .then(response => {
-        console.log('Organizer created successfully:', response.data);
-        toast.success("Organizer info saved");
-        queryClient.invalidateQueries(['Organizer',organizerId]);
-      })
-      .catch(error => {
-        console.error('Error creating/updating organizer:', error);
-         toast.error("Error saving organizer info");
-        // Handle error (e.g., show notification to user)
       });
     }
   }
@@ -116,20 +104,17 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
   }, [organizerInfo]);
 
   return (
-    
-    // <form
-    // className="max-w-md mx-auto mt-8 p-6"
-    //   onSubmit={handleSubmit(
-    //     console.log("address", fullAddress),
-    //   (data) => console.log("submit fired!", data),
-    //   (errors) => console.log("validation errors", errors)
-    // )}>
+
+    <>
+     <Toaster position="top-right"  containerStyle={{
+    zIndex: 99999, // Ensure it's higher than Flowbite's default tab/modal layers
+  }} />
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
 
     <div className="flex flex-col">
-     <Toaster position="top-right" />
+    
       
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organizer Website</label>
@@ -201,5 +186,6 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
     </div>
             
     </form>
+    </>
   );
 }
