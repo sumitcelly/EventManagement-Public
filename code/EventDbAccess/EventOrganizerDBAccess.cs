@@ -13,11 +13,49 @@ namespace EventManagementDbAccess
     public class EventOrganizerDBAccess : BaseDbAccess
     {
 
+        private static readonly string _allOrgsKey="AllOrgs";
 
         public EventOrganizerDBAccess(IConfiguration connectionString, ILogger<EventOrganizerDBAccess> logger, 
         IDistributedCache cache) : base(connectionString, logger,cache) 
         {
 
+        }
+
+        public async Task<List<string>> GetAllOrgNames()
+        {
+            string key =  CacheHelper.GetCacheKey<List<string>>(_allOrgsKey);
+            return await _cache.GetOrSetAsync<List<string>>(key,()=>GetAllOrgNamesFromDb(), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger) ?? new List<string>();
+        }
+    
+        public async Task<List<string>> GetAllOrgNamesFromDb()
+        {
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"SELECT OrganizationName FROM eventorganizer";
+                using var cmd = new MySqlCommand(query, connection);
+                
+                var result = await cmd.ExecuteReaderAsync();
+                List<string> resultList = new List<string>();
+                while (result.Read())
+                {
+                    resultList.Add(result.GetString(0));
+                }
+                if (resultList.Count > 0)
+                {          
+                     _cache.AddOrUpdateCache<List<string>>(resultList,_allOrgsKey);
+                }
+                return resultList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving all orgs: {ex.Message}");
+                throw;
+            }
+            
         }
 
        public async Task<int> GetOrganizerIdByStripeAccountId(string stripeAccountId)
@@ -74,9 +112,20 @@ namespace EventManagementDbAccess
                 throw;
             }
 
-
         }
+
         public async Task<EventOrganizer> GetOrganizerById(int customerId)
+        {
+            if (customerId <=0)
+            {
+                throw new ArgumentNullException(nameof(customerId));
+            }
+
+            string cacheKey = CacheHelper.GetCacheKey<EventOrganizer>(customerId.ToString());
+            EventOrganizer? organizer = await _cache.GetOrSetAsync(cacheKey, () => GetOrganizerByIdFromDb(customerId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return organizer ?? throw new KeyNotFoundException($"organizer  with id {customerId} not found.");
+        }
+        public async Task<EventOrganizer> GetOrganizerByIdFromDb(int customerId)
         {
             if (customerId <= 0)
                 throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
@@ -147,11 +196,20 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
-
         public async Task<EventOrganizer> GetOrganizerByEventBaseUrl(string eventBaseUrl)
         {
             if (string.IsNullOrWhiteSpace(eventBaseUrl))
-                throw new ArgumentException("CustomerId must be greater than zero.", nameof(eventBaseUrl));
+                throw new ArgumentException("Organizer url is invalid.", nameof(eventBaseUrl));
+
+            string cacheKey = CacheHelper.GetCacheKey<EventOrganizer>(eventBaseUrl);
+            EventOrganizer? organizer = await _cache.GetOrSetAsync(cacheKey, () => GetOrganizerByEventBaseUrlFromDb(eventBaseUrl), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return organizer ?? throw new KeyNotFoundException($"organizer  with url {eventBaseUrl} not found.");
+        }
+
+        public async Task<EventOrganizer> GetOrganizerByEventBaseUrlFromDb(string eventBaseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(eventBaseUrl))
+                throw new ArgumentException("Organizer url is invalid.", nameof(eventBaseUrl));
 
             try
             {
@@ -301,6 +359,10 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@X", organizer.OrganizerX ?? (object)DBNull.Value);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected >0)
+                {
+                    _cache.AddOrUpdateCache<EventOrganizer>(organizer,cmd.LastInsertedId.ToString());
+                }
                 return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
             }
             catch (Exception ex)
@@ -382,6 +444,10 @@ namespace EventManagementDbAccess
                 //cmd.Parameters.AddWithValue("@StripeAccountId", organizer.StripeAccountId ?? (object)DBNull.Value);
                 //cmd.Parameters.AddWithValue("@stripeConnectStatus", organizer.StripeConnectStatus.ToString() ?? (object)DBNull.Value);
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    _cache.AddOrUpdateCache<EventOrganizer>(organizer, organizer.OrganizerId.ToString());
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -412,6 +478,16 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@organizerId", organizerId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                { 
+                    EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
+                    if (evtOrg!=null)
+                    {
+                        evtOrg.StripeAccountId = stripeAccountId ?? string.Empty;
+                        evtOrg.StripeConnectStatus = stripeAccountStatus.ToString();
+                        await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                    }
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -445,6 +521,15 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@organizerId", organizerId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                { 
+                    EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
+                    if (evtOrg!=null)
+                    {
+                        evtOrg.StripeConnectStatus = stripeAccountStatus.ToString();
+                        await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                    }
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)

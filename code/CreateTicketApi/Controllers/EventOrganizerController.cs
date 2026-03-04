@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CreateTicketApi.Controllers
@@ -54,6 +55,27 @@ namespace CreateTicketApi.Controllers
             return organizer;
         }
         
+      
+
+        private string CreateUrlSlug(string inputString)
+        {
+            if (string.IsNullOrWhiteSpace(inputString)) return string.Empty;
+
+            // 1. Remove special characters (keep alphanumeric and spaces)
+            string cleanedString = Regex.Replace(inputString, @"[^a-zA-Z0-9\s]", "");
+
+            // 2. Remove all spaces (matching your JS logic)
+            string slug = Regex.Replace(cleanedString, @"\s+", "");
+
+            // 3. Convert to lowercase
+            return slug.ToLowerInvariant();
+        }
+
+        [HttpGet("CheckUniqueOrgName/{orgName}")]
+
+        public async Task<ActionResult<bool>> CheckUniqueOrgName(string orgName)=> 
+                    !_organizerDbAccess.GetAllOrgNames().Result.Any(s=>string.Equals(CreateUrlSlug(s),orgName,StringComparison.OrdinalIgnoreCase));
+                    
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<int>> Add([FromBody] EventOrganizer organizer)

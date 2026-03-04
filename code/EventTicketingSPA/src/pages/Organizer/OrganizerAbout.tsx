@@ -60,12 +60,27 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     register,
     setValue,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(memberSchema),
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
   });
+
+  const checkUniqueOrgName = async()=>{
+    console.log('checking uniqueness of org name...');
+    try
+    {
+      const result = await axiosClient.get(`/EventOrganizer/CheckUniqueOrgName/${createUrlSlug(getValues("orgName"))}`);
+      return result.data;
+    }
+    catch(error)
+    {
+      console.log('error checking org name', error);
+      toast.error('error checking org name availability');
+    }
+  }
 
   const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
@@ -249,10 +264,24 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
           {...register("orgName")}
           className="w-full border rounded p-2"
           placeholder="Enter organization name..."
+          onBlur={async (e)=> {
+              register("orgName").onBlur(e); 
+              //console.log('called on onBlur',getValues("orgName"));
+              const result = await checkUniqueOrgName();
+              console.log('result from unique check', result);
+              if (result === false)
+              {
+            
+                   setError("orgName", {
+                    type: "manual",
+                    message: "This organization name is already taken.",
+                  });
+              }
+          }}
           onChange={(e) => {
             // Call the RHF onChange first
             register("orgName").onChange(e); 
-            console.log('called on change',getValues("orgName"));
+         
             // Then run your custom logic
             setValue("eventBaseUrl",window.location.origin+'/'+createUrlSlug(getValues("orgName")))
         }}
@@ -357,7 +386,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     </div>
     {openModal && (
                 <InfoModal 
-                    modalText="Congrats! You have signed up as an owner.Please complete the information in the other sections. 
+                    modalText="Congrats! You have signed up as an owner. Please complete the information in the other sections. 
                               Connect your account to Stripe if you want to host paid events." 
                     openModal={openModal}
                     onClose={() =>  setOpenModal(false)}
