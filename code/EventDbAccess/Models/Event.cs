@@ -32,6 +32,8 @@ namespace EventManagementDbAccess
         public bool IsPrivate { get; set; } = false;
 
         public string EventBannerUrl {get;set;} = string.Empty;
+
+        public string EventUrlName {get;set;}  = string.Empty;
     }
     public class Event : EventHeader
     {
@@ -76,6 +78,6 @@ namespace EventManagementDbAccess
         /// </summary>
         public bool TicketStatus { get; set; }
 
-        public required string SanitizedEventName { get; set; }
+        public required string EventUrlName { get; set; }
     }
 }

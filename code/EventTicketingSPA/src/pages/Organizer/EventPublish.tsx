@@ -110,7 +110,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
 
         {data && data.isLive && (
           <div className= "mt-3 bg-brand-neutral rounded">
-            Your event url is <a href={`${window.location.origin}/${data.sanitizedEventName}`}>{`${window.location.origin}/${data.sanitizedEventName}`}</a>
+            Your event url is <a href={`${window.location.origin}/${data.eventUrlName}`}>{`${window.location.origin}/${data.eventUrlName}`}</a>
           </div>
         )}
         

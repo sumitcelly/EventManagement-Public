@@ -31,7 +31,7 @@ namespace EventManagementDbAccess
         await connection.OpenAsync();
         {
           _logger.LogInformation("Connection to database established successfully.");
-          string query = @" SELECT EventName,EventId,eventheadline,EventDescription,EventTags,EventOrganizer,
+          string query = @" SELECT EventName,EventId,EventUrlName, eventheadline,EventDescription,EventTags,EventOrganizer,
                             EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,
                             MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
@@ -99,6 +99,9 @@ namespace EventManagementDbAccess
                 {
                   EventId = reader.GetInt32("EventId"),
                   EventName = reader.GetString("EventName"),
+                  EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))?
+                               StringUtils.CreateUrlSlug(reader.GetString("EventName")):
+                               reader.GetString("EventUrlName"),
                   EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString("EventBannerFileName")),
                   EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
@@ -135,7 +138,7 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
-        var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
                     b.OrganizationName from events a, eventorganizer b 
@@ -152,7 +155,9 @@ namespace EventManagementDbAccess
           {
             EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
             EventName = reader.GetString(reader.GetOrdinal("EventName")),
-            
+            EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
             EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
@@ -179,7 +184,7 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
    
-        var query = @"select a.IsLive, a.EventName,
+        var query = @"select a.IsLive, a.EventName,a.EventUrlName
                     (Select count(*) from eventitemtype b where b.eventid = a.eventid) AS tickettypecount
                     FROM events a WHERE a.eventid = @eventId";
                     
@@ -194,7 +199,9 @@ namespace EventManagementDbAccess
           {
             IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
             TicketStatus = reader.GetInt16(reader.GetOrdinal("tickettypecount")) > 0 ? true : false,
-            SanitizedEventName = System.Uri.EscapeDataString(Regex.Replace(reader.GetString(reader.GetOrdinal("EventName")),@"\s+", string.Empty)) 
+            EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
           };
         }
       }
@@ -211,7 +218,7 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
         //todo: maybe get all events including past events 
-        var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
                     a.IsLive,a.Duration
@@ -234,6 +241,9 @@ namespace EventManagementDbAccess
               EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
               EventName = reader.GetString(reader.GetOrdinal("EventName")),
+              EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
               EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
               EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
@@ -257,7 +267,7 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
         //todo: maybe get all events including past events 
-        var query = @"select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName, a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress
                     from events a
@@ -279,6 +289,9 @@ namespace EventManagementDbAccess
               EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
               EventName = reader.GetString(reader.GetOrdinal("EventName")),
+              EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
               EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
               EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
               Free = reader.GetBoolean(reader.GetOrdinal("Free")),
@@ -326,6 +339,9 @@ namespace EventManagementDbAccess
             EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
             EventName = reader.GetString(reader.GetOrdinal("EventName")),
+            EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
             EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
             EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
@@ -362,16 +378,17 @@ namespace EventManagementDbAccess
       await connection.OpenAsync();
 
       string query = @"INSERT INTO Events 
-            (EventName,EventHeadline, EventDescription, EventDate, Duration,
+            (EventName,EventUrlName,EventHeadline, EventDescription, EventDate, Duration,
             EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
             Latitude,Longitude,StreetAddress,City,State,ZipCode,
             CreatedAt) 
-            VALUES (@name,@headline, @desc, @date, @duration,
+            VALUES (@name,@eventUrlName,@headline, @desc, @date, @duration,
              @organizer, @location, @agenda, @tags, @isLive, @isPrivate,
              @lat,@long,@streetAddress, @city, @state, @zipCode, @createdAt)";
 
       using var cmd = new MySqlCommand(query, connection);
       cmd.Parameters.AddWithValue("@name", evt.EventName);
+      cmd.Parameters.AddWithValue("@eventUrlName",evt.EventUrlName);
       cmd.Parameters.AddWithValue("@headline", evt.EventHeadline);
       cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
       cmd.Parameters.AddWithValue("@date", evt.EventDate);
@@ -493,6 +510,7 @@ namespace EventManagementDbAccess
 
         string query = @"UPDATE Events SET 
             EventName = @name,
+            EventUrlName = @eventUrlName,
             EventHeadline = @headline,
             EventDescription = @desc,
             EventAgenda = @agenda,
@@ -514,6 +532,7 @@ namespace EventManagementDbAccess
       using var cmd = new MySqlCommand(query, connection);
  
       cmd.Parameters.AddWithValue("@name", evt.EventName);
+       cmd.Parameters.AddWithValue("@eventUrlName", evt.EventUrlName);
       cmd.Parameters.AddWithValue("@headline", evt.EventHeadline);
       cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
       cmd.Parameters.AddWithValue("@date", evt.EventDate);
