@@ -19,6 +19,7 @@ import FileUpload from "../../components/FileUpload";
 import axios from "axios";
 import { InfoModal } from "../../components/InfoModal";
 import { changeUserRole, getAccessToken } from "../../features/auth/authSlice";
+import { createUrlSlug } from "../../utils/StringUtils";
 
 const memberSchema = yup.object({
   orgName: yup.string().required("Organization name required."),
@@ -95,7 +96,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         organizationName: data.orgName,
         organizerEmail: data.organizerEmail,
         organizerWebsite: organizerInfo?.organizerWebsite,
-        organizerEventBaseUrl: data.eventBaseUrl ,
+        organizerEventBaseUrl:  createUrlSlug(data.orgName) ,
         organizerDescription: data.description,
         organizerAboutMe: data.aboutMe,
         organizerInstagram: organizerInfo?.organizerInstagram ,
@@ -200,18 +201,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     }
   }
 
-  function createUrlSlug(inputString:String) {
-      // Remove special characters (keep alphanumeric and spaces)
-      let cleanedString = inputString.replace(/[^a-zA-Z0-9\s]/g, '');
-
-      // Replace spaces with hyphens
-      let slug = cleanedString.replace(/\s+/g, '');
-
-      // Convert to lowercase
-      slug = slug.toLowerCase();
-
-      return slug;
-    }
+ 
 
    useEffect(() => {
     console.log('MemberInfo changed:', organizerInfo);
@@ -221,7 +211,8 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         orgName: organizerInfo.organizationName || '',
         organizerEmail: organizerInfo.organizerEmail || '',
 
-        eventBaseUrl: organizerInfo.organizerEventBaseUrl || window.location.origin+'/'+createUrlSlug(organizerInfo.organizationName),
+        eventBaseUrl: organizerInfo.organizerEventBaseUrl ? window.location.origin+'/'+ organizerInfo.organizerEventBaseUrl:
+                       window.location.origin+'/'+createUrlSlug(organizerInfo.organizationName),
         description: organizerInfo.organizerDescription || '',
         //imagePreview: organizerInfo.organizerImageUrl || '',
         aboutMe: organizerInfo.organizerAboutMe || '',

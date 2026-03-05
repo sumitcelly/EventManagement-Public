@@ -10,6 +10,10 @@ import TicketBasics from "./TicketBasics";
 import EventPublish from "./EventPublish";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
+import { useQuery } from "react-query";
+import { useAppSelector } from "../../app/hook";
+import { RootState } from "../../app/store";
+import axiosClient from "../../api/axiosClient";
 
 interface EventManagerParams {
   eventId?: string;
@@ -19,6 +23,8 @@ interface EventManagerParams {
 
 export function EventManager() {
   const tabsRef = useRef<TabsRef>(null);
+  const user = useAppSelector((state: RootState) => state.auth.user);
+  const customerId = user?.customerId;
 
   const {eventId,mode,ticketId} = useParams<EventManagerParams>();
 
@@ -49,6 +55,24 @@ export function EventManager() {
     }
   }, [mode,ticketId]);
 
+  const { data, isLoading } = 
+    useQuery(['OrganizerInfo',customerId], async () => {
+        console.log("Fetching organizer by customer id", customerId);
+        const res = await axiosClient.get(`/EventOrganizer/${customerId}`);
+        console.log('organizer Indo',res?.data, res?.status);
+  
+        return res?.data;
+      },
+      {
+        staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+        cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+        enabled: !!customerId //  only run query if we have an id
+      }
+    );
+  
+ 
+  if (isLoading) return <p>Loading...</p>;
+  
   return (  
     <IonPage>
       <IonHeader>
@@ -62,7 +86,7 @@ export function EventManager() {
       variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
     
       <TabItem title="Event Details" icon={HiUserCircle}>
-        <EventForm id={eventId} isActive={localActiveTab===0}/>
+        <EventForm id={eventId}  organizerEventBaseUrl={data?.organizerEventBaseUrl} isActive={localActiveTab===0}/>
       </TabItem>
 
       <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>

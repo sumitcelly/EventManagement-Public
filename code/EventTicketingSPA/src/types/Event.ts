@@ -19,4 +19,5 @@ export interface EventHeader {
   isLive?:boolean;
   eventBannerUrl?:string;
   organizerStripeAccountId?:string;
+  eventUrlName?:string;
 }

@@ -16,9 +16,11 @@ import { RootState } from "../../app/store";
 //import  SuccessToast  from "../../components/SuccessToast";
 import toast, { Toaster } from 'react-hot-toast';
 import axios from "axios";
+import { createUrlSlug, getFullUrlForEvent } from "../../utils/StringUtils";
 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
+  eventUrlName: yup.string().required("Event Url name is reqired"),
   headline: yup.string().nullable().default(null),
   eventStartDate: yup.string().required("Event date is required")
   .test("past-date", "Event start date cannot be in the past", (value) => {
@@ -42,6 +44,7 @@ const eventSchema = yup.object({
 
 type FormValues = {
   eventName: string;
+  eventUrlName: string;
   eventStartDate: string;
   eventDuration: number;
   description: string;
@@ -58,7 +61,7 @@ type FormValues = {
 };
 
 
-export default function EventForm({id, isActive}: {id?: string,isActive:boolean}) {
+export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: string,organizerEventBaseUrl:string,isActive:boolean}) {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -99,6 +102,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       isLive: res.data?.isLive || false,
       eventOrganizerId: res.data.organizerId,
       eventBannerUrl: res.data.eventBannerUrl
+     // eventUrlName: res.data.eventUrlName
     }
     //console.log("event date for basic info", eventBasicInfo.eventDate);
     dispatch(updateEvent({event: eventBasicInfo}));
@@ -120,6 +124,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     handleSubmit,
     register,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(eventSchema),
@@ -133,6 +138,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
       city: eventDetails?.city || "",
       state: eventDetails?.state || "",
       eventName:  eventDetails?.eventName || "",
+      eventUrlName: getFullUrlForEvent(eventDetails?.eventUrlName,organizerEventBaseUrl),
       description:  eventDetails?.description || "",
       eventDuration: eventDetails?.duration || 0,
       agenda: eventDetails?.agenda || null,
@@ -154,7 +160,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         eventLocation: data.fullAddress,
         eventOrganizerId: data.organizerId,
         eventBannerUrl: data.eventBannerUrl
-
+        
       }
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log("redux update with even data", eventBasicInfo);
@@ -168,6 +174,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
     const eventApi ={
       eventId: eventCache.eventId || 0,
       eventName: data.eventName,
+      eventUrlName: createUrlSlug(data.eventName),
       eventHeadline: data.headline,
       eventDate:new Date(data.eventStartDate).toISOString(),
       duration: data.eventDuration,
@@ -292,6 +299,7 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
         city: eventDetails?.city || "",
         state: eventDetails?.state || "",
         eventName:  eventDetails?.eventName || "",
+        eventUrlName: getFullUrlForEvent(eventDetails?.eventUrlName,organizerEventBaseUrl),
         description:  eventDetails?.eventDescription || "",
         eventDuration: eventDetails?.duration || 0,
         agenda: eventDetails?.eventAgenda || null,
@@ -325,6 +333,13 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
           {...register("eventName")}
           className="w-full border rounded p-2"
           placeholder="Enter event title"
+          onChange={(e) => {
+                      // Call the RHF onChange first
+                      register("eventName").onChange(e); 
+                   
+                      // Then run your custom logic
+                      setValue("eventUrlName", getFullUrlForEvent(createUrlSlug(getValues("eventName")),organizerEventBaseUrl));
+                  }}
         />
         {errors.eventName && (
           <p className="text-red-600 text-sm mt-1">{errors.eventName.message}</p>
@@ -380,6 +395,18 @@ export default function EventForm({id, isActive}: {id?: string,isActive:boolean}
             </p>
           )}
         </div>
+      </div>
+      
+       <div className="space-y-1">
+        <label className="font-semibold mb-1">Event url</label>
+        <input
+          type="text"
+          {...register("eventUrlName")}
+          className="w-full border rounded p-2"
+          placeholder="Url for your event"
+          title="This is the url for your event."
+          disabled
+        />
       </div>
 
       <div>

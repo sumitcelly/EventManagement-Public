@@ -184,7 +184,7 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
    
-        var query = @"select a.IsLive, a.EventName,a.EventUrlName
+        var query = @"select a.IsLive, a.EventName,a.EventUrlName,
                     (Select count(*) from eventitemtype b where b.eventid = a.eventid) AS tickettypecount
                     FROM events a WHERE a.eventid = @eventId";
                     
@@ -532,7 +532,7 @@ namespace EventManagementDbAccess
       using var cmd = new MySqlCommand(query, connection);
  
       cmd.Parameters.AddWithValue("@name", evt.EventName);
-       cmd.Parameters.AddWithValue("@eventUrlName", evt.EventUrlName);
+      cmd.Parameters.AddWithValue("@eventUrlName", evt.EventUrlName);
       cmd.Parameters.AddWithValue("@headline", evt.EventHeadline);
       cmd.Parameters.AddWithValue("@desc", evt.EventDescription);
       cmd.Parameters.AddWithValue("@date", evt.EventDate);

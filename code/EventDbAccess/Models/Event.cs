@@ -33,6 +33,9 @@ namespace EventManagementDbAccess
 
         public string EventBannerUrl {get;set;} = string.Empty;
 
+        /// <summary>
+        /// Url safe event name from event table
+        /// </summary>
         public string EventUrlName {get;set;}  = string.Empty;
     }
     public class Event : EventHeader
