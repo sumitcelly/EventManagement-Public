@@ -94,6 +94,20 @@ namespace CreateTicketApi.Controllers
         }
 
 
+        [HttpGet("/Events/Details/{customerName}/{eventName}")]
+        public async Task<ActionResult<Event>> GetEventDetailsByName(string customerName, string eventName)
+        {
+            if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(eventName))
+            {
+                return BadRequest("Invalid customer or event name"); 
+            }
+            var evt = await _EventDbAccess.GetEventDetailsByName(customerName, eventName);
+            if (evt == null)
+                return NotFound();
+            return evt;
+        }
+
+
 
         [HttpGet("/Events/LiveStatus/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]

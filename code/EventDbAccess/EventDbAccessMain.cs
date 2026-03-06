@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using EventUtils;
 using Stripe.TestHelpers.Terminal;
 using System.Text.RegularExpressions;
+using System.Data.Common;
+using ZstdSharp;
 
 namespace EventManagementDbAccess
 {
@@ -207,6 +209,8 @@ namespace EventManagementDbAccess
       }
       return null;
     }
+
+    
     
     public async Task<List<EventHeader>> GetEventListByCustomerId(int customerId)
     {
@@ -332,41 +336,84 @@ namespace EventManagementDbAccess
         using var reader = await cmd.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
-          return new Event
-          {
-            EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-            EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
-            EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
-                                AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
-            EventName = reader.GetString(reader.GetOrdinal("EventName")),
-            EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
-                               ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
-                               :reader.GetString(reader.GetOrdinal("EventUrlName")),
-            EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
-            EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-            EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
-            Free = reader.GetBoolean(reader.GetOrdinal("Free")),
-            Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
-            EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress")),
-            EventDescription = reader.IsDBNull(reader.GetOrdinal("EventDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventDescription")),
-            Category = reader.IsDBNull(reader.GetOrdinal("EventCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventCategory")),
-            SubCategory = reader.IsDBNull(reader.GetOrdinal("SubCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("SubCategory")),
-            Tags = reader.IsDBNull(reader.GetOrdinal("EventTags")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventTags")),
-            EventAgenda = reader.IsDBNull(reader.GetOrdinal("EventAgenda")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAgenda")),
-            Capacity = reader.IsDBNull(reader.GetOrdinal("Capacity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Capacity")),
-            StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("StreetAddress")),
-            City = reader.IsDBNull(reader.GetOrdinal("City")) ? string.Empty : reader.GetString(reader.GetOrdinal("City")),
-            State = reader.IsDBNull(reader.GetOrdinal("State")) ? string.Empty : reader.GetString(reader.GetOrdinal("State")),
-            ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("ZipCode")),
-            Country = reader.IsDBNull(reader.GetOrdinal("Country")) ? string.Empty : reader.GetString(reader.GetOrdinal("Country")),
-            Latitude = reader.IsDBNull(reader.GetOrdinal("Latitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Latitude")),
-            Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Longitude")),
-            CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-            UpdatedAt = reader.IsDBNull(reader.GetOrdinal("ModifiedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
-          };
+          return GetEventFromReader(reader);
         }
       }
-      return null;
+      throw new Exception($"Unable to locate event with Id {eventId}");
+    }
+
+    public async Task<Event> GetEventDetailsByName(string customerUrlName, string eventUrlName)
+    {
+      if (string.IsNullOrWhiteSpace(eventUrlName) || string.IsNullOrWhiteSpace(customerUrlName))
+          throw new ArgumentException("Invalid arguments for function");
+
+      string cacheKey = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",customerUrlName,eventUrlName));
+      Event? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventDetailsByNameFromDb(customerUrlName, eventUrlName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+      return cachedEvent ?? throw new KeyNotFoundException($"Event with  {cacheKey} not found.") ;
+    }
+
+    public async Task<Event> GetEventDetailsByNameFromDb(string customerUrlName, string eventUrlName)
+    {
+      if (string.IsNullOrWhiteSpace(eventUrlName) || string.IsNullOrWhiteSpace(customerUrlName))
+          throw new ArgumentException("Invalid arguments for function");
+
+      using (MySqlConnection conn = new MySqlConnection(this.ConnectionString))
+      {
+        await conn.OpenAsync();
+
+        var query = @"select * from events
+                    inner join eventorganizer
+                    on eventorganizer.CustomerId = events.eventOrganizer
+                    and events.EventUrlName = @eventUrlName and
+                    eventorganizer.organizereventbaseurl=@customerUrlName";
+
+        using var cmd = new MySqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@eventUrlName", eventUrlName);
+        cmd.Parameters.AddWithValue("@customerUrlName", customerUrlName);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+          return GetEventFromReader(reader);
+        }
+      }
+      throw new Exception($"Unable to locate event with event url name {eventUrlName} and customer url name {customerUrlName}");
+    }
+
+    private Event GetEventFromReader(DbDataReader reader)
+    {
+      return new Event
+      {
+        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+        EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+        EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
+                            AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
+        EventName = reader.GetString(reader.GetOrdinal("EventName")),
+        EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
+                            ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
+                            :reader.GetString(reader.GetOrdinal("EventUrlName")),
+        EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
+        EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+        EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
+        Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+        Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
+        EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress")),
+        EventDescription = reader.IsDBNull(reader.GetOrdinal("EventDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventDescription")),
+        Category = reader.IsDBNull(reader.GetOrdinal("EventCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventCategory")),
+        SubCategory = reader.IsDBNull(reader.GetOrdinal("SubCategory")) ? string.Empty : reader.GetString(reader.GetOrdinal("SubCategory")),
+        Tags = reader.IsDBNull(reader.GetOrdinal("EventTags")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventTags")),
+        EventAgenda = reader.IsDBNull(reader.GetOrdinal("EventAgenda")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAgenda")),
+        Capacity = reader.IsDBNull(reader.GetOrdinal("Capacity")) ? 0 : reader.GetInt32(reader.GetOrdinal("Capacity")),
+        StreetAddress = reader.IsDBNull(reader.GetOrdinal("StreetAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("StreetAddress")),
+        City = reader.IsDBNull(reader.GetOrdinal("City")) ? string.Empty : reader.GetString(reader.GetOrdinal("City")),
+        State = reader.IsDBNull(reader.GetOrdinal("State")) ? string.Empty : reader.GetString(reader.GetOrdinal("State")),
+        ZipCode = reader.IsDBNull(reader.GetOrdinal("ZipCode")) ? string.Empty : reader.GetString(reader.GetOrdinal("ZipCode")),
+        Country = reader.IsDBNull(reader.GetOrdinal("Country")) ? string.Empty : reader.GetString(reader.GetOrdinal("Country")),
+        Latitude = reader.IsDBNull(reader.GetOrdinal("Latitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Latitude")),
+        Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Longitude")),
+        CreatedAt = reader.IsDBNull(reader.GetOrdinal("CreatedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+        UpdatedAt = reader.IsDBNull(reader.GetOrdinal("ModifiedAt")) ? DateTime.UtcNow : reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+      };
     }
 
     public async Task<int> CreateEvent(Event evt)
@@ -558,6 +605,7 @@ namespace EventManagementDbAccess
       if (rowsAffected > 0)
       { 
           _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          _cache.AddOrUpdateCache(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
       }
       return rowsAffected > 0;
     }

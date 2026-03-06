@@ -16,18 +16,18 @@ import Navbar from "../components/Navbar";
 
 export default function EventDetails() {
 
-  const { id } = useParams<{ id: string }>();
+  const { customerName, eventName } = useParams<{ customerName: string,eventName:string }>();
   const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
 
-  const { data:eventDetails, isLoading } = useQuery(`events/details/${id}`, async () => {
-    const res = await axiosClient.get(`/events/details/${id}`);
+  const { data:eventDetails, isLoading } = useQuery(`events/details/${customerName}/${eventName}`, async () => {
+    const res = await axiosClient.get(`/events/details/${customerName}/${eventName}`);
     console.log('Event details from backend', res?.data);
     return res.data;
   },
   {
     staleTime: 1000 * 60 * 5,
-    enabled: !!id
+    enabled: !!customerName && !!eventName
   }
 );
 
@@ -63,7 +63,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     dispatch(updateEvent({event}));
     //need to think if this needs to be done after checking if the event id is different than the above?
     dispatch(resetCart());
-    ionRouter.push(`/buytickets/${id}`);
+    ionRouter.push(`/buytickets/${eventDetails.eventId}`);
   }
   
   if (isLoading) return <p>Loading...</p>;

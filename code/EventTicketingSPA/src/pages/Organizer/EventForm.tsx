@@ -175,6 +175,9 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       eventId: eventCache.eventId || 0,
       eventName: data.eventName,
       eventUrlName: createUrlSlug(data.eventName),
+      //need these 2 fields below only so that the cache on the server has it when we update it.
+      organizerUrlName : user?.customerUrlName,
+      eventBannerUrl: eventDetails?.eventBannerUrl,
       eventHeadline: data.headline,
       eventDate:new Date(data.eventStartDate).toISOString(),
       duration: data.eventDuration,

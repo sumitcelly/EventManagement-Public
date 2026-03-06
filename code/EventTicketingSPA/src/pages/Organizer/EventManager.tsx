@@ -4,7 +4,7 @@ import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
 import TicketDashboard from "./TicketDashboad";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import TicketBasics from "./TicketBasics";
 import EventPublish from "./EventPublish";
@@ -22,9 +22,14 @@ interface EventManagerParams {
 }
 
 export function EventManager() {
+  //const [customerName, setCustomerName] = useState("");
   const tabsRef = useRef<TabsRef>(null);
   const user = useAppSelector((state: RootState) => state.auth.user);
-  const customerId = user?.customerId;
+  const customerUrlName = user?.customerUrlName || "";
+  // const location = useLocation();
+  // const customerData:any = location.state || {};
+  // const {customerUrlName} = customerData;
+  
 
   const {eventId,mode,ticketId} = useParams<EventManagerParams>();
 
@@ -35,6 +40,14 @@ export function EventManager() {
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
   //console.log('active tab in state is',activeTab);
+
+  // useEffect(()=>{
+  //   if (customerUrlName)
+  //   {
+  //     setCustomerName(customerUrlName);
+  //   }
+  // },[customerUrlName]);
+
 
   useEffect(() => {
     if (mode === "publish")
@@ -53,25 +66,8 @@ export function EventManager() {
       console.log("event tab");
       tabsRef.current?.setActiveTab(0);
     }
-  }, [mode,ticketId]);
+  }, [mode,ticketId,eventId]);
 
-  const { data, isLoading } = 
-    useQuery(['OrganizerInfo',customerId], async () => {
-        console.log("Fetching organizer by customer id", customerId);
-        const res = await axiosClient.get(`/EventOrganizer/${customerId}`);
-        console.log('organizer Indo',res?.data, res?.status);
-  
-        return res?.data;
-      },
-      {
-        staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-        cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-        enabled: !!customerId //  only run query if we have an id
-      }
-    );
-  
- 
-  if (isLoading) return <p>Loading...</p>;
   
   return (  
     <IonPage>
@@ -86,7 +82,7 @@ export function EventManager() {
       variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
     
       <TabItem title="Event Details" icon={HiUserCircle}>
-        <EventForm id={eventId}  organizerEventBaseUrl={data?.organizerEventBaseUrl} isActive={localActiveTab===0}/>
+        <EventForm id={eventId}  organizerEventBaseUrl={customerUrlName} isActive={localActiveTab===0}/>
       </TabItem>
 
       <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>

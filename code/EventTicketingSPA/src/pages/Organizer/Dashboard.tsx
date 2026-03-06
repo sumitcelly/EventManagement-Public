@@ -13,6 +13,7 @@ import { useDispatch } from "react-redux";
 import { resetCart } from "../../features/auth/cartSlice";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
+import { updateCustomerUrlName } from "../../features/auth/authSlice";
 // 
 
 
@@ -68,9 +69,28 @@ export default function Dashboard() {
     }
   );
 
+   const { data:customerData, isLoading:isLoadingCustomer } = 
+      useQuery(['OrganizerInfo',customerId], async () => {
+          console.log("Fetching organizer by customer id", customerId);
+          const res = await axiosClient.get(`/EventOrganizer/${customerId}`);
+          console.log('organizer Indo',res?.data, res?.status);
+    
+          return res?.data;
+        },
+        {
+          staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+          cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+          enabled: !!customerId //  only run query if we have an id
+        }
+      );
+    
+  useEffect(()=>{
+    if (customerData && customerData?.organizerEventBaseUrl)
+      dispatch(updateCustomerUrlName({customerUrlName:customerData?.organizerEventBaseUrl}));
+  },[customerData]);
 
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading || isLoadingCustomer) return <p>Loading...</p>;
 
   return (
      <IonPage>
@@ -85,7 +105,7 @@ export default function Dashboard() {
         {data && data.map((event:EventHeader) => (
           <div
             key={event.eventId}
-            onClick={() => history.push(`/eventdetails/${event.eventId}`)}
+            onClick={() => history.push(`/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`)}
             className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div>
@@ -105,9 +125,10 @@ export default function Dashboard() {
               <div onClick={(e)=>e.stopPropagation()}>
                 <ListMenu
                   linkData={{
-                    viewLink: `/eventdetails/${event.eventId}`,
+                    viewLink: `/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`,
                     editLink: `/EventManager/${event.eventId}`,
-                    delete:()=>deleteEvent(event.eventId)
+                    delete:()=>deleteEvent(event.eventId),
+                    editData: {customerUrlName: customerData?.organizerEventBaseUrl}
                   }}
                 />
               </div>
@@ -118,7 +139,7 @@ export default function Dashboard() {
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`);}}
+              onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`,{customerUrlName: customerData?.organizerEventBaseUrl});}}
             >
               New Event
         </button> 

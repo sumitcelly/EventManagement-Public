@@ -137,7 +137,7 @@ export default function App() {
           }
         />
         <Route
-          path="/eventdetails/:id"
+          path="/eventdetails/:customerName/:eventName"
            render={() =>
             <EventDetails /> 
           }
@@ -187,10 +187,10 @@ export default function App() {
         <Route path="/Signup" render={() =>isAuthenticated?<SignupForm/>:<LoginPage/>}/>
         <Route path="/ResetPassword"  render={() =>isAuthenticated?<ResetPassword/>:<LoginPage/>}/>
         
-        <Route path="/EventManager"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
+        {/* <Route path="/EventManager"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
         <Route path="/EventManager/:eventId"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
-        <Route path="/EventManager/:eventId/:mode/:ticketId"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
+        <Route path="/EventManager/:eventId/:mode"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/> */}
+        <Route path="/EventManager/:eventId?/:mode?/:ticketId?"  render={() =>checkBasicAdminAccess()?<EventManager/>:<LoginPage/>}/>
 
      
         <Route path="/OrganizerManager/:mode?"  render={() => isAuthenticated?<OrganizerManager/>:<LoginPage/>}/>

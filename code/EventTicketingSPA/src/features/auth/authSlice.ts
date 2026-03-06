@@ -9,6 +9,7 @@ interface User {
   role: string;
   customerId: string;
   name: string;
+  customerUrlName?:string;
 }
 
 interface AuthState {
@@ -54,24 +55,7 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
-// export const loginUserWithRoleChange = createAsyncThunk(
-//   "auth/loginUserWithRoleChange",
-//   async (data: any, { rejectWithValue }) => {
-//     try {
-//       const res = await axios.post(
-//         baseApiUrl+`/eventOrganizerMembers/AddOwner/${data.userId}`,
-//         {customerId: data.customerId},
-       
-//         { withCredentials: true } // needed for HttpOnly cookies
-//       );
-//       accessToken= res.data.accessToken; // Expecting { username: "john", ... }
-//       return  res.data.user; // Adjust based on your API response
-      
-//     } catch (err :any) {
-//       return rejectWithValue(err.response?.data || "Role change failed");
-//     }
-//   }
-// );
+
 
 export const loginUserWithSecureCode = createAsyncThunk(
   "auth/loginUserWithSecureCode",
@@ -132,6 +116,12 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
     },
+    updateCustomerUrlName(state,action){
+      console.log('updating customer url name',action.payload);
+       if (state.user && action.payload.customerUrlName) {
+        state.user.customerUrlName = action.payload.customerUrlName;
+      }
+    },   
     changeUserRole(state, action){
       console.log('data in change user role',action.payload);
       accessToken = action.payload.accessToken;
@@ -187,6 +177,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout,changeUserRole } = authSlice.actions;
+export const { logout,changeUserRole,updateCustomerUrlName } = authSlice.actions;
 export default authSlice.reducer;
 
