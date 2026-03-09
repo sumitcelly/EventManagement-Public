@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using Org.BouncyCastle.Asn1.Mozilla;
 using Stripe;
@@ -53,7 +54,8 @@ namespace EventManagementDbAccess
 
         public string Tags { get; set; } = string.Empty;
 
-        public string EventAgenda { get; set; } = string.Empty;
+        
+        public string? EventAgenda { get; set; } = string.Empty;
 
 
         public int Capacity { get; set; }
