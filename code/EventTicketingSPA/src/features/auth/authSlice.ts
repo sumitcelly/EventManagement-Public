@@ -10,6 +10,7 @@ interface User {
   customerId: string;
   name: string;
   customerUrlName?:string;
+  stripeConnectStatus?:string;
 }
 
 interface AuthState {
@@ -116,10 +117,11 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
     },
-    updateCustomerUrlName(state,action){
+    updateCustomerProfile(state,action){
       console.log('updating customer url name',action.payload);
-       if (state.user && action.payload.customerUrlName) {
+       if (state.user) {
         state.user.customerUrlName = action.payload.customerUrlName;
+        state.user.stripeConnectStatus = action.payload.stripeConnectStatus;
       }
     },   
     changeUserRole(state, action){
@@ -177,6 +179,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout,changeUserRole,updateCustomerUrlName } = authSlice.actions;
+export const { logout,changeUserRole,updateCustomerProfile } = authSlice.actions;
 export default authSlice.reducer;
 

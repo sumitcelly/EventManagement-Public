@@ -13,7 +13,7 @@ import { useDispatch } from "react-redux";
 import { resetCart } from "../../features/auth/cartSlice";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
-import { updateCustomerUrlName } from "../../features/auth/authSlice";
+import { updateCustomerProfile } from "../../features/auth/authSlice";
 // 
 
 
@@ -86,7 +86,7 @@ export default function Dashboard() {
     
   useEffect(()=>{
     if (customerData && customerData?.organizerEventBaseUrl)
-      dispatch(updateCustomerUrlName({customerUrlName:customerData?.organizerEventBaseUrl}));
+      dispatch(updateCustomerProfile({customerUrlName:customerData?.organizerEventBaseUr,stripeConnectStatus: customerData?.stripeConnectStatus}));
   },[customerData]);
 
 

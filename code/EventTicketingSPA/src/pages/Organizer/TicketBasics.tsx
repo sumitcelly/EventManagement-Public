@@ -93,7 +93,9 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient =useQueryClient();
-  
+  const stripeConnectStatus =  user?.stripeConnectStatus;
+
+ 
   //redux may or may not have event details
   let eventBasics = useAppSelector((state:RootState) => state.event);
   
@@ -146,6 +148,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
   const {
     control,
     setValue,
+    setError,
     handleSubmit,
     register,
     reset,
@@ -172,6 +175,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       reValidateMode: "onChange"
   });
 
+  
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
@@ -254,11 +258,14 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         tickevalidityEndtDate: ticketDetails?.ticketValidityEnd ? new Date(ticketDetails.ticketValidityEnd).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
                                 addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) ,      
                             });
+                            
     }
   }, [ticketDetails, reset, eventBasics]);
 
+
   if (ticketLoading || eventLoading) return <p>Loading...</p>;
 
+  
   return (
     
     // <form
@@ -296,17 +303,26 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         </div>
       </div>
       
-      <div className="flex flex-col w-1/5 min-h-[80px]">
+      <div className="flex flex-col">
         <label className="font-semibold mb-1">Cost($)</label>
-        <input
-          type="number"
-          {...register("cost")}
-          className="border rounded p-2"
-          min={0}
-        />
-        {errors.name && (
-          <p className="text-red-600 text-sm mt-1">{errors.cost?.message}</p>
-        )}
+        <div className="flex flex-row justify-between items-center">
+          <input
+            type="number"
+            {...register("cost")}
+            className="border rounded p-2 w-1/5"
+            min={0}
+            disabled={stripeConnectStatus !== "Completed"}
+          />
+          
+          {stripeConnectStatus !=="Completed" && (<div className="text-accent-color ml-auto">
+            You must be connected to stripe in order to host paid events!
+        </div>)} 
+        </div>
+        <div className="min-h-[20px]">
+          {errors.name && (
+            <p className="text-red-600 text-sm mt-1">{errors.cost?.message}</p>
+          )}
+        </div>
       </div>
 
       <div className= "overflow-y-auto min-h-[150px] max-h-[300px]">
