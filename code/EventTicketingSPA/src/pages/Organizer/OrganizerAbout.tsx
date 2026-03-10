@@ -104,7 +104,10 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         organizerX: organizerInfo?.organizerX,
         organizerPhone: data.organizerPhone,
         organizerCountry: organizerInfo?.organizerCountry,
+        stripeAccountId : organizerInfo?.stripeAccountId,
+        stripeConnectStatus: organizerInfo?.stripeConnectStatus
     };
+    console.log('api data sent to server', apiData);
 
     if (organizerInfo?.organizerId)
     {    

@@ -25,7 +25,7 @@ const ticketSchema = (event: EventHeader)=>yup.object({
         min(0, "Ticket cost cannot be negative.")
         .typeError('Invalid number.'),
   maxPerOrder: yup.number().default(0).nullable().typeError('Invalid number.'),
-  totalAllowed: yup.number().default(1).required().min(1, "Total allowed must be at least one.").typeError('Invalid number.'),
+  totalAllowed: yup.number().default(0).required().min(1, "Total allowed must be at least one.").typeError('Invalid number.'),
   description: yup
     .string()
     .required("Description is required")
@@ -138,12 +138,15 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     if (eventBasics?.duration && eventBasics?.eventDate)
     {
       const eventEnd = addHoursToDate(eventBasics.eventDate, eventBasics.duration);
+
       retVal=`T${eventEnd.getHours()}:00:00.000`;
       console.log('enddate',retVal);
     }
     return retVal;
     
   }
+
+   
 
   const {
     control,
@@ -244,15 +247,10 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         maxPerOrder: ticketDetails?.maxPerOrder || 0,
         totalAllowed: ticketDetails?.totalAllowed || 0,
         description: ticketDetails?.description || "",
-        tickeSalesStartDate: ticketDetails?.salesStartDate ? new Date(ticketDetails.salesStartDate).toISOString().split('T')[0] : 
-                            new Date().toISOString().split('T')[0],
-        tickeSalesEndDate: ticketDetails?.salesEndDate ? new Date(ticketDetails.salesEndDate).toISOString().split('T')[0] :
-                             new Date(eventBasics.eventDate).toISOString().split('T')[0],
-        // tickevalidityStartDate: ticketDetails?.ticketValidityStart ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityStartDate)) 
-        //                       : toLocalDateTimeInputValue(new Date(eventBasics.eventDate)),
-        // tickevalidityEndtDate: ticketDetails?.ticketValidityEnd
-        //                       ? toLocalDateTimeInputValue(new Date(ticketDetails.tickevalidityEndtDate))
-        //                       : toLocalDateTimeInputValue(addDurationToDate(new Date(eventBasics.eventDate), eventBasics.duration || 0))
+        tickeSalesStartDate: ticketDetails?.salesStartDate ? new Date(ticketDetails.salesStartDate).toLocaleDateString('sv-SE').split('T')[0] : 
+                            new Date().toLocaleDateString('sv-SE').split('T')[0],
+        tickeSalesEndDate: ticketDetails?.salesEndDate ? new Date(ticketDetails.salesEndDate).toLocaleDateString('sv-SE').split('T')[0] :
+                             new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0],
         tickevalidityStartDate: ticketDetails?.ticketValidityStart ? new Date(ticketDetails.ticketValidityStart).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
                                 new Date(eventBasics?.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) ,
         tickevalidityEndtDate: ticketDetails?.ticketValidityEnd ? new Date(ticketDetails.ticketValidityEnd).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
@@ -277,7 +275,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     // )}>
    
     <form onSubmit={handleSubmit(onSubmit)}
-      className="max-w-2xl mx-auto p-6 space-y-6"
+      className="max-w-2xl mx-auto p-3 space-y-2"
     > 
      {/* <Toaster position="top-right" /> */}
       <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color" 
@@ -288,7 +286,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           Back to Ticket list
       </a>
      
-      <div  className="min-h-[80px]">
+      <div className="flex flex-col">
         <label className="block font-semibold mb-1">Ticket Name</label>
         <input
           type="text"
@@ -296,32 +294,53 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           className="w-full border rounded p-2"
           placeholder="Enter ticket name"
         />
-        <div className="h-5">
+         <div className="min-h-[20px]">
           {errors.name && (
             <p className="text-red-600 text-sm mt-1">{errors.name.message}</p>
           )}
         </div>
       </div>
       
-      <div className="flex flex-col">
-        <label className="font-semibold mb-1">Cost($)</label>
-        <div className="flex flex-row justify-between items-center">
-          <input
-            type="number"
-            {...register("cost")}
-            className="border rounded p-2 w-1/5"
-            min={0}
-            disabled={stripeConnectStatus !== "Completed"}
-          />
-          
-          {stripeConnectStatus !=="Completed" && (<div className="text-accent-color ml-auto">
-            You must be connected to stripe in order to host paid events!
-        </div>)} 
+      <div className="flex flex-row items-center justify-between">
+        <div className="flex flex-col w-1/5">
+          <label className="font-semibold mb-1">Cost($)</label>
+          {/* <div className="flex flex-row justify-between items-center"> */}
+            <input
+              type="number"
+              step={.01}
+              {...register("cost")}
+              className="border rounded p-2"
+              min={0}
+              placeholder="0.00"
+              disabled={stripeConnectStatus !== "Completed"}
+            />
+            
+            {stripeConnectStatus !=="Completed" && (<div className="text-accent-color mr-auto max-w-[250px]">
+              You must be connected to stripe in order to host paid events!
+          </div>)} 
+          {/* </div> */}
+          <div className="min-h-[20px]">
+            {errors.name && (
+              <p className="text-red-600 text-sm mt-1">{errors.cost?.message}</p>
+            )}
+          </div>
         </div>
-        <div className="min-h-[20px]">
-          {errors.name && (
-            <p className="text-red-600 text-sm mt-1">{errors.cost?.message}</p>
-          )}
+        <div className="flex flex-col w-1/5">
+          <label className="font-semibold mb-1">Ticket Quantity</label>
+          <input 
+            type="number"
+            {...register("totalAllowed")}
+            className="border rounded p-2"
+            min={0}
+            title="Total number of tickets that can be sold for this ticket type."
+          />
+          <div className="min-h-[20px]">
+            {errors.totalAllowed && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.totalAllowed.message}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -334,7 +353,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
             <RichTextEditor value={field.value} onChange={field.onChange} />
           )}
         />
-        <div className="h-5">
+         <div className="min-h-[20px]">
           {errors.description && (
             <p className="text-red-600 text-sm mt-1">
               {errors.description.message}
@@ -344,44 +363,28 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       </div>
 
     
-      <div className="flex flex-row items-center justify-between min-h-[80px]">
-        <div className="flex flex-col w-1/5">
-          <label className="font-semibold mb-1">Ticket Quantity</label>
-          <input 
-            type="number"
-            {...register("totalAllowed")}
-            className="border rounded p-2"
-            min={0}
-            title="Total number of tickets that can be sold for this ticket type."
-          />
-          <div className="h-5">
-            {errors.totalAllowed && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.totalAllowed.message}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col w-1/4">
-          <label className="font-semibold mb-1">Per order limit</label>
-          <input
-            type="number"
-            {...register("maxPerOrder")}
-            className="border rounded p-2"
-            min={0}
-            title="Maximum number of tickets of this type that can be purchased in a single order. 0 means no limit."
-          />
-          <div className="h-5">
-            {errors.maxPerOrder && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.maxPerOrder.message}
-              </p>
-            )}
-          </div>   
-        </div>
+    <details>
+      <summary>Click to view advanced ticket settings</summary>
+      <div className="flex flex-col w-1/4 ml-auto">
+        <label className="font-semibold mb-1">Per order limit</label>
+        <input
+          type="number"
+          {...register("maxPerOrder")}
+          className="border rounded p-2"
+          min={0}
+          title="Maximum number of tickets of this type that can be purchased in a single order. 0 means no limit."
+        />
+        <div className="min-h-[20px]">
+          {errors.maxPerOrder && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.maxPerOrder.message}
+            </p>
+          )}
+        </div>   
       </div>
+    
       
-       <div className="flex flex-row items-center justify-between min-h-[80px]">
+       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col  justify-between">
           <label className="font-semibold mb-1">Sale start date</label>
           <div>
@@ -389,10 +392,11 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
               type="date"
               {...register("tickeSalesStartDate")}
               className="border rounded p-2"
+               title={`Event is on ${eventBasics.eventDate.toDateString()} `}
             
             />
           </div>
-          <div className="h-5">
+          <div className="min-h-[20px] max-w-[150px]">
             {errors.tickeSalesStartDate && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.tickeSalesStartDate.message}
@@ -406,9 +410,9 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
             type="date"
             {...register("tickeSalesEndDate")}
             className="border rounded p-2"
-          
+            title={`Event is on ${eventBasics.eventDate.toDateString()} `}
           />
-          <div className="h-5">
+          <div className="min-h-[20px] max-w-[150px]">
             {errors.tickeSalesEndDate && (
               <p className="text-red-600 text-sm mt-1 wrap">
                 {errors.tickeSalesEndDate.message}
@@ -418,17 +422,25 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         </div>  
       </div>
       
-      <div className="flex flex-row items-center justify-between min-h-[80px]">
+      <details>
+        <summary>Use this section to restrict tickets to a certain timeframe within an event.
+        </summary>
+        <div className="flex flex-row items-center justify-between">
         <div className="flex flex-col justify-between">
-          <label className="font-semibold mb-1">Validity start date</label>
+          <label className="font-semibold mb-1">Ticket valid from</label>
           <div>
             <input 
               type="time"
               {...register("tickevalidityStartDate")}
               className="border rounded p-2"
+              title = {`Event starts at ${eventBasics.eventDate.toLocaleTimeString('en-US',
+                { hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}`}
             />
           </div>
-          <div className="h-5">
+          <div className="min-h-[20px] max-w-[150px]">
             {errors.tickevalidityStartDate && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.tickevalidityStartDate.message}
@@ -437,16 +449,20 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           </div>
         </div>
         <div className="flex flex-col">
-          <label className="font-semibold mb-1">Validity end date</label>
+          <label className="font-semibold mb-1">Ticket valid to</label>
           <div>
             <input
               type="time"
-              
+              title={`Event ends at ${ addHoursToDate(eventBasics.eventDate, eventBasics.duration|| 0).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}`}
               {...register("tickevalidityEndtDate")}
               className="border rounded p-2"  
             />
           </div>
-          <div className="h-5">
+          <div className="min-h-[20px] max-w-[150px]">
             {errors.tickevalidityEndtDate && (
               <p className="text-red-600 text-sm mt-1 wrap">
                 {errors.tickevalidityEndtDate.message}
@@ -455,6 +471,9 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
           </div>   
         </div>  
       </div>
+      </details>
+      
+      </details>
 
      
       <div className="flex flex-row items-center justify-between">
