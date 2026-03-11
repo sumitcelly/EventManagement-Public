@@ -7,7 +7,7 @@ import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useMutation } from "react-query";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
@@ -19,10 +19,13 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   const history = useHistory();
 
   const queryClient = useQueryClient();
+  const refundModeRef = useRef<HTMLSelectElement>(null);
+  const ticketDisplayModeRef = useRef<HTMLSelectElement>(null);
 
-  const { data, isLoading:validateLoading } = useQuery(['validate',eventId], async () => {
-    const res = await axiosClient.get(`/events/livestatus/${eventId}`);
-    console.log('Event validation details from backend', res?.data);
+  const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
+    const res = await axiosClient.get(`/events/settings/${eventId}`);
+    console.log('Event settings details from backend', res?.data);
+    
     return res.data;
   },
     //return {"valid":true,"publishStatus":"Draft","eventStatus":false,"ticketStatus":false, eventUrl:"https://ticketsnow.com/foodfest26"};
@@ -37,14 +40,20 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   type PublishEventParams = {
     status: boolean;
     eventId?: string;
+    refundMode?:string;
+    ticketFeeMode?: string;
   };
 
   
-  const publishEvent = async ({ status, eventId }: PublishEventParams) => {
+  const publishEvent = async ({ status, eventId ,refundMode, ticketFeeMode}: PublishEventParams) => {
     try {
       console.log("Publishing event", eventId, "set live status to", status);
 
-      const res = await axiosClient.put(`/events/livestatus/${eventId}`, status, {
+      const res = await axiosClient.put(`/events/eventsettings/${eventId}`, {
+        isLive: status,
+        refundMode: Number(refundMode) || 0,
+        ticketFeeMode: Number(ticketFeeMode) || 0
+      }, {
                   headers: {
                   'Content-Type': 'application/json'}
                 });
@@ -53,7 +62,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
       const eventStatus = status?"Live":"Draft";
 
       if (res?.data) {
-        await queryClient.resetQueries({ queryKey: ["validate", eventId] });
+        await queryClient.resetQueries({ queryKey: ["settings", eventId] });
         console.log("✅ Success publishing event", eventId);
         toast.success("Event status changed successfully to "+eventStatus);
         return true;
@@ -74,9 +83,20 @@ export default function EventPublish({eventId}: {eventId?:string}) {
 
   const { mutate, isLoading, isSuccess, isError } = mutation;
 
+  useEffect(()=>{
+    if (data && refundModeRef.current && ticketDisplayModeRef.current)
+    {
+      refundModeRef.current.value = data.refundMode;
+      ticketDisplayModeRef.current.value = data.ticketFeeMode;
+    }
+  },[data]);
 
   if (validateLoading) return <p>Loading...</p>;
   
+ 
+
+
+
   return (  
      
     <div className="max-w-md mx-auto  text-center">
@@ -114,13 +134,32 @@ export default function EventPublish({eventId}: {eventId?:string}) {
           </div>
         )}
         
+        <div className="flex flex-col space-y-1 mt-4">
+         <label className="block font-semibold mb-1 mr-auto">Refund Mode</label>
+           <select ref={refundModeRef} className="w-1/2">
+              <option value="0">No refunds allowed</option>
+              <option value="1">Customer initiates refunds</option>
+            </select>
+        </div>
+
+         <div className="flex flex-col space-y-1 mt-4">
+          <label className="block font-semibold mb-1 mr-auto">Fee Display Mode</label>
+           <select ref={ticketDisplayModeRef} className="w-1/2">
+              <option value="0">None(Note required for free tickets)</option>
+              <option value="1">Customer absorbs all fees</option>
+              <option value="2">Organizer absorbs Stripe fees</option>
+            </select>
+        </div>
+        
       </div>
     
     {data && data.ticketStatus && (
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-               onClick={() => mutate({ status: !data.isLive, eventId: eventId })}
+               onClick={() => mutate({ status: !data.isLive, eventId: eventId, 
+                      refundMode:refundModeRef.current?.value,
+                      ticketFeeMode: ticketDisplayModeRef.current?.value })}
                 disabled={mutation.isLoading}
               >
                {!data.isLive? "Publish" :  "Unpublish"}

@@ -176,7 +176,7 @@ namespace EventManagementDbAccess
       return null;
     }
 
-    public async Task<EventLiveStatus> GetLiveStatusForEvent(int eventId)
+    public async Task<EventSettings> GetEventSettings(int eventId)
     {
       if (eventId <= 0)
         throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
@@ -186,7 +186,7 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
    
-        var query = @"select a.IsLive, a.EventName,a.EventUrlName,
+        var query = @"select a.IsLive, a.EventName,a.EventUrlName, a.RefundMode,a.TicketFeeDisplayMode,
                     (Select count(*) from eventitemtype b where b.eventid = a.eventid) AS tickettypecount
                     FROM events a WHERE a.eventid = @eventId";
                     
@@ -197,8 +197,10 @@ namespace EventManagementDbAccess
         using var reader = await cmd.ExecuteReaderAsync();
         if (await reader.ReadAsync())
         {
-          return new EventLiveStatus
+          return new EventSettings
           {
+            RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
+            TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
             IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
             TicketStatus = reader.GetInt16(reader.GetOrdinal("tickettypecount")) > 0 ? true : false,
             EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
@@ -396,6 +398,8 @@ namespace EventManagementDbAccess
         EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
         EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
         Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+        RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
+        TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
         Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
         EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress")),
         EventDescription = reader.IsDBNull(reader.GetOrdinal("EventDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventDescription")),
@@ -482,7 +486,7 @@ namespace EventManagementDbAccess
         }
         return rowsAffected > 0;
     }
-    public async Task<bool> UpdatePublishStatus(int eventId, bool status)
+    public async Task<bool> UpdateEventSettings(int eventId, EventSettings settings)
     {
         if (eventId <=0)
             throw new ArgumentNullException(nameof(eventId));
@@ -491,12 +495,17 @@ namespace EventManagementDbAccess
         await connection.OpenAsync();
 
         string query = @"UPDATE Events SET   
-            IsLive = @isLive 
+            IsLive = @isLive,
+            RefundMode = @refundMode,
+            TicketFeeDisplayMode = @ticketFeeDisplayMode
             WHERE EventId = @eventId";
 
       using var cmd = new MySqlCommand(query, connection);
  
-      cmd.Parameters.AddWithValue("@isLive", status);
+      cmd.Parameters.AddWithValue("@isLive", settings.IsLive);
+      cmd.Parameters.AddWithValue("@refundMode", settings.RefundMode.ToString());
+      cmd.Parameters.AddWithValue("@ticketFeeDisplayMode", settings.TicketFeeMode.ToString());
+      
       cmd.Parameters.AddWithValue("@eventId", eventId);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -508,7 +517,9 @@ namespace EventManagementDbAccess
           Event? tempEvent = await _cache.GetOnlyAsync<Event>(key);
           if (tempEvent !=null)
           {
-            tempEvent.IsLive = status;
+            tempEvent.IsLive = settings.IsLive;
+            tempEvent.RefundMode = settings.RefundMode;
+            tempEvent.TicketFeeMode = settings.TicketFeeMode;
             _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
           }
         }

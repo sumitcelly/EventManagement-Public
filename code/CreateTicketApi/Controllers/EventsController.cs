@@ -109,29 +109,35 @@ namespace CreateTicketApi.Controllers
 
 
 
-        [HttpGet("/Events/LiveStatus/{eventId}")]
+        [HttpGet("/Events/Settings/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
-        public async Task<ActionResult<EventLiveStatus>> GetEventLiveStatusById(int eventId)
+        public async Task<ActionResult<EventSettings>> GetEventSettings(int eventId)
         {
             if (eventId<=0)
             {
                 return BadRequest("Invalid event."); 
             }
-            var evt = await _EventDbAccess.GetLiveStatusForEvent(eventId);
+            var evt = await _EventDbAccess.GetEventSettings(eventId);
             if (evt == null)
                 return NotFound();
             return evt;
         }
 
-        [HttpPut("/Events/LiveStatus/{eventId}")]
+        [HttpPut("/Events/EventSettings/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
-        public async Task<ActionResult<bool>> UpdateLiveStatus(int eventId, [FromBody] bool status)
+        public async Task<ActionResult<bool>> UpdateEventSettings(int eventId, [FromBody] EventSettings status)
         {
             if (eventId <= 0)
                 return BadRequest("Invalid event.");
-            return (await _EventDbAccess.UpdatePublishStatus(eventId, status))?true:false;
+            if (!Enum.IsDefined(typeof(RefundMode), status.RefundMode) ||
+                !Enum.IsDefined(typeof(TicketFeeMode), status.TicketFeeMode))
+            {
+                return BadRequest("Invalid data sent for event fee mode or refund mode");
+            } 
+
+            return (await _EventDbAccess.UpdateEventSettings(eventId, status))?true:false;
         }
 
         [HttpPost("/events/{customerId}")]

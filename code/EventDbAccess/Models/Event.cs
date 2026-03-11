@@ -74,17 +74,47 @@ namespace EventManagementDbAccess
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        public RefundMode RefundMode { get; set; }  
+
+        public TicketFeeMode TicketFeeMode { get; set; }    
     }
     
-    public class EventLiveStatus
+    public class EventSettings
     { 
         public bool IsLive { get; set; }
 
         /// <summary>
         /// At least one ticket created
         /// </summary>
-        public bool TicketStatus { get; set; }
+        public bool? TicketStatus { get; set; }
 
-        public required string EventUrlName { get; set; }
+        public  string? EventUrlName { get; set; }
+
+        public RefundMode RefundMode { get; set;}   
+
+        public TicketFeeMode TicketFeeMode{ get; set; }
+    }
+
+    // public class EventSettings
+    // {
+    //     public bool IsLive {get;set;}
+
+    //     public RefundMode RefundMode { get; set;}   
+
+    //     public TicketFeeMode TicketFeeMode{ get; set; }
+    // }
+
+    public enum TicketFeeMode
+    {
+        None,
+        CustomerAbsorbsAll,
+        OrganizerAbsorbsStripe
+    }
+    public enum RefundMode
+    {
+        None,
+        CustomerControlled,
+        OrganizerControlled
     }
 }
