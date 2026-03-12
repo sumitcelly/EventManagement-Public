@@ -87,15 +87,19 @@ type FormValues = {
 
 
 
-export default function TicketBasics({eventId,ticketId}: {eventId?: string, ticketId?:string}) {
+export default function TicketBasics( {eventId,ticketId,mode}:
+   {eventId?: string, ticketId?:string,mode?:string})
+ {
 
   const history = useHistory();
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const queryClient =useQueryClient();
   const stripeConnectStatus =  user?.stripeConnectStatus;
-
  
+
+  console.log('ticket basics eventid, ticketid, mode',eventId,ticketId,mode);
+
   //redux may or may not have event details
   let eventBasics = useAppSelector((state:RootState) => state.event);
   
@@ -114,7 +118,10 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
   );
 
 
-  const { data:ticketDetails, isLoading:ticketLoading } = useQuery(`tickets/details/${eventId}/${ticketId}`, async () => {
+  const { data:ticketDetails, isLoading:ticketLoading } = useQuery(['TicketDetails',eventId,ticketId], async () => {
+    
+    console.log('ticket id from query',ticketId);
+  
     let res = await axiosClient.get(`/eventitemtype/${eventId}/${ticketId}`);
     if (res.data)
     {
@@ -127,10 +134,16 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     return res.data;
   },
   {
+    //refetchOnMount:true,
+    //refetchOnWindowFocus:true,
+    
     staleTime: 1000 * 60 * 5, //enable only if redux does not have event details
     enabled: !!ticketId && ticketId!=="-1"
   }
   );
+
+  console.log('ticket details',ticketDetails);
+
 
   const getEventEndTime =():string=>{
     let retVal = "";
@@ -146,7 +159,25 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     
   }
 
-   
+  const setDefaultFormValues =()=>{
+    return {
+      name: "",
+      cost: 0,
+      maxPerOrder: 0,
+      totalAllowed: 1 ,
+      description: "",
+      tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
+      tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
+      tickevalidityStartDate: eventBasics.eventDate ? 
+                             new Date(eventBasics.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                            '00:00',
+      tickevalidityEndtDate: eventBasics.eventDate && eventBasics.duration ? 
+                            addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
+                            '23:59',
+
+      };
+  }
+
 
   const {
     control,
@@ -158,7 +189,7 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(ticketSchema(eventBasics)),
-    defaultValues: {
+    defaultValues:  {
       name: "",
       cost: 0,
       maxPerOrder: 0,
@@ -210,7 +241,9 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
         .then(response => {
           toast.success("Ticket type updated!");
           console.log('Ticket updated successfully:', response.data);
-          queryClient.resetQueries({queryKey:[`tickets/details/${eventId}/${ticketId}`]});
+          queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
+          queryClient.invalidateQueries(['TicketDetails',eventId,ticketId]);
+          //queryClient.resetQueries({queryKey:[`tickets/details/${eventId}/${ticketId}`]});
           //setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
           //navigate(`/organizer/eventtickets/${eventId}`);
         })
@@ -225,6 +258,8 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
       .then(response => {
         console.log('Ticket created successfully:', response.data);
         toast.success("Ticket Type created!");
+        queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
+        //queryClient.s(['TicketDetails',eventId,response.data]);
         setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
       })
       .catch(error => {
@@ -238,7 +273,8 @@ export default function TicketBasics({eventId,ticketId}: {eventId?: string, tick
 
 
   useEffect(() => { 
-    if (ticketDetails) { 
+    if (ticketDetails)
+    { 
       console.log("Inside reset",ticketDetails);
       reset(
       {

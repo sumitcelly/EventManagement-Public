@@ -24,42 +24,50 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
   const queryClient = useQueryClient();
   const event = useAppSelector((state: RootState) => state.event);
 
-  const deleteTicket = async (eventId: number,eventItemTypeId:number) => 
+  const deleteTicket = async (eventId: string,eventItemTypeId:number) => 
   {
     try 
     {
         console.log('Deleting ticket id  for eventId',eventItemTypeId, eventId);
         // 1. Optimistically update UI
         queryClient.setQueryData(['TicketsbyEvent', eventId], (oldData: Ticket[] | undefined) => {
+          console.log('old data',oldData);
           if (!oldData) return [];
           return oldData.filter(ticket => ticket.eventItemTypeId !== eventItemTypeId);
         });
 
+        try
+        {
         // 2. Make API call
-        await axiosClient.delete(`/eventitemtype/${eventId}/${eventItemTypeId}`).then((response)=>{
-            if (response.data){
-              toast.error(response.data);
-            }
-            else
-            {
-              toast.success("Deleted ticket type succefully");
-            }
-        }).
-        catch((error)=>{
+         const response = await axiosClient.delete(`/eventitemtype/${eventId}/${eventItemTypeId}`);
+         if (!response || response.status!=200)
+         {
+            toast.error(response.data);
+         }
+         else
+         {
+            toast.success("Deleted ticket type succefully");
+            
+         }
+        }
+        catch(error)
+        {
             toast.error("Error deleting ticket type");
             console.log("error in catch", error);
-        });
+        }finally{
+          await queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
+        };
 
         // 3. Invalidate to verify our optimistic update
         // This ensures our cache matches the server state
-        await queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
+       
 
     } 
     catch (error) 
     {
         console.error('Failed to delete event:', error);
     // On error, refetch to restore correct state
-        await queryClient.invalidateQueries(['eventId', eventId]);
+        await queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
     }
 }
 
@@ -145,7 +153,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
                   linkData={{
                     viewLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
                     editLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
-                    delete:()=>eventId ? deleteTicket(Number(eventId), ticket.eventItemTypeId) : undefined
+                    delete:()=>eventId ? deleteTicket(eventId, ticket.eventItemTypeId) : undefined
                   }}
                 />
               </div>
@@ -157,7 +165,8 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     <div className="flex flex-row mt-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=> history.push(`/eventmanager/${eventId}/new`)}
+              onClick={()=>{ 
+                history.push(`/eventmanager/${eventId}/new`);}}
             >
               New Ticket
         </button> 

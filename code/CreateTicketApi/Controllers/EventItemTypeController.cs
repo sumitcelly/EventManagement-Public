@@ -79,7 +79,7 @@ namespace CreateTicketApi.Controllers
         {
             if ( eventId <= 0 || id <= 0)
                 return "Invalid event ID or item ID.";
-            return  await _eventItemTypeDbAccess.DeleteEventItemType(id);
+            return  await _eventItemTypeDbAccess.DeleteEventItemType(eventId,id);
            
         }
     }

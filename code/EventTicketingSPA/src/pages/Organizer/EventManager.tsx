@@ -89,7 +89,7 @@ export function EventManager() {
         {
           (mode === "ticketlist" || !mode)
           ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
-          :<TicketBasics eventId={eventId} ticketId={ticketId}/>         
+          :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
         }
       </TabItem>
 

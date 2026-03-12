@@ -21,6 +21,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   const queryClient = useQueryClient();
   const refundModeRef = useRef<HTMLSelectElement>(null);
   const ticketDisplayModeRef = useRef<HTMLSelectElement>(null);
+  const isLiveRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
     const res = await axiosClient.get(`/events/settings/${eventId}`);
@@ -84,10 +85,11 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   const { mutate, isLoading, isSuccess, isError } = mutation;
 
   useEffect(()=>{
-    if (data && refundModeRef.current && ticketDisplayModeRef.current)
+    if (data && refundModeRef.current && ticketDisplayModeRef.current && isLiveRef.current)
     {
       refundModeRef.current.value = data.refundMode;
       ticketDisplayModeRef.current.value = data.ticketFeeMode;
+      isLiveRef.current.checked = data.isLive;
     }
   },[data]);
 
@@ -116,7 +118,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
              {
               data && !data.ticketStatus && (
               <p className=" text-l">
-               Please add atleast one ticket type.
+               Please add atleast one ticket type to go live.
               </p>
             )}
           </div>
@@ -128,15 +130,27 @@ export default function EventPublish({eventId}: {eventId?:string}) {
             </div>
         }
 
+
         {data && data.isLive && (
           <div className= "mt-3 bg-brand-neutral rounded">
             Your event url is <a href={`${window.location.origin}/${data.eventUrlName}`}>{`${window.location.origin}/${data.eventUrlName}`}</a>
           </div>
         )}
         
-        <div className="flex flex-col space-y-1 mt-4">
+        <div className="flex flex-col space-y-4 mt-6">
+          <div className="flex flex-row space-x-2  items-center">
+            <label htmlFor="isLive">Is Live</label>
+            <input
+            type="checkbox"
+            id="isLive"
+            ref={isLiveRef}
+            disabled={!data || (data && !data.ticketStatus)}
+            defaultChecked={data && data.isLive?true: false}/>
+          </div>
+        
+
          <label className="block font-semibold mb-1 mr-auto">Refund Mode</label>
-           <select ref={refundModeRef} className="w-1/2">
+           <select ref={refundModeRef} className="w-3/5">
               <option value="0">No refunds allowed</option>
               <option value="1">Customer initiates refunds</option>
             </select>
@@ -144,7 +158,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
 
          <div className="flex flex-col space-y-1 mt-4">
           <label className="block font-semibold mb-1 mr-auto">Fee Display Mode</label>
-           <select ref={ticketDisplayModeRef} className="w-1/2">
+           <select ref={ticketDisplayModeRef} className="w-3/5">
               <option value="0">None(Note required for free tickets)</option>
               <option value="1">Customer absorbs all fees</option>
               <option value="2">Organizer absorbs Stripe fees</option>
@@ -153,16 +167,16 @@ export default function EventPublish({eventId}: {eventId?:string}) {
         
       </div>
     
-    {data && data.ticketStatus && (
+    {data && (
       <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-               onClick={() => mutate({ status: !data.isLive, eventId: eventId, 
+               onClick={() => mutate({ status: isLiveRef.current?.checked || false, eventId: eventId, 
                       refundMode:refundModeRef.current?.value,
                       ticketFeeMode: ticketDisplayModeRef.current?.value })}
                 disabled={mutation.isLoading}
               >
-               {!data.isLive? "Publish" :  "Unpublish"}
+               Update
           </button> 
           
          

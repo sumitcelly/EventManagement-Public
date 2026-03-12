@@ -310,10 +310,10 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<string> DeleteEventItemType(int eventItemTypeId)
+        public async Task<string> DeleteEventItemType(int eventId,int eventItemTypeId)
         {
-            if (eventItemTypeId <= 0)
-                throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventItemTypeId));
+            if (eventItemTypeId <= 0 || eventId <=0)
+                throw new ArgumentException("EventItemTypeId or event Id must be greater than zero.");
 
             try
             {
@@ -329,7 +329,7 @@ namespace EventManagementDbAccess
                 {
 
                     //remove all event item types from cache for the event. the next request will populate it.
-                    _cache.RemoveCache<List<EventItemType>>(eventItemTypeId.ToString());
+                    _cache.RemoveCache<List<EventItemType>>(eventId.ToString());
                 }
                 return rowsAffected > 0?string.Empty:"Unable to delete ticket type.";
             }
