@@ -25,6 +25,7 @@ module.exports = {
       },
       
        textColor: {
+        'link-color':'hsla(224, 90%, 27%, 0.83)',
         'primary-color': '#5c6d9aff', // Custom color named 'primary-text'
         'secondary-color': '#6d3333ff', // Custom color named 'secondary-text'
         'tertiary-color': '#195b14ff', // Custom color named 'tertiary-text'

@@ -314,7 +314,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       className="max-w-2xl mx-auto p-3 space-y-2"
     > 
      {/* <Toaster position="top-right" /> */}
-      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-accent-color" 
+      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-link-color" 
         onClick={(e)=>{
           e.preventDefault();
           history.push(`/eventmanager/${eventId}/ticketlist`);
@@ -337,7 +337,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
         </div>
       </div>
       
-      <div className="flex flex-row items-center justify-between">
+      <div className="flex flex-row justify-items-center justify-between">
         <div className="flex flex-col w-1/5">
           <label className="font-semibold mb-1">Cost($)</label>
           {/* <div className="flex flex-row justify-between items-center"> */}
