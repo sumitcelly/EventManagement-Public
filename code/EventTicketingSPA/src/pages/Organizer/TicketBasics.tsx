@@ -237,8 +237,8 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       totalAllowed: data.totalAllowed,
       salesStartDate: new Date(data.tickeSalesStartDate + 'T00:00:00.000').toISOString(),
       salesEndDate: new Date(combinedString).toISOString(),
-      ticketValidityStart: combineDateTime(eventBasics.eventDate, data.tickevalidityStartDate),
-      ticketValidityEnd: combineDateTime(eventBasics.eventDate, data.tickevalidityEndtDate),
+      ticketValidityStart: combineDateTime(new Date(eventBasics.eventDate), data.tickevalidityStartDate),
+      ticketValidityEnd: combineDateTime(new Date(eventBasics.eventDate), data.tickevalidityEndtDate),
     }
     console.log('payload to be sent to backend',payload);
    
