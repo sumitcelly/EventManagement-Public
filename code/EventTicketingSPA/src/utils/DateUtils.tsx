@@ -33,6 +33,15 @@ export const  addDaysToDate=(date: Date, durationDays: number): Date =>{
     return newDate;
   }
 
+export const combineDateTimeToLocale = (date: Date, timeStr: string): Date => {
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  
+  const combined = new Date(date); // Copy the date
+  combined.setHours(hours, minutes, 0, 0); // Set local time
+  
+  return combined; 
+}
+
 export const  combineDateTime=(date: Date, timeStr: string):string=> {
   const dateStr = date.toISOString().split('T')[0];
   return new Date(`${dateStr}T${timeStr}`).toISOString();

@@ -14,7 +14,7 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
-import {appendTime,toUTCDate, addHoursToDate,combineDateTime}   from '../../utils/DateUtils'
+import {appendTime,toUTCDate, addHoursToDate,combineDateTime,combineDateTimeToLocale}   from '../../utils/DateUtils'
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbarnew";
 
@@ -57,18 +57,22 @@ const ticketSchema = (event: EventHeader)=>yup.object({
         //return true;
         if (!event || !event.eventDate) return false;
       
-        const  validityDate =  new Date(combineDateTime( new Date(event.eventDate),value));
+
+        const  validityDate =  combineDateTimeToLocale( new Date(event.eventDate),value);
         const eventEndDate = addHoursToDate(event.eventDate, event.duration ||0);
-        console.log('validityDate, eventEndDate', validityDate, eventEndDate);
-        return  validityDate >= event.eventDate && validityDate<=eventEndDate;     
+        console.log('validitStartDate, eventStartDate,eventEndDate', validityDate, event.eventDate, eventEndDate);
+        return  validityDate >= new Date(event.eventDate) && validityDate<=eventEndDate;     
       }),
     tickevalidityEndtDate: yup.string().required("Ticket validity end date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => { 
       
-        if (!event || !event.eventDate) return false;
-        const  validityDate =  new Date(combineDateTime( new Date(event.eventDate),value));
+         if (!event || !event.eventDate) return false;
+      
+
+        const  validityDate =  combineDateTimeToLocale( new Date(event.eventDate),value);
         const eventEndDate = addHoursToDate(event.eventDate, event.duration ||0);
-        return  validityDate >= event.eventDate && validityDate<=eventEndDate;      
+        console.log('validityEndDate, eventStartDate,eventEndDate', validityDate, event.eventDate, eventEndDate);
+        return  validityDate >= new Date(event.eventDate) && validityDate<=eventEndDate;    
       }),
   });
 
@@ -145,19 +149,21 @@ export default function TicketBasics( {eventId,ticketId,mode}:
   console.log('ticket details',ticketDetails);
 
 
-  const getEventEndTime =():string=>{
-    let retVal = "";
+ const getEventEndTime = (): string => {
+  if (!eventBasics?.duration || !eventBasics?.eventDate) return "";
 
-    if (eventBasics?.duration && eventBasics?.eventDate)
-    {
-      const eventEnd = addHoursToDate(eventBasics.eventDate, eventBasics.duration);
+  const eventEnd = addHoursToDate(new Date(eventBasics.eventDate), eventBasics.duration);
 
-      retVal=`T${eventEnd.getHours()}:00:00.000`;
-      console.log('enddate',retVal);
-    }
-    return retVal;
-    
-  }
+  // Pad with leading zeros (e.g., 9 -> 09)
+  const hours = eventEnd.getHours().toString().padStart(2, '0');
+  const minutes = eventEnd.getMinutes().toString().padStart(2, '0');
+
+  // Return ONLY the time part. Let the caller handle the 'T' separator.
+  const retVal = `${hours}:${minutes}:00.000`;
+  
+  console.log('Formatted end time:', retVal);
+  return retVal;
+};
 
   const setDefaultFormValues =()=>{
     return {
@@ -213,6 +219,13 @@ export default function TicketBasics( {eventId,ticketId,mode}:
   const onSubmit = (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
+
+    console.log('sale end date',data.tickeSalesEndDate , getEventEndTime());
+    const datePart = data.tickeSalesEndDate.trim(); 
+    const timePart = getEventEndTime().trim();
+
+// Combine with NO space before the T
+    const combinedString = `${datePart}T${timePart}`;
     //make sure to convert date time local to UTC before sending to backend
     const payload = {
       eventItemTypeId: ticketDetails?.eventItemTypeId || 0,
@@ -223,7 +236,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       maxPerOrder: data.maxPerOrder,
       totalAllowed: data.totalAllowed,
       salesStartDate: new Date(data.tickeSalesStartDate + 'T00:00:00.000').toISOString(),
-      salesEndDate: new Date(data.tickeSalesEndDate + getEventEndTime()).toISOString(),
+      salesEndDate: new Date(combinedString).toISOString(),
       ticketValidityStart: combineDateTime(eventBasics.eventDate, data.tickevalidityStartDate),
       ticketValidityEnd: combineDateTime(eventBasics.eventDate, data.tickevalidityEndtDate),
     }

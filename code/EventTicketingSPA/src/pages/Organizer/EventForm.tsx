@@ -17,7 +17,7 @@ import { RootState } from "../../app/store";
 import toast, { Toaster } from 'react-hot-toast';
 import axios from "axios";
 import { createUrlSlug, getFullUrlForEvent } from "../../utils/StringUtils";
-
+import { addHoursToDate } from "../../utils/DateUtils";
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   eventUrlName: yup.string().required("Event Url name is reqired"),
@@ -30,7 +30,24 @@ const eventSchema = yup.object({
     }),
   fullAddress: yup.string().required("Event address is required"),
   eventDuration: yup.number().required("Event duration is required").
-  min(1, "Duration cannot be 0."),
+  min(1, "Duration cannot be 0.")
+  .test("next-day", "Your event must end on the same day.", function(value) {
+     const { eventStartDate } = this.parent;
+  
+      // 1. Validation guard: if values are missing, don't fail yet
+      if (!eventStartDate || !value) return true;
+
+      const start = new Date(eventStartDate);
+      const end = addHoursToDate(start, value);
+
+      // 2. Compare using toDateString (ignores time, compares Day Month Year)
+      const isSameDay = start.toDateString() === end.toDateString();
+
+      console.log('Start:', start.toDateString(), 'End:', end.toDateString());
+
+      // 3. Return the boolean result
+      return isSameDay; 
+      }),
   description: yup
     .string()
     .test("not-empty", "Description is required", (value) => {
@@ -368,8 +385,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         file={file}
         setFile={setFile}
       />
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-col">
+      <div className="flex flex-row justify-items-center justify-between">
+        <div className="flex flex-col space-y-1">
           <label className="font-semibold mb-1">Event Date</label>
           <input
             type="datetime-local"
@@ -383,8 +400,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
             </p>
           )}
         </div>
-        <div className="flex flex-col items-end">
-          <label className="font-semibold mb-1">Duration (hrs)</label>
+        <div className="flex flex-col space-y-1">
+          <label className="ml-auto font-semibold mb-1">Duration (hrs)</label>
           <input 
             type="number"
             {...register("eventDuration")}
@@ -392,11 +409,13 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
             placeholder="Duration (hours)"
             min={0}
           />
+          <div className="min-h-[20px]">
           {errors.eventDuration && (
             <p className="text-red-600 text-sm mt-1">
               {errors.eventDuration.message}
             </p>
           )}
+          </div>
         </div>
       </div>
       
