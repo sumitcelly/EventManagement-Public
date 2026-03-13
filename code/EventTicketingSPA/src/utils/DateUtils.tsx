@@ -23,6 +23,7 @@ export const toUTCDate = (localDateStr: string): Date => {
   
 export const  addHoursToDate=(date: Date, durationHours: number): Date =>{
     const newDate = new Date(date);
+    //should this be setUtchours?
     newDate.setHours(newDate.getHours() + durationHours);
     return newDate;
   }
