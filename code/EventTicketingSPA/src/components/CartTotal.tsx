@@ -1,5 +1,9 @@
 import { useWatch,Control } from "react-hook-form";
 import { TicketFormValues  ,Ticket } from "../types/Tickets";
+import { useQuery } from "react-query";
+import axiosClient from "../api/axiosClient";
+import { number } from "yup";
+import { useEffect, useState } from "react";
 
 type CartTotalProps = {
   control: Control<TicketFormValues>;
@@ -14,10 +18,11 @@ type CartTotalProps = {
  */
 
 
-  const letCustomeAbsorbAllFees = false;
-const calculateGrossUp = (
+const letCustomeAbsorbAllFees = false;
+
+export const calculateForCustomerAbsorbsAllFees = (
     targetNet: number, 
-    platformProfit: number, 
+    platformFees: number, 
     stripePercent: number = 0.029, 
     stripeFixed: number = 30
   ): { totalToCharge: number; serviceFee: number; displayTotal: string; displayFee: string } => {
@@ -31,13 +36,15 @@ const calculateGrossUp = (
         displayFee: "0.00"
       };
     }   
-    const numerator = targetNet + stripeFixed + platformProfit;
+
+    const platformFeeAmt = parseFloat((targetNet * platformFees).toFixed(2));
+    const numerator = targetNet*100 + stripeFixed + platformFeeAmt*100;
     const denominator = 1 - stripePercent;
     
     const totalToCharge = Math.ceil(numerator / denominator);
     
     // Total fees shown to the customer (Your profit + the stripe fee you are passing on)
-    const serviceFee = totalToCharge - targetNet;
+    const serviceFee = totalToCharge - targetNet*100;
 
     return {
       totalToCharge, // The final price (e.g., 2195)
@@ -47,39 +54,77 @@ const calculateGrossUp = (
     };
   };
 
-export default function CartTotal({ control }: CartTotalProps) {
-  const tickets = useWatch({ control, name: "tickets" });
-  console.log('tickets is',tickets);
-  const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
-  console.log('cart total',total);
-  //const processingFees = parseFloat((total *.029).toFixed(2));
-  const platformFees = parseFloat((total *.03).toFixed(2));
-
-  console.log('total and plattform fees',total,platformFees);
-
-  let displayTotal="", displayFee="";
-  if (letCustomeAbsorbAllFees){
-    ({displayTotal, displayFee} = calculateGrossUp(total * 100, platformFees * 100));
-  }
-  else
+  export const calculateForOrganizerAbsorbsStripeFees =
+    (total: number, platformFees:number)=>
   {
-    displayTotal= (total + platformFees).toFixed(2);
-    displayFee= platformFees.toFixed(2);
+     const platformFeeAmt = parseFloat((total * platformFees).toFixed(2));
+     const displayTotal= (total + platformFeeAmt).toFixed(2);
+     const displayFee= platformFeeAmt.toFixed(2);
+     return {displayTotal, displayFee};
+
   }
+  
+  
+  export default function CartTotal({ control }: CartTotalProps) {
+    const tickets = useWatch({ control, name: "tickets" });
+    const [fees, setFees]=useState("0");
+    const [total, setTotal]=useState("0");
 
-  //const finalTotal = (total + processingFees + platformFees).toFixed(2);
-  console.log(displayTotal);
-  console.log(displayFee);
+    const { data, isLoading } = 
+    useQuery(['TransactionFees'], async () => {
+      const res = await axiosClient.get(`/payment/transactionfees`);
+      console.log('TransactionFees fetched from backend',res.data);
+      return res.data;
+  
+    },
+    {
+     staleTime: 1000 * 60 * 600,  // Data stays fresh for 5 minutes
+     cacheTime: 1000 * 60 * 600, // Cache persists for 30 minutes
+     refetchOnMount: false,      // don’t always re-fetch on mount
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,   
+    }
+  );
 
-  return (<>
-            
-     
-              <div className="grid grid-cols-2 gap-y-1">
+  useEffect(()=>{
+      console.log('tickets is',tickets);
+
+      console.log('data is',data);
+      const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
+      console.log('cart total',total);
+
+      const platformFees = parseFloat((total * Number(data?.platformFees)).toFixed(2));
+
+      console.log('total and plattform fees',total,platformFees);
+
+      let displayTotal="", displayFee="";
+      if (letCustomeAbsorbAllFees){
+        ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed)));
+        setTotal(displayTotal);
+        setFees(displayFee);
+      
+      }
+      else
+      {
+        ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees));
+        setTotal(displayTotal);
+        setFees(displayFee);
+      
+      }
+
+      //const finalTotal = (total + processingFees + platformFees).toFixed(2);
+      console.log(displayTotal);
+      console.log(displayFee);``
+
+ 
+  },[data,tickets]);
+   return (<>
+               <div className="grid grid-cols-2 gap-y-1">
                 <div className="text-left">Service Fee:</div>
-                <div className="text-right">${displayFee}</div>
+                <div className="text-right">${fees}</div>
 
                 <div className="text-left font-semibold">Total:</div>
-                <div className="text-right font-semibold">${displayTotal}</div>
+                <div className="text-right font-semibold">${total}</div>
               </div>
           </>
   );

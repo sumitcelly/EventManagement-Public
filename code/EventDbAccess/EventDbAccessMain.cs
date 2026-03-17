@@ -34,10 +34,11 @@ namespace EventManagementDbAccess
         {
           _logger.LogInformation("Connection to database established successfully.");
           string query = @" SELECT EventName,EventId,EventUrlName, eventheadline,EventDescription,EventTags,EventOrganizer,
-                            EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,
+                            EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,b.OrganizerEventBaseUrl,
                             MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
                             FROM Events 
+                            inner join EventOrganizer b on b.CustomerId=Events.EventOrganizer
                             WHERE 1=1";
 
           if (!string.IsNullOrEmpty(keyword))
@@ -104,6 +105,9 @@ namespace EventManagementDbAccess
                   EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))?
                                StringUtils.CreateUrlSlug(reader.GetString("EventName")):
                                reader.GetString("EventUrlName"),
+                  OrganizerUrlName = reader.IsDBNull(reader.GetOrdinal("OrganizerEventBaseUrl"))?
+                                  string.Empty:
+                               reader.GetString("OrganizerEventBaseUrl"),
                   EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString("EventBannerFileName")),
                   EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
@@ -143,7 +147,7 @@ namespace EventManagementDbAccess
         var query = @"select a.EventId,a.EventName,a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
-                    b.OrganizationName from events a, eventorganizer b 
+                    b.OrganizationName, b.OrganizerEventBaseUrl from events a, eventorganizer b 
                     WHERE a.EventOrganizer= b.CustomerId and 
                     a.EventId = @eventId";
 
@@ -164,7 +168,8 @@ namespace EventManagementDbAccess
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
             EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
-            //EventOrganizer = reader.GetString(reader.GetOrdinal("EventOrganizer")),
+            OrganizerUrlName =  reader.IsDBNull(reader.GetOrdinal("OrganizerEventBaseUrl")) ? string.Empty: 
+                                reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
             EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
 
             Free = reader.GetBoolean(reader.GetOrdinal("Free")),

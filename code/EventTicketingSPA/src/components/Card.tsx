@@ -13,8 +13,8 @@ export function EventCard({event}:
     <Card     
       className="bg-brand-light max-w-xs  cursor-pointer hover:shadow-lg"
       imgAlt="test"
-      imgSrc={event.eventImageUrl}
-      onClick={() => ionRouter.push(`/eventDetails/${event.eventId}`)}
+      imgSrc={event.eventBannerUrl}
+      onClick={() => ionRouter.push(`/eventDetails/${event.organizerUrlName}/${event.eventUrlName}`)}
     >
       <div className="text-xl font-heading tracking-tight dark:text-white">
        {event.eventName}   

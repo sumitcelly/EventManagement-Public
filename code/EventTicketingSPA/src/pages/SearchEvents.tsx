@@ -20,7 +20,9 @@ export interface EventSearchResult {
   eventOrganizerId: number;
   eventLocation: string;
   free: boolean;
-  eventImageUrl: string;
+  eventBannerUrl: string;
+  organizerUrlName:string;
+  eventUrlName:string;
 }
 
 console.log("SearchEvents rendered");
@@ -56,10 +58,10 @@ export default function EventsPage() {
         console.log("SearchEvents completed res", res.data);
         if (res.data && res.data.length > 0)
         {
-          res.data.forEach((e: EventSearchResult) => 
-          {
-            e.eventImageUrl = "/images/concert.jpg";
-          });
+          // res.data.forEach((e: EventSearchResult) => 
+          // {
+          //   e.eventImageUrl = "/images/concert.jpg";
+          // });
         }
       return res.data;
     };

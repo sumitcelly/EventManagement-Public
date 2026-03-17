@@ -84,6 +84,17 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [HttpGet("transactionfees")]
+        public async Task<IActionResult> GetTransactionFees()
+        {
+            return Ok( new
+            {
+                PlatformFees= _configuration["Fees:Platform"],
+                StripeFees = _configuration["Fees:Stripe"],
+                StripeFixed =_configuration["Fees:StripeFixed"],
+            }) ;
+        }
+
         [HttpGet("connect-status/{stripeAccountId}")]
         [Authorize(Policy = "FullAdminMinimum")]
         public async Task<IActionResult> GetStripeAccountConnectStatus(string stripeAccountId)
