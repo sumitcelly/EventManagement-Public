@@ -49,7 +49,18 @@ public static class CacheHelper
         return value;
     }
 
-    public static async Task<T?> GetOnlyAsync<T>(this IDistributedCache cache, string key, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
+
+    /// <summary>
+    /// Send key obtained from GetCacheKey. So a string Event:24 not just 24 which is primary key
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="cache"></param>
+    /// <param name="key"></param>
+    /// <param name="absoluteExpiration"></param>
+    /// <param name="logger"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+     public static async Task<T?> GetOnlyAsync<T>(this IDistributedCache cache, string key, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
     {
         _logger = logger ?? _logger;
         if (string.IsNullOrEmpty(key))
@@ -86,6 +97,14 @@ public static class CacheHelper
     }
 
   
+  
+    /// <summary>
+    /// Send only the primary key like event  id or customerid
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="primaryKey"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static string GetCacheKey<T>(string primaryKey)
     {
         if (string.IsNullOrEmpty(primaryKey))
@@ -102,6 +121,14 @@ public static class CacheHelper
     }   
 
 
+    /// <summary>
+    /// Send primary key ONLY. Like 24 for event id. Do not send key from GetCacheKey
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="cache"></param>
+    /// <param name="item"></param>
+    /// <param name="primaryKey"></param>
+    /// <param name="absoluteExpiration"></param>
     public static void AddOrUpdateCache<T>(this IDistributedCache cache, T item, string primaryKey, TimeSpan? absoluteExpiration = null)
     {
         var key = GetCacheKey<T>(primaryKey);

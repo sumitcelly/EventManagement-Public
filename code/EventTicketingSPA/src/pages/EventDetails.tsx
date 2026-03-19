@@ -1,7 +1,7 @@
 import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Button } from "flowbite-react";
 import { useHistory, Link } from "react-router-dom";
 import { EventHeader} from "../types/Event";
@@ -19,17 +19,31 @@ export default function EventDetails() {
   const { customerName, eventName } = useParams<{ customerName: string,eventName:string }>();
   const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const {mode}  = location.state as any || {};
+  const user = useAppSelector((state:RootState) => state.auth.user);
+ 
 
   const { data:eventDetails, isLoading } = useQuery(`events/details/${customerName}/${eventName}`, async () => {
-    const res = await axiosClient.get(`/events/details/${customerName}/${eventName}`);
-    console.log('Event details from backend', res?.data);
-    return res.data;
+    if (mode && mode === "preview")
+    {
+       const res = await axiosClient.get(`/events/detailspreview/${user?.customerId}/${customerName}/${eventName}`);
+       console.log('Preview Event details from backend', res?.data);
+       return res.data;
+    }
+    else
+    {
+      const res = await axiosClient.get(`/events/details/${customerName}/${eventName}`);
+      console.log('Event details from backend', res?.data);
+      return res.data;
+    }
   },
   {
     staleTime: 1000 * 60 * 5,
     enabled: !!customerName && !!eventName
   }
 );
+
 
 
 // Fetch organizer details using a separate useQuery
@@ -68,6 +82,11 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
   
   if (isLoading) return <p>Loading...</p>;
 
+   if (!eventDetails)
+   {
+    return <p>Unable to locate event</p>
+   }
+   
   return (
     <IonPage>
       <IonHeader><AppNavbar/></IonHeader>

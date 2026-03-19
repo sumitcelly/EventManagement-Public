@@ -356,6 +356,7 @@ namespace EventManagementDbAccess
 
       string cacheKey = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",customerUrlName,eventUrlName));
       Event? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventDetailsByNameFromDb(customerUrlName, eventUrlName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+     
       return cachedEvent ?? throw new KeyNotFoundException($"Event with  {cacheKey} not found.") ;
     }
 
@@ -372,7 +373,8 @@ namespace EventManagementDbAccess
                     inner join eventorganizer
                     on eventorganizer.CustomerId = events.eventOrganizer
                     and events.EventUrlName = @eventUrlName and
-                    eventorganizer.organizereventbaseurl=@customerUrlName";
+                    eventorganizer.organizereventbaseurl=@customerUrlName
+                    where events.IsLive=1";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventUrlName", eventUrlName);
@@ -384,6 +386,8 @@ namespace EventManagementDbAccess
           return GetEventFromReader(reader);
         }
       }
+      _logger.LogError("Unable to locate event by customner {0} and event {1)",customerUrlName,eventUrlName);
+      
       throw new Exception($"Unable to locate event with event url name {eventUrlName} and customer url name {customerUrlName}");
     }
 
@@ -392,6 +396,7 @@ namespace EventManagementDbAccess
       return new Event
       {
         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+        IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
         EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
         EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                             AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
@@ -516,17 +521,16 @@ namespace EventManagementDbAccess
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
       if (rowsAffected > 0)
       {
-        string key = CacheHelper.GetCacheKey<Event>(eventId.ToString());
-        if (!string.IsNullOrWhiteSpace(key))
+        
+        string key = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName));       
+        Event? tempEvent = await _cache.GetOnlyAsync<Event>(key);
+        if (tempEvent !=null)
         {
-          Event? tempEvent = await _cache.GetOnlyAsync<Event>(key);
-          if (tempEvent !=null)
-          {
-            tempEvent.IsLive = settings.IsLive;
-            tempEvent.RefundMode = settings.RefundMode;
-            tempEvent.TicketFeeMode = settings.TicketFeeMode;
-            _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-          }
+          tempEvent.IsLive = settings.IsLive;
+          tempEvent.RefundMode = settings.RefundMode;
+          tempEvent.TicketFeeMode = settings.TicketFeeMode;
+          _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
+          _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
         }
           
       }

@@ -94,6 +94,8 @@ namespace EventManagementDbAccess
         public RefundMode RefundMode { get; set;}   
 
         public TicketFeeMode TicketFeeMode{ get; set; }
+
+        public string? OrganizerUrlName {get;set;}
     }
 
     // public class EventSettings

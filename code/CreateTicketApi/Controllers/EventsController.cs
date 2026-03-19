@@ -92,6 +92,26 @@ namespace CreateTicketApi.Controllers
                 return NotFound();
             return evt;
         }
+        
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        [HttpGet("/Events/DetailsPreview/{customerId}/{customerName}/{eventName}")]
+        public async Task<ActionResult<Event>> GetEventPreviewDetailsById(int customerId, string customerName, string eventName)
+        {
+            if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(eventName))
+            {
+                return BadRequest("Invalid customer or event name"); 
+            }
+            try
+            {
+                var evt = await _EventDbAccess.GetEventDetailsByName(customerName, eventName);
+                return evt;
+            }
+            catch (Exception)
+            {
+                return NotFound();
+            }
+        }
 
 
         [HttpGet("/Events/Details/{customerName}/{eventName}")]
@@ -101,10 +121,16 @@ namespace CreateTicketApi.Controllers
             {
                 return BadRequest("Invalid customer or event name"); 
             }
-            var evt = await _EventDbAccess.GetEventDetailsByName(customerName, eventName);
-            if (evt == null)
+            try
+            {
+                var evt = await _EventDbAccess.GetEventDetailsByName(customerName, eventName);
+                return evt !=null && evt.IsLive?evt:NotFound();
+            }
+            catch (Exception)
+            {
                 return NotFound();
-            return evt;
+            }
+           
         }
 
 

@@ -25,7 +25,7 @@ export const calculateForCustomerAbsorbsAllFees = (
     platformFees: number, 
     stripePercent: number = 0.029, 
     stripeFixed: number = 30
-  ): { totalToCharge: number; serviceFee: number; displayTotal: string; displayFee: string } => {
+  ): { totalToCharge: number; serviceFee: number; displayTotal: string; displayFee: string , stripeFees:string} => {
     // Formula: Total = (Net + Fixed + Profit) / (1 - Percent)
 
     if (targetNet <=0) {
@@ -33,7 +33,8 @@ export const calculateForCustomerAbsorbsAllFees = (
         totalToCharge: 0, 
         serviceFee: 0,
         displayTotal: "0.00",
-        displayFee: "0.00"
+        displayFee: "0.00",
+        stripeFees: "0.00"
       };
     }   
 
@@ -50,17 +51,21 @@ export const calculateForCustomerAbsorbsAllFees = (
       totalToCharge, // The final price (e.g., 2195)
       serviceFee,    // The "Booking Fee" line item (e.g., 195)
       displayTotal: (totalToCharge / 100).toFixed(2),
-      displayFee: (serviceFee / 100).toFixed(2)
+      displayFee: (serviceFee / 100).toFixed(2),
+      stripeFees: String(totalToCharge-targetNet-platformFeeAmt)
     };
   };
 
   export const calculateForOrganizerAbsorbsStripeFees =
-    (total: number, platformFees:number)=>
+    (total: number, platformFees:number,stripePercent: number = 0.029, 
+    stripeFixed: number = 30 )=>
   {
      const platformFeeAmt = parseFloat((total * platformFees).toFixed(2));
      const displayTotal= (total + platformFeeAmt).toFixed(2);
      const displayFee= platformFeeAmt.toFixed(2);
-     return {displayTotal, displayFee};
+     console.log('fees',stripeFixed,displayTotal,(Number(displayTotal)*stripePercent*100).toFixed(2), stripeFixed);
+     const stripeFees = (((total + platformFeeAmt)*stripePercent*100)+ stripeFixed).toFixed(2);
+     return {displayTotal, displayFee, stripeFees};
 
   }
   
