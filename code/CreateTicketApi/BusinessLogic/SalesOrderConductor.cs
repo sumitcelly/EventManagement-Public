@@ -16,9 +16,10 @@ public class SalesOrderConductor
 
     private readonly EventItemTypeDbAccess _eventItemTypeDbAccess;
     private readonly StripeAccess _stripeAccess;
+    private readonly EventDbAccess _eventDbAccess;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
                     EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess, EventItemTypeDbAccess eventItemTypeDbAccess,
-                    EmailUtils emailUtils, StripeAccess stripeAccess)
+                    EmailUtils emailUtils, StripeAccess stripeAccess, EventDbAccess eventDbAccess)
     {
         if (dbAccess == null)
             throw new ArgumentNullException(nameof(dbAccess));
@@ -41,6 +42,7 @@ public class SalesOrderConductor
         this.userDbAccess = attendeeDbAccess;
         _stripeAccess = stripeAccess;
         _emailUtils = emailUtils;
+        _eventDbAccess = eventDbAccess;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
     }
@@ -124,7 +126,7 @@ public class SalesOrderConductor
         
         //Todo:Need to compare price of item from ui with price in db for eventitemtype table and warn user if there is a mismatch.
         //
-
+   
         EventUser attendee;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
@@ -247,7 +249,13 @@ public class SalesOrderConductor
                     });
                     
                 }
-                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(orderId, customerSalesOrder.StripeConnectedAccountId,customerSalesOrder.EventId, checkoutItems, customerSalesOrder.EmailAddress);
+                EventHeader eventData = await _eventDbAccess.GetEventDetailsById(customerSalesOrder.EventId);   
+                if (eventData == null)
+                    throw new Exception("Invalid event Id sent");
+                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(orderId, customerSalesOrder.StripeConnectedAccountId,
+                                                    customerSalesOrder.EventId, checkoutItems, 
+                                                    customerSalesOrder.EmailAddress, 
+                                                    eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
                 await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.Reserved,result.Item2);

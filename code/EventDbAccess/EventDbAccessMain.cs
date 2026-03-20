@@ -33,7 +33,7 @@ namespace EventManagementDbAccess
         await connection.OpenAsync();
         {
           _logger.LogInformation("Connection to database established successfully.");
-          string query = @" SELECT EventName,EventId,EventUrlName, eventheadline,EventDescription,EventTags,EventOrganizer,
+          string query = @" SELECT EventName,EventId,EventUrlName, RefundMode, TicketFeeDisplayMode, eventheadline,EventDescription,EventTags,EventOrganizer,
                             EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,b.OrganizerEventBaseUrl,
                             MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
@@ -102,6 +102,8 @@ namespace EventManagementDbAccess
                 {
                   EventId = reader.GetInt32("EventId"),
                   EventName = reader.GetString("EventName"),
+                  RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
+                  TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
                   EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))?
                                StringUtils.CreateUrlSlug(reader.GetString("EventName")):
                                reader.GetString("EventUrlName"),
@@ -130,6 +132,7 @@ namespace EventManagementDbAccess
       if (eventId <= 0)
           throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
 
+      //Maybe we need to get this from the event cache. too many caches here. (eventheaderbyid, eventbyname, eventbyid)
       string cacheKey = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString());
       EventHeader? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventHeaderByIdFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
       return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventId} not found.") ;
@@ -144,7 +147,7 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
-        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.RefundMode, a.TicketFeeDisplayMode, a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
                     b.OrganizationName, b.OrganizerEventBaseUrl from events a, eventorganizer b 
@@ -161,6 +164,9 @@ namespace EventManagementDbAccess
           {
             EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
             EventName = reader.GetString(reader.GetOrdinal("EventName")),
+            RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
+            TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
+
             EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))
                                ?StringUtils.CreateUrlSlug(reader.GetString(reader.GetOrdinal("EventName")))
                                :reader.GetString(reader.GetOrdinal("EventUrlName")),
@@ -229,7 +235,8 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
         //todo: maybe get all events including past events 
-        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.RefundMode,a.TicketFeeDisplayMode,
+                    a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,
                     a.IsLive,a.Duration
@@ -248,6 +255,9 @@ namespace EventManagementDbAccess
             new EventHeader
             {
               EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+              RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
+              TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
+
               EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
               EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
@@ -529,6 +539,7 @@ namespace EventManagementDbAccess
           tempEvent.IsLive = settings.IsLive;
           tempEvent.RefundMode = settings.RefundMode;
           tempEvent.TicketFeeMode = settings.TicketFeeMode;
+          //maybe update eventheader cache also or just remove that cache and sync it with event cache
           _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
           _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
         }

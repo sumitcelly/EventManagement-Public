@@ -20,4 +20,18 @@ export interface EventHeader {
   eventBannerUrl?:string;
   organizerStripeAccountId?:string;
   eventUrlName?:string;
+  ticketFeeMode?:TicketFeeMode;
+  refundMode?:number;
+}
+
+export enum TicketFeeMode {
+  None=0,
+  CustomerAbsorbsAll,
+  OrganizerAbsorbsStripe
+}
+
+export enum RefundMode{
+    None =0,
+    CustomerControlled,
+    OrganizerControlled
 }

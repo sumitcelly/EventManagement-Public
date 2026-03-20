@@ -13,7 +13,9 @@ const initialState: EventHeader = {
   eventDate: new Date(),
   eventLocation: "",
   eventOrganizerId: 0,
-  duration:0
+  duration:0,
+  ticketFeeMode: 0,
+  refundMode:0
 };
 
 // Async login action

@@ -102,8 +102,8 @@ export default function BuyTickets() {
   const { control,register, reset,handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
-        fullname: cart.fullname || '',
-        email: cart.email || '',
+        fullname: cart.fullname || user?.user?.name,
+        email: cart.email || user?.user?.email,
         tickets: cart.tickets.length>0 ? cart.tickets : [] 
       },
         mode: "onChange",          // 👈 validates as user types or changes field
@@ -237,7 +237,7 @@ return (
         {/* <form onSubmit={handleSubmit(
   (data) => console.log("submit fired!", data),
   (errors) => console.log("validation errors", errors)
-)}></form> */}
+)}> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {ticketTypesList.map((item: Ticket, index:number) => 
             (
@@ -314,7 +314,7 @@ return (
 
               {/* Cart total and checkout */}
               <div className="ml-auto mt-auto w-1/2 flex flex-col mt-2 ">
-                <div className="ml-auto"><CartTotal control={control}/></div>
+                <div className="ml-auto"><CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0}/></div>
                 <button
                     type="submit"                         
                     className="mt-3  ml-auto bg-brand-dark text-white px-4 

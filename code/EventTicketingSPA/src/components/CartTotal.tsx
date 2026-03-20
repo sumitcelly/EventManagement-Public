@@ -4,9 +4,11 @@ import { useQuery } from "react-query";
 import axiosClient from "../api/axiosClient";
 import { number } from "yup";
 import { useEffect, useState } from "react";
+import { TicketFeeMode } from "../types/Event";
 
 type CartTotalProps = {
   control: Control<TicketFormValues>;
+  feeMode: TicketFeeMode;
 };
 
   /**
@@ -70,7 +72,10 @@ export const calculateForCustomerAbsorbsAllFees = (
   }
   
   
-  export default function CartTotal({ control }: CartTotalProps) {
+  export default function CartTotal({ control, feeMode }: CartTotalProps) {
+
+    console.log('fee Mode',TicketFeeMode[feeMode]);
+
     const tickets = useWatch({ control, name: "tickets" });
     const [fees, setFees]=useState("0");
     const [total, setTotal]=useState("0");
@@ -86,8 +91,8 @@ export const calculateForCustomerAbsorbsAllFees = (
      staleTime: 1000 * 60 * 600,  // Data stays fresh for 5 minutes
      cacheTime: 1000 * 60 * 600, // Cache persists for 30 minutes
      refetchOnMount: false,      // don’t always re-fetch on mount
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,   
+     refetchOnWindowFocus: false,
+     refetchOnReconnect: false,   
     }
   );
 
@@ -103,13 +108,14 @@ export const calculateForCustomerAbsorbsAllFees = (
       console.log('total and plattform fees',total,platformFees);
 
       let displayTotal="", displayFee="";
-      if (letCustomeAbsorbAllFees){
+      if (feeMode === TicketFeeMode.CustomerAbsorbsAll)
+      {
         ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed)));
         setTotal(displayTotal);
         setFees(displayFee);
       
       }
-      else
+      if (feeMode === TicketFeeMode.OrganizerAbsorbsStripe)
       {
         ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees));
         setTotal(displayTotal);

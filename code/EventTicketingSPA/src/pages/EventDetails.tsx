@@ -68,12 +68,14 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       eventDate: new Date(eventDetails.eventDate),
       eventLocation: eventDetails.eventLocation,
       eventOrganizerId: eventDetails.eventOrganizerId,
-      organizerStripeAccountId: organizerDetails?.stripeAccountId
+      organizerStripeAccountId: organizerDetails?.stripeAccountId,
+      refundMode: eventDetails.refundMode,
+      ticketFeeMode: eventDetails.ticketFeeMode
     }
 
     if (!event)
       return;
-
+    
     dispatch(updateEvent({event}));
     //need to think if this needs to be done after checking if the event id is different than the above?
     dispatch(resetCart());
@@ -86,7 +88,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
    {
     return <p>Unable to locate event</p>
    }
-   
+
   return (
     <IonPage>
       <IonHeader><AppNavbar/></IonHeader>

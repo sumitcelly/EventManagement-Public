@@ -40,6 +40,9 @@ namespace EventManagementDbAccess
         public string EventUrlName {get;set;}  = string.Empty;
 
         public string OrganizerUrlName {get;set;} = string.Empty;
+        public RefundMode RefundMode { get; set; }  
+
+        public TicketFeeMode TicketFeeMode { get; set; }    
     }
     public class Event : EventHeader
     {
@@ -75,9 +78,7 @@ namespace EventManagementDbAccess
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public RefundMode RefundMode { get; set; }  
-
-        public TicketFeeMode TicketFeeMode { get; set; }    
+       
     }
     
     public class EventSettings
