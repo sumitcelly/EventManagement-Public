@@ -534,14 +534,27 @@ namespace EventManagementDbAccess
         
         string key = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName));       
         Event? tempEvent = await _cache.GetOnlyAsync<Event>(key);
+        if (tempEvent == null)
+        {
+          _logger.LogInformation($"Unable to get event by {string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName)}. Trying with eventid {eventId}");
+          key = CacheHelper.GetCacheKey<Event>(eventId.ToString());
+          tempEvent = await _cache.GetOnlyAsync<Event>(key);
+        }
         if (tempEvent !=null)
         {
           tempEvent.IsLive = settings.IsLive;
           tempEvent.RefundMode = settings.RefundMode;
           tempEvent.TicketFeeMode = settings.TicketFeeMode;
+
           //maybe update eventheader cache also or just remove that cache and sync it with event cache
+         _cache.AddOrUpdateCache((EventHeader)tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes)); 
           _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
           _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
+        }
+        else
+        {
+          _logger.LogWarning($"Could not retrieve event either by eventId {0} or customer+eventname {1}", eventId,
+            string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName));
         }
           
       }

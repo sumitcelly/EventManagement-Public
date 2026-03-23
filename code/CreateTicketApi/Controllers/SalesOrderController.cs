@@ -17,14 +17,18 @@ namespace CreateTicketApi.Controllers
         private readonly SalesOrderDbAccess _dbAccess;
         private readonly TicketAccess _ticketAccess;
 
+        private readonly EventDbAccess _eventAccess;
         private readonly ILogger<SalesOrderController> _logger;
 
 
-        public SalesOrderController(ILogger<SalesOrderController> logger, SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess)
+        public SalesOrderController(ILogger<SalesOrderController> logger,
+         SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, EventDbAccess eventDbAccess,
+          TicketAccess ticketAccess)
         {
             _salesOrderConductor = salesOrderConductor;
             _dbAccess = dbAccess;
             _ticketAccess = ticketAccess;
+            _eventAccess = eventDbAccess;
             _logger = logger;
      
         }
@@ -110,15 +114,20 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("/SalesOrderRefundAmount/{orderId}")]
+        [HttpGet("/SalesOrderRefundAmount/{orderId}/{eventId}")]
         [Authorize(Policy="OrderOwnedByUser")]        
-        public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId)
+        public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId, int eventId)
         {
-            if (orderId <= 0)
-                return BadRequest("Invalid order id.");
+            if (orderId <= 0 || eventId <=0)
+                return BadRequest("Invalid order or eventId id.");
 
             try
             {
+                EventHeader evt = await _eventAccess.GetEventHeaderById(eventId);
+                if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
+                {   
+                    return StatusCode(409, "Refund mode must be customer controlled");
+                }
                 var retData = await _ticketAccess.GetOrderTotalPrice(orderId);
                 return Ok(retData);
             }

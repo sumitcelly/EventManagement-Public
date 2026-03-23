@@ -98,6 +98,10 @@ export default function ValidateSecureCode() {
       {
         history.push("/" + (returnUrl || ""));      
       }
+      if (returnUrl === "myevents")
+      {
+        history.push("/myevents");
+      }
     }
   }
   , [status]);

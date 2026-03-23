@@ -83,9 +83,9 @@ export default function TicketDetails() {
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      //cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      //refetchOnMount: true,
+      //refetchOnWindowFocus: true,
       enabled: (orderDetails?.eventId || eventId) > 0 && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
     }
   );
@@ -115,7 +115,7 @@ export default function TicketDetails() {
  
   }, []);
   if ((encryptedOrderId && orderLoading) || eventLoading || isLoading) return <p>Loading...</p>;
-
+  console.log('event details:',eventDetails);
   return ( 
       <IonPage>
             <IonHeader>
@@ -138,9 +138,11 @@ export default function TicketDetails() {
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
-          {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" && (
+         {/* Refund mode must be customer controlled (1)*/}
+          {eventDetails?.refundMode ===1 && (orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" && (
             <div className="ml-auto mt-4">
-              <button onClick={()=>history.push(`/refundorder`, orderDetails?.salesOrderId || salesOrderId)}
+              <button onClick={()=>history.push(`/refundorder`, 
+              {orderId:orderDetails?.salesOrderId || salesOrderId, eventId: eventDetails?.eventId })}
                   className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                   >
                   Initiate refund

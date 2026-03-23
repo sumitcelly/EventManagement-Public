@@ -26,20 +26,39 @@ interface UserSalesOrder {
 export default function RefundOrder() {
   //const navigate = useNavigate();
 
-  const [isChecked, setIsChecked] = useState(false)
+  const [isChecked, setIsChecked] = useState(false);
+  const [invalidRefundMode, setInvalidRefundMode] = useState(false);
   const router = useIonRouter();
   const  user = useAppSelector((state:RootState) => state.auth);
   const userId= user.user?.id;
   //const { id } = useParams<{ id: string }>();
+  interface MyLocationState {
+  orderId: string;
+  eventId: string;
+}
+
   const location = useLocation();
-  const orderId:any = location.state || {};
+  const {orderId, eventId} = location.state as MyLocationState || {};
 
   const { data:refundAmount, isLoading } = 
   useQuery(['SalesOrderRefundAmount',orderId], async () => {
      console.log("Fetching refund amount for order", orderId);
-      const res = await axiosClient.get(`/SalesOrderRefundAmount/${orderId}`);
-      console.log('amount fetched from backend from backend',res.data);
-      return res.data;
+      try
+      {
+        const res = await axiosClient.get(`/SalesOrderRefundAmount/${orderId}/${eventId}`);
+        console.log('amount fetched from backend from backend',res);
+        if (res.status !=200)
+        {
+          toast.error('Unable to initiate refund:', res.data);
+          setInvalidRefundMode(true);
+        }
+        return res.data;
+      }
+      catch(error)
+      {
+        console.log('error getting refund amount', error);
+        setInvalidRefundMode(true);
+      }
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
@@ -57,7 +76,7 @@ export default function RefundOrder() {
   }
 
   const InitiateRefund =async () =>{
-    if (refundAmount >0)
+    if (Number(refundAmount) >0 && !invalidRefundMode)
     {
       try
       {
@@ -76,12 +95,15 @@ export default function RefundOrder() {
         toast.error("There was an error refunding your order.Please try again." + error.message);
         console.log("Error refunding order. Please try again."+error.message);
       }
-      
+    }
+    else
+    {
+      toast.error("Unable to initiate refund due to invalid refund mode or amount");
     }
   }
     
 
-  if (refundAmount <=0)
+  if (Number(refundAmount) <=0)
   {
     return (
           <IonPage>
@@ -91,6 +113,22 @@ export default function RefundOrder() {
             <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
               
                <h2 className="text-xl font-bold mb-2">Refund amount is 0. Unable to proceed</h2>
+                    
+            </IonContent>
+          </IonPage>
+        );
+  }
+
+  if (invalidRefundMode)
+  {
+    return (
+          <IonPage>
+            <IonHeader>
+              <AppNavbar />
+            </IonHeader>
+            <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+              
+               <h2 className="text-xl font-bold mb-2">Refund mode is invalid.</h2>
                     
             </IonContent>
           </IonPage>

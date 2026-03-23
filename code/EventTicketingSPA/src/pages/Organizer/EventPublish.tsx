@@ -214,16 +214,17 @@ export default function EventPublish({eventId}: {eventId?:string}) {
         }
 
 
-        {data && data.isLive && (
+        {data  && (
           // <div className= "p-2 mt-3 bg-brand-neutral rounded min-h-[40px]">
              <div
               onClick={(e) => {
                 e.stopPropagation();
                 history.push(`/eventdetails/${user?.customerUrlName}/${data.eventUrlName}`,{mode: "preview"});
               }}
-              className="p-2 mt-3 bg-brand-neutral rounded min-h-[40px] cursor-pointer"
+              title={`${window.location.origin}/eventdetails/${user?.customerUrlName}/${data.eventUrlName}`}
+              className="p-2 mt-3 bg-brand-neutral rounded min-h-[40px] cursor-pointer truncate"
             >
-              Your event url: {`${window.location.origin}/eventdetails/${user?.customerUrlName}/${data.eventUrlName}`}
+              Your event url is {`${window.location.origin}/eventdetails/${user?.customerUrlName}/${data.eventUrlName}`}
             </div>
          
         )}

@@ -22,6 +22,8 @@ namespace CreateTicketApi.Controllers
         private readonly SalesOrderDbAccess _salesOrderDbAccess;
 
         private readonly EventOrganizerDBAccess _eventOrganizerDbAccess;
+
+        private readonly EventDbAccess _eventDbAccess;
         private readonly EmailUtils _emailUtils;
         private readonly TicketAccess _ticketAccess;
         public PaymentController(
@@ -31,7 +33,8 @@ namespace CreateTicketApi.Controllers
             SalesOrderDbAccess salesOrderDbAccess,
             EventOrganizerDBAccess eventOrganizerDbAccess,
             EmailUtils emailUtils,
-            TicketAccess ticketAccess)
+            TicketAccess ticketAccess,
+            EventDbAccess eventDbAccess)
         {
             _logger = logger;
             _stripeAccess = stripeAccess;
@@ -39,6 +42,7 @@ namespace CreateTicketApi.Controllers
             _salesOrderDbAccess = salesOrderDbAccess;
             _eventOrganizerDbAccess = eventOrganizerDbAccess;
             _ticketAccess = ticketAccess;
+            _eventDbAccess = eventDbAccess;
             _emailUtils = emailUtils ?? throw new ArgumentNullException(nameof(emailUtils), "EmailUtils cannot be null.");  
         }
 
@@ -230,6 +234,12 @@ namespace CreateTicketApi.Controllers
             {
                 return StatusCode(409,"No paymentintentid found");
             }
+            EventHeader evt = await _eventDbAccess.GetEventHeaderById(order.EventId);
+            if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
+            {
+                return StatusCode(409,"Event does not allow customer initiated refunds");
+            }
+
             int total = await _ticketAccess.GetOrderTotalPrice(orderId);
             if (total == 0)
                 return StatusCode(404,"Unable to start refund as total paid is 0");
