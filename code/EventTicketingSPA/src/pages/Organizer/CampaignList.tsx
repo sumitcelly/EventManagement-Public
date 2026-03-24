@@ -12,7 +12,7 @@ import { TeamMember } from "../../types/Teams";
 
 import toast, {Toaster} from "react-hot-toast";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 // 
 
 

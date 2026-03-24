@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation } from "react-query";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 import { calculateForCustomerAbsorbsAllFees, calculateForOrganizerAbsorbsStripeFees } from "../../components/CartTotal";
 import { updateCustomerProfile } from "../../features/auth/authSlice";
 import { useDispatch } from "react-redux";

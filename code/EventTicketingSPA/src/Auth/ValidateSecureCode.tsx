@@ -10,7 +10,7 @@ import { useHistory, useLocation,  useParams } from "react-router-dom";
 import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 
 
 interface SecureCodeFormInputs {

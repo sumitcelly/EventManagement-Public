@@ -5,7 +5,7 @@ import { ListGroup, ListGroupItem, Button} from "flowbite-react";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import { IonContent, IonPage, IonRouterLink } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
 // 
 interface UserSalesOrder {

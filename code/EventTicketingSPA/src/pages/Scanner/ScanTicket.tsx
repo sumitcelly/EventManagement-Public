@@ -4,7 +4,7 @@ import axiosClient from "../../api/axiosClient";
 import { Capacitor } from '@capacitor/core';
 import {CapacitorBarcodeScanner}  from '@capacitor/barcode-scanner';
 import { IonContent, IonHeader, IonPage, IonButton, IonText, IonSpinner, IonToast } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 import {toast, Toaster } from "react-hot-toast";
 
 

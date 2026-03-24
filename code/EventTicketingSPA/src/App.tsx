@@ -1,5 +1,5 @@
 
-import Navbar from "./components/Navbar";
+import Navbar from "./components/Navbar.-Defunttsx";
 import LoginPage from "./pages/Login";
 import MyEvents from "./pages/MyEvents";
 import TicketDetails from "./pages/TicketDetails";
@@ -8,7 +8,7 @@ import { useEffect } from "react";
 
 //import { AuthState } from "./features/auth/authSlice";
 import { Reducer } from "@reduxjs/toolkit";
-import AppNavbar from "./components/Navbarnew";
+import AppNavbar from "./components/Navbar";
 import { useAppDispatch } from "./app/hook";
 import { fetchUser } from "./features/auth/authSlice";
 import SearchEvents from "./pages/SearchEvents";

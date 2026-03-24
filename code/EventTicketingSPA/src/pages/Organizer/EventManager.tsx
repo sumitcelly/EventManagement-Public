@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import TicketBasics from "./TicketBasics";
 import EventPublish from "./EventPublish";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 import { useQuery } from "react-query";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";

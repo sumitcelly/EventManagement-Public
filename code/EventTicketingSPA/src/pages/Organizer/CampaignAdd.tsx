@@ -15,7 +15,7 @@ import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 import axios from "axios";
 
 

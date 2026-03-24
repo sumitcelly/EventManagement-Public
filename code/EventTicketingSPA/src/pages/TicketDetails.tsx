@@ -12,7 +12,7 @@ import AppPagination from "../components/Pagination";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import { Button } from "flowbite-react";
 
 export default function TicketDetails() {

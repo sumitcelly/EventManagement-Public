@@ -14,7 +14,7 @@ import axiosClient from "../api/axiosClient";
 import { useQuery } from "react-query";
 import { useEffect, useState } from "react";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
 import { SalesOrderErrors } from "../types/Order";
 

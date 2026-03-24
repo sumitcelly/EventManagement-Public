@@ -9,7 +9,7 @@ import { Button } from "flowbite-react";
 import { useState } from "react";
 import EventSummary from "../components/EventSummary";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import {loadStripe} from '@stripe/stripe-js';
 import {
   EmbeddedCheckoutProvider,

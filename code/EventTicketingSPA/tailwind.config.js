@@ -11,11 +11,12 @@ module.exports = {
       // 🎨 Brand Colors
       colors: {
         brand: {
-          DEFAULT: "#2563EB", // main brand (blue-600)
-          light: "#3B82F6",   // lighter hover shade
+          DEFAULT: "#2563EB", // button color
+          light: "#b6c690ff",   // main color for site
           dark: "#1E40AF",    // darker for focus/active
-          neutral: "#b6c690ff", // light gray background
-          neutrallight:  "#20c4aeff" // darker gray for text
+          neutral: "#b6c690ff", // background for events page. same as "light"
+          neutrallight:  "#20c4aeff", // darker gray for text
+          panelbg:"#F9F9F7"
         },
         accent: {
           DEFAULT: "#F59E0B", // accent (amber-500)

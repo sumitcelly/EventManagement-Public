@@ -6,7 +6,7 @@ import axios from "axios";
 import toast, { Toaster } from 'react-hot-toast';
 import axiosClient from "../api/axiosClient";
 import { useAppSelector } from "../app/hook";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 
 interface FormValues {

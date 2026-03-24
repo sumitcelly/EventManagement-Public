@@ -10,6 +10,7 @@ using Stripe.TestHelpers.Terminal;
 using System.Text.RegularExpressions;
 using System.Data.Common;
 using ZstdSharp;
+using System.Diagnostics.Tracing;
 
 namespace EventManagementDbAccess
 {
@@ -585,7 +586,13 @@ namespace EventManagementDbAccess
           if (evt!=null)
           {
               evt.EventBannerUrl =AmazonS3ContentUploader.ConvertKeyToUrl(url);
-              await _cache.SetOnlyAsync<Event>(cacheKey,evt);
+              _cache.AddOrUpdateCache<Event>(evt,eventId.ToString(),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+              if (!string.IsNullOrWhiteSpace(evt.EventUrlName) && !string.IsNullOrWhiteSpace(evt.OrganizerUrlName))
+                _cache.AddOrUpdateCache<Event>(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),
+                    TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+              _cache.AddOrUpdateCache<EventHeader>(evt,eventId.ToString(),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+             
+ 
           }
         }
         return rowsAffected > 0;
@@ -650,6 +657,8 @@ namespace EventManagementDbAccess
       { 
           _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
           _cache.AddOrUpdateCache(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          _cache.AddOrUpdateCache<EventHeader>(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+  
       }
       return rowsAffected > 0;
     }

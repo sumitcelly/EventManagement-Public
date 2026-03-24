@@ -16,7 +16,7 @@ import { EventHeader } from "../../types/Event";
 import toast, { Toaster } from 'react-hot-toast';
 import {appendTime,toUTCDate, addHoursToDate,combineDateTime,combineDateTimeToLocale}   from '../../utils/DateUtils'
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 
 
 const ticketSchema = (event: EventHeader)=>yup.object({

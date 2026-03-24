@@ -12,7 +12,7 @@ import { resetEvent, updateEvent } from "../../features/auth/eventSlice";
 import { useDispatch } from "react-redux";
 import { resetCart } from "../../features/auth/cartSlice";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 import { updateCustomerProfile } from "../../features/auth/authSlice";
 // 
 

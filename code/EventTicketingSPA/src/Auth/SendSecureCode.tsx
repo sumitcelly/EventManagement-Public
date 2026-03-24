@@ -10,7 +10,7 @@ import React, { useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import { useLocation} from "react-router-dom";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 
 interface SecureCodeFormInputs {
   email: string;

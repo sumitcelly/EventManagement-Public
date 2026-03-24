@@ -11,8 +11,7 @@ import  { updateEvent} from "../features/auth/eventSlice";
 import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
-import Navbar from "../components/Navbar";
+import AppNavbar from "../components/Navbar";
 
 export default function EventDetails() {
 
@@ -84,10 +83,20 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
   
   if (isLoading) return <p>Loading...</p>;
 
-   if (!eventDetails)
-   {
-    return <p>Unable to locate event</p>
-   }
+  if (!eventDetails)
+  {
+  return <p>Unable to locate event</p>
+  }
+  
+  const handleCopy = async (e:any) => {
+    console.log('copy text',e);
+  try {
+    await navigator.clipboard.writeText(e.target.innerText);
+    
+  } catch (err) {
+    console.error("Failed to copy: ", err);
+  }
+};
 
   return (
     <IonPage>
@@ -97,48 +106,46 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     <div className= "max-w-2xl mx-auto mt-3 flex-col border border-gray-300 rounded-lg p-6 shadow-lg bg-brand-neutral">
       <div className="text-3xl text-center text-primary-color font-heading font-bold">{eventDetails.eventName}</div>
       <div className="text-l text-center font-body mt-3 text-secondary-color">{eventDetails.eventHeadline}</div>
-      <div className="flex flex-row mt-4 bg-">
-          <img src={eventDetails.eventBannerUrl}  alt={eventDetails.eventName} 
-            className="rounded-lg shadow-md w-2/3" />
-          <div className="flex flex-col justify-center ml-4">
-    
-         
-            {eventDetails.isFree &&
-              <div className="text-center text-tertiary-color">Free Event!</div>
-              }
-            {/* {!eventDetails.isFree &&
-              <div className="text-center text-tertiary-color">Tickets from $20</div>
-              } */}
-            <Button
-              className="align-bottom mt-auto align-center ml-4"
-                    size="xs"
-                    onClick={() => handleGetTickets()}>
-                    Get your Tickets
-            </Button>
+      <div className="flex flex-col mt-4 gap-4"> 
+        {/* Header Row: Button on the far right */}
+        <div className="flex justify-between items-center w-full px-1">
+          <div>
+            {eventDetails.isFree && (
+              <span className="text-tertiary-color font-bold text-sm">
+                Free Event!
+              </span> 
+            )}
           </div>
+          
+          <Button size="xs" onClick={() => handleGetTickets()}> 
+            Get your Tickets 
+          </Button> 
+        </div>
+
+        {/* Image: Now full width below the button */}
+        <img 
+          src={eventDetails.eventBannerUrl} 
+          alt={eventDetails.eventName} 
+          className="rounded-lg shadow-md w-full max-h-[400px] object-contain" 
+        /> 
       </div>
+
       <div className="flex flex-row justify-center  italic font-body mt-4 font-extrabold">
         <div className="text-l font-headline text-primary-color">
           {new Date(eventDetails.eventDate).toLocaleString()} 
         </div>
 
-        <div className="font-headline text-primary-color ml-auto w-1/2">
+        <div className="font-headline text-primary-color ml-auto w-1/2 hover:bg-gray-100  cursor-pointer"
+            onClick={handleCopy} 
+            title ="Click to copy">
           {eventDetails.eventLocation} 
         </div>
     </div>
-    
-    {eventDetails.eventSummary && 
-    (
-      <div className="text-sm font-body mt-3 text-primary-color 
-                    border rounded-lg p-2 shadow-lg bg-brand-neutrallight">
-        {eventDetails.eventSummary}
-      </div>
-    )}
 
     {eventDetails.eventAgenda && 
     (
       <div className="text-sm font-body mt-3 text-primary-color 
-                border rounded-lg p-2 shadow-lg">
+                border rounded-lg p-2 shadow-lg bg-brand-panelbg">
           <div className="text-lg font-bold mb-2 text-center text-primary-color">Event Agenda</div>
           {/* {eventDetails.eventAgenda.split('\n').map((line:string, index:number) => (
             <li className="ml-5" key={index}>{line}</li>
@@ -150,7 +157,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
 
   {eventDetails.eventDescription &&( 
     <div className="bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
-              border rounded-lg p-2 shadow-lg">
+              border rounded-lg p-2 shadow-lg bg-brand-panelbg">
         <div className="text-lg font-bold mb-1 text-center text-primary-color">More Info ...</div>
         <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventDescription }} />
         {/* {eventDetails.eventDescription.split('\n').map((line:string, index:number) => (
@@ -161,7 +168,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
 
     {!isOrganizerLoading && (
       <div className="flex flex-row mt-4 items-center
-                border rounded-lg p-2 shadow-lg">
+                border rounded-lg p-2 shadow-lg bg-brand-panelbg">
           <img src={organizerDetails.organizerImageUrl}  alt={organizerDetails.organizationName}  
             className="rounded-full shadow-md w-24 h-24" />
           <div className="flex flex-col justify-center ml-4">

@@ -7,7 +7,7 @@ import { loginUser } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 
 import { IonPage, IonContent, IonHeader,IonRoute, useIonRouter } from '@ionic/react';
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
 
 interface LoginFormInputs {

@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import{useParams} from "react-router";
 import { get } from "react-hook-form";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 // 
 export interface EventSearchResult {
   eventId: number;

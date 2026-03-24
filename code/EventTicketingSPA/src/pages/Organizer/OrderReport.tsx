@@ -12,7 +12,7 @@ import { set, useForm } from "react-hook-form";
 import { use, useEffect, useState } from "react";
 import React from "react";
 import { IonContent, IonPage } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 
 // 
 

@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { Progress } from "flowbite-react";
 import toast, {  Toaster } from "react-hot-toast";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
-import AppNavbar from "../../components/Navbarnew";
+import AppNavbar from "../../components/Navbar";
 // 
 
 

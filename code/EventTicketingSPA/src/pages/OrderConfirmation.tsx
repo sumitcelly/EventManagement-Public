@@ -13,7 +13,7 @@ import SalesOrderTicket from "../components/SalesOrderTicket";
 import { Ticket } from "../types/Tickets";
 import {SalesOrderErrors} from "../types/Order"
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
-import AppNavbar from "../components/Navbarnew";
+import AppNavbar from "../components/Navbar";
 import { set } from "react-hook-form";
 
 export default function OrderConfirmation() {
