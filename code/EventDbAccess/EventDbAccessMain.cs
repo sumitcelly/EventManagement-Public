@@ -40,7 +40,7 @@ namespace EventManagementDbAccess
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
                             FROM Events 
                             inner join EventOrganizer b on b.CustomerId=Events.EventOrganizer
-                            WHERE 1=1";
+                            WHERE IsLive=1";
 
           if (!string.IsNullOrEmpty(keyword))
           {

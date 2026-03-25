@@ -1,5 +1,3 @@
-
-import Navbar from "./components/Navbar.-Defunttsx";
 import LoginPage from "./pages/Login";
 import MyEvents from "./pages/MyEvents";
 import TicketDetails from "./pages/TicketDetails";
@@ -208,10 +206,10 @@ export default function App() {
           path="/orderpayment/event/:id"
            render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
         />
-         <Route
+         {/* <Route
           path="/orderpayment"
            render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
-        />
+        /> */}
 
          <Route
           path="/orderconfirmation/event/:eventId"
