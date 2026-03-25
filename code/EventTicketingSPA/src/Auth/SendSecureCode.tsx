@@ -56,36 +56,17 @@ export default function SendSecureCode() {
       try
       {        
         let url=`/user/GenerateEmailCode/${data.email}`;
-        let userExists=false;
         if(returnUrl==="signup")
         {
             url+="/true";
-            console.log("Checking if user exists for signup flow");
-            try
-            {
-              const res = await axiosClient.get(`/user/checkuserexists/${data.email}`);
-              if(res?.status===200 && res.data===true){
-                  userExists=true;
-                  console.log("User exists with email:", data.email);
-              }
-              else if (res.status == 404)
-              {
-                setStatus("idle");
-              }
-            }
-            catch(err)
-            {
-              console.log('Error checking user exists',err);
-              setStatus("idle");
-            }
         }
         const res = await axiosClient.get(url);
-        console.log("API response for generate email code:", res);
+        console.log("API response for generate email code:", res?.data);
         
         //if 200 or 404 we show the same message to avoid email enumeration. Only if it's other error we show generic failure message.
         if (res?.status === 200 || res?.status === 404) {
             setApiStatus("If an email exists for your account, you will receive an authentication code to login.");
-            history.push(`/auth/validatesecurecode/${returnUrl}`,{userExists: userExists, email: data.email});
+            history.push(`/auth/validatesecurecode/${returnUrl}`,{signupExists: res?.data?.signupExists, email: data.email});
           }
         else {
             setApiStatus("Failed to send secure code. Please try again later.");
@@ -94,7 +75,7 @@ export default function SendSecureCode() {
     }
     catch (err: any) {
         if (err.response && err.response.status === 404) {
-            setApiStatus("Email not found. Please check and try again.");
+            setApiStatus("We have sent a Secure code to your email if one exists with our system.");
         }
         else
             setApiStatus("Failed to send secure code. Please try again later.");

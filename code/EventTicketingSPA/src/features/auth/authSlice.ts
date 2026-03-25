@@ -11,6 +11,7 @@ interface User {
   name: string;
   customerUrlName?:string;
   stripeConnectStatus?:string;
+  guest?:boolean;
 }
 
 interface AuthState {
@@ -134,8 +135,21 @@ const authSlice = createSlice({
           ...action.payload.user  // Merge new user data
         };
       }
-     
+    },
+     loginAsGuest(state, action){
+      console.log('data in login as guest',action.payload);
+      accessToken = action.payload.accessToken;
+      
+      if (action.payload.user) {
+        state.user = action.payload.user;
+        if (action.payload.user.id >0)
+        {
+          state.isAuthenticated = true;
+          state.status ="succeeded";
+        }
+      }
     }
+
   },
   extraReducers: (builder) => {
     builder
@@ -163,15 +177,6 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload || "Login failed"  ;
       })
-      // .addCase(loginUserWithRoleChange.fulfilled, (state, action :PayloadAction<User>) => {
-      //   state.status = "succeeded";
-      //   state.user = action.payload;
-      //   state.isAuthenticated = true;
-      // })
-      // .addCase(loginUserWithRoleChange.rejected, (state, action: any) => {
-      //   state.status = "failed";
-      //   state.error = action.payload || "Role change failed"  ;
-      // })
       .addCase(fetchUser.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = !!action.payload;
@@ -179,6 +184,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout,changeUserRole,updateCustomerProfile } = authSlice.actions;
+export const { logout,changeUserRole,updateCustomerProfile, loginAsGuest } = authSlice.actions;
 export default authSlice.reducer;
 

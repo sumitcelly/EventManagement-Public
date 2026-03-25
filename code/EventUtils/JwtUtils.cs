@@ -21,6 +21,29 @@ public class JwtUtils
             throw new ArgumentException("JWT symmetric key is not configured.", nameof(configuration));
     }
 
+    public string GenerateGuestJwtToken(string userId, string role)
+    {   
+        if (string.IsNullOrEmpty(userId))
+            throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
+        if (string.IsNullOrEmpty(role))
+            throw new ArgumentException("Role cannot be null or empty.", nameof(role));
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = System.Text.Encoding.ASCII.GetBytes(_jwtSymmetricKey);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Role, role),
+                new Claim("CustomerId", "0"),
+                new Claim("Guest","1")
+            }),
+            Expires = DateTime.UtcNow.AddMinutes(15),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
     public string GenerateJwtToken(string userId, string role, int customerId = 0)
     {   
         if (string.IsNullOrEmpty(userId))
@@ -37,7 +60,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString())
             }),
-                Expires = DateTime.UtcNow.AddMinutes(15),
+            Expires = DateTime.UtcNow.AddMinutes(60),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -89,7 +112,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString())
             }),
-            Expires = DateTime.UtcNow.AddHours(2), // refresh lifetime
+            Expires = DateTime.UtcNow.AddHours(240), // refresh lifetime (10 days)
             SigningCredentials = new SigningCredentials(
                 //todo: use a different key for refresh tokens if needed
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSymmetricKey)),

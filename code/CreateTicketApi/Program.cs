@@ -7,6 +7,7 @@ using System.Text;
 using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -32,7 +33,15 @@ builder.Services.AddCors(options =>
 });
 // Add services to the container.
 builder.Services.AddControllers();
-//not sure if this will work with swagger, but it is needed for JWT authentication
+
+
+builder.Services.AddRateLimiter(options => {
+    options.AddFixedWindowLimiter("guest-checkout-policy", opt => {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 5; // Allow 5 attempts per minute
+        opt.QueueLimit = 0;
+    });
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>    

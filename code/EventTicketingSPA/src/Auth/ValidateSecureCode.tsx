@@ -35,9 +35,9 @@ export default function ValidateSecureCode() {
   const location = useLocation();
   const  userData:any = location.state || {};
   console.log(' data from user user', userData);
-  const {email,userExists} =userData;
+  const {email,signupExists} =userData;
 
-  console.log("validating secure code for email:", email,userExists);
+  console.log("validating secure code for email:", email,signupExists);
   const {returnUrl} = useParams<{returnUrl: string}>();
   console.log("returnUrl:", returnUrl);
   
@@ -60,7 +60,7 @@ export default function ValidateSecureCode() {
       try{
         const res = await axiosClient.get(`/user/generateemailcode/${email}`);
         if (res?.status) {
-            setApiStatus("Secure code sent to your email.");
+            setApiStatus("We have sent a Secure code to your email if one exists with our system.");
             
         } 
         else {
@@ -71,7 +71,7 @@ export default function ValidateSecureCode() {
     }
     catch (err:any) {
         if (err.response && err.response.status === 404) {
-            setApiStatus("Email not found. Please check and try again.");
+            setApiStatus("We have sent a Secure code to your email if one exists with our system.");
         }
         else
           setApiStatus("Failed to send secure code. Please try again later.");
@@ -89,7 +89,7 @@ export default function ValidateSecureCode() {
       if (returnUrl === "signup")
       {
         //if user exists and they came through signup flow, we take them to reset password page since they want to create new password. If user does not exist we take them to signup page.
-        if (userExists)
+        if (signupExists)
           history.push("/resetpassword");
         else
           history.push("/" + "Signup");

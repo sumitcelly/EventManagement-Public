@@ -6,6 +6,7 @@ using System.Text;
 using Mysqlx.Crud;
 using System.Net;
 using System.Security.Claims;
+using EventUtils;
 
 namespace CreateTicketApi.Controllers
 {
@@ -20,16 +21,19 @@ namespace CreateTicketApi.Controllers
         private readonly EventDbAccess _eventAccess;
         private readonly ILogger<SalesOrderController> _logger;
 
+        private readonly JwtUtils _tokenUtils;
+
 
         public SalesOrderController(ILogger<SalesOrderController> logger,
          SalesOrderConductor salesOrderConductor, SalesOrderDbAccess dbAccess, EventDbAccess eventDbAccess,
-          TicketAccess ticketAccess)
+          TicketAccess ticketAccess, JwtUtils tokenUtils)
         {
             _salesOrderConductor = salesOrderConductor;
             _dbAccess = dbAccess;
             _ticketAccess = ticketAccess;
             _eventAccess = eventDbAccess;
             _logger = logger;
+            _tokenUtils = tokenUtils;
      
         }
 
@@ -39,27 +43,32 @@ namespace CreateTicketApi.Controllers
             if (order == null)
                 return BadRequest("Order is null.");
 
-            CustomerSalesOrder result = await _salesOrderConductor.CreateSalesOrder(order);
-            if (result == null || result.SalesOrderCode == null)
+            var result = await _salesOrderConductor.CreateSalesOrder(order);
+            if (result.Item1 == null)
                 return StatusCode(500, "Failed to create sales order.");
             else
-                return Ok(result);
+            {
+                if (!result.Item2)
+                    return Ok(new {SalesOrderData= result.Item1});
+                else
+                {
+                    //need to create temporary token here since this was guest checkout
+                    _logger.LogInformation("Guest checkout detected. Creating and sending temp token");
+                    var _accessToken = _tokenUtils.GenerateGuestJwtToken(result.Item1.UserId.ToString(),
+                                         UserRoles.Attendee.ToString());
+                    CustomerSalesOrder returnOrder = result.Item1;
+                    return Ok(new
+                    {
+                        SalesOrderData= result.Item1,
+                        AccessToken = _accessToken,
+                        User = new { id = returnOrder.UserId.ToString(), guest=true,email = returnOrder.EmailAddress, 
+                                    role = UserRoles.Attendee.ToString(), customerId = 0, 
+                                     name = returnOrder.Name ?? string.Empty }
+                    });
+                }
+            }
         }
 
-
-        // Not being used currently
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CustomerSalesOrder order)
-        {
-            if (order == null || id <= 0)
-                return BadRequest("Invalid order data.");
-
-            var result = await _salesOrderConductor.UpdateSalesOrder(id, order);
-            if (result == null || result.SalesOrderCode == null)
-                return StatusCode(500, "Failed to create sales order.");
-            else
-                return Ok(result);
-        }
 
         //Not being used currently
         [HttpDelete("{id}")]

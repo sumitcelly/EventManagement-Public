@@ -3,6 +3,7 @@ using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -99,12 +100,42 @@ namespace CreateTicketApi.Controllers
             });
         }
 
+        // [EnableRateLimiting("guest-checkout-policy")]
+        // [HttpPost("request-guest-token")]
+        // public IActionResult StartGuestCheckout([FromBody] TempTokenRequest request)
+        // {
+            
+        // }
+
+
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
         {
             var refreshToken = Request.Cookies["refreshToken"];
             //need to store refresh token in db or redis so it can be revoked if compromised
             //so basically token/userid store to validate this.
+            /*
+            Refresh Token Hash: Never store the raw token; store a SHA-256 hash of it to protect against database leaks.
+                UserId: Links the token to a specific user.
+                Expiry Date: The absolute time when the refresh token becomes invalid.
+                JTI (JWT ID): A unique identifier for the token to prevent "replay attacks" (reusing the same token).
+                Revoked/Used Flag: (Optional) Used for Rotation. If a token is used to get a new one, 
+                you can mark it as "used" or simply delete it
+                The most efficient way to store this in Redis is using a Key-Value pair where the key is the token's identifier and the value is a serialized JSON object or a Redis Hash. 
+                Serverion
+                Serverion
+                +1
+                Key Format: RefreshToken:{UserId}:{JTI}
+                Example: RefreshToken:user123:abc-789-xyz
+                {
+                        "UserId": "user123",
+                        "TokenHash": "a5d8f... (SHA-256)",
+                        "ExpiryTime": "2024-04-25T10:00:00Z",
+                        "RemoteIp": "192.168.1.1"
+                        }
+
+                */
+            
             if (string.IsNullOrEmpty(refreshToken) /*|| !RefreshTokens.ContainsKey(refreshToken)*/)
                 return Unauthorized();
 
@@ -249,18 +280,19 @@ namespace CreateTicketApi.Controllers
         }
 
 
-        /// <summary>
-        /// Called during signup to check if user already exists.  If exists, return true.
-        /// If exists, the true is passed in the next call to GenerateEmailCode to continue login flow.
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        [HttpGet("CheckUserExists/{email}")]
-        public async Task<bool> CheckUserExists(string email)
-        {
-            var user =  await _userDbAccess.GetUserByEmail(email);
-            return user != null;
-        }
+        // /// <summary>
+        // ///This call can lead to enumeration of email addresses in DB. Do not expose it.
+        //  Called during signup to check if user already exists.  If exists, return true.
+        // /// If exists, the true is passed in the next call to GenerateEmailCode to continue login flow.
+        // /// </summary>
+        // /// <param name="email"></param>
+        // /// <returns></returns>
+        // [HttpGet("CheckUserExists/{email}")]
+        // public async Task<bool> CheckUserExists(string email)
+        // {
+        //     var user =  await _userDbAccess.GetUserByEmail(email);
+        //     return user != null;
+        // }
 
         /// <summary>
         /// Generates a one-time email code for login or signup and sends it to the user's email address.
@@ -282,10 +314,11 @@ namespace CreateTicketApi.Controllers
                 _logger.LogInformation($"User with email {email} not found, continuing since this is signup.");
                //temp user is created during VerifyEmailCode step not here.
             }
+            bool signupExists = false;
             if (user != null && signup == true)
             {
                 _logger.LogInformation($"User {email} already exists and tryig to singup, sending them one time code.");
-               //create a temporary user record for signup
+                signupExists = true;
             }
 
             string emailCode= EventUtils.PasswordGenerator.GetPassword();
@@ -317,7 +350,7 @@ namespace CreateTicketApi.Controllers
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
                 templateData.Item2);
 
-            return Ok("Email verification code sent.");
+            return Ok(new {signupExists});
         }
 
         [HttpPost("logout")]

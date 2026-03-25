@@ -17,6 +17,7 @@ import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
 import { SalesOrderErrors } from "../types/Order";
+import { loginAsGuest } from "../features/auth/authSlice";
 
 const schema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email format"),
@@ -68,7 +69,7 @@ export default function BuyTickets() {
   const  cart = useAppSelector((state:RootState) => state.cart);
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
   const user = useAppSelector((state:RootState) =>state.auth);
-  
+
   const [stripeSessionId,setStripeSessionId] = useState<string | null>(null);
 
   const ionRouter = useIonRouter();
@@ -187,33 +188,39 @@ export default function BuyTickets() {
       }
       else
       {
+        if ((!user.user || user?.user?.id === 0) && result.data.accessToken)
+        {
+          console.log('guest login detected. Found token');
+          dispatch(loginAsGuest(result.data));     
+        }
         console.log(`Received 200 from order creation. checking error array...`);
-        if (result.data && result.data?.SalesOrderItemsError && result.data?.SalesOrderItemsError >0)
+        const salesOrderData = result.data?.salesOrderData;
+        if (salesOrderData?.SalesOrderItemsError && salesOrderData?.SalesOrderItemsError >0)
         {
           setcheckoutError(result.data?.SalesOrderItemsError);
           console.log('Order creation returned errors:', result.data?.SalesOrderItemsError);
           toast.error("There were issues with some items in your order. Please review.");
           return;
         }
-        else if (result.data)
+        else if (salesOrderData)
         {
-          console.log('Successfully created order with orderCode:'+result.data.SalesOrderCode);
+          console.log('Successfully created order with orderCode:'+salesOrderData.SalesOrderCode);
           if (!paymentNeeded())
           {
-             history.push(`/orderconfirmation/event/${id}`, result.data);
+             history.push(`/orderconfirmation/event/${id}`, salesOrderData);
           }
           else
           {
-            if (!result.data?.checkoutSessionSecret || !result.data?.checkoutSessionId)
+            if (!salesOrderData?.checkoutSessionSecret || !salesOrderData?.checkoutSessionId)
             {
               console.log('Unable to proceed to payment due to incomplete setup.');
               toast.error("Unable to proceed to payment due to incomplete setup. Please try again later.");
               return;
             }
 
-            setStripeSessionId(result.data.checkoutSessionId);
-            console.log('Proceeding to payment with session id:'+result.data.checkoutSessionId);
-            history.push(`/orderpayment/event/${id}`, result.data);
+            setStripeSessionId(salesOrderData.checkoutSessionId);
+            console.log('Proceeding to payment with session id:',salesOrderData.checkoutSessionId);
+            history.push(`/orderpayment/event/${id}`, salesOrderData);
           }
         }
       }

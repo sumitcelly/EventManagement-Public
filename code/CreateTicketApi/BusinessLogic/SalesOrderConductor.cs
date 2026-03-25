@@ -61,7 +61,7 @@ public class SalesOrderConductor
         return true;
     }
 
-    public async Task<CustomerSalesOrder> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
+    public async Task<(CustomerSalesOrder,bool)> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
     {
         if (order == null)
             throw new ArgumentNullException(nameof(order));
@@ -110,7 +110,7 @@ public class SalesOrderConductor
         });
         return eventSalesItems;
     }
-    public async Task<CustomerSalesOrder> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
+    public async Task<(CustomerSalesOrder,bool)> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
     {
         if (customerSalesOrder == null)
             throw new ArgumentNullException(nameof(customerSalesOrder));
@@ -128,8 +128,10 @@ public class SalesOrderConductor
         //
    
         EventUser attendee;
+        bool guestMode = false;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
+            guestMode = true;
             attendee = await userDbAccess.GetUserByEmail(customerSalesOrder.EmailAddress);
             if (attendee == null)
             {
@@ -153,6 +155,11 @@ public class SalesOrderConductor
         {
             _logger.LogInformation($"Existing attendee provided: {customerSalesOrder.UserId}");
             attendee = await userDbAccess.GetUserById(customerSalesOrder.UserId);
+            if (attendee == null)
+            {
+                _logger.LogCritical($"Unable to locate attendee provided: {customerSalesOrder.UserId}");
+                throw new Exception("Unable to locate attendee provided");
+            }
         }
 
         bool paymentRequired = customerSalesOrder.SalesOrderItems.Any(item => item.Cost > 0);
@@ -217,7 +224,8 @@ public class SalesOrderConductor
             _logger.LogInformation($"result for {item.EventTicketTypeId} is {result}");
         }
 
-        CustomerSalesOrder salesOrderReturn = new();
+        CustomerSalesOrder salesOrderReturn = new()
+                {UserId = attendee.UserId, EmailAddress = attendee.Email, Name = attendee.Name};
 
         if (errorItems.Count >0)
         {
@@ -269,7 +277,7 @@ public class SalesOrderConductor
             
         }
         salesOrderReturn.SalesOrderItemsError = errorItems;
-        return salesOrderReturn;
+        return (salesOrderReturn,guestMode);
     }
     
     
