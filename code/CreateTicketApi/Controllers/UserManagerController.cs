@@ -95,7 +95,7 @@ namespace CreateTicketApi.Controllers
             return Ok(new
             {
                 accessToken = _accessToken,
-                user = new { id = user.UserId, email = request.Email, role = role ?? null, customerId = orgMember?.CustomerId ?? 0, 
+                user = new { id = user.UserId, email = request.Email, guest=false,role = role ?? null, customerId = orgMember?.CustomerId ?? 0, 
                             name = user.Name ?? string.Empty }
             });
         }
@@ -196,7 +196,8 @@ namespace CreateTicketApi.Controllers
                 email = user.Email,
                 role = role,
                 customerId = customerId,
-                name = user.Name
+                name = user.Name,
+                guest=false
             });
         }
         
@@ -275,7 +276,7 @@ namespace CreateTicketApi.Controllers
             return Ok(new
             {
                 accessToken = _accessToken,
-                user = new { id = user.UserId, name= user.Name, email = request.Email, role = role ?? null, customerId = orgMember?.CustomerId ?? 0 }
+                user = new { id = user.UserId, name= user.Name, guest=false, email = request.Email, role = role ?? null, customerId = orgMember?.CustomerId ?? 0 }
             });
         }
 
@@ -307,7 +308,10 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("Email is null or empty.");
             var user = await _userDbAccess.GetUserByEmail(email);
             if (user == null && signup != true)
-                return NotFound();
+            {
+                _logger.LogError($"User with email  {email} was not found.");
+                return Ok();
+            }
             
             if (user == null && signup == true)
             {

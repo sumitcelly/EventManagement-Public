@@ -102,14 +102,16 @@ export function AppNavbar() {
       </NavbarBrand>
       {/* for screens mediume and lrger, shows up at the end on right  */}
       <div className="flex md:order-2">
-        {isAuthenticated && user?.email
+        {isAuthenticated && user?.email && !user?.guest
             ?(<>
-            <Dropdown
-            arrowIcon={false}
-            inline
-            label={
-                <Avatar alt="User settings" img="https://flowbite.com/docs/images/people/profile-picture-4.jpg" rounded />
-            }>
+              <Dropdown
+              arrowIcon={true}
+              inline
+              label={user.name || `Welcome`}
+                  // <Avatar alt="User settings"
+                  //     img="https://flowbite.com/docs/images/people/profile-picture-1.jpg" rounded />
+                  // }
+                >
                 <DropdownHeader>
                     <span className="block text-sm">{user?.email}</span>
                     {/* <span className="block truncate text-sm font-medium">name@flowbite.com</span> */}
@@ -211,7 +213,7 @@ export function AppNavbar() {
       
 
       <NavbarCollapse className="ml-auto mr-5">
-        {isAuthenticated && role === 'Attendee' &&
+        {isAuthenticated && !user?.guest && role === 'Attendee' &&
         (
             <NavbarLink href="/organizermanager" active>
               Organize an Event
@@ -223,14 +225,14 @@ export function AppNavbar() {
               Organize an Event
             </NavbarLink>
         )}
-        {isAuthenticated  ?
+        {isAuthenticated && !user?.guest  ?
         (<>
           <NavbarLink href="/myevents">Find my tickets</NavbarLink>
           <NavbarLink href="/scannerdashboard">Scan Tickets</NavbarLink>
           </>
         ) :
         (<NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>)}
-        {!isAuthenticated &&(
+        {!isAuthenticated || user?.guest &&(
           <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>
         )}
       </NavbarCollapse>

@@ -59,7 +59,7 @@ export default function ValidateSecureCode() {
 
       try{
         const res = await axiosClient.get(`/user/generateemailcode/${email}`);
-        if (res?.status) {
+        if (res?.status ==200) {
             setApiStatus("We have sent a Secure code to your email if one exists with our system.");
             
         } 

@@ -11,7 +11,7 @@ interface User {
   name: string;
   customerUrlName?:string;
   stripeConnectStatus?:string;
-  guest?:boolean;
+  guest:boolean;
 }
 
 interface AuthState {
@@ -92,8 +92,18 @@ export const refreshAccessToken = async () => {
   }
 };
 
-export const getAccessToken = () => accessToken;
-
+export const getAccessToken = () => {
+  if (accessToken)
+    return accessToken;
+  else if (sessionStorage.getItem('temp_auth_token'))
+  {
+    accessToken = sessionStorage.getItem('temp_auth_token');
+    sessionStorage.removeItem('temp_auth_token');
+    return accessToken;
+  }
+  console.log('no access token found');
+}
+  
 
 // Async check user session
 export const fetchUser = createAsyncThunk(
@@ -117,6 +127,10 @@ const authSlice = createSlice({
     logout(state) {
       state.user = null;
       state.isAuthenticated = false;
+    },
+    resetError(state){
+      state.error = null;
+      state.status = null;
     },
     updateCustomerProfile(state,action){
       console.log('updating customer url name',action.payload);
@@ -142,6 +156,7 @@ const authSlice = createSlice({
       
       if (action.payload.user) {
         state.user = action.payload.user;
+        sessionStorage.setItem('temp_auth_token', action.payload.accessToken)
         if (action.payload.user.id >0)
         {
           state.isAuthenticated = true;
@@ -184,6 +199,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout,changeUserRole,updateCustomerProfile, loginAsGuest } = authSlice.actions;
+export const { logout,changeUserRole,updateCustomerProfile, loginAsGuest, resetError } = authSlice.actions;
 export default authSlice.reducer;
 

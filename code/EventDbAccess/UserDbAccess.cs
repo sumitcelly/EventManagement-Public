@@ -213,8 +213,9 @@ namespace EventManagementDbAccess
                 if (await reader.ReadAsync())
                 {
                     string salt = reader.IsDBNull(reader.GetOrdinal("PasswordSalt")) ? string.Empty : reader.GetString(reader.GetOrdinal("PasswordSalt"));
-                    string hashedPassword = reader.GetString(reader.GetOrdinal("Password"));
-                    if (PasswordHelper.VerifyPassword(password, salt, hashedPassword))
+                    string hashedPassword = reader.IsDBNull(reader.GetOrdinal("Password")) ? string.Empty : reader.GetString(reader.GetOrdinal("Password"));
+                    if (!string.IsNullOrWhiteSpace(hashedPassword) && 
+                        PasswordHelper.VerifyPassword(password, salt, hashedPassword))
                     {
                         return new EventUser
                         {

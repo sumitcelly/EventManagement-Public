@@ -3,7 +3,7 @@ import { set, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 //import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../features/auth/authSlice";
+import { loginUser, resetError } from "../features/auth/authSlice";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import axiosClient from "../api/axiosClient";
 import React, { useState } from "react";
@@ -11,6 +11,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useLocation} from "react-router-dom";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
+
 
 interface SecureCodeFormInputs {
   email: string;
@@ -32,6 +33,7 @@ export default function SendSecureCode() {
   const email = params.get('email') || '';
   const {returnUrl} = useParams<{returnUrl: string}>();
   const history = useHistory();
+  const dispatch = useAppDispatch();
  
   console.log("SendSecureCode returnUrl:", returnUrl);
 
@@ -62,9 +64,10 @@ export default function SendSecureCode() {
         }
         const res = await axiosClient.get(url);
         console.log("API response for generate email code:", res?.data);
-        
-        //if 200 or 404 we show the same message to avoid email enumeration. Only if it's other error we show generic failure message.
-        if (res?.status === 200 || res?.status === 404) {
+        dispatch(resetError());
+        //Should always get 200 regardless of whether user is found or not.
+        //  Only if it's other error we show generic failure message.
+        if (res?.status === 200) {
             setApiStatus("If an email exists for your account, you will receive an authentication code to login.");
             history.push(`/auth/validatesecurecode/${returnUrl}`,{signupExists: res?.data?.signupExists, email: data.email});
           }
