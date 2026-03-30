@@ -113,6 +113,7 @@ builder.Services.AddSingleton<IAuthorizationHandler, AtleastRoleHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, CustomerIdMatchHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, UserIdMatchHandler>();
 
+builder.Services.AddSingleton(typeof(RefreshTokenCache));
 builder.Services.AddSingleton(typeof(JwtUtils));
 builder.Services.AddSingleton<EncryptionHelper>();
 builder.Services.AddSingleton(typeof(SQSHelper));

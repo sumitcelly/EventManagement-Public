@@ -110,7 +110,7 @@ namespace CreateTicketApi.Controllers
                 if (memberId >0)
                 {
                     _logger.LogInformation($"Added user {userId} as owner of org {customerId}");
-                    var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);      
+                    var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);      
                     SetSecureCookie("refreshToken", newRefreshToken);
                     var newAccessToken = _tokenUtils.GenerateJwtToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);
                     return Ok(new { accessToken = newAccessToken,

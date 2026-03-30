@@ -88,7 +88,7 @@ namespace CreateTicketApi.Controllers
 
             //create a JWT token or session here as needed
             var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
            // Response.Cookies.Append("refreshToken", refreshToken);
             SetSecureCookie("refreshToken", refreshToken);
 
@@ -112,31 +112,8 @@ namespace CreateTicketApi.Controllers
         public async Task<IActionResult> Refresh()
         {
             var refreshToken = Request.Cookies["refreshToken"];
-            //need to store refresh token in db or redis so it can be revoked if compromised
-            //so basically token/userid store to validate this.
-            /*
-            Refresh Token Hash: Never store the raw token; store a SHA-256 hash of it to protect against database leaks.
-                UserId: Links the token to a specific user.
-                Expiry Date: The absolute time when the refresh token becomes invalid.
-                JTI (JWT ID): A unique identifier for the token to prevent "replay attacks" (reusing the same token).
-                Revoked/Used Flag: (Optional) Used for Rotation. If a token is used to get a new one, 
-                you can mark it as "used" or simply delete it
-                The most efficient way to store this in Redis is using a Key-Value pair where the key is the token's identifier and the value is a serialized JSON object or a Redis Hash. 
-                Serverion
-                Serverion
-                +1
-                Key Format: RefreshToken:{UserId}:{JTI}
-                Example: RefreshToken:user123:abc-789-xyz
-                {
-                        "UserId": "user123",
-                        "TokenHash": "a5d8f... (SHA-256)",
-                        "ExpiryTime": "2024-04-25T10:00:00Z",
-                        "RemoteIp": "192.168.1.1"
-                        }
-
-                */
-            
-            if (string.IsNullOrEmpty(refreshToken) /*|| !RefreshTokens.ContainsKey(refreshToken)*/)
+          
+            if (string.IsNullOrEmpty(refreshToken) )
                 return Unauthorized();
 
 
@@ -150,7 +127,7 @@ namespace CreateTicketApi.Controllers
             string customerId = claims.Item3;
             
             //when stored in db, no need to store userId, role, customerId in token
-            var newRefreshToken = _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
+            var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
             
             SetSecureCookie("refreshToken", newRefreshToken);
 
@@ -269,7 +246,7 @@ namespace CreateTicketApi.Controllers
 
             //create a JWT token or session here as needed
             var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            string refreshToken = _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
            // Response.Cookies.Append("refreshToken", refreshToken);
             SetSecureCookie("refreshToken", refreshToken);
 

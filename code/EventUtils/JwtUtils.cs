@@ -11,16 +11,17 @@ using Stripe;
 public class JwtUtils
 {
     private readonly string _jwtSymmetricKey;
-
-    public JwtUtils(IConfiguration configuration)
+    private readonly RefreshTokenCache _refreshTokenCache;
+    public JwtUtils(IConfiguration configuration, RefreshTokenCache refreshTokenCache)
     {
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration), "Configuration cannot be null.");
         _jwtSymmetricKey = configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured.", nameof(configuration));
         if (string.IsNullOrEmpty(_jwtSymmetricKey))
             throw new ArgumentException("JWT symmetric key is not configured.", nameof(configuration));
+    
+        _refreshTokenCache = refreshTokenCache ?? throw new ArgumentNullException(nameof(refreshTokenCache), "RefreshTokenCache cannot be null.");
     }
-
     public string GenerateGuestJwtToken(string userId, string role)
     {   
         if (string.IsNullOrEmpty(userId))
@@ -81,6 +82,21 @@ public class JwtUtils
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSymmetricKey) ?? throw new ArgumentException("JWT symmetric key is not configured.")),
         });
+
+        (string userId, string tokenId, _) = GetUserIdTokenIdAndExpiry(token);
+        if (result.IsValid)
+        {        
+            if (!await _refreshTokenCache.ValidateTokenCache(token, userId, tokenId))
+            {
+                await _refreshTokenCache.InvalidateToken(token, userId, tokenId); // Invalidate the token in cache if validation fails
+                return false; // Token is not valid in cache
+            }
+        }
+        else
+        {
+            await _refreshTokenCache.InvalidateToken(token, userId, tokenId); // Invalidate the token in cache if validation fails
+            return false; // Token is not valid
+        }
         return result.IsValid;
     }
 
@@ -90,6 +106,7 @@ public class JwtUtils
             throw new ArgumentException("Token cannot be null or empty.", nameof(token));
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwtToken = tokenHandler.ReadJwtToken(token);
+        
         var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
         var customerIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "CustomerId");
@@ -101,7 +118,22 @@ public class JwtUtils
             customerIdClaim?.Value ?? "0");
     }
 
-    public string GenerateRefreshToken(string userId, string role, int customerId = 0)
+    public Tuple<string, string,DateTime> GetUserIdTokenIdAndExpiry(string token)
+    {
+        if (string.IsNullOrEmpty(token))
+            throw new ArgumentException("Token cannot be null or empty.", nameof(token));
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var jwtToken = tokenHandler.ReadJwtToken(token);
+        
+        var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
+    
+        return new (
+            userIdClaim?.Value ?? string.Empty,
+            jwtToken.Id,
+            jwtToken.ValidTo);
+    }
+
+    public async Task<string> GenerateRefreshToken(string userId, string role, int customerId = 0)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var refreshTokenDescriptor = new SecurityTokenDescriptor
@@ -110,7 +142,8 @@ public class JwtUtils
             {
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Role, role),
-                new Claim("CustomerId", customerId.ToString())
+                new Claim("CustomerId", customerId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), 
             }),
             Expires = DateTime.UtcNow.AddHours(240), // refresh lifetime (10 days)
             SigningCredentials = new SigningCredentials(
@@ -121,6 +154,7 @@ public class JwtUtils
 
         var refreshToken = tokenHandler.CreateToken(refreshTokenDescriptor);
         string refreshTokenString = tokenHandler.WriteToken(refreshToken);
+        await _refreshTokenCache.StoreToken(refreshTokenString, userId, refreshToken.Id, refreshTokenDescriptor.Expires.Value);
         return refreshTokenString;
     }
 }
