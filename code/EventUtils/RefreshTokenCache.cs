@@ -56,11 +56,9 @@ public  class RefreshTokenCache
         await _cache.SetStringAsync(key, token, options);
     }
 
-    public async Task InvalidateToken(string token, string userId, string tokenId)
+    public async Task InvalidateToken(string userId, string tokenId)
     {
-        if (string.IsNullOrWhiteSpace(token))
-            throw new ArgumentException("Token cannot be null or empty.", nameof(token));
-
+      
         //(string userId, string tokenId, _) = _jwtUtils.GetUserIdTokenIdAndExpiry(token);
         string key = $"refreshToken:{userId}:{tokenId}";
 

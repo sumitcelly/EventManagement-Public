@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Stripe;
 
@@ -12,7 +13,8 @@ public class JwtUtils
 {
     private readonly string _jwtSymmetricKey;
     private readonly RefreshTokenCache _refreshTokenCache;
-    public JwtUtils(IConfiguration configuration, RefreshTokenCache refreshTokenCache)
+    private readonly ILogger<JwtUtils> _logger;
+    public JwtUtils(IConfiguration configuration, RefreshTokenCache refreshTokenCache, ILogger<JwtUtils> logger)
     {
         if (configuration == null)
             throw new ArgumentNullException(nameof(configuration), "Configuration cannot be null.");
@@ -21,6 +23,7 @@ public class JwtUtils
             throw new ArgumentException("JWT symmetric key is not configured.", nameof(configuration));
     
         _refreshTokenCache = refreshTokenCache ?? throw new ArgumentNullException(nameof(refreshTokenCache), "RefreshTokenCache cannot be null.");
+        _logger = logger ?? throw new ArgumentNullException();
     }
     public string GenerateGuestJwtToken(string userId, string role)
     {   
@@ -88,13 +91,13 @@ public class JwtUtils
         {        
             if (!await _refreshTokenCache.ValidateTokenCache(token, userId, tokenId))
             {
-                await _refreshTokenCache.InvalidateToken(token, userId, tokenId); // Invalidate the token in cache if validation fails
+                await _refreshTokenCache.InvalidateToken(userId, tokenId); // Invalidate the token in cache if validation fails
                 return false; // Token is not valid in cache
             }
         }
         else
         {
-            await _refreshTokenCache.InvalidateToken(token, userId, tokenId); // Invalidate the token in cache if validation fails
+            await _refreshTokenCache.InvalidateToken( userId, tokenId); // Invalidate the token in cache if validation fails
             return false; // Token is not valid
         }
         return result.IsValid;
@@ -131,6 +134,23 @@ public class JwtUtils
             userIdClaim?.Value ?? string.Empty,
             jwtToken.Id,
             jwtToken.ValidTo);
+    }
+
+    public async Task RevokeTokenInCache(string token)
+    {
+        if (string.IsNullOrEmpty(token))
+            throw new ArgumentException("Token cannot be null or empty.", nameof(token));
+        try
+        {
+            (string userId, string tokenId, _) = GetUserIdTokenIdAndExpiry(token);
+            await _refreshTokenCache.InvalidateToken(userId, tokenId);
+        }
+        catch(Exception ex)
+        {
+            // Log the exception if needed, but do not throw further to avoid affecting user experience
+           _logger.LogError(ex, "Error revoking token in cache. Token: {Token}", token);
+        }
+
     }
 
     public async Task<string> GenerateRefreshToken(string userId, string role, int customerId = 0)

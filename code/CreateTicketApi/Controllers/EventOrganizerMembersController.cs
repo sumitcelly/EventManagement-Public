@@ -34,6 +34,12 @@ namespace CreateTicketApi.Controllers
             _tokenUtils = jwtUtils;
         }
 
+        /// <summary>
+        /// Not used so far
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
         [HttpPost("AddOwner/{userId}")]
         [Authorize(Policy = "MatchingUserId")]
         public async Task<IActionResult> AddOwner(int userId,EventOrganizerMembers data)

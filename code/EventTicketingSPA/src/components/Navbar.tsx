@@ -21,6 +21,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import axiosClient from "../api/axiosClient";
+import { useHistory } from "react-router";
 
 interface SearchFormInputs {
   keyword: string ;
@@ -54,7 +55,7 @@ export function AppNavbar() {
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
  // const navigate = useNavigate();
-  const history = useIonRouter();
+  const history = useHistory();
 
   const handleLogout = async () => {
     await axiosClient.post(
@@ -63,7 +64,7 @@ export function AppNavbar() {
       { withCredentials: true }
     );
     dispatch(logout());
-    history.push("/login");
+    history.replace("/login");
   }
 
     const {

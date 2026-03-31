@@ -126,6 +126,7 @@ namespace CreateTicketApi.Controllers
             string role = claims.Item2;
             string customerId = claims.Item3;
             
+            await _tokenUtils.RevokeTokenInCache(refreshToken); // Revoke the old refresh token in cache
             //when stored in db, no need to store userId, role, customerId in token
             var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
             
@@ -335,12 +336,13 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             var refreshToken = Request.Cookies["refreshToken"];
             if (!string.IsNullOrEmpty(refreshToken))
             {
                 //RefreshTokens.Remove(refreshToken);
+                await _tokenUtils.RevokeTokenInCache(refreshToken); // Revoke the refresh token in cache
                 Response.Cookies.Delete("refreshToken");
             }
 
