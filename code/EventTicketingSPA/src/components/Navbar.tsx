@@ -95,6 +95,14 @@ export function AppNavbar() {
       history.push(`/searchevents/${queryParams}`);
     };
 
+  const checkScannerAccess = () => {
+    return isAuthenticated && role !== "Attendee";
+  }
+
+   const checkBasicAdminAccess = () => {
+    return isAuthenticated && (role === "Owner" || role === "FullAdmin" || role === "RestrictedAdmin");
+  }
+
   return (
     <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md">
       <NavbarBrand href="https://flowbite-react.com">
@@ -107,7 +115,8 @@ export function AppNavbar() {
             ?(<>
               <Dropdown
               arrowIcon={true}
-              inline
+              className="mr-1"
+              // inline={true}
               label={user.name || `Welcome`}
                   // <Avatar alt="User settings"
                   //     img="https://flowbite.com/docs/images/people/profile-picture-1.jpg" rounded />
@@ -115,9 +124,9 @@ export function AppNavbar() {
                 >
                 <DropdownHeader>
                     <span className="block text-sm">{user?.email}</span>
-                    {/* <span className="block truncate text-sm font-medium">name@flowbite.com</span> */}
                 </DropdownHeader>
-                <DropdownItem>My Orders</DropdownItem>
+                {checkScannerAccess() && <DropdownItem href="/scannerdashboard">Scan Tickets</DropdownItem>}
+                <DropdownItem href='/myevents'>Find my tickets</DropdownItem>
                 <DropdownDivider />
                 <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>
             </Dropdown>
@@ -126,9 +135,6 @@ export function AppNavbar() {
                 onClick={() => {window.location.href = "/login";}}>
                 Login
                 </button>
-                {/* <NavbarCollapse>
-                <NavbarLink href="/login" className="hover:underline">Login</NavbarLink>
-                </NavbarCollapse> */}
                 </>)}
         <NavbarToggle />
       </div>
@@ -210,31 +216,25 @@ export function AppNavbar() {
       )}
       </form>
 
-     
-      
-
       <NavbarCollapse className="ml-auto mr-5">
-        {isAuthenticated && !user?.guest && role === 'Attendee' &&
+        {checkBasicAdminAccess() &&
         (
-            <NavbarLink href="/organizermanager" active>
-              Organize an Event
-            </NavbarLink>
+             <Dropdown
+              arrowIcon={true}          
+              label={`Organizer Menu`}>
+                <DropdownItem href="/dashboard" >Organize an event</DropdownItem>
+                <DropdownItem href="/organizermanager" >Organizer Info</DropdownItem>
+                <DropdownItem href="/emailcampaigns" >Email Campaigns</DropdownItem>
+                <DropdownItem href="/Organizer/SalesOrderReport" >Sales report</DropdownItem>
+                <DropdownItem href="/teammanager" >Manage teams</DropdownItem>            
+            </Dropdown>
         )}
-        {isAuthenticated && role !== 'Attendee' &&
-        (
-            <NavbarLink href="/dashboard" active>
-              Organize an Event
-            </NavbarLink>
-        )}
-        {isAuthenticated && !user?.guest  ?
-        (<>
-          <NavbarLink href="/myevents">Find my tickets</NavbarLink>
-          <NavbarLink href="/scannerdashboard">Scan Tickets</NavbarLink>
+  
+        {(!isAuthenticated || user?.guest) &&(
+          <>
+            <NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>
+            <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>
           </>
-        ) :
-        (<NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>)}
-        {!isAuthenticated || user?.guest &&(
-          <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>
         )}
       </NavbarCollapse>
     </Navbar>
