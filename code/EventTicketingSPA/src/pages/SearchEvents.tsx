@@ -9,6 +9,8 @@ import{useParams} from "react-router";
 import { get } from "react-hook-form";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
 // 
 export interface EventSearchResult {
   eventId: number;
@@ -107,7 +109,7 @@ export default function EventsPage() {
           disabled={!hasNextPage || isFetchingNextPage}>
           {isFetchingNextPage ? "Loading..." : hasNextPage ? "Load More" : "No More Results"}
       </button>
-
+  <Footer/>
    </IonContent>
        </IonPage>
   );

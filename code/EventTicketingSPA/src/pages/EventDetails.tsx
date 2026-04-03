@@ -12,6 +12,7 @@ import { resetCart } from "../features/auth/cartSlice";
 import { useAppDispatch } from "../app/hook";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function EventDetails() {
 
@@ -185,7 +186,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     )}
     
     </div>
-    
+    <Footer/>
     </IonContent>
     </IonPage>
   

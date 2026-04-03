@@ -11,7 +11,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { useLocation} from "react-router-dom";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
-
+import Footer from "../components/Footer"
 
 interface SecureCodeFormInputs {
   email: string;
@@ -95,9 +95,9 @@ export default function SendSecureCode() {
           <IonHeader>
             <AppNavbar />
           </IonHeader>
-        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+      <IonContent className="">
+    <div className="flex flex-col min-h-full">
+    <div className="w-full max-w-sm mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">SecureCode Login- Step1</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -128,6 +128,9 @@ export default function SendSecureCode() {
         {apiStatus && <p className="mt-4 text-red-500">{apiStatus}</p>}
       </form>
     </div>
+     <Footer/>
+    </div>
+
     </IonContent>
     </IonPage>
   );

@@ -7,6 +7,7 @@ import { RootState } from "../app/store";
 import { IonContent, IonPage, IonRouterLink } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
+import Footer from "../components/Footer";
 // 
 interface UserSalesOrder {
   eventId: number;
@@ -54,7 +55,7 @@ export default function MyEvents() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-      <IonContent  className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonContent  className="flex flex-col justify-center items-center h-full">
      
     <div className="max-w-md mx-auto mt-6">
       <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
@@ -107,8 +108,11 @@ export default function MyEvents() {
                       
 
     </ListGroup>
+   
     </div>
+    <Footer/>
     </IonContent>
+    
     </IonPage>
   );
 }

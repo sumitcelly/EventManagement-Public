@@ -9,6 +9,7 @@ import { useAppDispatch ,useAppSelector} from "../app/hook";
 import { IonPage, IonContent, IonHeader,IonRoute, useIonRouter } from '@ionic/react';
 import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
+import Footer from "../components/Footer";
 
 interface LoginFormInputs {
   email: string;
@@ -43,8 +44,9 @@ export default function Login() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-    <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+    <IonContent className="">
+    <div className="flex flex-col min-h-full">
+    <div className="w-full max-w-sm mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">Login</h1>
 
       {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
@@ -93,7 +95,11 @@ export default function Login() {
         </div>
       </form>
     </div>
+      <Footer/>
+    </div>
+
     </IonContent>
+   
     </IonPage>
   );
 }

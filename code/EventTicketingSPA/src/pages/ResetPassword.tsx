@@ -8,6 +8,8 @@ import axiosClient from "../api/axiosClient";
 import { useAppSelector } from "../app/hook";
 import AppNavbar from "../components/Navbar";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
+import Footer from "../components/Footer";
+
 
 interface FormValues {
   password: string;
@@ -97,6 +99,7 @@ export default function ResetPassword()  {
             </div>
             </form>
         </div>
+        <Footer/>
     </IonContent>
   </IonPage>
 

@@ -7,6 +7,8 @@ import axiosClient from "../api/axiosClient";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import { useAppSelector } from "../app/hook";
+import Footer  from '../components/Footer';
+
 interface FormValues {
   name: string;
   password: string;
@@ -122,6 +124,7 @@ export default function SignupForm()  {
         </div>
         </form>
     </div>
+    <Footer/>
     </IonContent>
     </IonPage>
   );

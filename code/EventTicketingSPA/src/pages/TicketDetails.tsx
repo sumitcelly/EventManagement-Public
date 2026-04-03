@@ -14,6 +14,7 @@ import { RootState } from "../app/store";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import { Button } from "flowbite-react";
+import Footer from "../components/Footer";
 
 export default function TicketDetails() {
   
@@ -118,12 +119,12 @@ export default function TicketDetails() {
   console.log('event details:',eventDetails);
   return ( 
       <IonPage>
-            <IonHeader>
-              <AppNavbar />
-            </IonHeader>
-          <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-      <div className="flex flex-col max-w-md mx-auto ">
-        
+        <IonHeader>
+          <AppNavbar />
+        </IonHeader>
+        <IonContent>
+         <div className="flex flex-col  min-h-full">
+          <div className="max-w-md mx-auto">
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
         
           {data && <SalesOrderTicket eventBasic={eventDetails} 
@@ -148,9 +149,11 @@ export default function TicketDetails() {
                   Initiate refund
               </button>
             </div>
-          )}
-          
+          )}  
+        </div>      
+        <Footer/> 
     </div>
+    
     </IonContent>
     </IonPage>
   );

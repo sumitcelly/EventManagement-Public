@@ -11,6 +11,7 @@ import { set, useForm } from "react-hook-form";
 import CountdownTimer from "../components/Countdowntimer";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
+import  Footer  from "../components/Footer";
 
 
 interface SecureCodeFormInputs {
@@ -120,13 +121,13 @@ export default function ValidateSecureCode() {
   }
 
   return (
-    <IonPage>
-          <IonHeader>
-            <AppNavbar />
-          </IonHeader>
-        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+       <IonPage>
+             <IonHeader>
+               <AppNavbar />
+             </IonHeader>
+         <IonContent className="">
+       <div className="flex flex-col min-h-full">
+       <div className="w-full max-w-sm mx-auto mt-10 p-6 bg-white shadow rounded">
       <h1 className="text-2xl font-bold mb-4">SecureCode Login- Step 2</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -180,6 +181,8 @@ export default function ValidateSecureCode() {
             Back
         </a>
       </form>
+    </div>
+    <Footer/>
     </div>
     </IonContent>
     </IonPage>

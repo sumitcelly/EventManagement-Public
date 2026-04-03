@@ -17,6 +17,7 @@ import {
 } from '@stripe/react-stripe-js';
 import toast, { Toaster } from "react-hot-toast";
 import CountdownMinutes from "../components/CountdownMinutes";
+import Footer from "../components/Footer";
 
 const pkStripe =  import.meta.env.VITE_STRIPE_PK;
 const stripePromise = loadStripe(pkStripe);
@@ -242,6 +243,7 @@ export default function OrderPayment() {
     
       {/* {error && <p className="text-red-500 text-sm mt-2">{error}</p>} */}
     </div>
+    <Footer/>
     </IonContent>
     </IonPage>
   );

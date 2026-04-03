@@ -9,6 +9,7 @@ import AppNavbar from "../components/Navbar";
 import { useParams, useLocation } from "react-router";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import Footer from "../components/Footer";
 // 
 interface UserSalesOrder {
   eventId: number;
@@ -157,6 +158,7 @@ export default function RefundOrder() {
               </button>
             </div>
           </div>
+        <Footer/>
     </IonContent>
     </IonPage>
   );

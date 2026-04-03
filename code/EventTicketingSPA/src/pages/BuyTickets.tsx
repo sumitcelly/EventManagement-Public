@@ -18,6 +18,7 @@ import AppNavbar from "../components/Navbar";
 import toast, { Toaster } from 'react-hot-toast';
 import { SalesOrderErrors } from "../types/Order";
 import { loginAsGuest } from "../features/auth/authSlice";
+import  Footer from "../components/Footer"
 
 const schema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email format"),
@@ -348,7 +349,9 @@ return (
         </form>
     
     </div>
+     <Footer/>  
     </IonContent>
+   
     </IonPage>
   );
 }

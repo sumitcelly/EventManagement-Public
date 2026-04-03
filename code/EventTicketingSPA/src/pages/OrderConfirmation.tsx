@@ -15,6 +15,7 @@ import {SalesOrderErrors} from "../types/Order"
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import { set } from "react-hook-form";
+import Footer from "../components/Footer";
 
 export default function OrderConfirmation() {
   
@@ -183,6 +184,7 @@ export default function OrderConfirmation() {
           
         </div>      
       </div>
+      <Footer/>
       </IonContent>
       </IonPage>
   );
