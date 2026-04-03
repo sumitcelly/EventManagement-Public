@@ -70,10 +70,11 @@ export default function ResetPassword()  {
 
   return (
     <IonPage>
-      <IonHeader>
-        <AppNavbar />
-      </IonHeader>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full"> 
+    <IonHeader>
+      <AppNavbar />
+    </IonHeader>
+    <IonContent>
+      <div className="flex flex-col  min-h-full">
         <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
             <Toaster position="top-right" />
             <h1 className="text-2xl font-bold mb-4 text-center">Reset Password</h1>
@@ -100,6 +101,7 @@ export default function ResetPassword()  {
             </form>
         </div>
         <Footer/>
+      </div>
     </IonContent>
   </IonPage>
 

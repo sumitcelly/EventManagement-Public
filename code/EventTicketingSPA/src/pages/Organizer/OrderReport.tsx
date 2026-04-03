@@ -11,8 +11,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { set, useForm } from "react-hook-form";
 import { use, useEffect, useState } from "react";
 import React from "react";
-import { IonContent, IonPage } from "@ionic/react";
+import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 // 
 
@@ -192,221 +193,227 @@ export default function OrderReport() {
     if (isEventsLoading) return <p>Loading...</p>;
   return (
     <IonPage>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonHeader>
         <AppNavbar />
-    <form onSubmit={handleSubmit(onSubmit)}
-      className="max-w-3xl mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
-    >  
-      <Toaster position="top-right" />
-      <div className="text-center text-xl font-bold text-accent-color mb-6">Order Report</div>
+      </IonHeader>
+      <IonContent>
+        <div className="flex flex-col  min-h-full">
+       
+          <form onSubmit={handleSubmit(onSubmit)}
+            className="max-w-4xl w-full mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
+          >  
+            <Toaster position="top-right" />
+            <div className="text-center text-xl font-bold text-accent-color mb-6">Order Report</div>
 
-      {/* Date Row */}
-      <div className="flex flex-row gap-x-4 mb-4">
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">Start Date</label>
-          <input
-            type="date"
-            {...register("startDate")}
-            className="w-full border rounded p-2"
-          />
-          <div className="min-h-[20px]">
-            {errors.startDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">End Date</label>
-          <input
-            type="date"
-            {...register("endDate")}
-            className="w-full border rounded p-2"
-          />
-          <div className="min-h-[20px]">
-            {errors.endDate && (
-              <p className="text-red-600 text-sm mt-1">{errors.endDate.message}</p>
-            )}
-          </div>
-        </div>
-      </div>
+            {/* Date Row */}
+            <div className="flex flex-row gap-x-4 mb-4">
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">Start Date</label>
+                <input
+                  type="date"
+                  {...register("startDate")}
+                  className="w-full border rounded p-2"
+                />
+                <div className="min-h-[20px]">
+                  {errors.startDate && (
+                    <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">End Date</label>
+                <input
+                  type="date"
+                  {...register("endDate")}
+                  className="w-full border rounded p-2"
+                />
+                <div className="min-h-[20px]">
+                  {errors.endDate && (
+                    <p className="text-red-600 text-sm mt-1">{errors.endDate.message}</p>
+                  )}
+                </div>
+              </div>
+            </div>
 
-      {/* Email/Name Row */}
-      <div className="flex flex-row gap-x-4 mb-4">
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">Email</label>
-          <input
-            type="text"
-            {...register("email")}
-            className="w-full border rounded p-2"
-          />
-            <div className="min-h-[20px]"></div>
-        </div>
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">Name</label>
-          <input
-            type="text"
-            {...register("fullname")}
-            className="w-full border rounded p-2"
-          />
-        </div>
-          <div className="min-h-[20px]"> </div>
-      </div>
+            {/* Email/Name Row */}
+            <div className="flex flex-row gap-x-4 mb-4">
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">Email</label>
+                <input
+                  type="text"
+                  {...register("email")}
+                  className="w-full border rounded p-2"
+                />
+                  <div className="min-h-[20px]"></div>
+              </div>
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">Name</label>
+                <input
+                  type="text"
+                  {...register("fullname")}
+                  className="w-full border rounded p-2"
+                />
+              </div>
+                <div className="min-h-[20px]"> </div>
+            </div>
 
-      {/* Order Status/Event Name Row */}
-      <div className="flex flex-row gap-x-4 mb-4">
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">Order Status</label>
-          <select
-            {...register("orderStatus")}
-            className="w-full border rounded p-2"
-          >
-            <option value="">Any Status</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Reserved">Reserved</option>
-            <option value="Timedout">Timedout</option>
-            <option value="Replaced">Replaced</option>
-            <option value="Abandoned">Abandoned</option>
-            <option value="PaymentSucceeded">Payment Succeeded</option>
-            <option value="OrderCompleted">Order Completed</option>
-            <option value="Refunded">Refunded</option>
-          </select>
-        </div>
-        <div className="flex flex-col w-1/2 space-y-1">
-          <label className="font-semibold">Event Name</label>
-          <select
-            {...register("eventName")}
-            className="w-full border rounded p-2">
-            <option value="">{"Select an option"}</option>
-            {events?.map((event:any) => (
-              <option key={event.eventId} value={event.eventId}>
-                {event.eventName}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+            {/* Order Status/Event Name Row */}
+            <div className="flex flex-row gap-x-4 mb-4">
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">Order Status</label>
+                <select
+                  {...register("orderStatus")}
+                  className="w-full border rounded p-2"
+                >
+                  <option value="">Any Status</option>
+                  <option value="InProgress">In Progress</option>
+                  <option value="Reserved">Reserved</option>
+                  <option value="Timedout">Timedout</option>
+                  <option value="Replaced">Replaced</option>
+                  <option value="Abandoned">Abandoned</option>
+                  <option value="PaymentSucceeded">Payment Succeeded</option>
+                  <option value="OrderCompleted">Order Completed</option>
+                  <option value="Refunded">Refunded</option>
+                </select>
+              </div>
+              <div className="flex flex-col w-1/2 space-y-1">
+                <label className="font-semibold">Event Name</label>
+                <select
+                  {...register("eventName")}
+                  className="w-full border rounded p-2">
+                  <option value="">{"Select an option"}</option>
+                  {events?.map((event:any) => (
+                    <option key={event.eventId} value={event.eventId}>
+                      {event.eventName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-      {/* Submit Button */}
-      <div className="flex mt-4 mb-4 justify-between items-center">
-        <div className="flex items-center mr-auto">
-          <label className="font-semibold self-center">Show latest orders on top</label>
-          <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
-        </div>
-        {recCount > 0 && (
-            <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
-              onClick= {async (e)=>{
-                e.preventDefault();
-                
-                // const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
-                // startDate: filters.startDate,
-                // endDate: filters.endDate,
-                // emailAddress: filters.email || '',
-                // name: filters.fullname || '',
-                // orderStatus: filters.orderStatus || '',
-                // eventId: filters.eventName == ''? '0': filters.eventName,
-                // isAscending: (!filters.isDescending).toString()
-                // }).toString() : ""}`;
-                // console.log("Downloading report from",url);
-                
-                // window.location.href = url;
-                if (filters)
-                {
-                  const queryParams = new URLSearchParams({
-                    startDate: filters.startDate,
-                    endDate: filters.endDate,
-                    emailAddress: filters.email || '',
-                    name: filters.fullname || '',
-                    orderStatus: filters.orderStatus || '',
-                    eventId: filters.eventName === '' ? '0' : filters.eventName,
-                    isAscending: (!filters.isDescending).toString()
-                  });
-                  try {
-                    const response = await axiosClient.get(
-                      `/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
-                      { responseType: 'blob' }
-                    );
-                    console.log("Report downloaded successfully:", response);
-                    const url = window.URL.createObjectURL(new Blob([response.data]));
-                    console.log("Generated download URL:", url);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.setAttribute('download', 'order-report.csv');
-                    document.body.appendChild(link);
-                    link.click();
-                    link.parentNode?.removeChild(link);
-                  } catch (error) {
-                    toast.error('Failed to download report');
-                  }
+            {/* Submit Button */}
+            <div className="flex mt-4 mb-4 justify-between items-center">
+              <div className="flex items-center mr-auto">
+                <label className="font-semibold self-center">Show latest orders on top</label>
+                <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
+              </div>
+              {recCount > 0 && (
+                  <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
+                    onClick= {async (e)=>{
+                      e.preventDefault();
+                      
+                      // const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
+                      // startDate: filters.startDate,
+                      // endDate: filters.endDate,
+                      // emailAddress: filters.email || '',
+                      // name: filters.fullname || '',
+                      // orderStatus: filters.orderStatus || '',
+                      // eventId: filters.eventName == ''? '0': filters.eventName,
+                      // isAscending: (!filters.isDescending).toString()
+                      // }).toString() : ""}`;
+                      // console.log("Downloading report from",url);
+                      
+                      // window.location.href = url;
+                      if (filters)
+                      {
+                        const queryParams = new URLSearchParams({
+                          startDate: filters.startDate,
+                          endDate: filters.endDate,
+                          emailAddress: filters.email || '',
+                          name: filters.fullname || '',
+                          orderStatus: filters.orderStatus || '',
+                          eventId: filters.eventName === '' ? '0' : filters.eventName,
+                          isAscending: (!filters.isDescending).toString()
+                        });
+                        try {
+                          const response = await axiosClient.get(
+                            `/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
+                            { responseType: 'blob' }
+                          );
+                          console.log("Report downloaded successfully:", response);
+                          const url = window.URL.createObjectURL(new Blob([response.data]));
+                          console.log("Generated download URL:", url);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', 'order-report.csv');
+                          document.body.appendChild(link);
+                          link.click();
+                          link.parentNode?.removeChild(link);
+                        } catch (error) {
+                          toast.error('Failed to download report');
+                        }
 
-                }
+                      }
 
 
-              }
-              }>
-              Download CSV
-            </Button>
-          // </a>
-        )}
-        
-
-        <label className="mr-4 font-semibold">Total Records: {recCount}</label>
-        <button
-          type="submit"
-          className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Search
-        </button>      
-      </div>
-      {orderPages && orderPages.pages.length > 0 &&(
-          <div className="border-l-2 pl-2">
-          <table className="table-auto w-full mt-4">
-            <thead>
-              <tr>
-                <th >Date</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Event</th>
-                <th>Status</th>
-                <th >Total</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderPages.pages.map((page, i) => (
-              <React.Fragment key={i}>
-                {console.log("Rendering page", i, page,page.orders)}
-                 {page.orders.map((row:any) => (
-                  <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
-                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
-                    <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
-                  
-                    <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
-                    {row.emailAddress}
-                    </td>
-                    <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
-                    <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
-                
-                    <td>
-                      ${row.orderTotal.toFixed(2)}
-                    </td>
-                    <td>{row.orderCount}</td>
-                  </tr>
-                   ))}
-              </React.Fragment>
-              ))}
-             
-            </tbody>
-            </table>
-            {hasNextPage && (
-                <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                  {isFetchingNextPage ? 'Loading more...' : 'Load More'}
-                </button>
+                    }
+                    }>
+                    Download CSV
+                  </Button>
+                // </a>
               )}
+              
 
-          </div>
-        )}
-      
-    </form>
+              <label className="mr-4 font-semibold">Total Records: {recCount}</label>
+              <button
+                type="submit"
+                className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Search
+              </button>      
+            </div>
+            {orderPages && orderPages.pages.length > 0 &&(
+                <div className="border-l-2 pl-2">
+                <table className="table-auto w-full mt-4">
+                  <thead>
+                    <tr>
+                      <th >Date</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Event</th>
+                      <th>Status</th>
+                      <th >Total</th>
+                      <th>Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderPages.pages.map((page, i) => (
+                    <React.Fragment key={i}>
+                      {console.log("Rendering page", i, page,page.orders)}
+                      {page.orders.map((row:any) => (
+                        <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
+                          <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
+                          <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
+                        
+                          <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
+                          {row.emailAddress}
+                          </td>
+                          <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
+                          <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
+                      
+                          <td>
+                            ${row.orderTotal.toFixed(2)}
+                          </td>
+                          <td>{row.orderCount}</td>
+                        </tr>
+                        ))}
+                    </React.Fragment>
+                    ))}
+                  
+                  </tbody>
+                  </table>
+                  {hasNextPage && (
+                      <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+                        {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                      </button>
+                    )}
+
+                </div>
+              )}
+            
+          </form>
+          <Footer/>
+        </div>
     </IonContent>
     </IonPage>
       

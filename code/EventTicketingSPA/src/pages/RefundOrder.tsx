@@ -140,7 +140,8 @@ export default function RefundOrder() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-      <IonContent  className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonContent>
+        <div className="flex flex-col  min-h-full"> 
          <Toaster position="top-right" />
           <div className="max-w-md mx-auto mt-6">
             <h2 className="text-xl font-semibold mb-4">Refund Order</h2>
@@ -159,6 +160,7 @@ export default function RefundOrder() {
             </div>
           </div>
         <Footer/>
+      </div>
     </IonContent>
     </IonPage>
   );

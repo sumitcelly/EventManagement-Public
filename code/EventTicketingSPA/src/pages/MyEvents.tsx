@@ -55,62 +55,65 @@ export default function MyEvents() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-      <IonContent  className="flex flex-col justify-center items-center h-full">
+      <IonContent className="">
+      <div className="flex flex-col min-h-full">
      
-    <div className="max-w-md mx-auto mt-6">
-      <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
-      <ListGroup>
-        {data && data.map((event:UserSalesOrder) => (
-            <ListGroupItem
-            key={event.salesOrderCode}
-            onClick={(e) =>{ 
-              console.log("Navigating to event details for eventId:", event.eventId);
-              history.push(`/eventdetails/${event.eventId}`,'forward'); }}
-            className="cursor-pointer"
-          >
-          <div className="flex items-center justify-between gap-4 w-full">
-            <div className="min-w-0">
-              <p className="font-heading text-accent-color">{event.eventName}</p>
-              <p className="text-font-heading text-primary-color text-lg">
-                {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
-              </p>
-              <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
-            </div>
-            {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
-            {/* <IonRouterLink
-              routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}/${event.salesOrderId}/${event.salesOrderStatus}`}
-              
-              onClick={(e) => e.stopPropagation()}
-              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
+        <div className="max-w-md mx-auto mt-6">
+        <h2 className="text-xl font-semibold mb-4">My Upcoming Events</h2>
+        <ListGroup>
+          {data && data.map((event:UserSalesOrder) => (
+              <ListGroupItem
+              key={event.salesOrderCode}
+              onClick={(e) =>{ 
+                console.log("Navigating to event details for eventId:", event.eventId);
+                history.push(`/eventdetails/${event.eventId}`,'forward'); }}
+              className="cursor-pointer"
             >
-              View tickets
-            </IonRouterLink> */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                history.push(`/ticketdetails`, {
-                  eventId: event.eventId,
-                  salesOrderCode: event.salesOrderCode,
-                  salesOrderId: event.salesOrderId,
-                  salesOrderStatus: event.salesOrderStatus
-                });
-              }}
-              className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
-            >
-              View tickets
-            </div>
-          
+            <div className="flex items-center justify-between gap-4 w-full">
+              <div className="min-w-0">
+                <p className="font-heading text-accent-color">{event.eventName}</p>
+                <p className="text-font-heading text-primary-color text-lg">
+                  {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
+                </p>
+                <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
+              </div>
+              {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
+              {/* <IonRouterLink
+                routerLink={`/ticketdetails/${event.eventId}/${event.salesOrderCode}/${event.salesOrderId}/${event.salesOrderStatus}`}
+                
+                onClick={(e) => e.stopPropagation()}
+                className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex"
+              >
+                View tickets
+              </IonRouterLink> */}
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  history.push(`/ticketdetails`, {
+                    eventId: event.eventId,
+                    salesOrderCode: event.salesOrderCode,
+                    salesOrderId: event.salesOrderId,
+                    salesOrderStatus: event.salesOrderStatus
+                  });
+                }}
+                className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
+              >
+                View tickets
+              </div>
             
-        </div>
-          </ListGroupItem>
-      
-        ))}
-                      
+              
+          </div>
+            </ListGroupItem>
+        
+          ))}
+                        
 
-    </ListGroup>
-   
+      </ListGroup>
+    
+      </div>
+      <Footer/>
     </div>
-    <Footer/>
+    
     </IonContent>
     
     </IonPage>

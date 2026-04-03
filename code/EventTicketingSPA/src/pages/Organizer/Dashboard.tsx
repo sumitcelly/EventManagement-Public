@@ -14,6 +14,7 @@ import { resetCart } from "../../features/auth/cartSlice";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import { updateCustomerProfile } from "../../features/auth/authSlice";
+import Footer from "../../components/Footer";
 // 
 
 
@@ -93,57 +94,60 @@ export default function Dashboard() {
   if (isLoading || isLoadingCustomer) return <p>Loading...</p>;
 
   return (
-     <IonPage>
-        <IonHeader>
+    <IonPage>
+      <IonHeader>
           <AppNavbar />
-        </IonHeader>
-    <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+      </IonHeader>
+      <IonContent>
+        <div className="flex flex-col min-h-full">
     
-    <div className="max-w-md mx-auto mt-6">
-      <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
-      <div className="divide-y">
-        {data && data.map((event:EventHeader) => (
-          <div
-            key={event.eventId}
-            onClick={() => history.push(`/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`)}
-            className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
-          >
-            <div>
-              <p className="font-heading text-accent-color">{event.eventName}</p>
-              <div className="text-primary-color text-lg">
-                <div>{new Date(event.eventDate).toLocaleDateString()}</div>
-                <div>{event.eventLocation}</div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-5">
-              {event.isLive ? (
-                <div className="text-2xl font-accent text-go-color">Live</div>
-              ) : (
-                <div className="text-xl font-accent text-accent-color">Draft</div>
-              )}
-              <div onClick={(e)=>e.stopPropagation()}>
-                <ListMenu
-                  linkData={{
-                    viewLink: `/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`,
-                    editLink: `/EventManager/${event.eventId}`,
-                    delete:()=>deleteEvent(event.eventId),
-                    editData: {customerUrlName: customerData?.organizerEventBaseUrl}
-                  }}
-                />
-              </div>
-            </div>
-      </div>))}
-    </div>
-    
-    <div className="flex flex-row mt-4">
-        <button
-              className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-              onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`,{customerUrlName: customerData?.organizerEventBaseUrl});}}
+        <div className="max-w-md mx-auto mt-6">
+        <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
+        <div className="divide-y">
+          {data && data.map((event:EventHeader) => (
+            <div
+              key={event.eventId}
+              onClick={() => history.push(`/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`)}
+              className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
             >
-              New Event
-        </button> 
+              <div>
+                <p className="font-heading text-accent-color">{event.eventName}</p>
+                <div className="text-primary-color text-lg">
+                  <div>{new Date(event.eventDate).toLocaleDateString()}</div>
+                  <div>{event.eventLocation}</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-5">
+                {event.isLive ? (
+                  <div className="text-2xl font-accent text-go-color">Live</div>
+                ) : (
+                  <div className="text-xl font-accent text-accent-color">Draft</div>
+                )}
+                <div onClick={(e)=>e.stopPropagation()}>
+                  <ListMenu
+                    linkData={{
+                      viewLink: `/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`,
+                      editLink: `/EventManager/${event.eventId}`,
+                      delete:()=>deleteEvent(event.eventId),
+                      editData: {customerUrlName: customerData?.organizerEventBaseUrl}
+                    }}
+                  />
+                </div>
+              </div>
+        </div>))}
       </div>
+      
+      <div className="flex flex-row mt-4">
+          <button
+                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`,{customerUrlName: customerData?.organizerEventBaseUrl});}}
+              >
+                New Event
+          </button> 
+        </div>
+    </div>
+  <Footer/>
   </div>
   </IonContent>
   </IonPage>

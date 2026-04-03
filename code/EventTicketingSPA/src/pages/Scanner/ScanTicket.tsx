@@ -6,6 +6,7 @@ import {CapacitorBarcodeScanner}  from '@capacitor/barcode-scanner';
 import { IonContent, IonHeader, IonPage, IonButton, IonText, IonSpinner, IonToast } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import {toast, Toaster } from "react-hot-toast";
+import Footer from "../../components/Footer";
 
 
 export default function ScanTicket() {
@@ -101,7 +102,8 @@ export default function ScanTicket() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonContent>
+        <div className="flex flex-col  min-h-full"> 
         <Toaster
             containerStyle={{
                 // Ensure toasts stay below notches and above home bars
@@ -131,8 +133,10 @@ export default function ScanTicket() {
         </div>
            
        
-        </div>
-      </IonContent>
+      </div>
+      <Footer/>
+    </div>
+    </IonContent>
     </IonPage>
   );
 }

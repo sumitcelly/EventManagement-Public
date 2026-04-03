@@ -1,5 +1,5 @@
 
-import { TabItem, Tabs, TabsRef } from "flowbite-react";
+import {  TabItem, Tabs, TabsRef } from "flowbite-react";
 import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
@@ -10,6 +10,7 @@ import TicketBasics from "./TicketBasics";
 import EventPublish from "./EventPublish";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import Footer from "../../components/Footer"
 import { useQuery } from "react-query";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
@@ -39,15 +40,7 @@ export function EventManager() {
   //if we have ticket id or mode, means we are on the ticket tab
  
   const [localActiveTab, setLocalActiveTab] = useState(0);
-  //console.log('active tab in state is',activeTab);
-
-  // useEffect(()=>{
-  //   if (customerUrlName)
-  //   {
-  //     setCustomerName(customerUrlName);
-  //   }
-  // },[customerUrlName]);
-
+  
 
   useEffect(() => {
     if (mode === "publish")
@@ -73,30 +66,34 @@ export function EventManager() {
     <IonPage>
       <IonHeader>
           <AppNavbar />
-       </IonHeader>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    
-    <Tabs aria-label="Event Manager" 
-      ref={tabsRef}
-      className="max-w-2xl mx-auto "
-      variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
-    
-      <TabItem title="Event Details" icon={HiUserCircle}>
-        <EventForm id={eventId}  organizerEventBaseUrl={customerUrlName} isActive={localActiveTab===0}/>
-      </TabItem>
+      </IonHeader>
+      <IonContent>
+        <div className="flex flex-col  min-h-full">
+        <div>
+          <Tabs aria-label="Event Manager" 
+            ref={tabsRef}
+            className="max-w-2xl mx-auto "
+            variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
+          
+            <TabItem title="Event Details" icon={HiUserCircle}>
+              <EventForm id={eventId}  organizerEventBaseUrl={customerUrlName} isActive={localActiveTab===0}/>
+            </TabItem>
 
-      <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>
-        {
-          (mode === "ticketlist" || !mode)
-          ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
-          :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
-        }
-      </TabItem>
+            <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>
+              {
+                (mode === "ticketlist" || !mode)
+                ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
+                :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
+              }
+            </TabItem>
 
-      <TabItem  title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
-        <EventPublish eventId={eventId}/>
-      </TabItem>
-    </Tabs>
+            <TabItem  title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
+              <EventPublish eventId={eventId}/>
+            </TabItem>
+          </Tabs>
+        </div>
+        <Footer/>
+      </div>
     </IonContent>
     </IonPage>
   );

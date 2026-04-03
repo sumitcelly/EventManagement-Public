@@ -13,6 +13,7 @@ import { TeamMember } from "../../types/Teams";
 import toast, {Toaster} from "react-hot-toast";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import  Footer  from "../../components/Footer";
 // 
 
 
@@ -106,8 +107,9 @@ export default function CampaignList() {
       <IonHeader>
           <AppNavbar />
         </IonHeader>
-        <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-          <div className="max-w-3xl mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral">
+        <IonContent>
+        <div className="flex flex-col min-h-full">
+          <div className="max-w-3xl w-full mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral">
           <Toaster position="top-right" />
           <h2 className="text-xl font-semibold mb-4 text-center">Email Campaigns</h2>
       
@@ -121,12 +123,12 @@ export default function CampaignList() {
           </div>
           <div className="p-4 bg-white rounded-lg shadow">
             {/* Header Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 font-semibold text-gray-700 border-b pb-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-5 font-semibold text-gray-700 border-b pb-2 mb-2">
               <div>Event Name</div>
               <div>Campaign</div>
               <div>SendAt</div>
               <div>Status</div>      
-               <div>Action</div>            
+              <div>Action</div>            
             </div>
 
             {/* Member Rows */}
@@ -169,8 +171,11 @@ export default function CampaignList() {
                 </div>
       ))}
     </div>
+    
   </div>
-
+  
+  </div>
+      <Footer/>
   </div>
   </IonContent>
   </IonPage>);

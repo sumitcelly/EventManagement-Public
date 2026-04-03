@@ -6,6 +6,7 @@ import { RootState } from "../../app/store";
 import { EventHeader } from "../../types/Event";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 // 
 
 
@@ -56,37 +57,41 @@ export default function ScannerDashboard() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
+      <IonContent>
+        <div className="flex flex-col  min-h-full"> 
     
-      <div className="max-w-md mx-auto mt-6">
-        {!validRole ? (
-              <h2 className="text-xl font-semibold mb-4">You do not have rights to scan tickets. 
-              Contact admin/owner.</h2>
-        ):(
-          <>
-            <h2 className="text-xl font-semibold mb-4 text-center">Select event to scan</h2>
-            <div className="divide-y">
-              {data && data.map((event:EventHeader) => (
-                <div
-                    key={event.eventId}
-                    onClick={() => ionRouter.push(`/scanticket/${event.eventId}?eventName=${event.eventName}`)}
-                    className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
-                  >
+          <div className="max-w-md mx-auto mt-6">
+            {!validRole ? (
+                  <h2 className="text-xl font-semibold mb-4">You do not have rights to scan tickets. 
+                  Contact admin/owner.</h2>
+            ):(
+              <>
+                <h2 className="text-xl font-semibold mb-4 text-center">Select event to scan</h2>
+                <div className="divide-y">
+                  {data && data.map((event:EventHeader) => (
+                    <div
+                        key={event.eventId}
+                        onClick={() => ionRouter.push(`/scanticket/${event.eventId}?eventName=${event.eventName}`)}
+                        className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
+                      >
+                      
+                      <div>
+                        <p className="font-heading text-accent-color">{event.eventName}</p>
+                        <div className="text-primary-color text-lg">
+                          <div>{new Date(event.eventDate).toLocaleDateString()}</div>
+                          <div>{event.eventLocation}</div>
+                        </div>
+                      </div>
+                    </div>  
                   
-                  <div>
-                    <p className="font-heading text-accent-color">{event.eventName}</p>
-                    <div className="text-primary-color text-lg">
-                      <div>{new Date(event.eventDate).toLocaleDateString()}</div>
-                      <div>{event.eventLocation}</div>
-                    </div>
-                  </div>
-                </div>  
-               
-              ))}    
-            </div>
-        </>
-        )}
-      </div>      
+                  ))}    
+                </div>
+            </>
+            )}
+          </div>    
+          <Footer/>
+        </div>
+      
   </IonContent>
   </IonPage>
   );

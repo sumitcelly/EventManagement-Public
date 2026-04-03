@@ -80,51 +80,52 @@ export default function SignupForm()  {
   };
 
   return (
-     <IonPage>
-        <IonHeader>
-          <AppNavbar />
-        </IonHeader>
-      <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    
-     <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-        <Toaster position="top-right" />
-        <h1 className="text-2xl font-bold mb-4 text-center">Create Account</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        
-        <div className="text-center">
-        <label className="text-l font-accent text-accent-color">Please complete the signup for <span className="text-xl text-tertiary-color">{email}</span></label>
-        </div>
-        {/* NAME FIELD */}
-        
-        <div>
-          <label className="block text-sm font-medium">Name</label>
-          <input
-            type="text"
-            {...register("name", { required: "Name is required" })}
-            className="mt-1 block w-full border rounded px-3 py-2"
-            placeholder="Your full name"
-          />
-         {errors.name &&(<p className="text-red-500 text-sm">{errors.name.message}</p>)}
+    <IonPage>
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+      <IonContent>
+        <div className="flex flex-col  min-h-full"> 
+      <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+          <Toaster position="top-right" />
+          <h1 className="text-2xl font-bold mb-4 text-center">Create Account</h1>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          
+          <div className="text-center">
+          <label className="text-l font-accent text-accent-color">Please complete the signup for <span className="text-xl text-tertiary-color">{email}</span></label>
+          </div>
+          {/* NAME FIELD */}
+          
+          <div>
+            <label className="block text-sm font-medium">Name</label>
+            <input
+              type="text"
+              {...register("name", { required: "Name is required" })}
+              className="mt-1 block w-full border rounded px-3 py-2"
+              placeholder="Your full name"
+            />
+          {errors.name &&(<p className="text-red-500 text-sm">{errors.name.message}</p>)}
 
-        </div>
+          </div>
 
-        {/* PASSWORD COMPONENT 
-        receives state from passwordfields 
-        to update state locally*/}
-        
-        <PasswordFields onChange={(state) => setPasswordState(state)} />
+          {/* PASSWORD COMPONENT 
+          receives state from passwordfields 
+          to update state locally*/}
+          
+          <PasswordFields onChange={(state) => setPasswordState(state)} />
 
-        <div className="flex flex-row">
-        {/* SUBMIT BUTTON */}
-            <button type="submit" 
-                className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-                disabled={!passwordState.valid || !email}>
-                Sign Up
-            </button>
-        </div>
-        </form>
-    </div>
+          <div className="flex flex-row">
+          {/* SUBMIT BUTTON */}
+              <button type="submit" 
+                  className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                  disabled={!passwordState.valid || !email}>
+                  Sign Up
+              </button>
+          </div>
+          </form>
+      </div>
     <Footer/>
+    </div>
     </IonContent>
     </IonPage>
   );

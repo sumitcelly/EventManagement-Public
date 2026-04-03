@@ -19,6 +19,7 @@ import OrganizerStripe from "./OrganizerStripe";
 import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
 import { Toaster } from "react-hot-toast";
+import Footer from "../../components/Footer";
 
 export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
@@ -76,31 +77,35 @@ export function OrganizerManager() {
 
   return (  
     <IonPage>
-          <IonHeader>
-            <AppNavbar />
-          </IonHeader>
-        <IonContent className="ion-padding fle  x flex-col justify-center items-center h-full">
-   
-    {role === "Attendee" &&(
-      <div className="flex text-wrap text-accent-dark text-lg font-body justify-center max-w-xl mx-auto mt-4">
-        We need some information from you so that you can organize events. Stripe information is manadatory for paid events.</div>
-    )}
-    <Tabs aria-label="Organizer Manager" 
-      ref={tabsRef}
-      className="max-w-2xl mx-auto "
-      variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
-    
-      <TabItem title="About Info" icon={HiUserCircle}>
-        <OrganizerAbout organizerId={organizerId} organizerInfo  ={data}/>
-      </TabItem>
+      <IonHeader>
+        <AppNavbar />
+      </IonHeader>
+      <IonContent>
+        <div className="flex flex-col min-h-full">
+          <div>
+          {role === "Attendee" &&(
+            <div className="flex text-wrap text-accent-dark text-lg font-body justify-center max-w-xl mx-auto mt-4">
+              We need some information from you so that you can organize events. Stripe information is manadatory for paid events.</div>
+          )}
+          <Tabs aria-label="Organizer Manager" 
+            ref={tabsRef}
+            className="max-w-2xl mx-auto "
+            variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
+          
+            <TabItem title="About Info" icon={HiUserCircle}>
+              <OrganizerAbout organizerId={organizerId} organizerInfo  ={data}/>
+            </TabItem>
 
-      <TabItem   title="Connection Info" icon={HiUserCircle}  >
-        <OrganizerConnect organizerId={organizerId} organizerInfo={data}/>
-      </TabItem>
-       <TabItem   title="Stripe Info" icon={HiUserCircle}  >
-        <OrganizerStripe organizerId={organizerId} organizerInfo={data}/>
-      </TabItem>
-    </Tabs>
+            <TabItem   title="Connection Info" icon={HiUserCircle}  >
+              <OrganizerConnect organizerId={organizerId} organizerInfo={data}/>
+            </TabItem>
+            <TabItem   title="Stripe Info" icon={HiUserCircle}  >
+              <OrganizerStripe organizerId={organizerId} organizerInfo={data}/>
+            </TabItem>
+          </Tabs>
+        </div>
+          <Footer/>
+        </div>
     </IonContent>
     </IonPage>
   );

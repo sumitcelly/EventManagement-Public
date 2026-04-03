@@ -17,6 +17,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import axios from "axios";
+import Footer from "../../components/Footer";
 
 
 const memberSchema = yup.object({
@@ -269,6 +270,7 @@ export default function CampaignAdd(){
         </IonHeader>
         <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
           <p>Loading...</p>
+          <Footer/>
         </IonContent>
       </IonPage>
     );
@@ -277,7 +279,7 @@ export default function CampaignAdd(){
   return (
     <IonPage>
       <IonHeader>
-              <AppNavbar />
+        <AppNavbar />
       </IonHeader>
       <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
       <form onSubmit={handleSubmit(onSubmit)}
@@ -441,6 +443,7 @@ export default function CampaignAdd(){
       onConfirm={() => setIsPreviewModalOpen(false)}
       initialContent={previewContent}
     />
+    <Footer/>
     </IonContent>
   </IonPage>
   );

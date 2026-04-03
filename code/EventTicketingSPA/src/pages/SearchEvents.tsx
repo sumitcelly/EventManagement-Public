@@ -93,24 +93,31 @@ export default function EventsPage() {
 
   return (
     
-        <IonPage>
-          <IonHeader><AppNavbar/></IonHeader>
-         <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-    <h4 className="text-xl font-bold m-2 flex justify-center">Events you maybe interested in</h4>
-    <div className="grid grid-cols-1 m-6 sm:grid-cols-2 md:grid-cols-5 gap-3 justify-items-center">
-        {data?.pages.map((page) =>
-           page.map((event:EventSearchResult) => <EventCard key={event.eventId} event={event} />)
-        )}
-    </div>
-     {/* <AppPagination  totalItems={totalItems} currentPage={currentPage} itemsPerPage={8} onPageChange={onPageChange}/> */}
-      <button className="mb-3  ml-4 bg-brand-dark text-white px-4 
-                        py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={() => fetchNextPage()}
-          disabled={!hasNextPage || isFetchingNextPage}>
-          {isFetchingNextPage ? "Loading..." : hasNextPage ? "Load More" : "No More Results"}
-      </button>
-  <Footer/>
-   </IonContent>
-       </IonPage>
+    <IonPage>
+      <IonHeader><AppNavbar/></IonHeader>
+      <IonContent>
+        <div className="flex flex-col min-h-full">
+          <div>
+          <h4 className="text-xl font-bold m-2 flex justify-center">Events you maybe interested in</h4>
+          <div className="grid grid-cols-1 m-6 sm:grid-cols-2 md:grid-cols-5 gap-3 justify-items-center">
+              {data?.pages.map((page) =>
+                page.map((event:EventSearchResult) => <EventCard key={event.eventId} event={event} />)
+              )}
+          </div>
+          <div className="flex mb-6">
+            <button className="mb-3  ml-4 bg-brand-dark text-white px-4 
+                        py-2 rounded hover:bg-blue-700 disabled:opacity-50 
+                        disabled:cursor-not-allowed"
+                onClick={() => fetchNextPage()}
+                disabled={!hasNextPage || isFetchingNextPage}>
+                {isFetchingNextPage ? "Loading..." : hasNextPage ? "Load More" : "No More Results"}
+            </button>
+          </div>
+        </div>
+      <Footer/>
+      </div>
+    </IonContent> 
+    
+  </IonPage>
   );
 }
