@@ -127,13 +127,13 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
         <img 
           src={eventDetails.eventBannerUrl} 
           alt={eventDetails.eventName} 
-          className="rounded-lg shadow-md w-full max-h-[400px] object-contain" 
+          className="rounded-lg shadow-md w-full max-h-[400px] object-contain bg-brand-panelbg" 
         /> 
       </div>
 
       <div className="flex flex-row justify-center  italic font-body mt-4 font-extrabold">
         <div className="text-l font-headline text-primary-color">
-          {new Date(eventDetails.eventDate).toLocaleString()} 
+          {new Date(eventDetails.eventDate + 'Z').toLocaleString()} 
         </div>
 
         <div className="font-headline text-primary-color ml-auto w-1/2 hover:bg-gray-100  cursor-pointer"
@@ -170,16 +170,33 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     {!isOrganizerLoading && (
       <div className="flex flex-row mt-4 items-center
                 border rounded-lg p-2 shadow-lg bg-brand-panelbg">
-          <img src={organizerDetails.organizerImageUrl}  alt={organizerDetails.organizationName}  
-            className="rounded-full shadow-md w-24 h-24" />
+
+          {organizerDetails?.organizerWebsite ?(
+            <a href={organizerDetails.organizerWebsite} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mb-2">
+              <img
+                src={organizerDetails.organizerImageUrl}
+                alt={organizerDetails.organizationName}
+                className="rounded-full shadow-md w-24 h-24"
+              />
+            </a>
+          ) : (
+            <img
+              src={organizerDetails?.organizerImageUrl}
+              alt={organizerDetails?.organizationName}
+              className="rounded-full shadow-md w-24 h-24"
+            />
+          )}
+          
           <div className="flex flex-col justify-center ml-4">
             <div className="text-l font-bold text-primary-color">{organizerDetails.organizationName}</div>
             <div className="text-sm font-body text-primary-color">{organizerDetails.organizerAboutMe}</div>
             <div className="flex flex-row mt-2 space-x-4">
               <a href={`mailto:${organizerDetails.organizerEmail}`} className="text-pink-500 hover:underline">Email</a>
-              <Link to={organizerDetails.organizerInstagram} target="_blank" className="text-pink-500 hover:underline">Instagram</Link>
-              <Link to={organizerDetails.organizerX} target="_blank" className="text-blue-400 hover:underline">X</Link>
-              <Link to={organizerDetails.organizerFacebook} target="_blank" className="text-blue-600 hover:underline">Facebook</Link>
+              {/* {organizerDetails.organizerPhone && <a href={`tel:${organizerDetails.organizerPhone}`} className="text-green-500 hover:underline">Phone</a>} */}
+              {organizerDetails.organizerInstagram && <a href={organizerDetails.organizerInstagram} target="_blank" className="text-pink-500 hover:underline">Instagram</a>}
+              {organizerDetails.organizerX && <a href={organizerDetails.organizerX} target="_blank" className="text-blue-400 hover:underline">X</a>}
+              {organizerDetails.organizerFacebook && <a href={organizerDetails.organizerFacebook} target="_blank" className="text-blue-600 hover:underline">Facebook</a>}
+            
             </div>
           </div>
       </div>

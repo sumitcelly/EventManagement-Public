@@ -16,7 +16,7 @@ export default function SalesOrderTicket({ eventBasic, tickets, errorTicketList,
               <div className="flex flex-row mb-2">
                 <div className="w-1/2  pl-1 flex flex-col">
                   <div className="font-bold mt-2 mb-1 text-xs text-secondary-color">
-                    {new Date(eventBasic.eventDate).toLocaleString()}            
+                    {new Date(eventBasic.eventDate+'Z').toLocaleString()}            
                   </div>
                   <div className="font-bold mb-1 text-xs text-secondary-color">
                     {eventBasic.eventLocation}           
