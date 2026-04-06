@@ -127,6 +127,7 @@ export function AppNavbar() {
                 </DropdownHeader>
                 {checkScannerAccess() && <DropdownItem href="/scannerdashboard">Scan Tickets</DropdownItem>}
                 <DropdownItem href='/myevents'>Find my tickets</DropdownItem>
+                <DropdownItem href='/organizermanager'>Organize an Event</DropdownItem>
                 <DropdownDivider />
                 <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>
             </Dropdown>

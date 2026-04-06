@@ -186,7 +186,6 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         'Authorization': `Bearer ${authToken}`,
          'Accept': 'application/json'
       }});
-      
       console.log('Response from presigned url is:',response.data);
       if (response.status !== 200)
       {
@@ -209,11 +208,17 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       else
       {
           console.log('Image uploaded successfully, now updating url in database');
-          const res  = await axiosClient.put(`/FileUpload/UpdateUrl/${orgId}`, {
+          const res  = await axios.put(`${baseApiUrl}/FileUpload/UpdateUrl/${orgId}`, {
             fileName: file.name,
             eventId: 0,
             purpose: "OrganizerAboutMeImage"
-          });
+          }
+          , 
+          { 
+            headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json'
+          }});
           if (res.status === 200)
           {
             console.log('Image URL updated successfully in database');
