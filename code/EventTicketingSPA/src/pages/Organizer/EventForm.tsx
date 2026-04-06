@@ -272,10 +272,12 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
   const uploadImage = async (organizerId:any,eventId:any)=>{
     if (file)
     {
-      const response = await axiosClient.get(`/FileUpload/presigned-url/${file.name}/` +
-                                `${eventId}/${organizerId}?` +
-                                `contentType=${file.type}&filePurpose=EventBannerImage`);    
-      
+      const response = await axiosClient.post(`/FileUpload/presigned-url/${organizerId}` ,{
+        fileName: file.name,
+        eventId: eventId,
+        purpose: "EventBannerImage",
+        contentType: file.type
+      });
       console.log('Response from presigned url is:',response.data);
       if (response.status !== 200)
       {
@@ -295,6 +297,26 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         toast.error("Error updating image");  
         return;
       }   
+      else
+      {
+          console.log('Image uploaded successfully, now updating url in database');
+          const res  = await axiosClient.put(`/FileUpload/UpdateUrl/${organizerId}`, {
+            fileName: file.name,
+            eventId: eventId,     
+            purpose: "EventBannerImage"
+          });
+          if (res.status === 200)
+          {
+            console.log('Image URL updated successfully in database');
+            toast.success("Image updated successfully");
+          }
+          else
+          {
+            console.error('Error updating image URL in database:', res?.statusText);
+            toast.error("Error updating image URL in database");
+          }
+
+      }
       console.log('response for image upload', res.data);
     }
   }

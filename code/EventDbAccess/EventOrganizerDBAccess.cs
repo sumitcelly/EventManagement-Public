@@ -296,11 +296,11 @@ namespace EventManagementDbAccess
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
             if (rowsAffected > 0)
             { 
-                EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
-                if (evtOrg!=null)
+                EventOrganizer organizer =  await GetOrganizerById(organizerId);
+                if (organizer != null)
                 {
-                    evtOrg.OrganizerImageUrl =AmazonS3ContentUploader.ConvertKeyToUrl(url);
-                    await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                    organizer.OrganizerImageUrl = AmazonS3ContentUploader.ConvertKeyToUrl(url);
+                    _cache.AddOrUpdateCache<EventOrganizer>(organizer,organizerId.ToString());
                 }
             }
             return rowsAffected > 0;

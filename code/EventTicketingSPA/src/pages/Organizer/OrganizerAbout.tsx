@@ -175,12 +175,18 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       console.log('access token and customer uid',token, customerId);
       const authToken = token ?? getAccessToken();
       const orgId = customerId ?? organizerId;
-      const response = await axios.get(`${baseApiUrl}/FileUpload/presigned-url/${file.name}/0/${orgId}?contentType=${file.type}&filePurpose=OrganizerAboutMeImage`, 
+      const response = await axios.post(`${baseApiUrl}/FileUpload/presigned-url/${orgId}`,{
+        fileName: file.name,
+        eventId: 0,
+        purpose: "OrganizerAboutMeImage",
+        contentType: file.type
+      }, 
       { 
         headers: {
         'Authorization': `Bearer ${authToken}`,
          'Accept': 'application/json'
       }});
+      
       console.log('Response from presigned url is:',response.data);
       if (response.status !== 200)
       {
@@ -199,7 +205,27 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         console.log('Error uploading image to presigned url', res.data);
         toast.error("Error updating image");  
         return;
-      }   
+      }
+      else
+      {
+          console.log('Image uploaded successfully, now updating url in database');
+          const res  = await axiosClient.put(`/FileUpload/UpdateUrl/${orgId}`, {
+            fileName: file.name,
+            eventId: 0,
+            purpose: "OrganizerAboutMeImage"
+          });
+          if (res.status === 200)
+          {
+            console.log('Image URL updated successfully in database');
+            toast.success("Image updated successfully");
+          }
+          else
+          {
+            console.error('Error updating image URL in database:', res?.statusText);
+            toast.error("Error updating image URL in database");
+          }
+
+      }
       console.log('response for image upload', res.data);
     }
   }
