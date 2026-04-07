@@ -1,0 +1,28 @@
+Emails and around:
+
+1. Create a second queue that contains the status of the emails sent. So message id and status.
+Its probably more complex since the lammbda is processing campaigns and transactional emails.
+So the queue needs to specify 
+{
+ message type: "transactional/campaign",
+ recipient_id: key to email recipients table"
+ OrderId:
+ Error:
+ SESMessageId:
+ Email:
+}
+
+2. Another worker picks up these messages and either updates the recipients table for
+	campaigns or a new table for transactional messages. Better combine the two.
+
+3. Create email campaign record when event goes live for 7 day and 2 day reminder.
+
+4. Create record in emailreceipients table for transactional emails.
+
+5. Check email templates and add appropriate footer links.
+
+6. Configure SES for appropriate domain.
+
+7. Buy domain.
+
+8. Finalize name.

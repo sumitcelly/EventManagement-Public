@@ -17,6 +17,11 @@ namespace EventManagementDbAccess
     {
         public EmailRecipientsDbAccess(IConfiguration configuration, ILogger<EmailRecipientsDbAccess> logger, IDistributedCache cache) : base(configuration, logger, cache) { }
 
+        /// <summary>
+        /// Not  used currently. We do not insert the email recipients until we have an email campaign ready to be sent. At that point we insert all the recipients for the campaign in bulk using InsertRecipientsForEvent which gets the email addresses for all attendees of the event linked to the email campaign.
+        /// </summary>
+        /// <param name="recipient"></param>
+        /// <returns></returns>
         public async Task<int> CreateEmailRecipient(EmailRecipient recipient)
         {
             using var conn = new MySqlConnection(this.ConnectionString);
@@ -34,6 +39,42 @@ namespace EventManagementDbAccess
             return Convert.ToInt32(result);
         }
 
+        public async Task<bool> BulkUpdateCampaignStatus(List<EmailStatusUpdate> statusUpdates)
+        {
+            /*
+                UPDATE emailrecipients AS er 
+                JOIN (
+                    SELECT @id0 AS Id, @status0 AS Status, @errorMessage0 AS ErrorMessage, @senderMessageId0 AS SenderMessageId
+                    UNION ALL 
+                    SELECT @id1 AS Id, @status1 AS Status, @errorMessage1 AS ErrorMessage, @senderMessageId1 AS SenderMessageId
+                ) AS updates ON er.id = updates.Id 
+                SET er.status = updates.Status, 
+                    er.ErrorMessage = updates.ErrorMessage, 
+                    er.SenderMessageId = updates.SenderMessageId;
+            */
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = new System.Text.StringBuilder();
+            query.Append("UPDATE emailrecipients AS er JOIN (");
+            for (int i = 0; i < statusUpdates.Count; i++)
+            {
+                if (i > 0) query.Append(" UNION ALL ");
+                query.Append($"SELECT @id{i} AS Id, @status{i} AS Status, @errorMessage{i} AS ErrorMessage, @senderMessageId{i} AS SenderMessageId");
+            }
+            query.Append(") AS updates ON er.id = updates.Id SET er.status = updates.Status, er.ErrorMessage = updates.ErrorMessage, er.SenderMessageId = updates.SenderMessageId");
+
+            using var cmd = new MySqlCommand(query.ToString(), conn);
+            for (int i = 0; i < statusUpdates.Count; i++)
+            {
+                cmd.Parameters.AddWithValue($"@id{i}", statusUpdates[i].Id);
+                cmd.Parameters.AddWithValue($"@status{i}", statusUpdates[i].Status);
+                cmd.Parameters.AddWithValue($"@errorMessage{i}", statusUpdates[i].ErrorMessage);
+                cmd.Parameters.AddWithValue($"@senderMessageId{i}", statusUpdates[i].SenderMessageId);
+            }
+
+            var rowsAffected = await cmd.ExecuteNonQueryAsync();
+            return rowsAffected > 0;
+        }
         public async Task<List<EmailRecipient>> GetEmailRecipientsByCampaignId(int id)
         {
             if (id <= 0)
@@ -41,7 +82,7 @@ namespace EventManagementDbAccess
 
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id";
+            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id and status != 'Queued' and retrycount < 3";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = await cmd.ExecuteReaderAsync();

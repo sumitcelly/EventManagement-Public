@@ -165,7 +165,14 @@ namespace EmailSchedulerWorker.Services
                         {                    
                             OrderEmailDetails? orderEmailDetails =  emailSalesOrder?.Where(eso=>eso.SalesOrderId==recipient.SalesOrderId).FirstOrDefault();
                             string content = GetEmailContentToSend(emailTemplate, eventHeader, eventOrganizer,orderEmailDetails);
-                                                                   
+                            /*
+                            Batching: Use SQS Action Batching to send up to 10 messages in a single API call from your worker to reduce costs and increase throughput.
+                                Visibility Timeout: Ensure your SQS Visibility Timeout is set longer than the time it takes to actually send the email to avoid duplicate sends.
+                                Idempotency: Make your sending logic idempotent so that if a message is accidentally processed twice, the user doesn't receive the same campaign email twice. 
+                                Amazon Web Services
+                                Amazon Web Services
+                            +3*/       
+                                       
                             await _sqsClient.QueueEmailMessage(
                                 "support@polkadotsandcurry.com",//from config
                                 recipient.RecipientEmail,//"info@polkadotsandcurry.com",//attendee.Email,
@@ -189,6 +196,7 @@ namespace EmailSchedulerWorker.Services
                             recipient.RetryCount = (recipient.RetryCount ?? 0) + 1;
                             recipient.LastAttemptedAt = DateTime.UtcNow;
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);
+                            //await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "Incomplete");
                         }
                     }
 

@@ -31,4 +31,40 @@ namespace EventManagementDbAccess
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
     }
+
+    public class EmailStatusUpdate
+    {
+        public int Id { get; set;}
+        public int  CampaignId { get; set; }
+
+        public required string RecipientEmail { get; set; } 
+
+        public required string Status { get; set; }
+
+        public string ErrorMessage { get; set; } = string.Empty;
+
+        public string SenderMessageId { get; set; } = string.Empty;
+    }
+
+    public class EmailTransactionLog
+    {
+        public int Id { get; set; }
+        public required string RecipientEmail { get; set; }
+        public string EmailType { get; set; } = "OrderConfirmation";
+        public required int SalesOrderId { get; set; }
+        public string SenderMessageId { get; set; } = string.Empty;
+        public string Status { get; set; } = "Queued";
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? SentAt { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
+    }
+
+    public class EmailTransactionStatusUpdate
+    {
+        public int Id { get; set; }
+        public required string Status { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
+        public string SenderMessageId { get; set; } = string.Empty;
+        public DateTime? SentAt { get; set; }
+    }
 }
