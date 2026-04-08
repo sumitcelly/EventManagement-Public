@@ -32,19 +32,19 @@ namespace EventManagementDbAccess
         public DateTime ModifiedAt { get; set; }
     }
 
-    public class EmailStatusUpdate
-    {
-        public int Id { get; set;}
-        public int  CampaignId { get; set; }
+    // public class EmailStatusUpdate
+    // {
+    //     public int Id { get; set;}
+    //     public int  CampaignId { get; set; }
 
-        public required string RecipientEmail { get; set; } 
+    //     public required string RecipientEmail { get; set; } 
 
-        public required string Status { get; set; }
+    //     public required string Status { get; set; }
 
-        public string ErrorMessage { get; set; } = string.Empty;
+    //     public string ErrorMessage { get; set; } = string.Empty;
 
-        public string SenderMessageId { get; set; } = string.Empty;
-    }
+    //     public string SenderMessageId { get; set; } = string.Empty;
+    // }
 
     public class EmailTransactionLog
     {
@@ -59,12 +59,4 @@ namespace EventManagementDbAccess
         public string ErrorMessage { get; set; } = string.Empty;
     }
 
-    public class EmailTransactionStatusUpdate
-    {
-        public int Id { get; set; }
-        public required string Status { get; set; }
-        public string ErrorMessage { get; set; } = string.Empty;
-        public string SenderMessageId { get; set; } = string.Empty;
-        public DateTime? SentAt { get; set; }
-    }
 }

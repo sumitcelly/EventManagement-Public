@@ -28,7 +28,8 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton<SQSHelper>();
         services.AddDistributedMemoryCache();
         //services.AddHostedService<EmailSchedulerService>();
-        services.AddHostedService<OrderCleanupService>();
+        //services.AddHostedService<OrderCleanupService>();
+        services.AddHostedService<EmailStatusUpdateService>();
        
     })
     .ConfigureLogging(logging =>

@@ -81,7 +81,7 @@ namespace EmailSchedulerWorker.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error cleaning up ordes");
+                _logger.LogError(ex, "Error cleaning up orders");
             }
         }
     }

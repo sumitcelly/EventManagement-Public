@@ -99,7 +99,7 @@ namespace EventManagementDbAccess
         /// </summary>
         /// <param name="statusUpdates">List of transaction log status updates</param>
         /// <returns>True if any rows were affected</returns>
-        public async Task<bool> BulkUpdateTransactionLogs(List<EmailTransactionStatusUpdate> statusUpdates)
+        public async Task<bool> BulkUpdateTransactionLogs(List<EmailStatusUpdate> statusUpdates)
         {
             if (statusUpdates == null || statusUpdates.Count == 0)
                 return false;

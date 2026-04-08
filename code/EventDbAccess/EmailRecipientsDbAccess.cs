@@ -70,6 +70,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue($"@status{i}", statusUpdates[i].Status);
                 cmd.Parameters.AddWithValue($"@errorMessage{i}", statusUpdates[i].ErrorMessage);
                 cmd.Parameters.AddWithValue($"@senderMessageId{i}", statusUpdates[i].SenderMessageId);
+                cmd.Parameters.AddWithValue($"@sentAt{i}", statusUpdates[i].SentAt ?? (object)DBNull.Value);
             }
 
             var rowsAffected = await cmd.ExecuteNonQueryAsync();
