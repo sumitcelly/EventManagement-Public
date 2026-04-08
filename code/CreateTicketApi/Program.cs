@@ -105,6 +105,7 @@ builder.Services.AddScoped(typeof(EventOrganizerMembersDbAccess));
 builder.Services.AddScoped(typeof(EmailCampaignDbAccess));
 builder.Services.AddScoped(typeof(EmailRecipientsDbAccess));
 builder.Services.AddScoped(typeof(LoginCodesDbAccess));
+builder.Services.AddScoped(typeof(EmailTransactionLogDbAccess));
 
 // Registering as Scoped allows the injection of a Scoped DbContext
 builder.Services.AddScoped<IAuthorizationHandler, GenericOwnerHandler>();

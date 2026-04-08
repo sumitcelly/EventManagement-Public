@@ -23,9 +23,11 @@ public class EmailUtils
     
     private readonly UserDbAccess _userDbAccess;
     private readonly SQSHelper _sqsClient;
+    private readonly EmailTransactionLogDbAccess _emailTransactionLogDbAccess;
     public EmailUtils(ILogger<EmailUtils> logger, EventOrganizerDBAccess eventOrganizerDBAccess,
                         EventDbAccess eventDbAccess, UserDbAccess userDbAccess, NotificationTemplateAccess notificationTemplateAccess
-                        , SQSHelper sqsClient)
+                        , SQSHelper sqsClient,
+                        EmailTransactionLogDbAccess emailTransactionLogDbAccess)
     {
         if (eventOrganizerDBAccess == null)
         {
@@ -42,6 +44,7 @@ public class EmailUtils
         _eventOrganizerDBAccess = eventOrganizerDBAccess;
         _eventDbAccess = eventDbAccess;
         _templateAccess = notificationTemplateAccess;
+        _emailTransactionLogDbAccess = emailTransactionLogDbAccess ?? throw new ArgumentNullException(nameof(emailTransactionLogDbAccess));
         _userDbAccess = userDbAccess ?? throw new ArgumentNullException(nameof(userDbAccess));
         if (sqsClient == null)
         {
@@ -103,7 +106,14 @@ public class EmailUtils
             "info@polkadotsandcurry.com",//attendee.Email,
             emailContent.Item2,
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
-            attendee?.Name);
+            attendee?.Name ?? string.Empty,
+            await _emailTransactionLogDbAccess.InsertEmailTransactionLog(new EmailTransactionLog()
+            {
+                RecipientEmail = attendee?.Email ?? string.Empty ,
+                RefId =  order.OrderId,
+                EmailType = "OrderConfirmation",           
+            })
+            );
 
         return true;
     }

@@ -23,7 +23,7 @@ public class SQSHelper
         
     }
     
-    public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name)
+    public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name, int refID, string messageType="Transactional")
     {
         Email tempObj = new Email()
         {
@@ -31,9 +31,10 @@ public class SQSHelper
             To = to,
             Subject = subject,
             Body = content,
-            Name = name
+            Name = name,
+            RefID = refID,
+            MessageType = messageType
         };
-
 
         SendMessageResponse response = await _amazonSQSClient.SendMessageAsync(new SendMessageRequest() { QueueUrl = _emailQueueUrl, MessageBody = JsonSerializer.Serialize(tempObj) });
         Console.WriteLine($"Response from queueing message is:{response.HttpStatusCode}");
@@ -64,21 +65,10 @@ public class SQSHelper
         }
         return updates;
     }
-    public async Task<bool> QueueMessage(string to, string name, string content, string subject)
+    public async Task<bool> QueueMessage(string to, string name, string content, string subject, int refId)
     {
-        var messageAttributes = new Email()
-        {
-            From = _fromEmail,
-            To = to,
-            Subject = subject,
-            Body = content,
-            Name = name
-        };
-       
-        SendMessageResponse response = await _amazonSQSClient.SendMessageAsync(new SendMessageRequest() 
-            { QueueUrl = _emailQueueUrl, MessageBody = JsonSerializer.Serialize(messageAttributes) });
-        Console.WriteLine($"Response from queueing message is:{response.HttpStatusCode}");
-        return response.HttpStatusCode == System.Net.HttpStatusCode.OK;
+
+        return await QueueEmailMessage(_fromEmail, to, subject, content, name, refId);
       
     }
 
@@ -130,4 +120,8 @@ public class Email
     public required string Body { get; set; }
     
     public required string Name { get; set; }
+
+    public int RefID { get; set; } //can be used to store pk of emailrecipients or emailtransactionlog depending on message type
+
+    public string MessageType { get; set; } = "Transactional"; //Transactional or Campaign
 }

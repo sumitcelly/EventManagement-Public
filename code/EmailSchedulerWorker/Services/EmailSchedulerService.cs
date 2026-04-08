@@ -178,7 +178,9 @@ namespace EmailSchedulerWorker.Services
                                 recipient.RecipientEmail,//"info@polkadotsandcurry.com",//attendee.Email,
                                 emailSubject,
                                 Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content)),
-                                orderEmailDetails?.FullName ?? string.Empty);
+                                orderEmailDetails?.FullName ?? string.Empty,
+                                recipient.Id,
+                                "Campaign");
                            
                             // Update recipient status to 'Queued'
                             recipient.Status = "Queued";

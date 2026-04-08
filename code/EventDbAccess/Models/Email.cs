@@ -48,10 +48,10 @@ namespace EventManagementDbAccess
 
     public class EmailTransactionLog
     {
-        public int Id { get; set; }
+        public int Id { get; set; }// the pk of the emailtransactionlog table, used for updating status of transactional emails
         public required string RecipientEmail { get; set; }
-        public string EmailType { get; set; } = "OrderConfirmation";
-        public required int SalesOrderId { get; set; }
+        public string EmailType { get; set; } = "OrderConfirmation";// EmailVerification, PasswordReset, etc.
+        public required int RefId { get; set; } // can be salesorderdid or userid depending on email type
         public string SenderMessageId { get; set; } = string.Empty;
         public string Status { get; set; } = "Queued";
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

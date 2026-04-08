@@ -24,14 +24,14 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"INSERT INTO emailtransactionlog (recipientemail, emailtype, salesorderid, sendermessageid, status, createdat, sentat, errormessage) 
-                         VALUES (@recipientemail, @emailtype, @salesorderid, @sendermessageid, @status, @createdat, @sentat, @errormessage); 
+            var query = @"INSERT INTO emailtransactionlog (recipientemail, emailtype, refid, sendermessageid, status, createdat, sentat, errormessage) 
+                         VALUES (@recipientemail, @emailtype, @refid, @sendermessageid, @status, @createdat, @sentat, @errormessage); 
                          SELECT LAST_INSERT_ID();";
             
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@recipientemail", transactionLog.RecipientEmail);
             cmd.Parameters.AddWithValue("@emailtype", transactionLog.EmailType);
-            cmd.Parameters.AddWithValue("@salesorderid", transactionLog.SalesOrderId);
+            cmd.Parameters.AddWithValue("@refid", transactionLog.RefId);
             cmd.Parameters.AddWithValue("@sendermessageid", transactionLog.SenderMessageId);
             cmd.Parameters.AddWithValue("@status", transactionLog.Status);
             cmd.Parameters.AddWithValue("@createdat", transactionLog.CreatedAt);
@@ -139,7 +139,7 @@ namespace EventManagementDbAccess
                 Id = reader.GetInt32(reader.GetOrdinal("id")),
                 RecipientEmail = reader.GetString(reader.GetOrdinal("recipientemail")),
                 EmailType = reader.GetString(reader.GetOrdinal("emailtype")),
-                SalesOrderId = reader.GetInt32(reader.GetOrdinal("salesorderid")),
+                RefId = reader.GetInt32(reader.GetOrdinal("refid")),
                 SenderMessageId = reader.GetString(reader.GetOrdinal("sendermessageid")),
                 Status = reader.GetString(reader.GetOrdinal("status")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("createdat")),

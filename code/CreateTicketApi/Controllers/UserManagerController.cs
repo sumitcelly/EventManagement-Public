@@ -30,11 +30,14 @@ namespace CreateTicketApi.Controllers
         private readonly SQSHelper _sqsHelper ;
 
         private readonly NotificationTemplateAccess _templateDbAccess;
+
+        private readonly EmailTransactionLogDbAccess _emailTransactionLogAccess;
         public UserController(ILogger<UserController> logger, UserDbAccess userDbAccess,
                 EventOrganizerMembersDbAccess eventOrganizerMembersDbAccess, JwtUtils tokenUtils,
                 LoginCodesDbAccess loginCodesDbAccess,
                 SQSHelper sqsHelper,
-                NotificationTemplateAccess templateDbAccess)
+                NotificationTemplateAccess templateDbAccess,
+                EmailTransactionLogDbAccess emailTransactionLogAccess)
         {
             _logger = logger;
             _userDbAccess = userDbAccess;
@@ -43,6 +46,7 @@ namespace CreateTicketApi.Controllers
             _loginCodesDbAccess = loginCodesDbAccess;
             _sqsHelper = sqsHelper;
             _templateDbAccess = templateDbAccess;
+            _emailTransactionLogAccess = emailTransactionLogAccess;
         }
 
         /// <summary>
@@ -326,11 +330,23 @@ namespace CreateTicketApi.Controllers
                 {"Attendee", user?.Name ?? "User" }
             };
 
+            int id = await _emailTransactionLogAccess.InsertEmailTransactionLog(new EmailTransactionLog
+            {
+                RecipientEmail = email,
+                EmailType = "EmailVerification",
+                Status = "Created",
+                CreatedAt = DateTime.UtcNow,
+                RefId = user?.UserId ?? 0,
+            });
+
             string content = tokenReplacer.ReplaceTokens(templateData.Item1, values);
+          
             await _sqsHelper.QueueMessage(email,
                 user?.Name ?? "User",
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
-                templateData.Item2);
+                templateData.Item2,
+                id
+                );
 
             return Ok(new {signupExists});
         }
