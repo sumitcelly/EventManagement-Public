@@ -17,6 +17,7 @@ namespace ScratchLambda;
 public class Function
 {
 
+    private static SQSHelper _sqsHelper;
     /// <summary>
     /// A simple function that takes a string and does a ToUpper
     /// </summary>
@@ -28,6 +29,7 @@ public class Function
     {
         List<SQSBatchResponse.BatchItemFailure> batchItemFailures = new List<SQSBatchResponse.BatchItemFailure>();
         NotificationSender.Init(context.Logger);
+        _sqsHelper = new SQSHelper(context.Logger);
 
         foreach (var message in evnt.Records)
         {
@@ -49,6 +51,9 @@ public class Function
     private async Task<bool> ProcessMessageAsync(SQSEvent.SQSMessage message, ILambdaContext context)
     {
         bool processingComplete = false;
+        string exceptionMsg= string.Empty;
+        NotificationResponse? sendResult = null;
+        NotficationMessage? msgBody = null;
         try
         {
             if (string.IsNullOrWhiteSpace(message.Body))
@@ -58,7 +63,7 @@ public class Function
                 return true;
             }
 
-            NotficationMessage msgBody = JsonSerializer.Deserialize<NotficationMessage>(message.Body);
+            msgBody= JsonSerializer.Deserialize<NotficationMessage>(message.Body);
             if (msgBody == null || string.IsNullOrEmpty(msgBody.To) || string.IsNullOrEmpty(msgBody.Subject) ||
                 string.IsNullOrEmpty(msgBody.Body) || string.IsNullOrEmpty(msgBody.From))
             {
@@ -67,7 +72,7 @@ public class Function
                 return true;
             }
 
-            NotificationResponse sendResult = await NotificationSender.SendEmail(msgBody.To, msgBody.Subject,
+            sendResult = await NotificationSender.SendEmail(msgBody.To, msgBody.Subject,
                                                     System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(msgBody.Body)),
                                                      msgBody.From);
 
@@ -88,6 +93,7 @@ public class Function
         {
             context.Logger.LogError($"Argument null excpetion thrown: {exc.Message})");
             processingComplete = true;
+            exceptionMsg = exc.Message;
         }
         catch (Exception e)
         {
@@ -95,6 +101,24 @@ public class Function
             context.Logger.LogError($"An error occurred {e.Message}");
             //may have to reverse this based on the error
             processingComplete  = true;
+            exceptionMsg = e.Message;
+        }
+        finally
+        {
+            EmailStatusUpdate emailStatus = new EmailStatusUpdate()
+            {
+                Id =  msgBody?.RefID ?? 0,
+                MessageType = msgBody?.MessageType ?? string.Empty,
+                RecipientEmail = msgBody?.To ?? string.Empty,
+                Status =  !string.IsNullOrWhiteSpace(sendResult?.MessageId) ?"Sent":"Failed",
+                ErrorMessage = !string.IsNullOrWhiteSpace(sendResult?.ErrorMessage)?
+                     string.Format("Error code{0} and message {1}",sendResult.ErrorCode, sendResult.ErrorMessage):
+                     exceptionMsg,
+                SenderMessageId = !string.IsNullOrWhiteSpace(sendResult?.MessageId) ? sendResult.MessageId : string.Empty,
+                SentAt = DateTime.UtcNow
+            };
+            bool result = await _sqsHelper.QueueEmailStatusMessage(emailStatus);
+            context.Logger.LogInformation($"Email status message queued with result {result} for email {emailStatus.RecipientEmail} with status {emailStatus.Status}");
         }
 
         return processingComplete;

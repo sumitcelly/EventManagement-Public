@@ -91,7 +91,7 @@ public class EmailStatusUpdate
 {
 
 
-    public required string ReceiptHandle { get; set; }
+    public string ReceiptHandle { get; set; }=string.Empty; // This is needed to delete the message from SQS after processing
     public int Id { get; set;} //can be id of emailrecipients table or email tran log table depending on message type
 
     public required string MessageType { get; set; } //campaign or transactional

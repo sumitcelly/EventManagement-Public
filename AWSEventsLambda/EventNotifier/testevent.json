@@ -3,7 +3,7 @@
         {
             "messageId": "059f36b4-87a3-44ab-83d2-661975830a7d",
             "receiptHandle": "AQEBwJnKyrHigUMZj6rYigCgxlaS3SLy0a...",
-            "body": "{\"Name\":\"Test Guy\",\"To\":\"info@polkadotsandcurry.com\",\"Subject\":\"Hello\",\"From\":\"support@polkadotsandcurry.com\", \"Body\":\"PGh0bWw+PGJvZHk+PGgyPkhlbGxvIGZyb20gQW1hem9uIFNFUzwvaDI+PHVsPjxsaT5JJ20gYSBsaXN0IGl0ZW08L2xpPjxsaT5TbyBhbSBJITwvbGk+PC9ib2R5PjwvaHRtbD4=\"}",
+            "body": "{\"Name\":\"Test User\",\"To\":\"info@polkadotsandcurry.com\",\"Subject\":\"Test Email\",\"From\":\"monika@polkadotsandcurry.com\",\"Body\":\"PGh0bWw+PGJvZHk+PGgyPkhlbGxvIGZyb20gQW1hem9uIFNFUzwvaDI+PHVsPjxsaT5JJ20gYSBsaXN0IGl0ZW08L2xpPjxsaT5TbyBhbSBJITwvbGk+PC9ib2R5PjwvaHRtbD4=\",\"MessageType\":\"Transactional\",\"RefID\":123}",
             "attributes": {
                 "ApproximateReceiveCount": "1",
                 "SentTimestamp": "1545082649183",
@@ -13,7 +13,7 @@
             "messageAttributes": {},
             "md5OfBody": "098f6bcd4621d373cade4e832627b4f6",
             "eventSource": "aws:sqs",
-            "eventSourceARN": "arn:aws:sqs:us-west-:111122223333:my-queue",
+            "eventSourceARN": "arn:aws:sqs:us-west-2:975050117852:YourQueueName",
             "awsRegion": "us-west-2"
         }
     ]

@@ -8,14 +8,11 @@ namespace ScratchLambda;
 
 public class NotificationSender
 {
-    private static  AmazonSimpleEmailServiceClient _emailClient = null;
-    private static ILambdaLogger _logger = null;
+    private static  AmazonSimpleEmailServiceClient _emailClient;
+    private static ILambdaLogger _logger;
     public static void Init(ILambdaLogger logger)
     {
-        // _emailClient = new AmazonSimpleEmailServiceClient(new
-        //                     AmazonSimpleEmailServiceConfig()
-        // { Profile = new Amazon.Profile("profile") });
-        _emailClient = new AmazonSimpleEmailServiceClient("REDACTED_AWS_KEY", "REDACTED_AWS_KEY");
+        _emailClient = new AmazonSimpleEmailServiceClient(Amazon.RegionEndpoint.USWest2);
         _logger = logger;
     }
 
@@ -66,6 +63,7 @@ public class NotificationSender
 
             var sendResponse = await _emailClient.SendEmailAsync(sendRequest);
             response.MessageId = sendResponse.MessageId;
+            response.ErrorCode = sendResponse.HttpStatusCode.ToString();
         }
         catch (MessageRejectedException exc)
         {
@@ -94,7 +92,7 @@ public class NotificationSender
                 _logger.Log($"Amazon service failure: {ex.Message}");
             }
             response.ErrorMessage = ex.Message;
-            response.ErrorCode = ex.ErrorCode;
+            response.ErrorCode = ex.ErrorCode ?? "AmazonServiceException";
         }
         catch (Exception ex)
         {
