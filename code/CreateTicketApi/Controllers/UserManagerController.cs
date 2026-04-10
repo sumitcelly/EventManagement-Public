@@ -339,7 +339,8 @@ namespace CreateTicketApi.Controllers
                 RefId = user?.UserId ?? 0,
             });
 
-            string content = tokenReplacer.ReplaceTokens(templateData.Item1, values);
+            string content = tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(templateData.Item1)), values);
           
             await _sqsHelper.QueueMessage(email,
                 user?.Name ?? "User",

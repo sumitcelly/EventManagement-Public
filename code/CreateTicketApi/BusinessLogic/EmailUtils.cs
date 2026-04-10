@@ -103,7 +103,7 @@ public class EmailUtils
 
         await _sqsClient.QueueEmailMessage(
             "support@polkadotsandcurry.com",//from config
-            "info@polkadotsandcurry.com",//attendee.Email,
+            attendee.Email,
             emailContent.Item2,
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
             attendee?.Name ?? string.Empty,

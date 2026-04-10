@@ -25,6 +25,7 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<EventItemTypeDbAccess>();
         services.AddScoped<TicketAccess>();
         services.AddScoped<SalesOrderDbAccess>();
+        services.AddScoped<EmailTransactionLogDbAccess>();
         services.AddSingleton<SQSHelper>();
         services.AddDistributedMemoryCache();
         //services.AddHostedService<EmailSchedulerService>();

@@ -59,9 +59,10 @@ namespace EventManagementDbAccess
             for (int i = 0; i < statusUpdates.Count; i++)
             {
                 if (i > 0) query.Append(" UNION ALL ");
-                query.Append($"SELECT @id{i} AS Id, @status{i} AS Status, @errorMessage{i} AS ErrorMessage, @senderMessageId{i} AS SenderMessageId");
+                query.Append($"SELECT @id{i} AS Id, @status{i} AS Status, @errorMessage{i} AS ErrorMessage, @senderMessageId{i} AS SenderMessageId, @sentAt{i} AS SentAt");
             }
-            query.Append(") AS updates ON er.id = updates.Id SET er.status = updates.Status, er.ErrorMessage = updates.ErrorMessage, er.SenderMessageId = updates.SenderMessageId");
+            query.Append(@") AS updates ON er.id = updates.Id SET er.status = updates.Status,
+             er.ErrorMessage = updates.ErrorMessage, er.SenderMessageId = updates.SenderMessageId, er.SentAt = updates.SentAt");
 
             using var cmd = new MySqlCommand(query.ToString(), conn);
             for (int i = 0; i < statusUpdates.Count; i++)
@@ -83,7 +84,7 @@ namespace EventManagementDbAccess
 
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id and status != 'Queued' and retrycount < 3";
+            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id and status != 'Queued' and (retrycount is null or retrycount < 3)";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = await cmd.ExecuteReaderAsync();
@@ -136,7 +137,8 @@ namespace EventManagementDbAccess
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             var query = @"UPDATE emailrecipients SET emailcampaignid = @emailcampaignid, recipientemail = @recipientemail, status = @status, 
-                        LastAttemptedAt = @LastAttemptedAt, RetryCount = @RetryCount, SalesOrderId = @SalesOrderId 
+                        LastAttemptedAt = @LastAttemptedAt, RetryCount = @RetryCount, SalesOrderId = @SalesOrderId ,
+                        ErrorMessage = @ErrorMessage
                         WHERE id = @id";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", recipient.Id);
@@ -145,6 +147,7 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@status", recipient.Status);
             cmd.Parameters.AddWithValue("@LastAttemptedAt", recipient.LastAttemptedAt);
             cmd.Parameters.AddWithValue("@RetryCount", recipient.RetryCount);
+            cmd.Parameters.AddWithValue("@ErrorMessage",recipient.ErrorMessage);
             cmd.Parameters.AddWithValue("@SalesOrderId", recipient.SalesOrderId);
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;

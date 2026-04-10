@@ -41,7 +41,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailcampaign WHERE Status = 'Pending' and  SendAt <= Utc_timestamp()";
+            var query = "SELECT * FROM emailcampaign WHERE Status = 'Pending'  and  SendAt <= Utc_timestamp()";
             using var cmd = new MySqlCommand(query, conn);
             using var reader = await cmd.ExecuteReaderAsync();
             var campaigns = new List<EmailCampaign>();

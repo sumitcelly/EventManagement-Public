@@ -84,18 +84,25 @@ namespace EmailSchedulerWorker.Services
                         if (await recipientsDbAccess.BulkUpdateCampaignStatus(campaignUpdates))
                         {
                             _logger.LogInformation($"Successfully updated campaign email statuses for {campaignUpdates.Count} updates.");
-                            _sqsHelper.DeleteMessagesFromEmailStatus(campaignUpdates.Select(x=>x.ReceiptHandle).ToList());
-                        }
+                            bool resp =await _sqsHelper.DeleteMessagesFromEmailStatus(campaignUpdates.Select(x=>x.ReceiptHandle).ToList());
+                            _logger.LogInformation($"Deleted {campaignUpdates.Count} messages from SQS after processing campaign email status updates. SQS delete response: {resp}");
+
+                        }     
                     }
-                    List<EmailStatusUpdate> transactions= updates.Where(x=>x.MessageType=="EmailTransactions").ToList();
+                    List<EmailStatusUpdate> transactions= updates.Where(x=>x.MessageType=="Transactional").ToList();
                     _logger.LogInformation($"Processing {transactions.Count} trasactions email status updates.");
                     if(transactions.Count > 0)
                     {
                         EmailTransactionLogDbAccess transactionLogDbAccess = scope.ServiceProvider.GetRequiredService<EmailTransactionLogDbAccess>();
                         if (await transactionLogDbAccess.BulkUpdateTransactionLogs(transactions))
                         {
-                            _logger.LogInformation($"Successfully updated email transaction log statuses for {campaignUpdates.Count} updates.");
-                            _sqsHelper.DeleteMessagesFromEmailStatus(campaignUpdates.Select(x=>x.ReceiptHandle).ToList());
+                            _logger.LogInformation($"Successfully updated email transaction log statuses for {transactions.Count} updates.");
+                            bool resp =await _sqsHelper.DeleteMessagesFromEmailStatus(transactions.Select(x=>x.ReceiptHandle).ToList());
+                            _logger.LogInformation($"Deleted {transactions.Count} messages from SQS after processing transactional email status updates. SQS delete response: {resp}");
+                        }
+                        else
+                        {
+                            _logger.LogInformation("Unable to process bulk update transaction");
                         }
                     }
                 }

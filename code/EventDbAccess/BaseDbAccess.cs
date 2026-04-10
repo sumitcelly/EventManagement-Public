@@ -19,7 +19,7 @@ using Microsoft.Extensions.Logging;
             {
                 throw new ArgumentNullException(nameof(config), "Configuration cannot be null.");
             }
-            _logger.LogInformation("BaseDbAccess initialized.");
+            
             if (config == null || string.IsNullOrWhiteSpace(config.GetConnectionString("Default")))
             {
                 throw new ArgumentNullException(nameof(config), "Configuration or connection string cannot be null or empty.");

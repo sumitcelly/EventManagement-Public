@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Logging;
+using System.Net;
 public class SQSHelper
 {
     private  readonly AmazonSQSClient _amazonSQSClient;
@@ -18,7 +19,8 @@ public class SQSHelper
     private static Microsoft.Extensions.Logging.ILogger? _logger { get; set; }
     public SQSHelper(IConfiguration configuration, ILogger<SQSHelper> logger)
     {
-        _logger = logger;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
         _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"],Amazon.RegionEndpoint.USWest2);     
         
     }
@@ -44,12 +46,23 @@ public class SQSHelper
     public async Task<List<EmailStatusUpdate>> GetEmailStatusUpdates()
     {
         var response = await _amazonSQSClient.ReceiveMessageAsync(new ReceiveMessageRequest() { QueueUrl = _emailStatusQueueUrl, MaxNumberOfMessages = 10 });
+        _logger?.LogInformation($"Polled email status queue. HTTP Status: {response.HttpStatusCode}, Messages Received: {response.Messages?.Count ?? 0}");
+        if (response !=null && response.HttpStatusCode == System.Net.HttpStatusCode.OK && response.Messages != null && response.Messages.Count > 0)
+        {
+            _logger?.LogInformation($"Received {response?.Messages?.Count} messages from email status queue.");
+        }
+         else
+        {
+            _logger?.LogInformation($"No messages received from email status queue.");
+            return new List<EmailStatusUpdate>();
+        }
         var updates = new List<EmailStatusUpdate>();
         foreach(var message in response.Messages)
         {
             try
             {
                 var update = JsonSerializer.Deserialize<EmailStatusUpdate>(message.Body);
+                _logger.LogInformation("received email status update: " + message.Body);
                 if (update != null)
                 {
                     update.ReceiptHandle = message.ReceiptHandle;
@@ -72,7 +85,7 @@ public class SQSHelper
       
     }
 
-    public void DeleteMessagesFromEmailStatus(List<string> list)
+    public async Task<bool> DeleteMessagesFromEmailStatus(List<string> list)
     {
         DeleteMessageBatchRequest deleteRequest = new DeleteMessageBatchRequest
         {
@@ -83,7 +96,8 @@ public class SQSHelper
                 ReceiptHandle = receiptHandle
             }).ToList()
         };
-       _amazonSQSClient.DeleteMessageBatchAsync(deleteRequest);
+       DeleteMessageBatchResponse resp=  await _amazonSQSClient.DeleteMessageBatchAsync(deleteRequest);
+       return resp.HttpStatusCode == HttpStatusCode.OK;
     }
 }
 

@@ -86,7 +86,7 @@ namespace EventManagementDbAccess
                 using (MySqlConnection connection = new(this.ConnectionString))
                 {
                     string sql = @$"Select TemplateContent,Subject from eventmanagement.notificationtemplates where
-                                    Id='{templateId}'";
+                                    Id={templateId}";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using DbDataReader reader = await cmd.ExecuteReaderAsync();
@@ -102,7 +102,7 @@ namespace EventManagementDbAccess
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError($"Error retrieving template with id {templateId} from database: {ex.Message}");
             }
             return new Tuple<string, string>(templateContent, subject);
         }

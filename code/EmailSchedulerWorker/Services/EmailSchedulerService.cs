@@ -78,13 +78,17 @@ namespace EmailSchedulerWorker.Services
                 EventDbAccess _eventDBAccess = scope.ServiceProvider.GetRequiredService<EventDbAccess>();
                 EventOrganizerDBAccess _organizerDBAccess = scope.ServiceProvider.GetRequiredService<EventOrganizerDBAccess>();
                 
-                _logger.LogInformation("Checking for pending emails at {time}.", DateTime.UtcNow);
+                _logger.LogInformation("Checking for pending/inprogress campaigns at {time}.", DateTime.UtcNow);
                 List<EmailCampaign> campaignList = await _emailCampaignDbAccess.GetPendingCampaigns();
+                _logger.LogInformation($"Found {campaignList.Count} pending campaigns to process at {DateTime.UtcNow}.");
                 foreach (var campaign in campaignList)
                 {
                     _logger.LogInformation($"Processing Email Campaign ID: {campaign.Id}, template ID {campaign.TemplateId}, eventID {campaign.EventId} ");
-                     campaign.Status ="InProgress";
-                    await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, campaign.Status);
+                     if (campaign.Status == "Pending")
+                     {
+                        campaign.Status ="InProgress";
+                        await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, campaign.Status);
+                     }
                     List<EmailRecipient> recipients = await _emailRecipientsDbAccess.GetEmailRecipientsByCampaignId(campaign.Id);
                     _logger.LogInformation($"Found {recipients.Count} recipients for Campaign ID: {campaign.Id}");
                     List<OrderEmailDetails> emailSalesOrder = [];
@@ -197,11 +201,19 @@ namespace EmailSchedulerWorker.Services
                             recipient.Status = "Failed";
                             recipient.RetryCount = (recipient.RetryCount ?? 0) + 1;
                             recipient.LastAttemptedAt = DateTime.UtcNow;
+                            recipient.ErrorMessage = ex.Message;
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);
+                            //not sure if we want to mark the whole campaign as failed if any recipient fails,
+                            //  for now we will just log the error and move on to the next recipient
                             //await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "Incomplete");
                         }
                     }
-
+                    // todo: what happens if some emails are queued and some fail? 
+                    // do we want to retry the failed ones in the next run?
+                    //  for now we will just mark the campaign as completed if we attempted to queue emails for all recipients,
+                    //  even if some failed.
+                    //The errors should really only be from transient issues with SQS or the email service, so retrying in the next run should be sufficient.
+                    await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "Completed");
                 }
             }
             catch (Exception ex)
