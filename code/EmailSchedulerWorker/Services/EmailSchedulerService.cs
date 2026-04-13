@@ -22,7 +22,7 @@ namespace EmailSchedulerWorker.Services
         private readonly ILogger<EmailSchedulerService> _logger;
         private readonly IConfiguration _config;
         private readonly string _connectionString;
-        private readonly string _queueUrl;
+      
         private readonly int _pollIntervalSeconds;
 
         private readonly SQSHelper _sqsClient;
@@ -43,8 +43,7 @@ namespace EmailSchedulerWorker.Services
 
             _connectionString = config.GetConnectionString("Default") 
                 ?? throw new Exception("Missing MySQL connection string.");
-            _queueUrl = config["Sqs:QueueUrl"] 
-                ?? throw new Exception("Missing SQS QueueUrl.");
+           
             _pollIntervalSeconds = config.GetValue<int>("Worker:PollIntervalSeconds", 60);
         }
 

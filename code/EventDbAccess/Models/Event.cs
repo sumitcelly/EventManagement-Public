@@ -97,6 +97,8 @@ namespace EventManagementDbAccess
         public TicketFeeMode TicketFeeMode{ get; set; }
 
         public string? OrganizerUrlName {get;set;}
+
+        public DateTime EventDate { get; set; }
     }
 
     // public class EventSettings

@@ -244,7 +244,7 @@ namespace CreateTicketApi.Controllers
                            EventId = emailCampaign.EventId,
                            Name = emailCampaign.EmailCampaignName,
                            Description =emailCampaign.Description,
-                           SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddMinutes(2):emailCampaign.SendAt,
+                           SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddMinutes(1):emailCampaign.SendAt,
                            Status ="Pending",
                            TemplateId = templateId
                         });

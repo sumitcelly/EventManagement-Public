@@ -11,10 +11,10 @@ using System.Net;
 public class SQSHelper
 {
     private  readonly AmazonSQSClient _amazonSQSClient;
-    private  readonly string _emailQueueUrl = "https://sqs.us-west-2.amazonaws.com/975050117852/NotificationEventPr0";
+    private  readonly string _emailQueueUrl =string.Empty;
 
-    private readonly string _emailStatusQueueUrl = "https://sqs.us-west-2.amazonaws.com/975050117852/EmailStatus";
-    private readonly string _fromEmail = "support@polkadotsandcurry.com";
+    private readonly string _emailStatusQueueUrl = string.Empty;
+    private readonly string _fromEmail = string.Empty;
 
     private static Microsoft.Extensions.Logging.ILogger? _logger { get; set; }
     public SQSHelper(IConfiguration configuration, ILogger<SQSHelper> logger)
@@ -23,6 +23,9 @@ public class SQSHelper
 
         _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"],Amazon.RegionEndpoint.USWest2);     
         
+        _emailStatusQueueUrl = configuration["SQS:StatusUrl"] ?? throw new Exception("Missing SQS Status QueueUrl.");
+        _fromEmail = configuration["FromEmail"] ?? throw new Exception("Missing FromEmail in configuration.");
+        _emailQueueUrl = configuration["SQS:QueueUrl"] ?? throw new Exception("Missing SQS QueueUrl.");
     }
     
     public async Task<bool> QueueEmailMessage(string from, string to, string subject, string content, string name, int refID, string messageType="Transactional")

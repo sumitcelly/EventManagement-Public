@@ -12,6 +12,8 @@ namespace EventManagementDbAccess
         public int SalesOrderId { get; set; } = 0;
 
         public string ErrorMessage { get; set; } = string.Empty;
+
+      
     }
     public class EmailCampaign
     {
@@ -32,6 +34,7 @@ namespace EventManagementDbAccess
         public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
+        public bool Enabled { get; set; } = true;
     }
 
     // public class EmailStatusUpdate

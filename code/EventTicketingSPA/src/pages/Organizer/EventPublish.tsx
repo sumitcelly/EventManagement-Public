@@ -32,6 +32,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   const isLiveRef = useRef<HTMLInputElement>(null);
   const user = useAppSelector((state: RootState) => state?.auth.user);
   console.log('customer url name', user?.customerUrlName);
+  const eventData = useAppSelector((state: RootState) => state?.event);
 
   const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
     const res = await axiosClient.get(`/events/settings/${eventId}`);
@@ -99,6 +100,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
         organizerUrlName: organizerUrlName,
         eventUrlName:eventUrlName,
         isLive: status,
+        eventDate: eventData?.eventDate,
         refundMode: Number(refundMode) || 0,
         ticketFeeMode: Number(ticketFeeMode) || 0
       }, {

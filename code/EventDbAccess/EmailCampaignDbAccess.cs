@@ -21,8 +21,8 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status,Name,Description, CreatedAt, ModifiedAt) 
-                        VALUES (@TemplateId, @EventId, @SendAt, @Status,@Name,@Description, @CreatedAt, @ModifiedAt); 
+            var query = @"INSERT INTO emailcampaign (TemplateId, EventId, SendAt, Status,Name,Description,Enabled, CreatedAt, ModifiedAt) 
+                        VALUES (@TemplateId, @EventId, @SendAt, @Status,@Name,@Description, @Enabled,@CreatedAt, @ModifiedAt); 
                         SELECT LAST_INSERT_ID();";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@TemplateId", campaign.TemplateId);
@@ -31,8 +31,10 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
             cmd.Parameters.AddWithValue("@Name", campaign.Name);
             cmd.Parameters.AddWithValue("@Description", campaign.Description);
+            cmd.Parameters.AddWithValue("@Enabled",1);
             cmd.Parameters.AddWithValue("@CreatedAt",DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
+
             var result = await cmd.ExecuteScalarAsync();
             return Convert.ToInt32(result);
         }
@@ -41,7 +43,7 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailcampaign WHERE Status = 'Pending'  and  SendAt <= Utc_timestamp()";
+            var query = "SELECT * FROM emailcampaign WHERE Status = 'Pending'  and Enabled = 1 and SendAt <= Utc_timestamp()";
             using var cmd = new MySqlCommand(query, conn);
             using var reader = await cmd.ExecuteReaderAsync();
             var campaigns = new List<EmailCampaign>();
@@ -58,7 +60,8 @@ namespace EventManagementDbAccess
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                    ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                    ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                    Enabled = reader.GetBoolean(reader.GetOrdinal("Enabled"))
                 });
             }
             return campaigns;       
@@ -90,7 +93,8 @@ namespace EventManagementDbAccess
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
                     Status = reader.IsDBNull(reader.GetOrdinal("Status")) ? null : reader.GetString(reader.GetOrdinal("Status")),
                     CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                    ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt"))
+                    ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                    Enabled = reader.GetBoolean(reader.GetOrdinal("Enabled"))
                 });
             }
             return campaigns;
@@ -107,7 +111,7 @@ namespace EventManagementDbAccess
             
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,a.Name,a.Description,
+            var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,a.Name,a.Description,a.Enabled,
                           b.Templatename,b.templatecontent,b.templatedescription,b.subject,b.isdefault,
                           c.eventname
                           FROM emailcampaign a, notificationtemplates b, events c
@@ -123,7 +127,7 @@ namespace EventManagementDbAccess
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                     Name= reader.GetString(reader.GetOrdinal("Name")),
                     Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
-
+                    Enabled = reader.GetBoolean(reader.GetOrdinal("Enabled")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
                     SendAt = reader.GetDateTime(reader.GetOrdinal("SendAt")),
@@ -150,7 +154,7 @@ namespace EventManagementDbAccess
             var campaigns = new List<EmailCampaign>();
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, a.Name,a.Description,
+            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, a.Name,a.Description,a.Enabled,
                         b.templatename, b.Id as TemplateId, b.IsDefault  from 
                         emailcampaign a
                         JOIN notificationtemplates b ON a.TemplateId = b.id
@@ -167,6 +171,7 @@ namespace EventManagementDbAccess
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),   
                     Name= reader.GetString(reader.GetOrdinal("Name")),
+                    Enabled = reader.GetBoolean(reader.GetOrdinal("Enabled")),
                     Description = reader.IsDBNull(reader.GetOrdinal("Description"))? string.Empty : reader.GetString(reader.GetOrdinal("Description")),
                     IsDefault = reader.GetBoolean(reader.GetOrdinal("IsDefault")),         
                     EventName = reader.IsDBNull(reader.GetOrdinal("EventName")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventName")),
@@ -218,5 +223,30 @@ namespace EventManagementDbAccess
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;
         }
+
+        public async Task<bool> UpdateEmailCampaignsStatusForEvent(int eventId, bool enable)
+        {
+            using var conn = new MySqlConnection(this.ConnectionString);
+            conn.Open();
+            int i= enable ? 1 : 0;
+            var query = $"UPDATE emailcampaign SET Enabled = {i} WHERE eventId = @eventId";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            
+            var rows = await cmd.ExecuteNonQueryAsync();
+            return  rows > 0;
+        }
+
+        public async Task<bool> CheckIfCamaignsExistForEvent(int eventId)
+        {
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = "SELECT COUNT(*) FROM emailcampaign WHERE eventId = @eventId";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            var count = Convert.ToInt32( await cmd.ExecuteScalarAsync());
+            return count > 0;
+        }
+
     }
 }

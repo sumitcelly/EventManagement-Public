@@ -16,14 +16,19 @@ namespace CreateTicketApi.Controllers
 
         private readonly TicketAccess _ticketContext;
 
+        private readonly EmailCampaignDbAccess _emailCampaignDbAccess;
+
+        private readonly NotificationTemplateAccess _notificationTemplateAccess;
+
 
         public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess,
-                            TicketAccess ticketContext)
+                            TicketAccess ticketContext, EmailCampaignDbAccess emailCampaignDbAccess, NotificationTemplateAccess notificationTemplateAccess)
         {
             _logger = logger;
             _EventDbAccess = EventDbAccess;
             _ticketContext = ticketContext;
-  
+            _emailCampaignDbAccess = emailCampaignDbAccess;
+            _notificationTemplateAccess = notificationTemplateAccess;
         }
 
         [HttpGet]
@@ -163,7 +168,69 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("Invalid data sent for event fee mode or refund mode");
             } 
 
-            return (await _EventDbAccess.UpdateEventSettings(eventId, status))?true:false;
+            if (await _EventDbAccess.UpdateEventSettings(eventId, status))
+            {
+                if (!status.IsLive)
+                {
+                    // if event is being unpublished, also disable associated email campaigns
+                    bool result = await _emailCampaignDbAccess.UpdateEmailCampaignsStatusForEvent(eventId,false);
+                    _logger.LogInformation($"Event {eventId} unpublished. Associated email campaigns disabled: {result}");
+                }
+                else
+                {
+                    if (!await _emailCampaignDbAccess.CheckIfCamaignsExistForEvent(eventId))
+                    {
+                        _logger.LogInformation($"No campaigns exist for event id {eventId}. Going live for first time probably.");
+                        List<EmailTemplate> templates=  await _notificationTemplateAccess.GetDefaultTemplates();
+                        templates?.ForEach(async template =>
+                        {
+                            if (template.TemplateName ==  NotificationTemplateAccess.EventReminder1DayTemplateName ||
+                                 template.TemplateName == NotificationTemplateAccess.EventReminder5DayTemplateName)
+                            {
+                                EmailCampaign campaign = new EmailCampaign
+                                {
+                                    Name = $"{template.TemplateName}_{status.EventUrlName}",
+                                    Description = template.TemplateDescription,
+                                    EventId = eventId,
+                                    TemplateId = template.Id,
+                                    Status = "Pending",
+                                    SendAt = GetSendAtTime(template.TemplateName, status.EventDate),}
+                                ;
+                                if (await _emailCampaignDbAccess.CreateEmailCampaign(campaign) >0)
+                                    _logger.LogInformation($"Created email campaign {campaign.Name} for event id {eventId} based on template {template.TemplateName}");
+                                else
+                                    _logger.LogError($"Failed to create email campaign {campaign.Name} for event id {eventId} based on template {template.TemplateName}");
+                            }
+                        });       
+                    }
+                    else
+                    {
+                        bool result = await _emailCampaignDbAccess.UpdateEmailCampaignsStatusForEvent(eventId,true);
+                        _logger.LogInformation($"Campaigns already exist for event id {eventId}. Not creating default campaigns. But setting them to active. Result of status update is {result}");
+                    }
+                }
+                return Ok(true);
+            }
+            else
+            {
+                return StatusCode(500, "Failed to update event settings.");
+            }
+        }
+
+        private DateTime GetSendAtTime(string templateName, DateTime eventStartDate)
+        {
+            if (templateName == NotificationTemplateAccess.EventReminder5DayTemplateName)
+            {
+                return eventStartDate.AddDays(-5);
+            }
+            else if (templateName == NotificationTemplateAccess.EventReminder1DayTemplateName)
+            {
+                return eventStartDate.AddDays(-1);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid template name for send time calculation");
+            }
         }
 
         [HttpPost("/events/{customerId}")]

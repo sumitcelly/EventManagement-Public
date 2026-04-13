@@ -15,13 +15,84 @@ using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Unicode;
 namespace EventManagementDbAccess
 {
+
+    
+    /// <summary>
+    /// this class has 3 redis caches. One has a key of EmailTemplate:_default and value of list of default templates. Second cache has key of EmailTemplate:Id and value of template content and subject. Third cache has key of EmailTemplate:TemplateName and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
+    /// the other cache has a key of EmailTemplate:TemplateName and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
+    /// and finally there is a cache with key of EmailTemplate:Id and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
+    /// </summary>
     public class NotificationTemplateAccess : BaseDbAccess
     {
-        public static readonly string[] _defaultTemplateName=new string[] { "EventReminder5Day", "EventReminder1Day",};
+        public static readonly string EventReminder5DayTemplateName = "EventReminder5Day";
+        public static readonly string EventReminder1DayTemplateName = "EventReminder1Day";
+        public static readonly string EmailVerificationTemplateName = "EmailVerification";
+        public static readonly string OrderConfirmationTemplateName = "OrderConfirmation";
+        
         public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger, IDistributedCache cache) : base(connectionString, logger, cache)
         {
         }
 
+       
+
+        public async Task<List<int>> GetDefaultTemplatesIds()
+        {
+            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>("_default");
+            List<EmailTemplate>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetDefaultTemplatesFromDb(), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            if (templateData == null || templateData.Count == 0)
+            {
+                return [];
+            }
+            else
+            {
+                return templateData.Select(x => x.Id).ToList();
+            }
+        }
+
+        public async Task<List<EmailTemplate>> GetDefaultTemplates()
+        {
+           
+            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>("_default");
+            List<EmailTemplate>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetDefaultTemplatesFromDb(), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return templateData ?? throw new KeyNotFoundException($"template with _default id not found.");
+        }
+
+        public async Task<List<EmailTemplate>> GetDefaultTemplatesFromDb()
+        {
+            try
+            {
+                List<EmailTemplate> templates = new List<EmailTemplate>();
+                using (MySqlConnection connection = new(this.ConnectionString))
+                {
+                    string sql = @$"Select Id,TemplateName,TemplateDescription,TemplateContent, Subject from  eventmanagement.notificationtemplates where
+                                    IsDefault=1";
+                    await connection.OpenAsync();
+                    MySqlCommand cmd = new MySqlCommand(sql, connection);
+                    using DbDataReader reader = await cmd.ExecuteReaderAsync();
+                    
+                    
+                    while (await reader.ReadAsync())
+                    {
+                        templates.Add(new EmailTemplate()
+                        {
+                            Id = reader.GetInt32(0),
+                          
+                            TemplateName = reader.GetString(1),
+                            TemplateDescription = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            TemplateContent=reader.GetString(3),
+                            Subject=reader.GetString(4)
+                        });
+                    }
+                    
+                }
+                return templates;
+            }
+            catch (Exception ex)
+            {
+               _logger.LogCritical("Could not retrive templates ids for default {0}",ex);
+               throw;
+            }
+        }
         public async Task<Tuple<string, string>> GetTemplateById(int templateId)
         {
             if (templateId <= 0)
@@ -32,43 +103,6 @@ namespace EventManagementDbAccess
             string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateId.ToString());
             Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return templateData ?? throw new KeyNotFoundException($"template with id {templateId} not found.");
-        }
-
-        public async Task<List<int>> GetDefaultTemplatesIds()
-        {
-           
-            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>("_default");
-            List<int>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetDefaultTemplateIdsFromDb(), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
-            return templateData ?? throw new KeyNotFoundException($"template with _default id not found.");
-        }
-
-        public async Task<List<int>> GetDefaultTemplateIdsFromDb()
-        {
-            try
-            {
-                List<int> templateIds = new List<int>();
-                using (MySqlConnection connection = new(this.ConnectionString))
-                {
-                    string sql = @$"Select Id from  eventmanagement.notificationtemplates where
-                                    IsDefault=1";
-                    await connection.OpenAsync();
-                    MySqlCommand cmd = new MySqlCommand(sql, connection);
-                    using DbDataReader reader = await cmd.ExecuteReaderAsync();
-                    
-                    
-                    while (await reader.ReadAsync())
-                    {
-                        templateIds.Add(reader.GetInt16(0));
-                    }
-                    
-                }
-                return templateIds;
-            }
-            catch (Exception ex)
-            {
-               _logger.LogCritical("Could not retrive templates ids for default {0}",ex);
-               throw;
-            }
         }
 
         public async Task<Tuple<string, string>> GetTemplateByIdFromDb(int templateId)
@@ -124,7 +158,7 @@ namespace EventManagementDbAccess
                 throw new ArgumentNullException("templateName");
             }
 
-            string cacheKey = CacheHelper.GetCacheKey<Event>(templateName.ToString());
+            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateName.ToString());
             Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByNameFromDb(templateName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return templateData ?? throw new KeyNotFoundException($"template  with name  {templateName} not found.");
         }
