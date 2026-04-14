@@ -48,9 +48,9 @@ namespace EventUtils
         public EmailTokenReplacement()
         {
             _templateTokenMap = new Dictionary<string, string>();
-            foreach (var token in _supportedTokens)
+            foreach (string token in _supportedTokens)
             {
-                _templateTokenMap[token] = $"[token_{token}]";
+                _templateTokenMap[token] = $"{{{{{token}}}}}";
             }
         }
 

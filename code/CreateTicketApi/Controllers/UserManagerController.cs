@@ -326,8 +326,7 @@ namespace CreateTicketApi.Controllers
             EmailTokenReplacement tokenReplacer = new EmailTokenReplacement();
             var values = new Dictionary<string, string>
             {
-                { "EmailCode", emailCode },
-                {"Attendee", user?.Name ?? "User" }
+                { "EmailCode", emailCode }
             };
 
             int id = await _emailTransactionLogAccess.InsertEmailTransactionLog(new EmailTransactionLog

@@ -184,8 +184,8 @@ namespace CreateTicketApi.Controllers
                         List<EmailTemplate> templates=  await _notificationTemplateAccess.GetDefaultTemplates();
                         templates?.ForEach(async template =>
                         {
-                            if (template.TemplateName ==  NotificationTemplateAccess.EventReminder1DayTemplateName ||
-                                 template.TemplateName == NotificationTemplateAccess.EventReminder5DayTemplateName)
+                            if (template.TemplateName ==  NotificationTemplateAccess.EventReminder2DayTemplateName ||
+                                 template.TemplateName == NotificationTemplateAccess.EventReminder7DayTemplateName)
                             {
                                 EmailCampaign campaign = new EmailCampaign
                                 {
@@ -219,13 +219,13 @@ namespace CreateTicketApi.Controllers
 
         private DateTime GetSendAtTime(string templateName, DateTime eventStartDate)
         {
-            if (templateName == NotificationTemplateAccess.EventReminder5DayTemplateName)
+            if (templateName == NotificationTemplateAccess.EventReminder7DayTemplateName)
             {
-                return eventStartDate.AddDays(-5);
+                return eventStartDate.AddDays(-7);
             }
-            else if (templateName == NotificationTemplateAccess.EventReminder1DayTemplateName)
+            else if (templateName == NotificationTemplateAccess.EventReminder2DayTemplateName)
             {
-                return eventStartDate.AddDays(-1);
+                return eventStartDate.AddDays(-2);
             }
             else
             {
