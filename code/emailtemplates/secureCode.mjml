@@ -1,0 +1,67 @@
+<mjml>
+  <mj-head>
+    <mj-title>Your Security Code</mj-title>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+
+      <mj-text font-size="16px" color="#4a4a4a" line-height="24px" />
+      <mj-section padding="20px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#ffffff">
+
+    <!-- Logo Header -->
+    <mj-section padding-bottom="0px">
+      <mj-column>
+
+        <mj-text font-size="24px" font-weight="800" color="#2563EB" align="center">
+          {{platform_name}}
+        </mj-text>
+
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Content Box -->
+    <mj-section>
+      <mj-column background-color="#b6c690ff" border-radius="8px" padding="30px">
+
+        <mj-text font-size="20px" font-weight="bold" color="#1a1a1a">
+          Verification Code
+        </mj-text>
+
+        <mj-text>
+          Use the code below to complete your request. This code will expire in 10 minutes.
+        </mj-text>
+
+        <!-- Code Display -->
+        <mj-section padding="20px 0">
+          <mj-column background-color="#f8fafc" border="1px dashed #cbd5e1" border-radius="4px">
+
+            <mj-text align="center" font-size="32px" font-weight="bold" color="#1e293b" letter-spacing="4px" padding="20px">
+              {{code}}
+            </mj-text>
+
+          </mj-column>
+        </mj-section>
+
+        <mj-text font-size="14px" color="#64748b">
+          If you didn't request this, you can safely ignore this email. Someone may have typed your email address by mistake.
+        </mj-text>
+
+      </mj-column>
+    </mj-section>
+
+    <!-- Legit Footer -->
+    <mj-section padding-top="0px">
+      <mj-column>
+
+        <mj-text align="center" font-size="12px" color="#2563EB">
+          © {{registered_company}} | {{registered_address}} <br />
+          <a href="mailto:{{support_email}}" style="color: #2563EB; text-decoration: none;">Contact Support</a> | <a href="{{privacy_url}}" style="color: #2563EB; text-decoration: none;">Privacy Policy</a>
+        </mj-text>
+
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

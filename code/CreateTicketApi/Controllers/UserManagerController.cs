@@ -312,7 +312,7 @@ namespace CreateTicketApi.Controllers
             {
                 EmailAddress = email,
                 SecurityCode =emailCode,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
                 RequestIp = HttpContext.Connection.RemoteIpAddress?.ToString()
             });
 

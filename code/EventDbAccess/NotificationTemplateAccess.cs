@@ -23,8 +23,8 @@ namespace EventManagementDbAccess
     /// </summary>
     public class NotificationTemplateAccess : BaseDbAccess
     {
-        public static readonly string EventReminder5DayTemplateName = "EventReminder5Day";
-        public static readonly string EventReminder1DayTemplateName = "EventReminder1Day";
+        public static readonly string EventReminder5DayTemplateName = "EventReminder7Day";
+        public static readonly string EventReminder1DayTemplateName = "EventReminder2Day";
         public static readonly string EmailVerificationTemplateName = "EmailVerification";
         public static readonly string OrderConfirmationTemplateName = "OrderConfirmation";
         

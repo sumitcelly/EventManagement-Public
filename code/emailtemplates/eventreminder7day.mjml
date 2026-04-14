@@ -1,0 +1,80 @@
+<mjml>
+  <mj-head>
+    <mj-title>7 Days Until {{event_name}}!</mj-title>
+    <mj-preview>Get ready! We'll see you in just one week.</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#4a4a4a" line-height="24px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f7f9">
+
+    <!-- Header -->
+    <mj-section padding-bottom="0px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="800" color="#2563EB" align="center">
+          {{platform_name}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Card -->
+    <mj-section>
+      <mj-column background-color="#b6c690ff" border-radius="8px" padding="30px">
+        <mj-text font-size="24px" font-weight="bold" color="#1a1a1a" align="center">
+          It's almost time!
+        </mj-text>
+        <mj-text align="center" font-size="18px" color="#6366f1">
+          7 Days Until {{event_name}}
+        </mj-text>
+        
+        <mj-divider border-width="1px" border-color="#e2e8f0" padding="20px 0" />
+
+        <!-- Event Details Table -->
+        <mj-text font-weight="bold" padding-bottom="0px">When:</mj-text>
+        <mj-text padding-top="0px">{{event_date}} at {{event_time}}</mj-text>
+        
+        <mj-text font-weight="bold" padding-bottom="0px">Where:</mj-text>
+        <mj-text padding-top="0px">{{venue_name}}<br/>{{venue_address}}</mj-text>
+
+        <!-- Call to Action -->
+        <mj-button background-color="#2563EB" color="white" font-weight="bold" font-size="16px" border-radius="6px" href="{{ticket_url}}" padding-top="20px">
+          View My Tickets
+        </mj-button>
+
+        <mj-divider border-width="1px" border-color="#e2e8f0" padding="20px 0" />
+        
+        <mj-text font-size="14px" color="#64748b">
+          <strong>Quick Tip:</strong> Have your QR code ready on your phone when you arrive at the venue to ensure a smooth entry.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <!-- Organizer Section -->
+    <mj-section padding-top="10px">
+      <mj-column>
+        <mj-text font-size="14px" color="#64748b" padding-bottom="0px">
+          <strong>Organized By:</strong>
+        </mj-text>
+        <mj-text font-size="14px" color="#1a1a1a" padding-top="0px">
+          {{organizer_name}}
+        </mj-text>
+        <mj-text font-size="13px" padding-top="0px">
+          <a href="mailto:{{organizer_email}}" style="color: #4F46E5; text-decoration: none;">Contact Organizer</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section padding-top="0px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#94a3b8">
+          You are receiving this because you purchased tickets to {{event_name}}. <br/>
+          © {{registered_company}} | {{registered_address}} <br/>
+          <a href="mailto:{{support_email}}" style="color: #2563EB; text-decoration: none;">Contact Support</a> 
+          | <a href="{{privacy_url}}" style="color: #2563EB; text-decoration: none;">Privacy Policy</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

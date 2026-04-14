@@ -1,0 +1,27 @@
+{{platform_name}}
+
+Footer tokens:
+{{support_email}}
+{{privacy_url}}
+{{registered_company}}
+{{registered_address}}
+
+
+SecureCode:
+{{code}}
+
+reminder:
+{{event_name}}
+{{event_date}} at {{event_time}}
+{{venue_name}}
+{{venue_address}}
+{{organizer_name}}
+{{organizer_email}}
+
+Order Confirmation:
+{{order_number}}
+{{event_name}}
+{{event_date}} at {{event_time}}
+{{venue_name}}
+{{venue_address}}
+{{grand_total}}
