@@ -18,9 +18,8 @@ namespace EventManagementDbAccess
 
     
     /// <summary>
-    /// this class has 3 redis caches. One has a key of EmailTemplate:_default and value of list of default templates. Second cache has key of EmailTemplate:Id and value of template content and subject. Third cache has key of EmailTemplate:TemplateName and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
-    /// the other cache has a key of EmailTemplate:TemplateName and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
-    /// and finally there is a cache with key of EmailTemplate:Id and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
+    /// this class has 2 redis caches. One has a key of EmailTemplate:_default and value of list of default templates. Second cache has key of EmailTemplate:Id and value of template content and subject. Third cache has key of EmailTemplate:TemplateName and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
+    ///  and finally there is a cache with key of EmailTemplate:Id and value of template content and subject. So when we add or update a template we need to invalidate all 3 caches if the template is default otherwise only second and third cache.
     /// </summary>
     public class NotificationTemplateAccess : BaseDbAccess
     {
@@ -151,18 +150,32 @@ namespace EventManagementDbAccess
             var rows = await cmd.ExecuteNonQueryAsync();
             return rows > 0;
         }
-        public async Task<Tuple<string, string>> GetTemplateByName(string templateName, int? customerId = null)
+        public async Task<Tuple<string, string>> GetDefaultTemplateDetailsByName(string templateName)
         {
             if (string.IsNullOrEmpty(templateName))
             {
-                throw new ArgumentNullException("templateName");
+                throw new ArgumentNullException(nameof(templateName));
             }
-
-            string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateName.ToString());
-            Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByNameFromDb(templateName), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
-            return templateData ?? throw new KeyNotFoundException($"template  with name  {templateName} not found.");
+            var defaultList = await GetDefaultTemplates();
+            var template = defaultList.FirstOrDefault(t => t.TemplateName == templateName);
+            if (template == null)
+            {
+                throw new KeyNotFoundException($"Default template with name {templateName} not found.");
+            }
+            else
+            {
+                return new Tuple<string,string>(template.TemplateContent, template.Subject);
+            }
+           
         }
+    
 
+        /// <summary>
+        /// Not used currently. Since we only retrive by id or by default name
+        /// </summary>
+        /// <param name="templateName"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public async Task<Tuple<string, string>> GetTemplateByNameFromDb(string templateName)
         {
             if (string.IsNullOrEmpty(templateName))

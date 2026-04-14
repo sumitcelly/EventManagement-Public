@@ -319,7 +319,7 @@ namespace CreateTicketApi.Controllers
             if (code <= 0)
                 return StatusCode(500, "Failed to generate email verification code.");
             
-            Tuple<string,string> templateData = await _templateDbAccess.GetTemplateByName("EmailVerification");
+            Tuple<string,string> templateData = await _templateDbAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.EmailVerificationTemplateName);
             if (templateData == null || string.IsNullOrEmpty(templateData.Item1))
                 return StatusCode(500, "Email template not found.");
 

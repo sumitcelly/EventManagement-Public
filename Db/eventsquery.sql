@@ -1,89 +1,99 @@
-SELECT * FROM eventmanagement.events;
-SELECT * FROM eventmanagement.events WHERE MATCH(EventDescription) AGAINST(`food` IN NATURAL LANGUAGE MODE);
+select * from logincodes order by createdat desc
+delete from eventorganizermembers where customerid=42
+delete from eventorganizer where customerid=42
 
+select * from notificationtemplates order by modifiedat desc
 
+update notificationtemplates as t1
+JOIN notificationtemplates AS t2 ON t1.matching_id = t2.source_id
+set templatename='EventReminder7day',
+subject='Your event is coming up in 7 days',
 
+templatecontent= (select templatecontent from notificationtemplates where id=33)
+where id=4
 
-select  a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventOrganizer, a.EventSummary,a.Free,ifnull(a.EventAddress,'') as EventAddress, b.OrganizerName from 
-`eventmanagement`.`events` a,
-`eventmanagement`.`eventorganizer` b
-where a.EventOrganizer= b.CustomerId 
+UPDATE notificationtemplates
+SET templatename = (
+    SELECT templatename 
+    FROM (SELECT * FROM notificationtemplates) AS temp_alias 
+    WHERE id = 33),
+    templatename='EventReminder7day',
+	subject='Your event is coming up in 7 days',
+    templatedescription='7 day event reminder'
+WHERE id = 4;
 
-select a.EventId,a.EventName,a.EventHeadline,a.EventDate, a.EventOrganizer, a.EventSummary,a.Free,a.eventAddress,
-                    b.OrganizerName from events a, eventorganizer b 
-                    WHERE  a.EventOrganizer= b.CustomerId and 
-                    a.EventId = 1
+select * from emailcampaign order by createdat desc
+update emailcampaign
+set status='Pending'
+where id=16
 
-update  events
-set City="Colorado Springs"
+update notificationtemplates
+set TemplateName='OrderConfirmation',
+TemplateDescription='Order confirmation template'
+where id=3
+
+if not exists (select count(*) from emailcampaign where eventid=37)
+update emailcampaign
+set status='Pending'
+where eventid=37
+
+delete from emailcampaign
+where id>0
+select * from emailrecipients order by createdat desc
+
+SELECT * FROM emailrecipients WHERE emailcampaignid = 16 and status != 'Queued' and  (retrycount is null or retrycount < 3)
+
+delete from emailrecipients
+where id>0
+
+select * from emailtransactionlog
+select * from events where eventname='Drinks Festival NY'
+update events
+set islive=1
+where eventid=6
+select * from logincodes order by createdat desc
+
+select * from eventuser where email like 'test77%'
+update events
+set islive=1
 where eventid>0
-
-
-
-INSERT INTO `eventmanagement`.`events`
-(
-`EventName`,
-`EventDate`,
-`EventOrganizer`,
-`EventDescription`,
-`EventAddress`,
-`State`,
-`City`,
-`EventCategory`,
-`EventTags`,
-`EventDuration`,
-`EventScheduleType`,
-`EventHeadline`,
-`EventAgenda`,
-`Private`,
-`ImageReel`)
-VALUES
-(
-'Music Festival NY',
-'2026-09-29 11:00:00',
-1,
-'Many vendors, food stall, cultural, live music, fun, dances, culture, and much much more',
-'123 Lewis Palmer School, Colorado Springs, CO - 80920',
-'Colorado Springs',
-'CO',
-'Food Festivals',
-'Food, Outdoors, Live music',
-4,
-'OneTime',
-'Come enjoy the food, outdoors, music',
-'',
-0,
-0);
-SELECT * FROM eventmanagement.events;
-
-SELECT * FROM eventmanagement.events WHERE MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventCategory,EventName) 
-AGAINST ('festival' IN NATURAL LANGUAGE MODE);
+select * from eventsalesitem where ticketcode='XF6OJJ1I'
 
 SELECT 
-        EventId,
-        City,
-        EventDate,
-        eventheadline,
-        EventDescription,
-        EventTags,
-        EventDate,
-        EventAddress,
-        EventCategory 
-		FROM events
-        WHERE
-        city='Colorado Springs'
-        and eventdate >'9/29/2026 12:00:00 AM'
-        order by EventDate asc
-   
-   MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
-    
-CALL search_events(
-    NULL,                   -- p_keyword
-    NULL,                 -- p_start_date
-    NULL, 					-- p_end_date
-    NULL,                  -- p_state
-   'Colorado Springs',			-- p_city
-    NULL,                      -- p_category
-    10,                        -- p_limit
-    0                          -- p_offset
-);
+                        CustomerId, 
+                        OrganizationName,
+                        OrganizerEmail,
+                        OrganizerWebsite,
+                        OrganizerEventBaseUrl,
+                        OrganizerDescription,
+                        OrganizerAboutMe,
+                        OrganizerImageUrl,
+                        OrganizerCity,
+                        OrganizerCountry,
+                        OrganizerPhone,
+                        OrganizerStreetAddress,
+                        OrganizerZipCode,
+                        OrganizerInstagram,
+                        OrganizerFacebook,
+                        OrganizerX,
+                        StripeAccountId,
+                        StripeConnectStatus                      
+                    FROM eventorganizer 
+                    WHERE CustomerId = 1
+select * from eventorganizer where customerid=40
+
+select  eventId, eventname, eventurlname from events order by createdat desc
+
+select * from events where eventid =32
+update events
+set eventurlname='drinksfestivalny'
+where eventid=6
+
+update eventorganizer
+set OrganizerEventBaseUrl='pdac25'
+where customerid=1
+
+select * from eventitemtype where eventitemtypeid=15
+update eventitemtype
+set cost =1.67
+where eventitemtypeid=15

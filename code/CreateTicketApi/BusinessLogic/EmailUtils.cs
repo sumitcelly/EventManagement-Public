@@ -68,7 +68,7 @@ public class EmailUtils
         var tokenReplacer = new EmailTokenReplacement();
         var values = new Dictionary<string, string>();
         // Fetch the email template
-        Tuple<string,string> emailContent = await _templateAccess.GetTemplateByName("BasicEmailNew1");
+        Tuple<string,string> emailContent = await _templateAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.OrderConfirmationTemplateName);
         byte[] qrBytes = QRCodeUtils.GetQRCodes(order.SalesOrderCode);
 
         EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerById(order.CustomerId);
