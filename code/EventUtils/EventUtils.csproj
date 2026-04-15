@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AWSSDK.S3" Version="4.0.6.2" />
     <PackageReference Include="AWSSDK.SQS" Version="4.0.0.4" />
+    <PackageReference Include="GeoTimeZone" Version="6.1.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
@@ -16,6 +17,7 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
     <PackageReference Include="Stripe.net" Version="48.4.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
+    <PackageReference Include="TimeZoneConverter" Version="7.2.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.10" />
     <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.21" />
 

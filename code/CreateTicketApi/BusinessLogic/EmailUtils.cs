@@ -24,10 +24,13 @@ public class EmailUtils
     private readonly UserDbAccess _userDbAccess;
     private readonly SQSHelper _sqsClient;
     private readonly EmailTransactionLogDbAccess _emailTransactionLogDbAccess;
+
+    private IConfiguration _configuration;
     public EmailUtils(ILogger<EmailUtils> logger, EventOrganizerDBAccess eventOrganizerDBAccess,
                         EventDbAccess eventDbAccess, UserDbAccess userDbAccess, NotificationTemplateAccess notificationTemplateAccess
                         , SQSHelper sqsClient,
-                        EmailTransactionLogDbAccess emailTransactionLogDbAccess)
+                        EmailTransactionLogDbAccess emailTransactionLogDbAccess,
+                        IConfiguration configuration)
     {
         if (eventOrganizerDBAccess == null)
         {
@@ -44,6 +47,7 @@ public class EmailUtils
         _eventOrganizerDBAccess = eventOrganizerDBAccess;
         _eventDbAccess = eventDbAccess;
         _templateAccess = notificationTemplateAccess;
+        _configuration = configuration;
         _emailTransactionLogDbAccess = emailTransactionLogDbAccess ?? throw new ArgumentNullException(nameof(emailTransactionLogDbAccess));
         _userDbAccess = userDbAccess ?? throw new ArgumentNullException(nameof(userDbAccess));
         if (sqsClient == null)
@@ -65,7 +69,7 @@ public class EmailUtils
         {
            attendee = await _userDbAccess.GetUserById(order.UserId);
         }
-        var tokenReplacer = new EmailTokenReplacement();
+        var tokenReplacer = new EmailTokenReplacement(_configuration);
         var values = new Dictionary<string, string>();
         // Fetch the email template
         Tuple<string,string> emailContent = await _templateAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.OrderConfirmationTemplateName);
@@ -89,9 +93,9 @@ public class EmailUtils
             values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
                 Attendee = attendee.Name,
-                EventDate = eventObj.EventDate,
+                //EventDate = eventObj.EventDate,
                 EventLocation = eventObj.EventLocation,
-                EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
+                EventOrganizerEmail = eventOrganizer.OrganizerDescription,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 QRCode = order.SalesOrderCode,
                 QRCodeImage = System.Convert.ToBase64String(qrBytes)
@@ -102,7 +106,7 @@ public class EmailUtils
         }
 
         await _sqsClient.QueueEmailMessage(
-            "support@polkadotsandcurry.com",//from config
+            _configuration.GetValue<string>("EmailTemplateValues:support_email") ?? string.Empty,//from config
             attendee.Email,
             emailContent.Item2,
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),

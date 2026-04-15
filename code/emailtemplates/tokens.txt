@@ -17,9 +17,10 @@ reminder:
 {{venue_address}}
 {{organizer_name}}
 {{organizer_email}}
+{{ticket_url}}
 
 Order Confirmation:
-{{order_number}}
+{{order_code}}
 {{event_name}}
 {{event_date}} at {{event_time}}
 {{venue_name}}

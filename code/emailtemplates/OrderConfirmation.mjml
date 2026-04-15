@@ -27,7 +27,7 @@
           You're all set!
         </mj-text>
         <mj-text align="center" font-size="18px" color="#2563EB">
-          Order #{{order_number}} Confirmed
+          Order #{{order_code}} Confirmed
         </mj-text>
         
         <mj-divider border-width="1px" border-color="#e2e8f0" padding="20px 0" />

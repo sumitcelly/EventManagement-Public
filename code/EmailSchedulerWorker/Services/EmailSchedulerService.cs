@@ -224,20 +224,21 @@ namespace EmailSchedulerWorker.Services
         private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
                 OrderEmailDetails? orderEmailData)
         {
+            //(string date,string time)= EventUtils.TimeZoneConverter.GetLocalDateTime(eventHeader.la);
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
                 Attendee = orderEmailData?.FullName ?? "Attendee",
-                EventDate = eventHeader.EventDate,
+                //EventDate = eventHeader.EventDate,
                 EventLocation = eventHeader.EventLocation,
                 EventName = eventHeader.EventName,
-                EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
+                EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
                                     $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
                                     :string.Empty
             });
             
-            var tokenReplacer = new EmailTokenReplacement();
+            var tokenReplacer = new EmailTokenReplacement(_config);
             return tokenReplacer.ReplaceTokens(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
         }

@@ -32,12 +32,14 @@ namespace CreateTicketApi.Controllers
         private readonly NotificationTemplateAccess _templateDbAccess;
 
         private readonly EmailTransactionLogDbAccess _emailTransactionLogAccess;
+        private readonly IConfiguration _configuration;
         public UserController(ILogger<UserController> logger, UserDbAccess userDbAccess,
                 EventOrganizerMembersDbAccess eventOrganizerMembersDbAccess, JwtUtils tokenUtils,
                 LoginCodesDbAccess loginCodesDbAccess,
                 SQSHelper sqsHelper,
                 NotificationTemplateAccess templateDbAccess,
-                EmailTransactionLogDbAccess emailTransactionLogAccess)
+                EmailTransactionLogDbAccess emailTransactionLogAccess,
+                IConfiguration config)
         {
             _logger = logger;
             _userDbAccess = userDbAccess;
@@ -47,6 +49,7 @@ namespace CreateTicketApi.Controllers
             _sqsHelper = sqsHelper;
             _templateDbAccess = templateDbAccess;
             _emailTransactionLogAccess = emailTransactionLogAccess;
+            _configuration = config;
         }
 
         /// <summary>
@@ -323,10 +326,10 @@ namespace CreateTicketApi.Controllers
             if (templateData == null || string.IsNullOrEmpty(templateData.Item1))
                 return StatusCode(500, "Email template not found.");
 
-            EmailTokenReplacement tokenReplacer = new EmailTokenReplacement();
+            EmailTokenReplacement tokenReplacer = new EmailTokenReplacement(_configuration);
             var values = new Dictionary<string, string>
             {
-                { "EmailCode", emailCode }
+                { "email_code", emailCode }
             };
 
             int id = await _emailTransactionLogAccess.InsertEmailTransactionLog(new EmailTransactionLog
@@ -344,7 +347,7 @@ namespace CreateTicketApi.Controllers
             await _sqsHelper.QueueMessage(email,
                 user?.Name ?? "User",
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
-                templateData.Item2,
+                tokenReplacer.ReplacePlatformNameInSubject(templateData.Item2),
                 id
                 );
 

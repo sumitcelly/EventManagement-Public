@@ -29,11 +29,12 @@ namespace CreateTicketApi.Controllers
         private readonly EventOrganizerDBAccess _eventOrganizerDBAccess;
         private readonly EventDbAccess _eventDbAccess;
 
+        private readonly IConfiguration _configuration;
         private readonly SalesOrderDbAccess _salesOrderDbAccess;
 
         public EmailCampaignController(ILogger<EmailCampaignController> logger, EmailCampaignDbAccess dbAccess,
          NotificationTemplateAccess templateAccess, EventOrganizerDBAccess eventOrganizerDBAccess,
-          EventDbAccess eventDbAccess, SalesOrderDbAccess salesOrderDbAccess)
+          EventDbAccess eventDbAccess, SalesOrderDbAccess salesOrderDbAccess,IConfiguration configuration)
         {
             _logger = logger;
             _campaignDbAccess = dbAccess;
@@ -41,6 +42,7 @@ namespace CreateTicketApi.Controllers
             _eventOrganizerDBAccess =  eventOrganizerDBAccess;
             _salesOrderDbAccess = salesOrderDbAccess;
             _eventDbAccess = eventDbAccess;
+            _configuration = configuration;
         }
 
         [HttpGet("/EmailCampaign/{customerId}")]
@@ -119,17 +121,17 @@ namespace CreateTicketApi.Controllers
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
                 Attendee = orderEmailData?.FullName ?? "Attendee",
-                EventDate = eventHeader.EventDate,
+                //EventDate = eventHeader.EventDate,
                 EventLocation = eventHeader.EventLocation,
                 EventName = eventHeader.EventName,
-                EventOrganizerHelpLine = eventOrganizer.OrganizerPhone,
+                EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
                                     $"http://localhost:5173/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString()))}"
                                     :string.Empty
             });
             
-            var tokenReplacer = new EmailTokenReplacement();
+            var tokenReplacer = new EmailTokenReplacement(_configuration);
             return tokenReplacer.ReplaceTokens(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
         }
