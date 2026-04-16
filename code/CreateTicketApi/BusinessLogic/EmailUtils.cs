@@ -130,7 +130,7 @@ public class EmailUtils
                 VenueName= " ",
                 QRCode = order.SalesOrderCode ?? string.Empty,
                 GrandTotal = !string.IsNullOrWhiteSpace(orderTotal)? orderTotal : order.SalesOrderTotal.ToString("C"),
-                EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(order.OrderId.ToString()))}"
+                EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(order.OrderId.ToString(),true)}"
             });
             
             replacedContent = tokenReplacer.ReplaceTokens(

@@ -149,9 +149,12 @@ namespace CreateTicketApi.Controllers
         [HttpGet("/SalesOrder/byEmailLinkId/{encryptedOrderId}")]
         public async Task<ActionResult> GetSalesOrderByEmailLinkId(string encryptedOrderId)
         {
+            _logger.LogInformation("Received request for sales order details with email link ID: {0}", encryptedOrderId);
             if (string.IsNullOrEmpty(encryptedOrderId))
                 return BadRequest("Invalid encrypted order id.");
-            string decodedId = WebUtility.UrlDecode(encryptedOrderId);
+            string decodedId = EncryptionHelper.UrlDecode(encryptedOrderId);
+            _logger.LogInformation("Decoded email link ID: {0}", decodedId);
+            
             if (string.IsNullOrEmpty(decodedId))
                 return BadRequest("Invalid encrypted order id after decoding.");
             try

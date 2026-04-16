@@ -57,14 +57,8 @@ export default function TicketDetails() {
     ['orderDetails', encryptedOrderId], // structured query key
     async () => {
     
-      // const urlDecodedOrderId = encryptedOrderId ? decodeURIComponent(encryptedOrderId) : ''; 
-      // console.log('URL decoded order id', urlDecodedOrderId);
-      // if (!urlDecodedOrderId)
-      // {
-      //   console.warn('No valid order ID provided');
-      //   toast.error('No valid order ID provided');
-      //   return null;
-      // }
+     // const urlDecodedOrderId = encryptedOrderId ? decodeURIComponent(encryptedOrderId) : ''; 
+      
       try {
         const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${encryptedOrderId}`);
         console.log('salesDetails details from backend', res?.data);
