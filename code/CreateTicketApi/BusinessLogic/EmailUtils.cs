@@ -27,11 +27,13 @@ public class EmailUtils
     private readonly SQSHelper _sqsClient;
     private readonly EmailTransactionLogDbAccess _emailTransactionLogDbAccess;
 
+    private readonly SalesOrderDbAccess _salesOrderDbAccess;
     private IConfiguration _configuration;
     public EmailUtils(ILogger<EmailUtils> logger, EventOrganizerDBAccess eventOrganizerDBAccess,
                         EventDbAccess eventDbAccess, UserDbAccess userDbAccess, NotificationTemplateAccess notificationTemplateAccess
                         , SQSHelper sqsClient,
                         EmailTransactionLogDbAccess emailTransactionLogDbAccess,
+                        SalesOrderDbAccess salesOrderDbAccess,
                         IConfiguration configuration)
     {
         if (eventOrganizerDBAccess == null)
@@ -50,6 +52,7 @@ public class EmailUtils
         _eventDbAccess = eventDbAccess;
         _templateAccess = notificationTemplateAccess;
         _configuration = configuration;
+        _salesOrderDbAccess = salesOrderDbAccess ?? throw new ArgumentNullException(nameof(salesOrderDbAccess));
         _emailTransactionLogDbAccess = emailTransactionLogDbAccess ?? throw new ArgumentNullException(nameof(emailTransactionLogDbAccess));
         _userDbAccess = userDbAccess ?? throw new ArgumentNullException(nameof(userDbAccess));
         if (sqsClient == null)
@@ -61,16 +64,34 @@ public class EmailUtils
 
     }
     
-    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser? attendee = null)
+    public async Task<bool> SendOrderConfirmationEmail(SalesOrder? order,EventUser? attendee = null,int salesOrderId=0,
+                                                        string orderTotal ="",string attendeeEmail=""
+                                                        )
     {
-        if (order == null)
+        if (order == null && salesOrderId == 0)
         {
-            throw new ArgumentNullException(nameof(order), "No way to send email without order.");
+            throw new ArgumentNullException(nameof(order), "No way to send email without order or orderid");
         }
+        if (order == null && salesOrderId > 0)
+        {
+            order = await _salesOrderDbAccess.GetSalesOrderById(salesOrderId);
+            if (order == null)
+            {
+                throw new Exception($"Order with id {salesOrderId} not found.");
+            }
+        }
+
         if (attendee == null)
         {
-           attendee = await _userDbAccess.GetUserById(order.UserId);
+            attendee = !string.IsNullOrWhiteSpace(attendeeEmail) ? new EventUser() { Email = attendeeEmail } : 
+                         await _userDbAccess.GetUserById(order.UserId);;
         }
+        
+        if (attendee == null)
+        {
+            throw new Exception("Attendee email is required to send confirmation email.");
+        }
+
         var tokenReplacer = new EmailTokenReplacement(_configuration);
         var values = new Dictionary<string, string>();
         // Fetch the email template
@@ -108,7 +129,7 @@ public class EmailUtils
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 VenueName= " ",
                 QRCode = order.SalesOrderCode ?? string.Empty,
-                GrandTotal = order.SalesOrderTotal.ToString(),
+                GrandTotal = !string.IsNullOrWhiteSpace(orderTotal)? orderTotal : order.SalesOrderTotal.ToString("C"),
                 EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(order.OrderId.ToString()))}"
             });
             

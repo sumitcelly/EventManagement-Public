@@ -305,7 +305,7 @@ namespace CreateTicketApi.Controllers
                         }   
                         _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
                         // Send confirmation email to customer
-                        //await _emailUtils.SendOrderConfirmationEmail();
+                        await _emailUtils.SendOrderConfirmationEmail(null, null,stripeEvent.SalesOrderId,stripeEvent.OrderTotal, stripeEvent.CustomerEmail);
                         }
                         catch (Exception ex)
                         {

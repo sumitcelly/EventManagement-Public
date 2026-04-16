@@ -168,7 +168,7 @@ public class StripeAccess
         }
     }
 
-    private long CalculateApplicationFee(List<PaymentLineItemModel> lineItems)
+    private long CalculatePlatformFee(List<PaymentLineItemModel> lineItems)
     {
         decimal totalAmount = 0;
         foreach (var item in lineItems)
@@ -293,7 +293,7 @@ public class StripeAccess
             throw new ArgumentException("Line items cannot be null or empty.", nameof(lineItems));
         }
 
-        long appFees = CalculateApplicationFee(lineItems);
+        long appFees = CalculatePlatformFee(lineItems);
         long totalItemsUnitPrice = (long)lineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
         long finalTotal=0, totalFeesForTrans=0;
@@ -318,6 +318,13 @@ public class StripeAccess
             {
               "card"
             
+            },
+            Metadata = new Dictionary<string, string>
+            {
+                { "SalesOrderId", salesOrderId.ToString() },
+                { "EventId", eventId.ToString() },
+                { "PlatformFees", appFees.ToString() },
+                { "PassOnAllFeesToCustomer", passOnAllFeesToCustomer.ToString() }
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
@@ -402,13 +409,22 @@ public class StripeAccess
         }
         else if (stripeEvent.Data.Object is Session session && session!=null)
         {
+            decimal platformFeeAmt=0;
+           
+            if (session.Metadata.TryGetValue("PlatformFee", out string? tempId))
+            {
+                decimal.TryParse(tempId, out platformFeeAmt);
+            }
             return new StripeWebHookData
             {
                 EventType = stripeEvent.Type,
                 SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
                 SessionId = session.Id,
                 PaymentIntentId = session.PaymentIntentId,
-                PaymentSucceeded = session.PaymentStatus == "paid" ?true:false
+                PaymentSucceeded = session.PaymentStatus == "paid" ?true:false,
+                PlatformFees = platformFeeAmt,
+                OrderTotal = session.AmountTotal.HasValue ? (session.AmountTotal.Value / 100.0m).ToString("C") :"$0",
+                CustomerEmail = session.CustomerEmail
             };
         }
         else if (stripeEvent.Data.Object is Refund refund && refund!=null)
@@ -476,7 +492,11 @@ public class StripeWebHookData
     public long RefundAmount { get; set;} = 0;
 
     public string RefundStatus { get; set; } = string.Empty;
-   public override string ToString()
+    public decimal PlatformFees { get; internal set; }
+    public string OrderTotal { get; internal set; }
+    public string CustomerEmail { get; internal set; }
+
+    public override string ToString()
     {
         return @$"EventType:{EventType} SalesOrderId: {SalesOrderId} Sessionid { SessionId} 
                 CustomerId { CustomerId}  AccountId {AccountId} 

@@ -75,11 +75,14 @@ namespace EventUtils
                 _templateTokenMap[token] = $"{{{{{token}}}}}";
             }
 
-            _globalTokens.Add("{{support_email}}",  config["EmailTemplateValues:support_email"]??string.Empty);
-            _globalTokens.Add("{{privacy_url}}",  config["EmailTemplateValues:privacy_url"]??string.Empty);
-            _globalTokens.Add("{{registered_company}}",  config["EmailTemplateValues:registered_company"]??string.Empty);
-            _globalTokens.Add("{{registered_address}}",  config["EmailTemplateValues:registered_address"]??string.Empty);
-            _globalTokens.Add("{{platform_name}}",  config["EmailTemplateValues:platform_name"]??string.Empty);
+            if (_globalTokens.Count==0)
+            {
+                _globalTokens.Add("{{support_email}}",  config["EmailTemplateValues:support_email"]??string.Empty);
+                _globalTokens.Add("{{privacy_url}}",  config["EmailTemplateValues:privacy_url"]??string.Empty);
+                _globalTokens.Add("{{registered_company}}",  config["EmailTemplateValues:registered_company"]??string.Empty);
+                _globalTokens.Add("{{registered_address}}",  config["EmailTemplateValues:registered_address"]??string.Empty);
+                _globalTokens.Add("{{platform_name}}",  config["EmailTemplateValues:platform_name"]??string.Empty);
+            }
         }
 
         public static Dictionary<string, string> GetReplacementValues(TokenValues tokenValues)
