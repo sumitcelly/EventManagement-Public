@@ -6,7 +6,6 @@ import { Ticket } from "../types/Tickets";
 
 export default function SalesOrderTicket({ eventBasic, tickets, errorTicketList, salesOrderCode,qrBase64String }: {eventBasic:EventHeader, tickets:Ticket[], 
           errorTicketList:SalesOrderErrors[], salesOrderCode:string, qrBase64String:string}) {
-
   return (<>
   
             <div className="flex flex-col p-2 border border-gray-300 rounded-lg shadow-md bg-brand-light">  

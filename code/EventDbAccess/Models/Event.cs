@@ -42,7 +42,11 @@ namespace EventManagementDbAccess
         public string OrganizerUrlName {get;set;} = string.Empty;
         public RefundMode RefundMode { get; set; }  
 
-        public TicketFeeMode TicketFeeMode { get; set; }    
+        public TicketFeeMode TicketFeeMode { get; set; } 
+
+        public decimal Latitude { get; set; }
+        public decimal Longitude { get; set; }
+   
     }
     public class Event : EventHeader
     {
@@ -72,9 +76,7 @@ namespace EventManagementDbAccess
 
 
         public string Country { get; set; } = "USA";
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
-
+   
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

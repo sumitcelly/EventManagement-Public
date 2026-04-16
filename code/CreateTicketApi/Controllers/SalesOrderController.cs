@@ -160,6 +160,8 @@ namespace CreateTicketApi.Controllers
                 if (result != null)
                 {
                     _logger.LogInformation("Sales order details retrieved for email link ID: {0} {1}", encryptedOrderId, result.SalesOrderCode);
+                    IEnumerable<EventSalesItem> tickets = await _salesOrderConductor.GetSalesOrderByQrCode(result.EventId, result.SalesOrderCode,result.UserId);
+                    result.TicketDetails = [.. tickets];
                     return Ok(result);
                 }
                 else

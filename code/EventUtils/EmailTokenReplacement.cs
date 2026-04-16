@@ -29,6 +29,8 @@ namespace EventUtils
         public string EventTicketLink { get; set; } = string.Empty;
 
         public string EmailCode {get; set;} = string.Empty;
+        public string GrandTotal { get;  set; } = string.Empty;
+        public string? VenueName { get;  set; }
     }
     /// <summary>
     /// Handles the replacement of tokens in email templates
@@ -106,9 +108,15 @@ namespace EventUtils
                     case "venue_address":
                         values[token] = tokenValues.EventLocation ?? string.Empty;
                         break;
+                    case "venue_name":
+                        values[token] = tokenValues.VenueName ?? string.Empty;
+                        break;
                     case "organizer_name":
                         values[token] = tokenValues.EventOrganizerName ?? "Not specified";
                         break;
+                    case "grand_total":
+                           values[token] = tokenValues.GrandTotal;
+                           break;
                     case "organizer_email":
                         values[token] = tokenValues.EventOrganizerEmail ?? "Not specified";
                         break;

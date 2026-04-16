@@ -514,6 +514,7 @@ namespace EventManagementDbAccess
                 {
                     SalesOrderId = orderId,
                     EventId = order.EventId,
+                    UserId = order.UserId,
                     SalesOrderCode = order.SalesOrderCode ?? "",
                     SalesOrderStatus = ((SalesOrderStatus)order.SalesOrderStatus).ToString(),
                 };

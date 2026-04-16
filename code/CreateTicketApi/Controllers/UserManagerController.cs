@@ -327,11 +327,11 @@ namespace CreateTicketApi.Controllers
                 return StatusCode(500, "Email template not found.");
 
             EmailTokenReplacement tokenReplacer = new EmailTokenReplacement(_configuration);
-            var values = new Dictionary<string, string>
+            var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
-                { "email_code", emailCode }
-            };
-
+                EmailCode = emailCode,
+            });
+            
             int id = await _emailTransactionLogAccess.InsertEmailTransactionLog(new EmailTransactionLog
             {
                 RecipientEmail = email,

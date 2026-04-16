@@ -150,7 +150,7 @@ namespace EventManagementDbAccess
 
         var query = @"select a.EventId,a.EventName,a.EventUrlName,a.RefundMode, a.TicketFeeDisplayMode, a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
-                    ifnull(a.EventAddress,'') as EventAddress,
+                    ifnull(a.EventAddress,'') as EventAddress,a.Latitude,a.Longitude,
                     b.OrganizationName, b.OrganizerEventBaseUrl from events a, eventorganizer b 
                     WHERE a.EventOrganizer= b.CustomerId and 
                     a.EventId = @eventId";
@@ -178,6 +178,8 @@ namespace EventManagementDbAccess
             OrganizerUrlName =  reader.IsDBNull(reader.GetOrdinal("OrganizerEventBaseUrl")) ? string.Empty: 
                                 reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
             EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
+            Latitude = reader.IsDBNull(reader.GetOrdinal("Latitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Latitude")),
+            Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Longitude")),
 
             Free = reader.GetBoolean(reader.GetOrdinal("Free")),
             EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),

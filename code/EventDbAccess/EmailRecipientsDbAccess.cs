@@ -227,6 +227,9 @@ namespace EventManagementDbAccess
         public int EventId { get; set; }
 
         public string SalesOrderCode { get; set; } = string.Empty;
+        public int UserId { get; internal set; }
+
+        public List<EventSalesItem> TicketDetails {get; set; }= [];
     }
 
     public class OrderEmailDetails

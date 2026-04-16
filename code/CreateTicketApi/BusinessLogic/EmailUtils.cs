@@ -1,8 +1,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
 using EventManagementDbAccess;
 using EventUtils;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 
 
@@ -59,7 +61,7 @@ public class EmailUtils
 
     }
     
-    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser attendee =null)
+    public async Task<bool> SendOrderConfirmationEmail(SalesOrder order,EventUser? attendee = null)
     {
         if (order == null)
         {
@@ -73,7 +75,6 @@ public class EmailUtils
         var values = new Dictionary<string, string>();
         // Fetch the email template
         Tuple<string,string> emailContent = await _templateAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.OrderConfirmationTemplateName);
-        byte[] qrBytes = QRCodeUtils.GetQRCodes(order.SalesOrderCode);
 
         EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerById(order.CustomerId);
         if (eventOrganizer == null)
@@ -81,34 +82,45 @@ public class EmailUtils
             throw new Exception($"Organizer with id {order.CustomerId} not found.");
         }
 
-        Event eventObj = await _eventDbAccess.GetEventDetailsById(order.EventId);
+        EventHeader eventObj = await _eventDbAccess.GetEventHeaderById(order.EventId);
         if (eventObj == null)
         {
             throw new Exception($"Event with ID {order.EventId} not found.");
         }
-        string replacedContent = string.Empty;
+        string replacedContent = string.Empty, replacedSubject=string.Empty;
+
+        string eventDate = string.Empty,eventTime =string.Empty;
+        if (eventObj.Latitude!=0 && eventObj.Longitude!=0)
+        {
+            (eventDate, eventTime)= EventUtils.TimeZoneConverter.GetLocalDateTime((double)eventObj.Latitude,(double) eventObj.Longitude,eventObj.EventDate);
+        }
         // Set values for supported tokens
         if (!string.IsNullOrWhiteSpace(emailContent.Item1))
         {
             values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
-                Attendee = attendee.Name,
-                //EventDate = eventObj.EventDate,
+               
+                EventLocalDate = eventDate,
+                EventLocalTime = eventTime,
+                EventName = eventObj.EventName,
                 EventLocation = eventObj.EventLocation,
-                EventOrganizerEmail = eventOrganizer.OrganizerDescription,
+                EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
-                QRCode = order.SalesOrderCode,
-                QRCodeImage = System.Convert.ToBase64String(qrBytes)
+                VenueName= " ",
+                QRCode = order.SalesOrderCode ?? string.Empty,
+                GrandTotal = order.SalesOrderTotal.ToString(),
+                EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(order.OrderId.ToString()))}"
             });
             
             replacedContent = tokenReplacer.ReplaceTokens(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent.Item1)), values);
+            replacedSubject = tokenReplacer.ReplaceEventNameInSubject(emailContent.Item2,eventObj.EventName);
         }
-
+        
         await _sqsClient.QueueEmailMessage(
             _configuration.GetValue<string>("EmailTemplateValues:support_email") ?? string.Empty,//from config
             attendee.Email,
-            emailContent.Item2,
+           replacedSubject,
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
             attendee?.Name ?? string.Empty,
             await _emailTransactionLogDbAccess.InsertEmailTransactionLog(new EmailTransactionLog()

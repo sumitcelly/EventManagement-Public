@@ -528,7 +528,7 @@ namespace EventManagementDbAccess
             return ticketList;
         }
 
-        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBasicsBySalesOrderQrCodeFromDb(string salesOrderCode, int eventId, int userId)
+        public async Task<IEnumerable<EventSalesItem>>  GetEventTicketBasicsBySalesOrderQrCodeFromDb(string salesOrderCode, int eventId, int userId)
         {
             if (string.IsNullOrWhiteSpace(salesOrderCode) || eventId <= 0)
                 throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");

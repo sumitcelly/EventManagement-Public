@@ -32,6 +32,8 @@ public class SalesOrder
 
     public DateTime RefundedAt {get;set; }
 
+    public decimal SalesOrderTotal {get; set; }=0;
+
 }
 
 public class UserSalesOrders : EventHeader

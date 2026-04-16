@@ -15,11 +15,14 @@ import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import { Button } from "flowbite-react";
 import Footer from "../components/Footer";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function TicketDetails() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [ticketData,setticketData] = useState<any[]>([]);
+
   const history = useHistory();
   const onPageChange = (page: number)=>{
         console.log("onpagechange",page);
@@ -56,9 +59,27 @@ export default function TicketDetails() {
     
       const urlDecodedOrderId = encryptedOrderId ? decodeURIComponent(encryptedOrderId) : ''; 
       console.log('URL decoded order id', urlDecodedOrderId);
-      const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${encryptedOrderId}`);
-      console.log('salesDetails details from backend', res?.data);
-      return res.data;
+      if (!urlDecodedOrderId)
+      {
+        console.warn('No valid order ID provided');
+        toast.error('No valid order ID provided');
+        return null;
+      }
+      try {
+        const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${urlDecodedOrderId}`);
+        console.log('salesDetails details from backend', res?.data);
+        setticketData(res?.data?.ticketDetails || []);
+        console.log('ticket data set for pagination from encrypted flow', ticketData);
+        if (currentPage === 1)
+          setTotalItems(res.data?.ticketDetails?.length || 0);
+
+        return res.data;
+      }catch (error) {
+        console.error('Error fetching order details', error);
+        toast.error('Error fetching order details');
+        return null;
+      }
+ 
     },
     {
       //staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
@@ -90,23 +111,26 @@ export default function TicketDetails() {
       enabled: (orderDetails?.eventId || eventId) > 0 && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
     }
   );
-
-  const { data, isLoading } = useQuery( ['ticketDetails', orderDetails?.eventId || eventId, orderDetails?.salesOrderCode || salesOrderCode], async () => {
-    const idToUse = orderDetails?.eventId || eventId;
-    const codeToUse = orderDetails?.salesOrderCode || salesOrderCode;
-    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${idToUse}/${codeToUse}`);
+  
+  const { data, isLoading } = useQuery( ['ticketDetails', eventId, salesOrderCode], async () => {
+    //const idToUse = orderDetails?.eventId || eventId;
+    //const codeToUse = orderDetails?.salesOrderCode || salesOrderCode;
+    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
     console.log('user tickets from backend', res?.data);
+    setticketData(res?.data || []);
+    console.log('ticket data set for pagination from normal flow', ticketData);
     if (currentPage === 1)
         setTotalItems(res.data?.length);
    
     return res.data;
-    },
+  },
   {
      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
       cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       //refetchOnMount: 'always',
       refetchOnWindowFocus: false,
-      enabled: (orderDetails?.eventId || eventId) > 0 && !!(orderDetails?.salesOrderCode || salesOrderCode) && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
+      enabled: !!eventId && !!salesOrderCode && (!encryptedOrderId || !orderLoading)
+      //enabled: (orderDetails?.eventId || eventId) > 0 && !!(orderDetails?.salesOrderCode || salesOrderCode) && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
   });
    
   useEffect(() => {
@@ -117,21 +141,31 @@ export default function TicketDetails() {
   }, []);
   if ((encryptedOrderId && orderLoading) || eventLoading || isLoading) return <p>Loading...</p>;
   console.log('event details:',eventDetails);
+  if (!eventDetails) {
+    return (
+      <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
+
+        <h1 className="text-2xl font-bold mb-4 text-center">Event Not Found</h1>
+        <p className="text-gray-500 text-center">We couldn't find the event associated with this ticket.</p>
+      </div>
+    );
+  }
   return ( 
       <IonPage>
         <IonHeader>
           <AppNavbar />
         </IonHeader>
         <IonContent>
+          <Toaster position="top-right" />
          <div className="flex flex-col  min-h-full">
           <div className="max-w-md mx-auto">
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
         
-          {data && <SalesOrderTicket eventBasic={eventDetails} 
-              tickets={[{eventItemTypeId: data[currentPage-1].eventItemType.eventItemTypeId, name: data[currentPage-1].eventItemType.name, 
+          {ticketData && <SalesOrderTicket eventBasic={eventDetails} 
+              tickets={[{eventItemTypeId: ticketData[currentPage-1].eventItemType.eventItemTypeId, name: ticketData[currentPage-1].eventItemType.name, 
                 description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]}
               errorTicketList={[]} 
-              salesOrderCode={data[currentPage-1].qrCode} qrBase64String={data[currentPage-1].qrBase64Image}>
+              salesOrderCode={ticketData[currentPage-1].qrCode} qrBase64String={ticketData[currentPage-1].qrBase64Image}>
             
             </SalesOrderTicket>
           }

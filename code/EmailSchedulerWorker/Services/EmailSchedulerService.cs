@@ -224,6 +224,7 @@ namespace EmailSchedulerWorker.Services
         private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
                 OrderEmailDetails? orderEmailData)
         {
+           
             //(string date,string time)= EventUtils.TimeZoneConverter.GetLocalDateTime(eventHeader.la);
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
@@ -234,7 +235,7 @@ namespace EmailSchedulerWorker.Services
                 EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
-                                    $"https://eventsnow/viewmytickets/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
+                                    $"{_config["BaseUrl"]}/ticketdetatils/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
                                     :string.Empty
             });
             
