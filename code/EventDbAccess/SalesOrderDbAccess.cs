@@ -180,7 +180,8 @@ namespace EventManagementDbAccess
 
       
 
-        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId, string paymentIntentId)
+        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId, string paymentIntentId, decimal salesTotal,
+                                                decimal platformFees, decimal totalFeesForTrans)
         {
             if (salesOrderId < 0 && String.IsNullOrEmpty(stripeSessionId))
                 throw new ArgumentException("Either salesOrderId or stripeSessionId must be provided.");
@@ -193,7 +194,10 @@ namespace EventManagementDbAccess
                             SET SalesOrderStatus = @status, 
                                 SalesOrderCode =@orderCode,
                                 ModifiedAt = @modifiedAt,
-                                PaymentIntentId= @paymentIntentId
+                                PaymentIntentId= @paymentIntentId,
+                                SalesOrderTotal = @salesTotal,
+                                PlatformFees = @platformFees,
+                                TotalFees = @totalFeesForTrans
                             WHERE OrderId = @orderId";
             }
             else
@@ -202,7 +206,10 @@ namespace EventManagementDbAccess
                             SET SalesOrderStatus = @status, 
                                 SalesOrderCode = @orderCode,
                                 ModifiedAt = @modifiedAt,
-                                PaymentIntentId= @paymentIntentId
+                                PaymentIntentId= @paymentIntentId,
+                                SalesOrderTotal = @salesTotal,
+                                PlatformFees = @platformFees,
+                                TotalFees = @totalFeesForTrans
                             WHERE StripeSessionId = @stripeSessionId";
             }       
             using var connection = new MySqlConnection(ConnectionString);
@@ -215,7 +222,10 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@status", (int)SalesOrderStatus.PaymentSucceeded);
                 cmd.Parameters.AddWithValue("@orderCode",PasswordGenerator.GetPassword()); 
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
-                cmd.Parameters.AddWithValue("@paymentIntentId", paymentIntentId);
+                cmd.Parameters.AddWithValue("@paymentIntentId", paymentIntentId);   
+                cmd.Parameters.AddWithValue("@salesTotal", salesTotal);
+                cmd.Parameters.AddWithValue("@platformFees", platformFees);
+                cmd.Parameters.AddWithValue("@totalFeesForTrans",totalFeesForTrans);
                 if (salesOrderId > 0)
                     cmd.Parameters.AddWithValue("@orderId", salesOrderId);
                 else

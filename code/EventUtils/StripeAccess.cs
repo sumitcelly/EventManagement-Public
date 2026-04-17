@@ -324,6 +324,7 @@ public class StripeAccess
                 { "SalesOrderId", salesOrderId.ToString() },
                 { "EventId", eventId.ToString() },
                 { "PlatformFees", appFees.ToString() },
+                { "TotalFeesForTransaction", totalFeesForTrans.ToString() },
                 { "PassOnAllFeesToCustomer", passOnAllFeesToCustomer.ToString() }
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
@@ -409,11 +410,15 @@ public class StripeAccess
         }
         else if (stripeEvent.Data.Object is Session session && session!=null)
         {
-            decimal platformFeeAmt=0;
+            decimal platformFeeAmt=0, totalFeesForTrans=0;
            
-            if (session.Metadata.TryGetValue("PlatformFee", out string? tempId))
+            if (session.Metadata.TryGetValue("PlatformFees", out string? tempId))
             {
                 decimal.TryParse(tempId, out platformFeeAmt);
+            }
+            if (session.Metadata.TryGetValue("TotalFeesForTransaction", out tempId))
+            {
+                decimal.TryParse(tempId, out totalFeesForTrans);
             }
             return new StripeWebHookData
             {
@@ -423,7 +428,8 @@ public class StripeAccess
                 PaymentIntentId = session.PaymentIntentId,
                 PaymentSucceeded = session.PaymentStatus == "paid" ?true:false,
                 PlatformFees = platformFeeAmt,
-                OrderTotal = session.AmountTotal.HasValue ? (session.AmountTotal.Value / 100.0m).ToString("C") :"$0",
+                TotalFeesForTransaction = totalFeesForTrans,
+                OrderTotal = session.AmountTotal.HasValue ? session.AmountTotal.Value:0,
                 CustomerEmail = session.CustomerEmail
             };
         }
@@ -493,8 +499,9 @@ public class StripeWebHookData
 
     public string RefundStatus { get; set; } = string.Empty;
     public decimal PlatformFees { get; internal set; }
-    public string OrderTotal { get; internal set; }
-    public string CustomerEmail { get; internal set; }
+    public decimal OrderTotal { get; internal set; }
+    public string CustomerEmail { get; internal set; } = string.Empty;
+    public decimal TotalFeesForTransaction { get; internal set; }
 
     public override string ToString()
     {

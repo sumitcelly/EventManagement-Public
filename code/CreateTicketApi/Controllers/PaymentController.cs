@@ -292,7 +292,12 @@ namespace CreateTicketApi.Controllers
                         {
                         // Finalize the sales order. generate tickets etc
                         //Task.Delay(10000).Wait();
-                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, stripeEvent.SessionId,stripeEvent.PaymentIntentId);
+                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, 
+                                                                            stripeEvent.SessionId,
+                                                                            stripeEvent.PaymentIntentId,
+                                                                            stripeEvent.OrderTotal,
+                                                                            stripeEvent.PlatformFees,
+                                                                            stripeEvent.TotalFeesForTransaction);
                         if (!result)
                         {
                             _logger.LogError($"Failed to finalize sales order for SalesOrder ID: {stripeEvent.SalesOrderId}");
@@ -305,7 +310,8 @@ namespace CreateTicketApi.Controllers
                         }   
                         _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
                         // Send confirmation email to customer
-                        await _emailUtils.SendOrderConfirmationEmail(null, null,stripeEvent.SalesOrderId,stripeEvent.OrderTotal, stripeEvent.CustomerEmail);
+                        await _emailUtils.SendOrderConfirmationEmail(null, null,stripeEvent.SalesOrderId,
+                                                                    (stripeEvent.OrderTotal/100.0m).ToString("C"), stripeEvent.CustomerEmail);
                         }
                         catch (Exception ex)
                         {
