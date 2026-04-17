@@ -172,7 +172,7 @@ export default function BuyTickets() {
       //   }
       // }
       const result = await axiosClient.post("/salesOrder", {
-        userId: user.user?.id, 
+        userId: user.user?.guest? 0: user.user?.id, 
         eventId: id,
         customerId: eventHeaderInfo.eventOrganizerId,
         emailAddress: formData.email,
@@ -189,7 +189,7 @@ export default function BuyTickets() {
       }
       else
       {
-        if ((!user.user || user?.user?.id === 0) && result.data.accessToken)
+        if (user.user?.guest && result.data.accessToken)
         {
           console.log('guest login detected. Found token');
           dispatch(loginAsGuest(result.data));     
