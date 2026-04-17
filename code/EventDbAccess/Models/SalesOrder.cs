@@ -33,13 +33,19 @@ public class SalesOrder
     public DateTime RefundedAt {get;set; }
 
     public decimal SalesOrderTotal {get; set; }=0;
-
+    public decimal TotalFees { get; internal set; }=0;
+    public decimal PlatformFees { get; internal set; }=0;
 }
 
 public class UserSalesOrders : EventHeader
 {
     public required string SalesOrderStatus { get; set; }
     public required string SalesOrderCode { get; set; }
+
+    public required decimal SalesOrderTotal { get; set; }
+    public required decimal TotalFees { get; set; }
+
+    public required decimal PlatformFees { get; set; }
     public int SalesOrderId { get; set; }
 }
 

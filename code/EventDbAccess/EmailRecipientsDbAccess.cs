@@ -230,6 +230,9 @@ namespace EventManagementDbAccess
         public int UserId { get; internal set; }
 
         public List<EventSalesItem> TicketDetails {get; set; }= [];
+        public decimal SalesOrderTotal { get; internal set; }
+        public decimal TotalFees { get; internal set; }
+        public decimal PlatformFees { get; internal set; }
     }
 
     public class OrderEmailDetails

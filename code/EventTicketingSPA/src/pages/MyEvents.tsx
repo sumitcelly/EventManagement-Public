@@ -20,6 +20,9 @@ interface UserSalesOrder {
   salesOrderStatus:String;
   salesOrderId:number;
   eventHeadline:string;
+  salesOrderTotal: number;
+  totalFees: number;
+  platformFees: number;
 }
 
 
@@ -93,7 +96,10 @@ export default function MyEvents() {
                     eventId: event.eventId,
                     salesOrderCode: event.salesOrderCode,
                     salesOrderId: event.salesOrderId,
-                    salesOrderStatus: event.salesOrderStatus
+                    salesOrderStatus: event.salesOrderStatus,
+                    salesOrderTotal : event.salesOrderTotal || 0,
+                    totalFees : event.totalFees || 0,
+                    platformFees : event.platformFees || 0
                   });
                 }}
                 className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"

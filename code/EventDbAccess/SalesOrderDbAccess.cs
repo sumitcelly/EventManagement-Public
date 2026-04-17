@@ -154,6 +154,9 @@ namespace EventManagementDbAccess
                         OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
                         CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
+                        SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
+                        TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+                        PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
@@ -438,7 +441,8 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"select a.EventId, a.SalesOrderCode,a.SalesOrderStatus, a.OrderId,b.EventName,
+                string query = @"select a.EventId, a.SalesOrderCode,a.SalesOrderStatus, a.OrderId,
+                                a.SalesOrderTotal, a.TotalFees, a.PlatformFees,b.EventName,
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
                                 b.EventSummary,b.Free
                                 from SalesOrder a, Events b
@@ -462,6 +466,9 @@ namespace EventManagementDbAccess
                             SalesOrderId = reader.GetInt16("OrderId"),
                             EventId = reader.GetInt32("EventId"),
                             EventName = reader.GetString("EventName"),
+                            SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
+                            TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+                            PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
                             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString("EventHeadline"),
                             EventDate = reader.GetDateTime("EventDate"),
                             EventOrganizerId = reader.GetInt32("EventOrganizer"),
@@ -523,6 +530,9 @@ namespace EventManagementDbAccess
                 return new DecryptedOrderDetails
                 {
                     SalesOrderId = orderId,
+                    SalesOrderTotal = order.SalesOrderTotal,
+                    TotalFees = order.TotalFees,
+                    PlatformFees = order.PlatformFees,
                     EventId = order.EventId,
                     UserId = order.UserId,
                     SalesOrderCode = order.SalesOrderCode ?? "",

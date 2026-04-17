@@ -167,6 +167,53 @@ export default function TicketDetails() {
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
+         
+         {/* Ticket Summary */}
+         <div className="max-w-xl mx-auto mt-6 w-full">
+            <h3 className="text-lg font-bold text-accent-dark mb-3">Ticket Summary</h3>
+            <div className="space-y-2">
+              {ticketData && Object.values(
+                ticketData.reduce((acc: any, ticket: any) => {
+                  const typeName = ticket.eventItemType?.name || 'Unknown';
+                  const typeId = ticket.eventItemType?.eventItemTypeId;
+                  const key = `${typeId}-${typeName}`;
+                  
+                  if (!acc[key]) {
+                    acc[key] = { name: typeName, count: 0, total: 0 };
+                  }
+                  acc[key].count += 1;
+                  acc[key].total += ticket.pricePaid || 0;
+                // {
+                //   "1-General Admission": { name: "General Admission", count: 3, total: 45 },
+                //   "2-VIP": { name: "VIP", count: 1, total: 30 }
+                // }
+                  return acc;
+                }, {})
+              ).map((item: any, idx: number) => (
+                <div key={idx} className="flex justify-between text-accent-dark border-b pb-2">
+                  <span>{item.name}</span>
+                  <span>{item.count} ticket{item.count !== 1 ? 's' : ''}</span>
+                  <span>${item.total.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+         </div>
+         
+         <div className="mt-4 text-accent-dark text-sm font-body space-y-2">
+
+            <div className="flex justify-between">
+              <span>Platform Fees:</span>
+              <span>${orderDetails?.platformFees.toFixed(2) || salesOrderData?.platformFees.toFixed(2) || '0.00'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total Fees:</span>
+              <span>${orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees.toFixed(2) || '0.00'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Sales Order Total:</span>
+              <span>${orderDetails?.salesOrderTotal.toFixed(2) || salesOrderData?.salesOrderTotal.toFixed(2) || '0.00'}</span>
+            </div>
+          </div>
          {/* Refund mode must be customer controlled (1)*/}
           {eventDetails?.refundMode ===1 && (orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" && (
             <div className="ml-auto mt-4">
