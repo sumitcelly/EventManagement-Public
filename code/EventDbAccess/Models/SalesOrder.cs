@@ -49,6 +49,19 @@ public class UserSalesOrders : EventHeader
     public int SalesOrderId { get; set; }
 }
 
+public class SalesOrderPaymentStatus
+{
+    public bool Paid {get;set;}
+
+    public required string SalesOrderCode { get; set; }
+     public required decimal SalesOrderTotal { get; set; }
+    public required decimal TotalFees { get; set; }
+
+    public required decimal PlatformFees { get; set; }
+
+    public string QrImage { get; set; } = string.Empty;
+}
+
 public class SalerOrderReportItems
 {
     public int OrderId { get; set;}

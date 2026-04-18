@@ -79,8 +79,12 @@ export default function OrderConfirmation() {
               ...prevData,
               paymentPending: false,
               salesOrderCode: data.salesOrderCode,
-              salesOrderQrCodeImage: data.salesOrderQrCodeImage
+              salesOrderQrCodeImage: data.qrImage,
+              salesOrderTotal: data.salesOrderTotal,
+              platformFees: data.platformFees,
+              totalFees: data.totalFees
             }));
+            console.log('Payment confirmed, updated sales order data', salesOrderData);
           }
         }
       }
@@ -159,7 +163,10 @@ export default function OrderConfirmation() {
                                   eventId: event.eventId,
                                   salesOrderCode: salesOrderData.salesOrderCode,
                                   salesOrderId:salesOrderData.salesOrderId,
-                                  salesOrderStatus: orderSuccessStatus
+                                  salesOrderStatus: orderSuccessStatus,
+                                  salesOrderTotal : salesOrderData.salesOrderTotal || 0,
+                                  totalFees : salesOrderData.totalFees || 0,
+                                  platformFees : salesOrderData.platformFees || 0
                               });
                             }}
                             >

@@ -203,15 +203,15 @@ export default function TicketDetails() {
 
             <div className="flex justify-between">
               <span>Platform Fees:</span>
-              <span>${orderDetails?.platformFees.toFixed(2) || salesOrderData?.platformFees.toFixed(2) || '0.00'}</span>
+              <span>${orderDetails?.platformFees?.toFixed(2) || salesOrderData?.platformFees?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="flex justify-between">
               <span>Total Fees:</span>
-              <span>${orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees.toFixed(2) || '0.00'}</span>
+              <span>${orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="flex justify-between">
               <span>Sales Order Total:</span>
-              <span>${orderDetails?.salesOrderTotal.toFixed(2) || salesOrderData?.salesOrderTotal.toFixed(2) || '0.00'}</span>
+              <span>${orderDetails?.salesOrderTotal.toFixed(2) || salesOrderData?.salesOrderTotal?.toFixed(2) || '0.00'}</span>
             </div>
           </div>
          {/* Refund mode must be customer controlled (1)*/}

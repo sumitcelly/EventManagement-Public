@@ -96,7 +96,7 @@ namespace CreateTicketApi.Controllers
             try
             {
                 var retData = await _dbAccess.GetSalesOrderQrImage(orderId);
-                return Ok(new { SalesOrderQrCodeImage = retData.Item2, SalesOrderCode = retData.Item1 });
+                return Ok(retData);
             }
             catch (Exception ex)
             {
@@ -114,8 +114,11 @@ namespace CreateTicketApi.Controllers
 
             try
             {
-                var retData = await _dbAccess.GetSalesOrderPaymentStatus(orderId);
-                return Ok(new { Paid = retData.paid , SalesOrderCode = retData.SalesOrderCode, SalesOrderQrCodeImage = retData.QrImage });
+                _logger.LogInformation($"Retrieving sales order status for orderId: {orderId}");
+                 var data= (await _dbAccess.GetSalesOrderPaymentStatus(orderId));
+                 _logger.LogInformation($"Retrieved sales order status data for orderId: {data}");
+                 return Ok(data);
+                //return Ok(new { Paid = retData.paid , SalesOrderCode = retData.SalesOrderCode, SalesOrderQrCodeImage = retData.QrImage });
             }
             catch (Exception ex)
             {

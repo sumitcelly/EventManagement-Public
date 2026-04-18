@@ -65,8 +65,11 @@ export default function OrderPayment() {
           history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
             { paymentPending: false,
                salesOrderCode: salesData.data?.salesOrderCode, 
-               salesOrderQrCodeImage: salesData.data?.salesOrderQrCodeImage,
+               salesOrderQrCodeImage: salesData.data?.qrImage,
                salesOrderId: orderId,
+               salesOrderTotal: salesData.data?.salesOrderTotal,
+               platformFees: salesData.data?.platformFees,
+               totalFees: salesData.data?.totalFees,
                paymentNeeded:true
              });
         }

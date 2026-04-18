@@ -65,7 +65,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     const event: EventHeader = {
       eventId: eventDetails.eventId,
       eventName: eventDetails.eventName,
-      eventDate: new Date(eventDetails.eventDate),
+      eventDate: new Date(eventDetails.eventDate+"Z"),
       eventLocation: eventDetails.eventLocation,
       eventOrganizerId: eventDetails.eventOrganizerId,
       organizerStripeAccountId: organizerDetails?.stripeAccountId,

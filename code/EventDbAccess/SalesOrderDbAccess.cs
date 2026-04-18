@@ -304,7 +304,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<(string SalesOrderCode, string QrImageBase64)> GetSalesOrderQrImage(int orderId)
+        public async Task<SalesOrderPaymentStatus> GetSalesOrderQrImage(int orderId)
         {
             try
             {
@@ -313,7 +313,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT SalesOrderCode FROM salesorder WHERE OrderId = @orderId";
+                string query = "SELECT SalesOrderCode,SalesOrderTotal,PlatformFees,TotalFees FROM salesorder WHERE OrderId = @orderId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
@@ -321,21 +321,28 @@ namespace EventManagementDbAccess
             
                 using var reader = await cmd.ExecuteReaderAsync();
                 string salesOrderCode = string.Empty;
+                SalesOrderPaymentStatus paymentStatus;
                 if (await reader.ReadAsync())
                 {
-                 
-                    salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
-                                            reader.GetString(reader.GetOrdinal("SalesOrderCode"));
-                }
-                if (!string.IsNullOrEmpty(salesOrderCode))
-                {
-                    string qrImageBase64 = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode));
-                    return (salesOrderCode, qrImageBase64);
+                    paymentStatus = new SalesOrderPaymentStatus()
+                    {
+                        SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
+                        PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
+                        TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+
+                        SalesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
+                                        reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                        QrImage = !string.IsNullOrEmpty(salesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)) : string.Empty
+                    };
+                    
                 }
                 else
                 {
-                    return (salesOrderCode, string.Empty);
+                    throw new Exception($"Sales order for id {orderId} not found");
                 }
+                return paymentStatus;
+
+               
             }
             catch (Exception ex)
             {
@@ -344,7 +351,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async  Task<(bool paid, string SalesOrderCode, string QrImage)>  GetSalesOrderPaymentStatus(int orderId)
+        public async  Task<SalesOrderPaymentStatus>  GetSalesOrderPaymentStatus(int orderId)
         {
             try
             {
@@ -353,7 +360,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT SalesOrderCode, SalesOrderStatus FROM salesorder WHERE OrderId = @orderId";
+                string query = "SELECT SalesOrderCode, SalesOrderStatus,SalesOrderTotal,PlatformFees,TotalFees FROM salesorder WHERE OrderId = @orderId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
@@ -361,6 +368,7 @@ namespace EventManagementDbAccess
             
                 using var reader = await cmd.ExecuteReaderAsync();
                 SalesOrderStatus status = SalesOrderStatus.InProgress;
+                
                 if (await reader.ReadAsync())
                 {
                     int enumStatus = reader.GetInt32(reader.GetOrdinal("SalesOrderStatus"));
@@ -373,11 +381,29 @@ namespace EventManagementDbAccess
                                                 string.Empty:
                                                 reader.GetString(reader.GetOrdinal("SalesOrderCode"));
 
-                        return (true, salesOrderCode, !string.IsNullOrEmpty(salesOrderCode)?System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)):string.Empty);             
+                        return new SalesOrderPaymentStatus()
+                        {
+                            SalesOrderCode = salesOrderCode,
+                            SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
+                            PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
+                            TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+                            QrImage = string.IsNullOrEmpty(salesOrderCode)?string.Empty:
+                                            System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)),
+                            Paid = true,
+                        };
+                       
                     }
                     else
                     {
-                        return (false, string.Empty, string.Empty);
+                        return new SalesOrderPaymentStatus()
+                        {
+                            SalesOrderCode = string.Empty,
+                            SalesOrderTotal = 0,
+                            PlatformFees =0, 
+                            TotalFees = 0, 
+                            QrImage = string.Empty,
+                            Paid = false,
+                        };
                     }
                 }   
                 throw new Exception($"Sales order for id {orderId} not found");
