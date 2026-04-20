@@ -138,7 +138,7 @@ public class EmailUtils
             replacedSubject = tokenReplacer.ReplaceEventNameInSubject(emailContent.Item2,eventObj.EventName);
         }
         
-        await _sqsClient.QueueEmailMessage(
+        QueueResponse resp =await _sqsClient.QueueEmailMessage(
             _configuration.GetValue<string>("FromEmail") ?? string.Empty,//from config
             attendee.Email,
            replacedSubject,
@@ -151,6 +151,12 @@ public class EmailUtils
                 EmailType = "OrderConfirmation",           
             })
             );
+        
+        if (!resp.Success)
+        {
+            string status = resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry";
+            await _emailTransactionLogDbAccess.UpdateEmailTransactionLogStatus(order.OrderId, status, resp.Message);
+        }
 
         return true;
     }

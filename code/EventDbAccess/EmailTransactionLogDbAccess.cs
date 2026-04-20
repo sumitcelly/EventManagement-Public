@@ -42,7 +42,21 @@ namespace EventManagementDbAccess
             return Convert.ToInt32(result);
         }
 
-        /// <summary>
+        public async Task<bool> UpdateEmailTransactionLogStatus(int id, string status, string error)
+        {
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"UPDATE emailtransactionlog SET status = @status, errormessage=@error WHERE id = @id";
+            
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@status", status);
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.Parameters.AddWithValue("@error",error);
+            
+            var rowsAffected = await cmd.ExecuteNonQueryAsync();
+            return rowsAffected > 0;
+        }
+              /// <summary>
         /// Retrieves all email transaction logs for a specific sales order
         /// </summary>
         /// <param name="salesOrderId">The sales order ID to filter by</param>

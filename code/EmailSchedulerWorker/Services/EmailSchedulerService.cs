@@ -159,7 +159,7 @@ namespace EmailSchedulerWorker.Services
                     }
                     // At this point, we have recipients to process
                     ///At this point we have all the information to send the email.
-                                        foreach (var recipient in recipients)
+                    foreach (var recipient in recipients)
                     {
                         try
                         {                    
@@ -179,7 +179,7 @@ namespace EmailSchedulerWorker.Services
                                 Amazon Web Services
                             +3*/       
                                        
-                            await _sqsClient.QueueEmailMessage(
+                            QueueResponse resp= await _sqsClient.QueueEmailMessage(
                                _config["FromEmail"] ?? throw new Exception("Missing FromEmail configuration."),
                                 recipient.RecipientEmail,//"info@polkadotsandcurry.com",//attendee.Email,
                                 finalSubject,
@@ -189,7 +189,8 @@ namespace EmailSchedulerWorker.Services
                                 "Campaign");
                            
                             // Update recipient status to 'Queued'
-                            recipient.Status = "Queued";
+                            recipient.Status = resp.Success ? "Queued" : (resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry");
+                            recipient.ErrorMessage = resp.Success ? string.Empty : resp.Message;
                             recipient.LastAttemptedAt = DateTime.UtcNow;
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);
 
@@ -200,8 +201,8 @@ namespace EmailSchedulerWorker.Services
                             _logger.LogError(ex, $"Failed to queue email for Recipient ID: {recipient.Id}, Email: {recipient.RecipientEmail}");
 
                             // Update recipient status to 'Failed' and increment retry count
-                            recipient.Status = "Failed";
-                            recipient.RetryCount = (recipient.RetryCount ?? 0) + 1;
+                            recipient.Status = "QueuingFailure_NoRetry";
+                           // recipient.RetryCount = (recipient.RetryCount ?? 0) + 1;
                             recipient.LastAttemptedAt = DateTime.UtcNow;
                             recipient.ErrorMessage = ex.Message;
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);

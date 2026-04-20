@@ -336,7 +336,7 @@ namespace CreateTicketApi.Controllers
             {
                 RecipientEmail = email,
                 EmailType = "EmailVerification",
-                Status = "Created",
+                Status = "Queued",
                 CreatedAt = DateTime.UtcNow,
                 RefId = user?.UserId ?? 0,
             });
@@ -344,12 +344,18 @@ namespace CreateTicketApi.Controllers
             string content = tokenReplacer.ReplaceTokens(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(templateData.Item1)), values);
           
-            await _sqsHelper.QueueMessage(email,
+            QueueResponse resp =  await _sqsHelper.QueueMessage(email,
                 user?.Name ?? "User",
                 Convert.ToBase64String(Encoding.UTF8.GetBytes(content)),
                 tokenReplacer.ReplacePlatformNameInSubject(templateData.Item2),
                 id
                 );
+            
+            if (!resp.Success)
+            {
+                string status = resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry";
+                await _emailTransactionLogAccess.UpdateEmailTransactionLogStatus(id, status, resp.Message);
+            }
 
             return Ok(new {signupExists});
         }
