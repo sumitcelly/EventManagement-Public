@@ -159,6 +159,8 @@ namespace EmailSchedulerWorker.Services
                     }
                     // At this point, we have recipients to process
                     ///At this point we have all the information to send the email.
+                    /// 
+                    bool queueingFailure = false;
                     foreach (var recipient in recipients)
                     {
                         try
@@ -189,12 +191,14 @@ namespace EmailSchedulerWorker.Services
                                 "Campaign");
                            
                             // Update recipient status to 'Queued'
+                            queueingFailure = queueingFailure || resp.Retry;
                             recipient.Status = resp.Success ? "Queued" : (resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry");
                             recipient.ErrorMessage = resp.Success ? string.Empty : resp.Message;
                             recipient.LastAttemptedAt = DateTime.UtcNow;
                             await _emailRecipientsDbAccess.UpdateEmailRecipient(recipient);
-
-                            _logger.LogInformation($"Queued email for Recipient ID: {recipient.Id}, Email: {recipient.RecipientEmail}");
+                            
+                            if (resp.Success)
+                             _logger.LogInformation($"Queued email for Recipient ID: {recipient.Id}, Email: {recipient.RecipientEmail}");
                         }
                         catch (Exception ex)
                         {
@@ -211,12 +215,9 @@ namespace EmailSchedulerWorker.Services
                             //await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "Incomplete");
                         }
                     }
-                    // todo: what happens if some emails are queued and some fail? 
-                    // do we want to retry the failed ones in the next run?
-                    //  for now we will just mark the campaign as completed if we attempted to queue emails for all recipients,
-                    //  even if some failed.
+                   
                     //The errors should really only be from transient issues with SQS or the email service, so retrying in the next run should be sufficient.
-                    await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "Completed");
+                    await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, queueingFailure?"Incomplete": "Completed");
                 }
             }
             catch (Exception ex)

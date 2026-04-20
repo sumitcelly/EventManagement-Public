@@ -84,7 +84,7 @@ namespace EventManagementDbAccess
 
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id and status != 'Queued' and (retrycount is null or retrycount < 3)";
+            var query = "SELECT * FROM emailrecipients WHERE emailcampaignid = @id and status = 'Pending' or  status= 'QueuingFailure_Retry'";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@id", id);
             using var reader = await cmd.ExecuteReaderAsync();
