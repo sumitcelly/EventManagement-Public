@@ -139,7 +139,7 @@ public class EmailUtils
         }
         
         await _sqsClient.QueueEmailMessage(
-            _configuration.GetValue<string>("EmailTemplateValues:support_email") ?? string.Empty,//from config
+            _configuration.GetValue<string>("FromEmail") ?? string.Empty,//from config
             attendee.Email,
            replacedSubject,
             Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),

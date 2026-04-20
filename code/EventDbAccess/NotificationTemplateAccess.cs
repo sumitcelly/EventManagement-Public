@@ -92,16 +92,25 @@ namespace EventManagementDbAccess
                throw;
             }
         }
-        public async Task<Tuple<string, string>> GetTemplateById(int templateId)
+        public async Task<Tuple<string, string,bool>> GetTemplateById(int templateId)
         {
             if (templateId <= 0)
             {
                 throw new ArgumentNullException("templateId");
             }
 
+            List<EmailTemplate> templates= await GetDefaultTemplates();
+            if (templates?.Count>0)
+            {
+                var template = templates.FirstOrDefault(t => t.Id == templateId);
+                if (template != null)
+                {
+                    return new (template.TemplateContent, template.Subject,true);
+                }
+            }
             string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateId.ToString());
             Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
-            return templateData ?? throw new KeyNotFoundException($"template with id {templateId} not found.");
+            return new (templateData?.Item1 ?? string.Empty,templateData?.Item2 ?? string.Empty,false);
         }
 
         public async Task<Tuple<string, string>> GetTemplateByIdFromDb(int templateId)

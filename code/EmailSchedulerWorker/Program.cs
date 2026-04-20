@@ -28,9 +28,9 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<EmailTransactionLogDbAccess>();
         services.AddSingleton<SQSHelper>();
         services.AddDistributedMemoryCache();
-        //services.AddHostedService<EmailSchedulerService>();
+        services.AddHostedService<EmailSchedulerService>();
         //services.AddHostedService<OrderCleanupService>();
-        services.AddHostedService<EmailStatusUpdateService>();
+        //services.AddHostedService<EmailStatusUpdateService>();
        
     })
     .ConfigureLogging(logging =>

@@ -26,8 +26,6 @@ namespace EmailSchedulerWorker.Services
         private readonly int _pollIntervalSeconds;
 
         private readonly SQSHelper _sqsClient;
-
-        private readonly EventOrganizerDBAccess _organizerDBAccess;
         private readonly IServiceProvider _serviceProvider;
         public EmailSchedulerService(
             ILogger<EmailSchedulerService> logger,
@@ -150,7 +148,7 @@ namespace EmailSchedulerWorker.Services
                     }
                   
                     
-                    Tuple<string,string> templateData = await _templateAccess.GetTemplateById(campaign.TemplateId);
+                    Tuple<string,string,bool> templateData = await _templateAccess.GetTemplateById(campaign.TemplateId);
                     string emailTemplate = templateData.Item1;
                     string emailSubject = templateData.Item2;
                     if (string.IsNullOrWhiteSpace(emailTemplate))
@@ -161,13 +159,18 @@ namespace EmailSchedulerWorker.Services
                     }
                     // At this point, we have recipients to process
                     ///At this point we have all the information to send the email.
-                    
-                    foreach (var recipient in recipients)
+                                        foreach (var recipient in recipients)
                     {
                         try
                         {                    
                             OrderEmailDetails? orderEmailDetails =  emailSalesOrder?.Where(eso=>eso.SalesOrderId==recipient.SalesOrderId).FirstOrDefault();
-                            string content = GetEmailContentToSend(emailTemplate, eventHeader, eventOrganizer,orderEmailDetails);
+                           // If the template is marked as default (Item3 of the tuple), we will send the template content as is without token replacement.
+                           string finalEmailContent = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate));
+                           string finalSubject = emailSubject;
+                           if (templateData.Item3)
+                                (finalEmailContent, finalSubject) =  GetEmailContentToSend(emailTemplate,emailSubject,  eventHeader, eventOrganizer,orderEmailDetails);
+              
+
                             /*
                             Batching: Use SQS Action Batching to send up to 10 messages in a single API call from your worker to reduce costs and increase throughput.
                                 Visibility Timeout: Ensure your SQS Visibility Timeout is set longer than the time it takes to actually send the email to avoid duplicate sends.
@@ -177,11 +180,11 @@ namespace EmailSchedulerWorker.Services
                             +3*/       
                                        
                             await _sqsClient.QueueEmailMessage(
-                                "support@polkadotsandcurry.com",//from config
+                               _config["FromEmail"] ?? throw new Exception("Missing FromEmail configuration."),
                                 recipient.RecipientEmail,//"info@polkadotsandcurry.com",//attendee.Email,
-                                emailSubject,
-                                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(content)),
-                                orderEmailDetails?.FullName ?? string.Empty,
+                                finalSubject,
+                                Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(finalEmailContent)),
+                                string.Empty,
                                 recipient.Id,
                                 "Campaign");
                            
@@ -221,27 +224,35 @@ namespace EmailSchedulerWorker.Services
             }
         }
 
-        private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
+        private (string,string) GetEmailContentToSend(string emailTemplate, string subject, EventHeader eventHeader, EventOrganizer eventOrganizer,
                 OrderEmailDetails? orderEmailData)
-        {
+        {          
+            string eventDate = string.Empty,eventTime =string.Empty;
+            if (eventHeader.Latitude!=0 && eventHeader.Longitude!=0)
+            {
+                (eventDate, eventTime)= EventUtils.TimeZoneConverter.GetLocalDateTime((double)eventHeader.Latitude,(double) eventHeader.Longitude,eventHeader.EventDate);
+            }
            
             //(string date,string time)= EventUtils.TimeZoneConverter.GetLocalDateTime(eventHeader.la);
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
                 Attendee = orderEmailData?.FullName ?? "Attendee",
-                //EventDate = eventHeader.EventDate,
+                EventLocalDate = eventDate,
+                EventLocalTime = eventTime,
                 EventLocation = eventHeader.EventLocation,
+                VenueName = " ",
                 EventName = eventHeader.EventName,
                 EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
-                                    $"{_config["BaseUrl"]}/ticketdetatils/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString())}"
+                                    $"{_config["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString(),true)}"
                                     :string.Empty
             });
             
             var tokenReplacer = new EmailTokenReplacement(_config);
-            return tokenReplacer.ReplaceTokens(
-                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
+            string replacedSubject = tokenReplacer.ReplaceEventNameInSubject(subject,eventHeader.EventName);
+            return (tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values),replacedSubject);        
         }
 
     }
