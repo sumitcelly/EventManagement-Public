@@ -15,7 +15,8 @@ namespace CreateTicketApi.Controllers
 {
     public class TemplateContentRequest
     {
-        public string TemplateContent { get; set; }
+        public int TemplateId { get; set; }
+        //public string TemplateContent { get; set; }
     }
 
     [ApiController]
@@ -31,6 +32,8 @@ namespace CreateTicketApi.Controllers
 
         private readonly IConfiguration _configuration;
         private readonly SalesOrderDbAccess _salesOrderDbAccess;
+
+        
 
         public EmailCampaignController(ILogger<EmailCampaignController> logger, EmailCampaignDbAccess dbAccess,
          NotificationTemplateAccess templateAccess, EventOrganizerDBAccess eventOrganizerDBAccess,
@@ -81,17 +84,14 @@ namespace CreateTicketApi.Controllers
             {
                 return StatusCode(500, "Invalid event ID");
             }
-            if (string.IsNullOrEmpty(request?.TemplateContent))
+            if (request == null || request?.TemplateId == 0)
             {
-                return StatusCode(500, "Template content is required for resolving template ID");
+                return StatusCode(500, "Template ID is required for resolving template");
             }
 
             try
             {
-                //byte[] fileBytes = System.IO.File.ReadAllBytes(@"C:\temp\projects\eventmgmt\code\CreateTicketApi\Content\EventReminder5day.html");
-                //string base64String = Convert.ToBase64String(fileBytes);
-               //string rawContent = Encoding.UTF8.GetString(Convert.FromBase64String(request.TemplateContent));
-               //string rawContent = base64String;
+                
                EventHeader evt = await _eventDbAccess.GetEventHeaderById(eventId);
                if (evt == null)                {
                     return StatusCode(500, "Unable to find event for given event ID");
@@ -102,8 +102,9 @@ namespace CreateTicketApi.Controllers
                 {
                     return StatusCode(500, "Unable to find organizer for given event");
                 }
+                var retData= await _templateAccess.GetTemplateById(request.TemplateId);
                 OrderEmailDetails orderEmailData = await  _salesOrderDbAccess.GetSampleOrderEmailDetails(eventId);
-                string resolvedContent = GetEmailContentToSend(request?.TemplateContent, evt, organizer, orderEmailData);
+                string resolvedContent = GetEmailContentToSend(retData.Item1, evt, organizer, orderEmailData);
                 return Ok(Convert.ToBase64String(UTF8Encoding.UTF8.GetBytes(resolvedContent)));
              
             }
@@ -116,19 +117,27 @@ namespace CreateTicketApi.Controllers
         }
 
         private string GetEmailContentToSend(string emailTemplate, EventHeader eventHeader, EventOrganizer eventOrganizer,
-                OrderEmailDetails? orderEmailData)
+                OrderEmailDetails orderEmailData)
         {
+              string eventDate = string.Empty,eventTime =string.Empty;
+            if (eventHeader.Latitude!=0 && eventHeader.Longitude!=0)
+            {
+                (eventDate, eventTime)= EventUtils.TimeZoneConverter.GetLocalDateTime((double)eventHeader.Latitude,(double) eventHeader.Longitude,eventHeader.EventDate);
+            }
             var values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
             {
                 Attendee = orderEmailData?.FullName ?? "Attendee",
-                //EventDate = eventHeader.EventDate,
+                EventLocalDate = eventDate,
+                EventLocalTime = eventTime,
                 EventLocation = eventHeader.EventLocation,
                 EventName = eventHeader.EventName,
                 EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
-                EventTicketLink = orderEmailData?.SalesOrderId>0?
-                                    $"http://localhost:5173/ticketdetails/{WebUtility.UrlEncode(EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString()))}"
-                                    :string.Empty
+                QRCode = string.IsNullOrWhiteSpace(orderEmailData?.SalesOrderCode) ? "ABCDEFGH" : orderEmailData.SalesOrderCode,
+                GrandTotal = orderEmailData?.SalesOrderTotal >0 ? orderEmailData.SalesOrderTotal.ToString("C") : "$100.00",
+                VenueName= " ",
+                EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString(),true)}"
+
             });
             
             var tokenReplacer = new EmailTokenReplacement(_configuration);
@@ -215,16 +224,17 @@ namespace CreateTicketApi.Controllers
                 {
                     return StatusCode(500, "Invalid customer ID");
                 }
-               
+                if (emailCampaign == null || emailCampaign.EventId <=0 )
+                {
+                    return StatusCode(500, "Invalid campaign data. Please provide all required fields");
+                }
+              
                 //creating a new campaign
                 if (campaignId <= 0)
                 {
                     _logger.LogInformation($"No campaign id found. Processing new campaign.");
                     
-                    // if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
-                    // {
-                    //     return StatusCode(500,$"Please change name of template since it matches default template");
-                    // }
+
                     //new template as well. Should always be true for a new campaign
                     //unless at some point we add clone functionality for existing reminder templates
                     if (emailCampaign.TemplateContentChange)
@@ -275,26 +285,23 @@ namespace CreateTicketApi.Controllers
                         _logger.LogInformation($"default ids for templates are {string.Join(", ",defaultIds)}");   
                         if (defaultIds.Contains(emailCampaign.TemplateId))
                         {
-                            _logger.LogInformation("Default template being modifed {0}",emailCampaign.TemplateId);
-                            templateId = await _templateAccess.AddEmailTemplate(new EmailTemplate()
-                            {
-                                Subject = emailCampaign.Subject,
-                                TemplateContent = emailCampaign.TemplateContent,
-                                TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
-                                IsDefault= false,
-                                TemplateDescription=emailCampaign.Description
-                            });
-                            if (templateId <=0)
-                            {
-                                return StatusCode(500,"Error creating template for campaign");
-                            }
+                            return StatusCode(500,$"Default template cannot be modified. Please choose a different template or create a new campaign with changes to template");
+                            // _logger.LogInformation("Default template being modifed {0}",emailCampaign.TemplateId);
+                            // templateId = await _templateAccess.AddEmailTemplate(new EmailTemplate()
+                            // {
+                            //     Subject = emailCampaign.Subject,
+                            //     TemplateContent = emailCampaign.TemplateContent,
+                            //     TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
+                            //     IsDefault= false,
+                            //     TemplateDescription=emailCampaign.Description
+                            // });
+                            // if (templateId <=0)
+                            // {
+                            //     return StatusCode(500,"Error creating template for campaign");
+                            // }
                         }
                         else
                         {
-                            // if (NotificationTemplateAccess._defaultTemplateName.Contains(emailCampaign.EmailTemplateName))
-                            // {
-                            //     return StatusCode(500,$"Please change name of template since it matches default template");
-                            // }
                             await _templateAccess.UpdateEmailTemplate(new EmailTemplate()
                             {
                                 Id=templateId,

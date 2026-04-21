@@ -9,7 +9,8 @@ export interface ListMenuData{
     viewLink:string,
     editLink:string,
     editData?:any
-    delete:()=>void
+    delete:()=>void,
+    previewData?:()=>void
 }
 
 export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
@@ -34,9 +35,17 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
             View Details
           </DropdownItem>
         )}
+        {linkData.editLink && (
         <DropdownItem onClick={() => history.push(linkData.editLink, linkData?.editData)}>
           Edit
         </DropdownItem>
+        )}
+        
+        {linkData.previewData && (
+          <DropdownItem onClick={() => linkData?.previewData && linkData.previewData()}>
+            Preview
+          </DropdownItem>
+        )}
         <DropdownItem onClick={() => setOpenModal(true)}>
           Delete
         </DropdownItem>

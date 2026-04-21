@@ -239,9 +239,11 @@ namespace EventManagementDbAccess
     {
         public string FullName { get; set; } = string.Empty;
 
-        public int SalesOrderId { get; set; }
+        public int SalesOrderId { get; set; }=0;
 
         public string Email { get; set; } = string.Empty;
 
+        public string SalesOrderCode { get; set; } = string.Empty;
+        public decimal SalesOrderTotal { get; internal set; }
     }
 }

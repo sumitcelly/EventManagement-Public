@@ -7,18 +7,22 @@ import { RootState } from "../../app/store";
 import { Ticket } from "../../types/Tickets";
 import  ListMenu  from "../../components/ListMenu";
 import { ListMenuData } from "../../components/ListMenu";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { TeamMember } from "../../types/Teams";
 
 import toast, {Toaster} from "react-hot-toast";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import  Footer  from "../../components/Footer";
+import { RichTextEditorModal } from "../../components/RichTextEditorModal";
 // 
 
 
   
 export default function CampaignList() {
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewContent, setPreviewContent] = useState("");
+  
   const history = useHistory();
   const  user = useAppSelector((state:RootState) => state.auth);
 
@@ -76,6 +80,7 @@ export default function CampaignList() {
         res.data.map((temp:any)=>{
             campaigns.push({
               id:temp.id,
+              eventId: temp.eventId,
               templateId:temp.templateId,
               name:temp.name,
               isDefault: temp.isDefault,
@@ -101,6 +106,25 @@ export default function CampaignList() {
 
 
   if (isLoading) return <p>Loading...</p>;
+
+  async function  previewCampaign(campaignData: any) {
+   // throw new Error("Function not implemented.");
+   try {    
+        const result = await axiosClient.post(`/EmailCampaign/Resolve/${campaignData.eventId}`, {
+        templateId: campaignData?.templateId
+        });
+        console.log('Preview result from backend', result.data);
+        if (result && result.status === 200) {
+          console.log('Decoded preview content', atob(result.data));
+          setPreviewContent(atob(result.data));
+          setIsPreviewModalOpen(true);
+        }
+      } 
+      catch (error) {
+        console.error('Error previewing template:', error);
+        toast.error("Error previewing email template");
+    }
+  }
 
   return (
     <IonPage>
@@ -161,9 +185,10 @@ export default function CampaignList() {
                       <ListMenu
                         linkData={{
                           viewLink: "",
-                          editLink: `/ManageCampaign`,
+                          editLink:!campaign.isDefault? `/ManageCampaign`: '',
                           delete:()=>deleteCampaign(Number(campaign.id)),
-                          editData: campaign
+                          editData: campaign,
+                          previewData: campaign.isDefault ? () => { previewCampaign(campaign); } : undefined
                         }}
                       />
                     </div>
@@ -173,7 +198,13 @@ export default function CampaignList() {
     </div>
     
   </div>
-  
+    <RichTextEditorModal
+          modalTitle="Email Preview"
+          openModal={isPreviewModalOpen}
+          onClose={() => setIsPreviewModalOpen(false)}
+          onConfirm={() => setIsPreviewModalOpen(false)}
+          initialContent={previewContent}
+        />
   </div>
       <Footer/>
   </div>

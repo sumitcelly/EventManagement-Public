@@ -582,7 +582,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 //make sure to get valid salesorder status
-                string query = @"SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b 
+                string query = @"SELECT a.Email, a.FullName, b.OrderId,b.SalesOrderCode,b.SalesOrderTotal FROM eventuser a, salesorder b 
                                 WHERE b.EventId = @eventId and a.UserId=b.UserId   limit 1";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -595,10 +595,13 @@ namespace EventManagementDbAccess
                     {
                         Email = reader.GetString(reader.GetOrdinal("Email")),
                         FullName = reader.GetString(reader.GetOrdinal("FullName")),
-                        SalesOrderId = reader.GetInt32(reader.GetOrdinal("OrderId"))
+                        SalesOrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                        SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
+                        SalesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty: reader.GetString(reader.GetOrdinal("SalesOrderCode"))
                     };
                 }
-                throw new Exception($"Unable to retrieve order email details for event id {eventId}");
+                return new OrderEmailDetails();
+                
             }
             catch (Exception ex)
             {

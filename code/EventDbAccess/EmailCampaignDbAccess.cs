@@ -154,7 +154,7 @@ namespace EventManagementDbAccess
             var campaigns = new List<EmailCampaign>();
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"select a.Id, c.EventName, a.SendAt, a.Status, a.Name,a.Description,a.Enabled,
+            var query = @"select a.Id, c.EventName,c.EventId, a.SendAt, a.Status, a.Name,a.Description,a.Enabled,
                         b.templatename, b.Id as TemplateId, b.IsDefault  from 
                         emailcampaign a
                         JOIN notificationtemplates b ON a.TemplateId = b.id
@@ -168,6 +168,7 @@ namespace EventManagementDbAccess
                 campaigns.Add(new EmailCampaign
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    EventId = reader.IsDBNull(reader.GetOrdinal("EventId")) ? null : reader.GetInt32(reader.GetOrdinal("EventId")),
                     TemplateId = reader.GetInt32(reader.GetOrdinal("TemplateId")),
                     TemplateName = reader.GetString(reader.GetOrdinal("TemplateName")),   
                     Name= reader.GetString(reader.GetOrdinal("Name")),
