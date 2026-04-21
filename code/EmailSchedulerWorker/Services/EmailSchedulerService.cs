@@ -80,19 +80,29 @@ namespace EmailSchedulerWorker.Services
                 _logger.LogInformation($"Found {campaignList.Count} pending campaigns to process at {DateTime.UtcNow}.");
                 foreach (var campaign in campaignList)
                 {
-                    _logger.LogInformation($"Processing Email Campaign ID: {campaign.Id}, template ID {campaign.TemplateId}, eventID {campaign.EventId} ");
-                     if (campaign.Status == "Pending")
-                     {
-                        campaign.Status ="InProgress";
-                        await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, campaign.Status);
-                     }
-                    List<EmailRecipient> recipients = await _emailRecipientsDbAccess.GetEmailRecipientsByCampaignId(campaign.Id);
-                    _logger.LogInformation($"Found {recipients.Count} recipients for Campaign ID: {campaign.Id}");
-                    List<OrderEmailDetails> emailSalesOrder = [];
+                    _logger.LogInformation($"Processing Email Campaign ID: {campaign.Id}, template ID {campaign.TemplateId}, eventID {campaign.EventId} with status {campaign.Status}");
+                    
+                    await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "InProgress");
+                    List<EmailRecipient> recipients = new List<EmailRecipient>();
+                    if (campaign.Status == "Incomplete")
+                    {
+                        _logger.LogInformation($"Resuming processing of incomplete campaign ID: {campaign.Id}");
+                        recipients = await _emailRecipientsDbAccess.GetEmailRecipientsByCampaignId(campaign.Id);
+                        _logger.LogInformation($"Found {recipients.Count} recipients for Campaign ID: {campaign.Id}");
+                        if (recipients.Count == 0)
+                        {
+                            _logger.LogWarning($"No recipients found for incomplete Campaign ID: {campaign.Id}. Marking campaign as NoRecipients.");
+                            await _emailCampaignDbAccess.UpdateEmailCampaignStatus(campaign.Id, "NoRecipients");
+                            continue;
+                        }
+                    }                    
+                    
+                    campaign.Status ="InProgress";
 
+                    List<OrderEmailDetails> emailSalesOrder = [];
                     if (recipients.Count == 0)
                     {
-                        _logger.LogWarning(@$"No recipients found for Campaign ID: {campaign.Id}. 
+                        _logger.LogInformation(@$"No recipients found for Campaign ID: {campaign.Id}. 
                             Checking for event attendees for event ID {campaign.EventId}...");
                         if (campaign.EventId.HasValue)
                         {
