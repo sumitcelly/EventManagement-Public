@@ -150,36 +150,14 @@ export default function App() {
           <OrderReport/>:<LoginPage/>}
         />
       
-        <Route
-          path="/searchevents/keyword/:keyword?"
-           render={() =>
-            <SearchEvents/> 
-          }
-        /> 
+       
          <Route
-          path="/searchevents/location/:location?"
+          path="/searchevents/:keyword?/:location?"
            render={() =>
             <SearchEvents /> 
           }
         /> 
-         <Route
-          path="/searchevents/location/:location/keyword/:keyword"
-           render={() =>
-            <SearchEvents /> 
-          }
-        /> 
-         <Route
-          path="/searchevents/keyword/:keyword/location/:location"
-           render={() =>
-            <SearchEvents /> 
-          }
-        /> 
-         <Route
-          path="/searchevents"
-           render={() =>
-            <SearchEvents /> 
-          }
-        /> 
+      
         <Route path="/Auth/SendSecureCode/:returnUrl?"><SendSecureCode/></Route>
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" ><ValidateSecureCode/></Route>       
         <Route path="/Signup" render={() =>isAuthenticated?<SignupForm/>:<LoginPage/>}/>

@@ -8,7 +8,7 @@ export function EventCard({event}:
     {event: EventSearchResult}) {
     const ionRouter = useIonRouter();
     const history = useHistory();
-    console.log('card data',event);
+   // console.log('card data',event);
   return (
 
     <Card     

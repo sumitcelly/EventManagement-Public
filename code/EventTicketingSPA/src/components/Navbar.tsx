@@ -1,4 +1,3 @@
-
 import {
   Avatar,
   Dropdown,
@@ -51,7 +50,7 @@ const schema = yup
 export function AppNavbar() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = user?.role || "";
-  
+  //const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
  // const navigate = useNavigate();
@@ -81,18 +80,20 @@ export function AppNavbar() {
 
       console.log('insubmit',data,data.location,data.keyword);
       console.log("form errors", errors);
-      let queryParams = "";
-        if (!data.keyword && !data.location) return;
-      if (data.location) {
-        queryParams += `location/${encodeURIComponent(data.location)}`;
-      }
-      if (data.keyword) {
-        if (queryParams) queryParams += "/";
-        queryParams += `keyword/${encodeURIComponent(data.keyword)}`;
+     
+      if (!data.keyword && !data.location) return;
+      let queryParams = "?";
+      
+      queryParams += `keyword=${encodeURIComponent(data.keyword)}`;
+      
+     // if (data.location) {
+     {
+        queryParams += "&location=";
+        queryParams += `${encodeURIComponent(data.location)}`;
       }
       console.log(`/searchevents/${queryParams}`);
       //window.location.href =`/searchevents/${queryParams}`;
-      history.push(`/searchevents/${queryParams}`);
+      history.push(`/searchevents${queryParams}`);
     };
 
   const checkScannerAccess = () => {
@@ -105,7 +106,7 @@ export function AppNavbar() {
 
   return (
     <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md">
-      <NavbarBrand href="https://flowbite-react.com">
+      <NavbarBrand href="/login">
         <img src="/vite.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">EventsNow</span>
       </NavbarBrand>
@@ -153,7 +154,12 @@ export function AppNavbar() {
       </button>
 
       {/*hidden on small screens, visible on medium and larger*/}
-      
+      {/* <form className="relative w-full md:ml-auto md:w-1/3"
+      onSubmit={handleSubmit(
+        //console.log("address", fullAddress),
+  (data) => console.log("submit fired!", data),
+  (errors) => console.log("validation errors", errors)
+)}> */ }
     <form onSubmit={ handleSubmit(onSubmit)} className="relative w-full md:ml-auto md:w-1/3" >
       {/*desktop version*/}
       <div className="relative hidden md:block ml-auto">
@@ -168,7 +174,8 @@ export function AppNavbar() {
           
           {...register("location")}
             className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
-            placeholder="Location..."/>
+            placeholder="Location..."
+            title="Enter city, state (e.g., Colorado Springs, CO) or just state (e.g., CO)"/>
           <button type="submit"  
           className="p-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
             <svg className="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">

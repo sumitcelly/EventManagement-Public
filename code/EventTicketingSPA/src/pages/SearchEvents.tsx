@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "react-query";
 import axiosClient from "../api/axiosClient";
 import { Link } from "react-router-dom";
 import { EventCard } from "../components/Card";
@@ -32,22 +32,29 @@ console.log("SearchEvents rendered");
 const pageSize =5;
 export default function EventsPage() {
    
-    const { keyword: paramKeyword, location: paramLocation } = useParams<{ keyword?: string; location?: string }>();
-    const keyword = paramKeyword ?? "";
-    const location = paramLocation ?? "";
+    const params = new URLSearchParams(location.search);
+    const eventlocation = params.get("location") || "";
+    const keyword = params.get("keyword") || "";
+    console.log('location and keyword',eventlocation,keyword);
     let state = "";
     let city="";
-    console.log('location and keyword',location,keyword);
-    if (location.length == 2)
-      state = location;
-    if (location.includes(',')) {
-      city =  location.split(',')[0].trim();
-      state = location.split(',')[1].trim();
+ 
+    if (eventlocation.length == 2)
+      state = eventlocation;
+    else if (eventlocation.includes(',')) {
+      city =  eventlocation.split(',')[0].trim();
+      state = eventlocation.split(',')[1].trim();
     }
+    else
+    {
+      city = eventlocation;
+    }
+    console.log('keyword,city and state',keyword, city,state);
+    
 
-    console.log('city and state',city,state);
 
     const fetchEvents = async ({ pageParam = null }) => {
+      console.log("Fetching events with params", { keyword, city, state, pageParam });
       const res = await axiosClient.get("/events/search", {
         params: {
           keyword,
@@ -57,14 +64,8 @@ export default function EventsPage() {
           cursor: pageParam, // null on first load, lastEventDate on subsequent
         },
       });
-        console.log("SearchEvents completed res", res.data);
-        if (res.data && res.data.length > 0)
-        {
-          // res.data.forEach((e: EventSearchResult) => 
-          // {
-          //   e.eventImageUrl = "/images/concert.jpg";
-          // });
-        }
+       console.log("SearchEvents completed res");
+      
       return res.data;
     };
 
@@ -76,18 +77,22 @@ export default function EventsPage() {
         isLoading
       } = useInfiniteQuery(["events", keyword, location], fetchEvents, {
         getNextPageParam: (lastPage) => {
-        if (lastPage.length < pageSize) return undefined; // no more results
+        if (lastPage.length < pageSize){
+          console.log("No more pages to fetch");
+          return undefined; // no more results
+        } 
        
+        console.log("Next page param (last event date)", lastPage[lastPage.length - 1].eventDate);
         return lastPage[lastPage.length - 1].eventDate; // 👈 use cursor
-      },staleTime: 1000 * 60 * 5
+      },
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: 'always',
+      refetchOnReconnect: 'always',
+
+      //staleTime: 0,
+      staleTime: 1000 * 60 * 5
     });
-    //const { data, isLoading } = useQuery(["searchevents", keyword, location, currentPage], getData,  { staleTime: 1000 * 60 });
-    
-    // useEffect(() => {
-    // if (data && data.length > 0 && currentPage === 1) {
-    //   setTotalItems(data.length);
-    // }
-    // }, [data, currentPage]);
+  
     
     if (isLoading) return <p>Loading...</p>;
 
