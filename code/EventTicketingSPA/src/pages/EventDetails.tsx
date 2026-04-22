@@ -33,9 +33,19 @@ export default function EventDetails() {
     }
     else
     {
-      const res = await axiosClient.get(`/events/details/${customerName}/${eventName}`);
-      console.log('Event details from backend', res?.data);
-      return res.data;
+      try {
+        const res = await axiosClient.get(`/events/details/${customerName}/${eventName}`);
+        if (!res || res.status !== 200 || !res.data) {
+          console.error('Failed to fetch event details:', res);
+          return null;
+        }
+        console.log('Event details from backend', res?.data);
+        return res.data;
+      } catch (error) {
+        console.error('Error fetching event details:', error);
+        return null; // Rethrow to let react-query handle it
+      }
+
     }
   },
   {
@@ -86,7 +96,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
 
   if (!eventDetails)
   {
-  return <p>Unable to locate event</p>
+    return <p>Unable to locate event</p>
   }
   
   const handleCopy = async (e:any) => {

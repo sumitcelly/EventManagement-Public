@@ -50,6 +50,7 @@ const schema = yup
 export function AppNavbar() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = user?.role || "";
+
   //const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
@@ -106,7 +107,7 @@ export function AppNavbar() {
 
   return (
     <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md">
-      <NavbarBrand href="/login">
+      <NavbarBrand href="/">
         <img src="/vite.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">EventsNow</span>
       </NavbarBrand>

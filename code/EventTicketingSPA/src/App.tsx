@@ -76,6 +76,7 @@ export default function App() {
         {/* No idea why adding it at beginning works. If put at end, then I always see Myevents page for 
         any route. Tooke me a day. I would expect it be other way*/}
         <Route
+          exact
           path="/"
            render={() =>
            {
@@ -88,6 +89,7 @@ export default function App() {
            }
           }
         />
+      
         <Route
           path="/login"
            render={() =>
@@ -134,12 +136,14 @@ export default function App() {
             <CampaignAdd />  : <LoginPage />
           }
         />
-        <Route
-          path="/eventdetails/:customerName/:eventName"
-           render={() =>
-            <EventDetails /> 
-          }
-        />
+
+          <Route
+            path="/eventdetails/:customerName/:eventName"
+            render={() =>
+              <EventDetails /> 
+            }
+          />
+   
          <Route
           path="/refundorder"
            render={() => isAuthenticated? <RefundOrder /> : <LoginPage />
@@ -150,14 +154,13 @@ export default function App() {
           <OrderReport/>:<LoginPage/>}
         />
       
-       
-         <Route
+        <Route
           path="/searchevents/:keyword?/:location?"
            render={() =>
-            <SearchEvents /> 
+            <SearchEvents  /> 
           }
         /> 
-      
+
         <Route path="/Auth/SendSecureCode/:returnUrl?"><SendSecureCode/></Route>
         <Route path="/Auth/ValidateSecureCode/:returnUrl?" ><ValidateSecureCode/></Route>       
         <Route path="/Signup" render={() =>isAuthenticated?<SignupForm/>:<LoginPage/>}/>
