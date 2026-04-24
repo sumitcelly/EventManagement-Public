@@ -24,6 +24,22 @@ public class StripeAccess
 
     private static string WebhookSecret { get; set; }
 
+    public static readonly Dictionary<string, string> EventCategoryTaxMapping = new Dictionary<string, string>
+    {
+        { "General Event", "txcd_50010001" },
+        { "Nightclub or Bar Event", "txcd_50013002" },
+        { "Museum or Art Gallery", "txcd_50011003" },
+        { "Conference or Workshop", "txcd_50013001" },
+        { "Sporting Event", "txcd_50012001" },
+        {"Concert or Live Performance", "txcd_50010003" }
+        // Add more mappings as needed
+    };
+
+    public static readonly string _defaultTicketTaxCode = "txcd_50010001"; // Default tax code if category is not found
+    
+    public static readonly string _serviceTaxCode = "txcd_20030000"; // Tax code for service fees
+
+    public static readonly string _defaultMechandiseTaxCode = "txcd_99999999"; // Default tax code for merchandise
 
     public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<StripeAccess> logger)
     {
@@ -279,22 +295,35 @@ public class StripeAccess
     /// <returns>Tuple containing client secret to be used by UI (Item1) and
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Tuple<string, string>> CreateCheckoutSession(int salesOrderId, string stripeAccountID, int eventId,
-                                            List<PaymentLineItemModel> lineItems,
-                                             string customerEmailAddress="",
-                                             bool passOnAllFeesToCustomer = false)
+    public async Task<Tuple<string, string>> CreateCheckoutSession(string stripeAccountID, PaymentModel paymentModel,
+                                                                string customerEmailAddress="", bool passOnAllFeesToCustomer = false)
     {
+        
         if (string.IsNullOrEmpty(stripeAccountID))
         {
             throw new ArgumentException("Stripe customer ID cannot be null or empty.", nameof(stripeAccountID));
         }
-        if (lineItems == null || lineItems.Count == 0)
+        if (paymentModel == null || paymentModel.LineItems == null || paymentModel.LineItems.Count == 0)
         {
-            throw new ArgumentException("Line items cannot be null or empty.", nameof(lineItems));
+            throw new ArgumentException("payment model or line items cannot be null or empty.", nameof(paymentModel));
         }
 
-        long appFees = CalculatePlatformFee(lineItems);
-        long totalItemsUnitPrice = (long)lineItems.Sum(item => item.Price * item.Quantity * 100);
+        if (string.IsNullOrWhiteSpace(paymentModel.EventStreetAddress) || string.IsNullOrWhiteSpace(paymentModel.EventCity) || string.IsNullOrWhiteSpace(paymentModel.EventState) || string.IsNullOrWhiteSpace(paymentModel.EventPostalCode))
+        {
+            _logger.LogError($"Event address information is incomplete for event id {paymentModel.EventId}. Street: {paymentModel.EventStreetAddress}, City: {paymentModel.EventCity}, State: {paymentModel.EventState}, PostalCode: {paymentModel.EventPostalCode}.");
+            throw new ArgumentException("Event address information is incomplete. Please provide complete address information for the event.");
+        }
+
+        if (string.IsNullOrWhiteSpace(paymentModel.EventCategory))
+        {
+            _logger.LogWarning($"Event category is not provided for event id {paymentModel.EventId}. Default tax code {_defaultTicketTaxCode} will be applied.");        
+        }
+
+        string ticketTaxCode = EventCategoryTaxMapping.ContainsKey(paymentModel.EventCategory) ? EventCategoryTaxMapping[paymentModel.EventCategory] : _defaultTicketTaxCode;
+        _logger.LogInformation($"Tax code {ticketTaxCode} will be applied for event category {paymentModel.EventCategory} and event id {paymentModel.EventId}.");
+        
+        long appFees = CalculatePlatformFee(paymentModel.LineItems);
+        long totalItemsUnitPrice = (long)paymentModel.LineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
         long finalTotal=0, totalFeesForTrans=0;
         if (passOnAllFeesToCustomer)
@@ -310,19 +339,20 @@ public class StripeAccess
         
         _logger.LogInformation($"Fees after stripe calculation is {finalTotal} {totalFeesForTrans}");
 
-        _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {lineItems.Count} line items.");
+        _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {paymentModel.LineItems.Count} line items.");
         var options = new SessionCreateOptions
         {
-            ReturnUrl = _paymentReturnUrl.Replace("event_id", eventId.ToString()).Replace("order_Id", salesOrderId.ToString()),
+            ReturnUrl = _paymentReturnUrl.Replace("event_id", paymentModel.EventId.ToString()).Replace("order_Id", paymentModel.SalesOrderId.ToString()),
             PaymentMethodTypes = new List<string>
             {
               "card"
             
             },
+            
             Metadata = new Dictionary<string, string>
             {
-                { "SalesOrderId", salesOrderId.ToString() },
-                { "EventId", eventId.ToString() },
+                { "SalesOrderId", paymentModel.SalesOrderId.ToString() },
+                { "EventId", paymentModel.EventId.ToString() },
                 { "PlatformFees", appFees.ToString() },
                 { "TotalFeesForTransaction", totalFeesForTrans.ToString() },
                 { "PassOnAllFeesToCustomer", passOnAllFeesToCustomer.ToString() }
@@ -336,22 +366,34 @@ public class StripeAccess
             UiMode = "embedded"
 
         };
-        options.ClientReferenceId = salesOrderId.ToString();
+        options.AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true };
+
+        options.ClientReferenceId = paymentModel.SalesOrderId.ToString();
         options.LineItems = new List<SessionLineItemOptions>();
-        foreach (var item in lineItems)
+
+        foreach (var item in paymentModel.LineItems)
         {
-            options.LineItems.Add(new Stripe.Checkout.SessionLineItemOptions
+            options.LineItems.Add(new SessionLineItemOptions
             {
-                PriceData = new Stripe.Checkout.SessionLineItemPriceDataOptions
+                PriceData = new SessionLineItemPriceDataOptions
                 {
                     Currency = "usd",
-                    ProductData = new Stripe.Checkout.SessionLineItemPriceDataProductDataOptions
+                    
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
+                        
                         Name = item.Description,
+                        
+                        //use mechandise tax code for add on items since they are not event admission tickets, this is to handle the case where an order has both tickets and add on items
+                        TaxCode = item.IsAddOn ? _defaultMechandiseTaxCode: ticketTaxCode
                     },
                     UnitAmount = (long)(item.Price * 100), // Convert to cents
                 },
                 Quantity = item.Quantity,
+                
+                
+                
+
 
             });
         }
@@ -360,7 +402,7 @@ public class StripeAccess
             PriceData = new SessionLineItemPriceDataOptions {
                 UnitAmount = finalTotal - totalItemsUnitPrice, // The remaining "Service Fee" (approx $1.95)
                 Currency = "usd",
-                ProductData = new SessionLineItemPriceDataProductDataOptions { Name = "Service Fee" }
+                ProductData = new SessionLineItemPriceDataProductDataOptions { Name = "Service Fee" , TaxCode = _serviceTaxCode} // Tax code for service fees
             },
             Quantity = 1
         });
@@ -517,3 +559,4 @@ public class StripeWebHookAccount
 
     public int CustomerId { get; set; }
 }
+

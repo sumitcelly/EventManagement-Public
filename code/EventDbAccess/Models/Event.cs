@@ -75,7 +75,7 @@ namespace EventManagementDbAccess
         public required string ZipCode { get; set; }
 
 
-        public string Country { get; set; } = "USA";
+        public string Country { get; set; } = "US";
    
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

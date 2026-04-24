@@ -242,7 +242,22 @@ public class SalesOrderConductor
             }
             else
             {
+                Event eventData = await _eventDbAccess.GetEventDetailsById(customerSalesOrder.EventId);   
+                if (eventData == null)
+                    throw new Exception("Invalid event Id sent");
+                PaymentModel paymentModel = new PaymentModel
+                {
+                    EventId = eventData.EventId,
+                    SalesOrderId = salesOrder.OrderId,
+                    EventStreetAddress = eventData.StreetAddress,
+                    EventCity = eventData.City,
+                    EventPostalCode = eventData.ZipCode,
+                    EventState = eventData.State,
+                    EventCountry = eventData.Country,
+                    EventCategory = eventData.Category
+                };
                 List<EventItemType> itemTypes = await _eventItemTypeDbAccess.GetAllEventItemTypesByEventId(salesOrder.EventId);
+             
                 List<PaymentLineItemModel> checkoutItems = [];
                 //sending an item to stripe even if 0 cost since the some items are free and some are paid in the order.
                 foreach (var item in customerSalesOrder.SalesOrderItems)
@@ -258,11 +273,10 @@ public class SalesOrderConductor
                     });
                     
                 }
-                EventHeader eventData = await _eventDbAccess.GetEventDetailsById(customerSalesOrder.EventId);   
-                if (eventData == null)
-                    throw new Exception("Invalid event Id sent");
-                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(orderId, customerSalesOrder.StripeConnectedAccountId,
-                                                    customerSalesOrder.EventId, checkoutItems, 
+                paymentModel.LineItems = checkoutItems ?? new List<PaymentLineItemModel>();
+              
+                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(customerSalesOrder.StripeConnectedAccountId,
+                                                    paymentModel,
                                                     customerSalesOrder.EmailAddress, 
                                                     eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;

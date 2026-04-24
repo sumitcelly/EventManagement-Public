@@ -1,0 +1,138 @@
+Standard stripe onboarding where onboarding happens with stripe with the
+platform being hands off , offloads a lot of responsibility to Stripe.
+
+1. check for charges_enabled from account update event for the green light to
+sell. detail_submitted is not necessary or pre mature.
+	also make sure that anytime events page is shown, this status is checked
+	for the customer's stripe connection because it could change.
+2. 
+Need to send event location address and tax code in checkout session create call
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  line_items: [
+    {
+      price: 'price_H5v65v', // Your ticket price ID
+      quantity: 1,
+      tax_code: 'txcd_20030000', // General Services code
+      // Provide the event address right here
+      product_data: {
+        tax_details: {
+          performance_location: {
+            address: {
+              line1: '123 Event Way',
+              city: 'Denver',
+              state: 'CO',
+              postal_code: '80202',
+              country: 'US',
+            },
+          },
+        },
+      },
+    },
+  ],
+  automatic_tax: { enabled: true },
+}, {
+  stripeAccount: 'acct_organizer_id', // The connected Standard account
+});
+
+Need these as event categories
+
+Concert or Live Performance (Maps to: txcd_50010003)
+Sporting Event (Spectator) (Maps to: txcd_50012001)
+Conference or Workshop (Maps to: txcd_50013001)
+Museum or Art Gallery (Maps to: txcd_50011003)
+Nightclub or Bar Event (Maps to: txcd_50013002)
+General Event (Maps to: txcd_50010001) 
+
+
+"Is this a pure donation?" or "Is this a tax-exempt charitable event?"
+Donation/charity:
+txcd_00000000
+Checkbox: "Is this a tax-exempt charitable event?"
+Instruction: "To enable tax-exempt sales, you must provide your non-profit credentials in your 
+Stripe Dashboard settings under 'Tax details'."
+Validation: Use the Stripe API to check if the connected account’s tax_exempt status is set to 
+exempt before you allow them to toggle the "Charity" category on your site.
+
+We will have to ask the user if it is a item or ticket?
+for selling items, the tax code is
+ txcd_99999999 (For t-shirts, hats, or physical kits).
+ txcd_30010001 Use this for alcohol)
+ txcd_30060001 ( for meal kit)
+ 
+
+More adavanced later:
+Movie / Film Screening (txcd_50010002)
+Amusement Park or Fair (txcd_50011001 / txcd_50011004)
+Participatory Sports (e.g., 5K run, Golf tourney) (txcd_50012002)
+Zoo or Botanical Garden (txcd_50011003)
+
+calculate stripe tax with api before checkout session:
+this costs .05 per call  huh!
+var service = new Tax.CalculationService();
+var options = new Tax.CalculationCreateOptions
+{
+    Currency = "usd",
+    LineItems = new List<Tax.CalculationLineItemOptions>
+    {
+        new Tax.CalculationLineItemOptions
+        {
+            Amount = 5000, // $50.00 base price
+            Reference = "ticket_123",
+            TaxCode = "txcd_50010003", // Concert category
+        }
+    },
+    CustomerDetails = new Tax.CalculationCustomerDetailsOptions
+    {
+        // Use the customer's zip code if you have it, 
+        // or just the event's location for the preview
+        Address = new AddressOptions { 
+            PostalCode = "80202", // Denver
+            Country = "US" 
+        }
+    }
+};
+
+// This gives you the preview!
+var calculation = service.Create(options);
+long taxAmount = calculation.TaxAmount; // The exact tax in cents
+
+do this in checkout and it is free
+var options = new SessionCreateOptions
+{
+    // ... basic session settings ...
+    LineItems = new List<SessionLineItemOptions>
+    {
+        new SessionLineItemOptions
+        {
+            PriceData = new SessionLineItemPriceDataOptions
+            {
+                UnitAmount = 10000, // $100.00
+                TaxCode = "txcd_50010003", // Concert category
+                // ... product data ...
+            },
+            Quantity = 1,
+            
+            // THIS IS THE KEY PART
+            ProductData = new SessionLineItemProductDataOptions
+            {
+                TaxDetails = new SessionLineItemProductDataTaxDetailsOptions
+                {
+                    PerformanceLocation = new SessionLineItemProductDataTaxDetailsPerformanceLocationOptions
+                    {
+                        Address = new AddressOptions
+                        {
+                            Line1 = "123 Venue Street",
+                            City = "Denver",
+                            State = "CO",
+                            PostalCode = "80202",
+                            Country = "US",
+                        },
+                    },
+                },
+            },
+        },
+    },
+    AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true },
+};
+

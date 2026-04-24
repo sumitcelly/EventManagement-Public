@@ -28,6 +28,7 @@ const eventSchema = yup.object({
       return  new Date(value) >= new Date();
       
     }),
+  eventCategory: yup.string().required("Event category is required"),
   fullAddress: yup.string().required("Event address is required"),
   eventDuration: yup.number().required("Event duration is required").
   min(1, "Duration cannot be 0.")
@@ -64,6 +65,7 @@ type FormValues = {
   eventUrlName: string;
   eventStartDate: string;
   eventDuration: number;
+  eventCategory: string; 
   description: string;
   headline: string | null; // <-- allow undefined
   tagList?: string[];
@@ -118,7 +120,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       eventLocation: res.data.eventLocation,
       isLive: res.data?.isLive || false,
       eventOrganizerId: res.data.organizerId,
-      eventBannerUrl: res.data.eventBannerUrl
+      eventBannerUrl: res.data.eventBannerUrl,
+      eventCatergory: res.data.Category
      // eventUrlName: res.data.eventUrlName
     }
     //console.log("event date for basic info", eventBasicInfo.eventDate);
@@ -148,6 +151,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
     defaultValues: {
       tagList: eventDetails?.tags || [],
       fullAddress: eventDetails?.eventLocation || "",
+      eventCategory: eventDetails?.Category || "",
       lat: eventDetails?.latitude || 0,
       lng: eventDetails?.longitude || 0,
       street: eventDetails?.streetAddress || "",
@@ -199,6 +203,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       eventDate:new Date(data.eventStartDate).toISOString(),
       duration: data.eventDuration,
       eventLocation: data.fullAddress,
+      category: data.eventCategory,
       //use the organizer if from redux (for existing event) or user's id for new event
       eventOrganizerId: eventCache?.eventOrganizerId || user?.customerId,
       isLive: eventCache?.isLive || false,
@@ -416,11 +421,13 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
             className="border rounded p-2"
             placeholder="Select event date and time"
           />
-          {errors.eventStartDate && (
-            <p className="text-red-600 text-sm mt-1">
-              {errors.eventStartDate.message}
-            </p>
-          )}
+           <div className="min-h-[20px]">
+            {errors.eventStartDate && (
+              <p className="text-red-600 text-sm mt-1">
+                {errors.eventStartDate.message}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex flex-col space-y-1">
           <label className="ml-auto font-semibold mb-1">Duration (hrs)</label>
@@ -439,6 +446,21 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
           )}
           </div>
         </div>
+      </div>
+      
+      <div className="space-y-1">
+        <label className="font-semibold mb-1">Event Category</label>
+        <select
+          {...register("eventCategory")}
+          className="w-full border rounded p-2"
+        >
+          <option value="General Event">General Event</option>
+          <option value="Museum or Art Gallery">Museum or Art Gallery</option>
+          <option value="Conference or Workshop">Conference or Workshop</option>
+          <option value="Sporting Event">Sporting Event</option>
+          <option value="Concert or Live Performance">Concert or Live Performance</option>
+          <option value="Nightclub or Bar Event">Nightclub or Bar Event</option>
+        </select>
       </div>
       
        <div className="space-y-1">

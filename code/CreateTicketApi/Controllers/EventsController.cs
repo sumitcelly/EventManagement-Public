@@ -252,7 +252,7 @@ namespace CreateTicketApi.Controllers
         [Authorize(Policy = "EventOwnedByCustomer")]
         public async Task<IActionResult> UpdateEvent(int eventId, [FromBody] Event evt)
         {
-            Console.WriteLine($"event id {eventId} and event {evt} received for update");
+            Console.WriteLine($"event id {eventId} and event {evt.Category} received for update");
             if (evt == null || eventId != evt.EventId)
                 return BadRequest("Invalid event or ID mismatch.");
             bool result = await _EventDbAccess.UpdateEvent(evt);

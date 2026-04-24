@@ -454,11 +454,11 @@ namespace EventManagementDbAccess
       string query = @"INSERT INTO Events 
             (EventName,EventUrlName,EventHeadline, EventDescription, EventDate, Duration,
             EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
-            Latitude,Longitude,StreetAddress,City,State,ZipCode,
+            Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory
             CreatedAt) 
             VALUES (@name,@eventUrlName,@headline, @desc, @date, @duration,
              @organizer, @location, @agenda, @tags, @isLive, @isPrivate,
-             @lat,@long,@streetAddress, @city, @state, @zipCode, @createdAt)";
+             @lat,@long,@streetAddress, @city, @state, @zipCode, @eventCategory, @createdAt)";
 
       using var cmd = new MySqlCommand(query, connection);
       cmd.Parameters.AddWithValue("@name", evt.EventName);
@@ -482,6 +482,7 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@state", evt.State);
       cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
 
+      cmd.Parameters.AddWithValue("@eventCategory",evt.Category);
       cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -626,6 +627,7 @@ namespace EventManagementDbAccess
             ZipCode =@zipCode,
             IsLive = @isLive,
             Private = @isPrivate,
+            EventCategory = @eventCategory,
             ModifiedAt = @modifiedAt
             WHERE EventId = @eventId";
 
@@ -652,6 +654,7 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@state", evt.State);
       cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
       cmd.Parameters.AddWithValue("@eventId", evt.EventId);
+      cmd.Parameters.AddWithValue("@eventCategory",evt.Category);
       cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();

@@ -190,28 +190,30 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("Invalid sales order ID or payment request.");
             }
 
-            try
-            {
-                var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId,eventId, request);
-                //todo: update session id , order status, in db
-                if (result == null || string.IsNullOrEmpty(result.Item1) || string.IsNullOrEmpty(result.Item2))
-                {
-                    return StatusCode(500, "Payment processing failed.");
-                }
-                else
-                {
-                    _logger.LogInformation($"Payment session ID {result.Item2} created  successfully for sales order ID {salesOrderId}.");
-                    // Update the sales order with the Stripe session ID
-                    await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(salesOrderId, SalesOrderStatus.Reserved, result.Item2);
-                    return Ok(result.Item1);
-                }
+            return Ok("This endpoint is not used currently. Please use the checkout session created in SalesOrderConductor to start the payment process.");
+
+            // try
+            // {
+            //     var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId,eventId, request);
+            //     //todo: update session id , order status, in db
+            //     if (result == null || string.IsNullOrEmpty(result.Item1) || string.IsNullOrEmpty(result.Item2))
+            //     {
+            //         return StatusCode(500, "Payment processing failed.");
+            //     }
+            //     else
+            //     {
+            //         _logger.LogInformation($"Payment session ID {result.Item2} created  successfully for sales order ID {salesOrderId}.");
+            //         // Update the sales order with the Stripe session ID
+            //         await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(salesOrderId, SalesOrderStatus.Reserved, result.Item2);
+            //         return Ok(result.Item1);
+            //     }
                 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Stripe charge failed.");
-                return StatusCode(500, "Payment processing failed.");
-            }
+            // }
+            // catch (Exception ex)
+            // {
+            //     _logger.LogError(ex, "Stripe charge failed.");
+            //     return StatusCode(500, "Payment processing failed.");
+            // }
         }
         
         [HttpPost]
