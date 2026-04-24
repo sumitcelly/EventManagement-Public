@@ -56,7 +56,7 @@ namespace EventManagementDbAccess
 
         public string Category { get; set; } = string.Empty;
 
-
+        public string LocationId {get; set;} = string.Empty;
         public string SubCategory { get; set; } = string.Empty;
 
         public string Tags { get; set; } = string.Empty;

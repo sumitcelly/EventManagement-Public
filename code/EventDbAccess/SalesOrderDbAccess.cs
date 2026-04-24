@@ -184,7 +184,8 @@ namespace EventManagementDbAccess
       
 
         public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId, string paymentIntentId, decimal salesTotal,
-                                                decimal platformFees, decimal totalFeesForTrans)
+                                                decimal platformFees, decimal totalFeesForTrans,
+                                                decimal salesTax)
         {
             if (salesOrderId < 0 && String.IsNullOrEmpty(stripeSessionId))
                 throw new ArgumentException("Either salesOrderId or stripeSessionId must be provided.");
@@ -200,7 +201,8 @@ namespace EventManagementDbAccess
                                 PaymentIntentId= @paymentIntentId,
                                 SalesOrderTotal = @salesTotal,
                                 PlatformFees = @platformFees,
-                                TotalFees = @totalFeesForTrans
+                                TotalFees = @totalFeesForTrans,
+                                SalesTax=@salesTax
                             WHERE OrderId = @orderId";
             }
             else
@@ -212,7 +214,8 @@ namespace EventManagementDbAccess
                                 PaymentIntentId= @paymentIntentId,
                                 SalesOrderTotal = @salesTotal,
                                 PlatformFees = @platformFees,
-                                TotalFees = @totalFeesForTrans
+                                TotalFees = @totalFeesForTrans,
+                                SalesTax=@salesTax
                             WHERE StripeSessionId = @stripeSessionId";
             }       
             using var connection = new MySqlConnection(ConnectionString);
@@ -229,6 +232,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@salesTotal", salesTotal);
                 cmd.Parameters.AddWithValue("@platformFees", platformFees);
                 cmd.Parameters.AddWithValue("@totalFeesForTrans",totalFeesForTrans);
+                cmd.Parameters.AddWithValue("@salesTax", salesTax);
                 if (salesOrderId > 0)
                     cmd.Parameters.AddWithValue("@orderId", salesOrderId);
                 else
@@ -1072,6 +1076,63 @@ namespace EventManagementDbAccess
             }
         }
         return salesOrders;
+    }
+
+    /// <summary>
+    /// Retrieves sales orders that were created a configurable number of hours ago with SalesTax > 0 and TaxCollected = false.
+    /// </summary>
+    /// <param name="hoursAgo">The number of hours in the past to look for orders. Default is 24 hours.</param>
+    /// <returns>A list of SalesOrder objects matching the criteria.</returns>
+    /// <exception cref="ArgumentException">Thrown if hoursAgo is less than or equal to 0.</exception>
+    public async Task<List<SalesOrderForTax>> GetSalesOrdersForTaxCollection(int hoursAgo = 24)
+    {
+        if (hoursAgo <= 0)
+            throw new ArgumentException("hoursAgo must be greater than 0.", nameof(hoursAgo));
+
+        try
+        {
+            using var connection = new MySqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            //all orders which have payment succeeded but tax has not been collected
+            string query = @"SELECT a.OrderId,a.SalesOrderCode, a.SalesOrderTotal, a.CustomerId,a.EventId,a.SalesTax,a.CreatedAt,
+                            a.PaymentIntentId, b.StripeAccountId, c.EventName
+                            FROM salesorder a
+                            inner join eventorganizer b on a.CustomerId=b.CustomerId
+                            inner join Events c on a.EventId=c.EventId
+                            WHERE a.CreatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL @hoursAgo HOUR)
+                            AND a.SalesTax > 0
+                            AND a.TaxCollected = false
+                            AND a.SalesOrderStatus=7
+                            ORDER BY CreatedAt DESC";
+
+            using var cmd = new MySqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@hoursAgo", hoursAgo);
+
+            var salesOrders = new List<SalesOrderForTax>();
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                salesOrders.Add(new SalesOrderForTax
+                {
+                    OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
+                    EventName = reader.GetString(reader.GetOrdinal("EventName")),
+                    SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
+                    StripeAccountId = reader.GetString(reader.GetOrdinal("StripeAccountId")),
+                    OrderTotal = reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal")),
+                    PaymentIntentId = reader.IsDBNull(reader.GetOrdinal("PaymentIntentId")) ? string.Empty : reader.GetString(reader.GetOrdinal("PaymentIntentId")),
+                    SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SalesTax")) / 100.0m,
+                });
+            }
+
+            _logger.LogInformation($"Retrieved {salesOrders.Count} sales orders for tax collection from the past {hoursAgo} hours.");
+            return salesOrders;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical($"Error retrieving sales orders for tax collection: {ex.Message}");
+            throw;
+        }
     }
     
     }

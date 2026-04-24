@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using EventUtils;
 
 namespace CreateTicketApi.Controllers
 {
@@ -20,15 +21,20 @@ namespace CreateTicketApi.Controllers
 
         private readonly NotificationTemplateAccess _notificationTemplateAccess;
 
+        private readonly StripeAccess _stripeAccess;
 
         public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess,
-                            TicketAccess ticketContext, EmailCampaignDbAccess emailCampaignDbAccess, NotificationTemplateAccess notificationTemplateAccess)
+                            TicketAccess ticketContext, 
+                            EmailCampaignDbAccess emailCampaignDbAccess,
+                             NotificationTemplateAccess notificationTemplateAccess,
+                             StripeAccess stripeAccess)
         {
             _logger = logger;
             _EventDbAccess = EventDbAccess;
             _ticketContext = ticketContext;
             _emailCampaignDbAccess = emailCampaignDbAccess;
             _notificationTemplateAccess = notificationTemplateAccess;
+            _stripeAccess = stripeAccess;
         }
 
         [HttpGet]
@@ -240,7 +246,13 @@ namespace CreateTicketApi.Controllers
         {
             if (evt == null || customerId <= 0 || customerId != evt.EventOrganizerId)
                 return BadRequest("Invalid event.");
-   
+
+            if (string.IsNullOrWhiteSpace(evt.StreetAddress) || string.IsNullOrWhiteSpace(evt.City) ||
+             string.IsNullOrWhiteSpace(evt.State) || string.IsNullOrWhiteSpace(evt.ZipCode))
+            {
+                return BadRequest("event address details are not set");
+            }
+            evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, evt.ZipCode);
             var id = await _EventDbAccess.CreateEvent(evt);
             if (id > 0)
                 return Ok(id);
@@ -255,6 +267,27 @@ namespace CreateTicketApi.Controllers
             Console.WriteLine($"event id {eventId} and event {evt.Category} received for update");
             if (evt == null || eventId != evt.EventId)
                 return BadRequest("Invalid event or ID mismatch.");
+            if (string.IsNullOrWhiteSpace(evt.StreetAddress) || string.IsNullOrWhiteSpace(evt.City) ||
+             string.IsNullOrWhiteSpace(evt.State) || string.IsNullOrWhiteSpace(evt.ZipCode))
+            {
+                return BadRequest("event address details are not set");
+            }
+            //this should be ok since the event should be cached
+            Event evtCurrent = await _EventDbAccess.GetEventDetailsById(eventId);
+            if (evtCurrent == null)
+            {
+                return  StatusCode(500,"the event could not be located");
+            }
+
+            if (!string.Equals(evt.EventLocation, evtCurrent.EventLocation, StringComparison.OrdinalIgnoreCase))
+            {
+                evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, evt.ZipCode,evt.Country);
+            }
+            else
+            {
+                evt.LocationId = evtCurrent.LocationId;
+            }
+                
             bool result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
                 return Ok();

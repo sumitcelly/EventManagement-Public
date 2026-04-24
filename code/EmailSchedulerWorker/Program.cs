@@ -6,6 +6,7 @@ using Amazon.SQS;
 using EmailSchedulerWorker.Services;
 using EventManagementDbAccess;
 using Stripe;
+using EventUtils;
 
 Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
@@ -27,6 +28,7 @@ Host.CreateDefaultBuilder(args)
         services.AddScoped<SalesOrderDbAccess>();
         services.AddScoped<EmailTransactionLogDbAccess>();
         services.AddSingleton<SQSHelper>();
+        services.AddSingleton<StripeAccess>();
         services.AddDistributedMemoryCache();
         services.AddHostedService<EmailSchedulerService>();
         //services.AddHostedService<OrderCleanupService>();

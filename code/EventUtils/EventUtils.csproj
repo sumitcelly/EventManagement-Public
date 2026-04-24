@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
     <PackageReference Include="SkiaSharp" Version="3.119.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.0" />
-    <PackageReference Include="Stripe.net" Version="48.4.0" />
+    <PackageReference Include="Stripe.net" Version="51.2.0-beta.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
     <PackageReference Include="TimeZoneConverter" Version="7.2.0" />
     <PackageReference Include="ZXing.Net" Version="0.16.10" />

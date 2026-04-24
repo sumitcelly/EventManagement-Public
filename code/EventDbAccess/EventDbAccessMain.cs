@@ -411,6 +411,7 @@ namespace EventManagementDbAccess
         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
         IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
         EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
+        LocationId = reader.IsDBNull(reader.GetOrdinal("LocationId")) ? string.Empty : reader.GetString(reader.GetOrdinal("LocationId")),
         EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
                             AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
         EventName = reader.GetString(reader.GetOrdinal("EventName")),
@@ -454,11 +455,11 @@ namespace EventManagementDbAccess
       string query = @"INSERT INTO Events 
             (EventName,EventUrlName,EventHeadline, EventDescription, EventDate, Duration,
             EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
-            Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory
+            Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory,LocationId
             CreatedAt) 
             VALUES (@name,@eventUrlName,@headline, @desc, @date, @duration,
              @organizer, @location, @agenda, @tags, @isLive, @isPrivate,
-             @lat,@long,@streetAddress, @city, @state, @zipCode, @eventCategory, @createdAt)";
+             @lat,@long,@streetAddress, @city, @state, @zipCode, @eventCategory,@locationId, @createdAt)";
 
       using var cmd = new MySqlCommand(query, connection);
       cmd.Parameters.AddWithValue("@name", evt.EventName);
@@ -483,6 +484,7 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
 
       cmd.Parameters.AddWithValue("@eventCategory",evt.Category);
+      cmd.Parameters.AddWithValue("@locationId",evt.LocationId);
       cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -628,6 +630,7 @@ namespace EventManagementDbAccess
             IsLive = @isLive,
             Private = @isPrivate,
             EventCategory = @eventCategory,
+            LocationId=@locationId,
             ModifiedAt = @modifiedAt
             WHERE EventId = @eventId";
 
@@ -655,6 +658,7 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@zipCode", evt.ZipCode);
       cmd.Parameters.AddWithValue("@eventId", evt.EventId);
       cmd.Parameters.AddWithValue("@eventCategory",evt.Category);
+      cmd.Parameters.AddWithValue("@locationId",evt.LocationId);
       cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();

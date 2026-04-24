@@ -27,6 +27,7 @@ namespace EmailSchedulerWorker.Services
 
         private readonly int _orderTimeoutMinutes = 10; // Default timeout
        
+       private readonly int _orderAgeForTaxCollection = 1;
         private readonly IServiceProvider _serviceProvider;
         public OrderCleanupService(
             ILogger<OrderCleanupService> logger,
@@ -44,6 +45,7 @@ namespace EmailSchedulerWorker.Services
         
             _pollIntervalSeconds = config.GetValue<int>("Worker:PollIntervalSeconds", 60);
             _orderTimeoutMinutes = config.GetValue<int>("Worker:OrderTimeoutMinutes", 10);
+            _orderAgeForTaxCollection = config.GetValue<int>("Worker:OrderAgeForTaxCollectionInHours",1);
              _logger.LogInformation($"Using order timeout  minutes of {_orderTimeoutMinutes}");
 
         }
@@ -57,6 +59,7 @@ namespace EmailSchedulerWorker.Services
                 try
                 {
                     await ProcessOrderCleanupAsync(stoppingToken);
+                    await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
                 }
                 catch (Exception ex)
                 {
@@ -82,6 +85,50 @@ namespace EmailSchedulerWorker.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error cleaning up orders");
+            }
+        }
+
+        private async Task ProcessTaxCollectionAsync(CancellationToken token, int hoursAgo)
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+
+                SalesOrderDbAccess _salesOrderDbAccess = scope.ServiceProvider.GetRequiredService<SalesOrderDbAccess>();
+                var salesOrders = await _salesOrderDbAccess.GetSalesOrdersForTaxCollection(hoursAgo);
+               
+                if (salesOrders == null || salesOrders.Count == 0)
+                {
+                    _logger.LogInformation($"No sales orders found for tax collection from past {hoursAgo} hours.");
+                    return;
+                }
+                StripeAccess  stripeAccess = scope.ServiceProvider.GetRequiredService<StripeAccess>();
+
+
+                _logger.LogInformation($"Processing {salesOrders.Count} sales orders for tax collection.");
+
+                foreach (var order in salesOrders)
+                {
+                    try
+                    {
+                        // TODO: Fill in your tax collection logic here
+                        string description =  $"Sales Tax: {order.EventName} (Ref: {order.OrderId} with order total {order.OrderTotal})";
+                        _logger.LogInformation($"Processing order {order.OrderId} with tax amount {order.SalesTax}");
+                        bool result = await stripeAccess.CollectTax(order.StripeAccountId, order.PaymentIntentId, 
+                                        order.SalesTax,order.OrderId,description);
+                              
+                        _logger.LogInformation($@"Transfer Result for order id {order.OrderId} with description
+                                             {description} for stripe account {order.StripeAccountId} is {result}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Error processing order {order.OrderId} for stripe account {order.StripeAccountId} for tax collection");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in tax collection processing");
             }
         }
     }

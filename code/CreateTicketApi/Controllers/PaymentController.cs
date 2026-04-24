@@ -279,47 +279,50 @@ namespace CreateTicketApi.Controllers
                 // Handle the event
                 if (stripeEvent.EventType.Contains("checkout.session.completed"))
                 {
-                    bool result =await _salesOrderDbAccess.UpdateSalesOrderStatus(
-                                    stripeEvent.SalesOrderId,
-                                    stripeEvent.PaymentSucceeded?  SalesOrderStatus.PaymentSucceeded : SalesOrderStatus.PaymentFailed
-                                   );
-                    if (!result)
-                    {
-                        _logger.LogError($"Failed to update sales order status for SalesOrder ID: {stripeEvent.SalesOrderId}");
-                        return StatusCode(500,"Failed to update sales order status order id "+ stripeEvent.SalesOrderId); 
-                    }
+                    _logger.LogInformation($@"Received checkout completed for order {stripeEvent.SalesOrderId} with 
+                                            status of {stripeEvent.PaymentSucceeded}")  ;
+                   
                     if (stripeEvent.PaymentSucceeded)
                     {
                         try
                         {
-                        // Finalize the sales order. generate tickets etc
-                        //Task.Delay(10000).Wait();
-                        result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, 
-                                                                            stripeEvent.SessionId,
-                                                                            stripeEvent.PaymentIntentId,
-                                                                            stripeEvent.OrderTotal,
-                                                                            stripeEvent.PlatformFees,
-                                                                            stripeEvent.TotalFeesForTransaction);
-                        if (!result)
-                        {
-                            _logger.LogError($"Failed to finalize sales order for SalesOrder ID: {stripeEvent.SalesOrderId}");
-                            await _salesOrderDbAccess.UpdateSalesOrderStatus(
-                                    stripeEvent.SalesOrderId,
-                                    SalesOrderStatus.OrderFinalizationError
-                                    );
-                            //stripe will retry webhook for us with 500 error
-                            return StatusCode(500, "Failed to finalize sales order for order id " + stripeEvent.SalesOrderId);
-                        }   
-                        _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
-                        // Send confirmation email to customer
-                        await _emailUtils.SendOrderConfirmationEmail(null, null,stripeEvent.SalesOrderId,
-                                                                    (stripeEvent.OrderTotal/100.0m).ToString("C"), stripeEvent.CustomerEmail);
+                            // Finalize the sales order. generate tickets etc
+                            //Task.Delay(10000).Wait();
+                            bool result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, 
+                                                                                stripeEvent.SessionId,
+                                                                                stripeEvent.PaymentIntentId,
+                                                                                stripeEvent.OrderTotal,
+                                                                                stripeEvent.PlatformFees,
+                                                                                stripeEvent.TotalFeesForTransaction,
+                                                                                stripeEvent.TotalTax
+                                                                               );
+                            if (!result)
+                            {
+                                _logger.LogError($"Failed to finalize sales order for SalesOrder ID: {stripeEvent.SalesOrderId}");
+                                await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                        stripeEvent.SalesOrderId,
+                                        SalesOrderStatus.OrderFinalizationError
+                                        );
+                                //stripe will retry webhook for us with 500 error
+                                return StatusCode(500, "Failed to finalize sales order for order id " + stripeEvent.SalesOrderId);
+                            }   
+                            _logger.LogInformation($"Sales order {stripeEvent.SalesOrderId} finalized successfully.");
+                            // Send confirmation email to customer
+                            await _emailUtils.SendOrderConfirmationEmail(null, null,stripeEvent.SalesOrderId,
+                                                                        (stripeEvent.OrderTotal/100.0m).ToString("C"), stripeEvent.CustomerEmail);
                         }
                         catch (Exception ex)
                         {
                             _logger.LogError("Error in checkoutsession completed {0} for order id {1}", ex,stripeEvent.SalesOrderId );
                             return StatusCode(500,$"Error in checkoutsession completed {ex} for order id {stripeEvent.SalesOrderId}");
                         }
+                    }
+                    else
+                    {
+                         await _salesOrderDbAccess.UpdateSalesOrderStatus(
+                                        stripeEvent.SalesOrderId,
+                                        SalesOrderStatus.PaymentFailed
+                                        );
                     }
                     
                     // Process the completed checkout session (e.g., update order status)
@@ -369,7 +372,7 @@ namespace CreateTicketApi.Controllers
                 }
                 else if (stripeEvent.EventType.Contains("account.updated"))
                 {
-                    StripeAccountStatus status = stripeEvent.DetailsSubmitted ? StripeAccountStatus.Completed:
+                    StripeAccountStatus status = stripeEvent.ChargedEnabled ? StripeAccountStatus.Completed:
                                                 (stripeEvent.RequirementsPending ? StripeAccountStatus.RequirementsPending: 
                                                 StripeAccountStatus.InProgress);
                     _logger.LogInformation(@$"updating stripe account: {stripeEvent.AccountId} for 

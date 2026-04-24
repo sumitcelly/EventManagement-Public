@@ -5,18 +5,21 @@ using System;
 public class PaymentModel
 {
 
+
     public List<PaymentLineItemModel> LineItems { get; set; } = new List<PaymentLineItemModel>();
    
     public int EventId { get; set; }
     public int SalesOrderId { get; set; }
-    public required  string EventStreetAddress { get; set; } 
-    public required string EventCity { get; set;}
-    public required string EventPostalCode { get; set;} 
-    public required string EventState { get; set;} 
+    // public required  string EventStreetAddress { get; set; } 
+    // public required string EventCity { get; set;}
+    // public required string EventPostalCode { get; set;} 
+    // public required string EventState { get; set;} 
 
-    public required string EventCountry { get; set;} ="US";
+    // public required string EventCountry { get; set;} ="US";
 
     public required string EventCategory { get; set; }
+
+    public required string LocationId { get; set; }
 
 }
 public class PaymentLineItemModel

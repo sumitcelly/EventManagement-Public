@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections;
 using Microsoft.Extensions.Primitives;
 using Stripe.Checkout;
+using Stripe.Tax;
 namespace EventUtils;
 
 public class StripeAccess
@@ -23,6 +24,11 @@ public class StripeAccess
     private readonly decimal _fixedTransactionFee = 1.0m; // Example: $0.30 fixed fee per transaction
 
     private static string WebhookSecret { get; set; }
+    private static  LocationService locationService = new LocationService();
+
+     private static  TransferService transferService = new TransferService();
+
+    private static string _platformAcctId = "";
 
     public static readonly Dictionary<string, string> EventCategoryTaxMapping = new Dictionary<string, string>
     {
@@ -62,12 +68,14 @@ public class StripeAccess
 
         StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         WebhookSecret = configuration["Stripe:WebhookSecret"];
+        _platformAcctId = configuration["Stripe:PlatformId"];
+
         if (string.IsNullOrEmpty(WebhookSecret))
         {
             throw new ArgumentException("Stripe webhook secret is not configured.");
         }
        // _applicationFeePercentage = Convert.ToDecimal(configuration["Stripe:ApplicationFeePercentage"]);
-        logger.LogInformation("Initializing Stripe API with provided configuration.");
+        logger.LogInformation($"Initializing Stripe API with provided configuration. {StripeConfiguration.ApiVersion}");
     }
 
     public async Task<string> CreateStripeAccount(int customerId,StripePrefillInfo stripePrefillInfo)
@@ -285,6 +293,32 @@ public class StripeAccess
 
     }
     
+    public async Task<string> GetLocationIdForAddress(string eventName,string streetAddress, string city, string state, string zipCode, string country="US")
+    {
+        
+        // 1. Initialize the service
+       
+
+        // 2. Define the venue address and type
+        var options = new LocationCreateOptions
+        {
+            Address = new AddressOptions
+            {
+                Line1 = streetAddress, 
+                City = city,
+                State = state,
+                PostalCode = zipCode,
+                Country = country,
+            },
+            // For tickets and events, the type MUST be 'performance'
+            Type = "performance", 
+            Description = eventName
+        };
+
+        // 3. Create the location in Stripe
+        Location location = await locationService.CreateAsync(options);
+        return location.Id;
+    }
     /// <summary>
     /// Processes the purchase of sales items using Stripe Checkout.Initiates a Stripe Checkout session.
     /// 
@@ -308,10 +342,10 @@ public class StripeAccess
             throw new ArgumentException("payment model or line items cannot be null or empty.", nameof(paymentModel));
         }
 
-        if (string.IsNullOrWhiteSpace(paymentModel.EventStreetAddress) || string.IsNullOrWhiteSpace(paymentModel.EventCity) || string.IsNullOrWhiteSpace(paymentModel.EventState) || string.IsNullOrWhiteSpace(paymentModel.EventPostalCode))
+        if (string.IsNullOrWhiteSpace(paymentModel.LocationId))
         {
-            _logger.LogError($"Event address information is incomplete for event id {paymentModel.EventId}. Street: {paymentModel.EventStreetAddress}, City: {paymentModel.EventCity}, State: {paymentModel.EventState}, PostalCode: {paymentModel.EventPostalCode}.");
-            throw new ArgumentException("Event address information is incomplete. Please provide complete address information for the event.");
+            _logger.LogError($"Event location id is missing for event id {paymentModel.EventId}");
+            throw new ArgumentException("Event location id is missing. Please provide complete address information for the event.");
         }
 
         if (string.IsNullOrWhiteSpace(paymentModel.EventCategory))
@@ -373,6 +407,8 @@ public class StripeAccess
 
         foreach (var item in paymentModel.LineItems)
         {
+            
+          
             options.LineItems.Add(new SessionLineItemOptions
             {
                 PriceData = new SessionLineItemPriceDataOptions
@@ -381,23 +417,23 @@ public class StripeAccess
                     
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
-                        
+                         
                         Name = item.Description,
+                        TaxDetails = new SessionLineItemPriceDataProductDataTaxDetailsOptions()
+                        {
+                            PerformanceLocation = paymentModel.LocationId,
+                             //use mechandise tax code for add on items since they are not event admission tickets, this is to handle the case where an order has both tickets and add on items
+                            TaxCode = item.IsAddOn ? _defaultMechandiseTaxCode: ticketTaxCode
+                        },
                         
-                        //use mechandise tax code for add on items since they are not event admission tickets, this is to handle the case where an order has both tickets and add on items
-                        TaxCode = item.IsAddOn ? _defaultMechandiseTaxCode: ticketTaxCode
                     },
                     UnitAmount = (long)(item.Price * 100), // Convert to cents
                 },
                 Quantity = item.Quantity,
-                
-                
-                
-
-
-            });
+             });
         }
-
+      
+     
         options.LineItems.Add(new SessionLineItemOptions {
             PriceData = new SessionLineItemPriceDataOptions {
                 UnitAmount = finalTotal - totalItemsUnitPrice, // The remaining "Service Fee" (approx $1.95)
@@ -420,6 +456,39 @@ public class StripeAccess
         _logger.LogInformation($"session details {session.ReturnUrl}", session.Url);
         ///return the client secret to the frontend to complete the payment
         return new Tuple<string, string>(session.ClientSecret, session.Id);
+    }
+
+    public async Task<bool>  CollectTax(string fromStripeAcctId,string paymentIntentId, decimal amount,
+                                        int orderId,string description)
+    {
+        try 
+        {
+            var options = new  TransferCreateOptions
+            {
+                Amount = (long)amount,
+                Currency = "usd",
+                Destination = _platformAcctId, // Your acct_xxx
+                Description = description,
+                SourceTransaction = paymentIntentId
+            };
+
+            // Act as the organizer to push the tax to your platform
+            var requestOptions = new RequestOptions { StripeAccount = fromStripeAcctId };
+            
+            await transferService.CreateAsync(options, requestOptions);
+            return true;
+        }
+        catch (StripeException ex) when (ex.Message.Contains("insufficient funds"))
+        {
+            // Money is likely still 'Pending' in the organizer's account.
+            // Leave as 'Pending' to try again tomorrow.
+            _logger.LogInformation($"Funds not yet available for Order {orderId} for request {description}");
+        }
+        catch(Exception exc)
+        {
+            _logger.LogError($"Error in transferring tax for {description} and order id {orderId}", exc);
+        }
+        return false;
     }
 
     public static StripeWebHookData GetWebhookEventAndRefIdReceived(string json, IDictionary<string, StringValues> request)
@@ -464,6 +533,7 @@ public class StripeAccess
             }
             return new StripeWebHookData
             {
+                
                 EventType = stripeEvent.Type,
                 SalesOrderId = int.TryParse(session.ClientReferenceId, out int salesOrderId) ? salesOrderId : 0,
                 SessionId = session.Id,
@@ -472,7 +542,8 @@ public class StripeAccess
                 PlatformFees = platformFeeAmt,
                 TotalFeesForTransaction = totalFeesForTrans,
                 OrderTotal = session.AmountTotal.HasValue ? session.AmountTotal.Value:0,
-                CustomerEmail = session.CustomerEmail
+                CustomerEmail = session.CustomerEmail,
+                TotalTax = session.TotalDetails?.AmountTax ?? 0,
             };
         }
         else if (stripeEvent.Data.Object is Refund refund && refund!=null)
@@ -505,6 +576,7 @@ public class StripeAccess
                 AccountId =  account.Id,
                 CustomerId = customerId,
                 DetailsSubmitted = account.DetailsSubmitted,
+                ChargedEnabled = account.ChargesEnabled,
                 RequirementsPending = account.Requirements?.CurrentlyDue.Count > 0
             };
         }
@@ -544,6 +616,9 @@ public class StripeWebHookData
     public decimal OrderTotal { get; internal set; }
     public string CustomerEmail { get; internal set; } = string.Empty;
     public decimal TotalFeesForTransaction { get; internal set; }
+    public long TotalTax { get; internal set; }
+
+    public bool ChargedEnabled {get;set;} = false;
 
     public override string ToString()
     {

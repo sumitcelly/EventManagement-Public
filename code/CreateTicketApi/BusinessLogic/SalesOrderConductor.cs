@@ -249,11 +249,7 @@ public class SalesOrderConductor
                 {
                     EventId = eventData.EventId,
                     SalesOrderId = salesOrder.OrderId,
-                    EventStreetAddress = eventData.StreetAddress,
-                    EventCity = eventData.City,
-                    EventPostalCode = eventData.ZipCode,
-                    EventState = eventData.State,
-                    EventCountry = eventData.Country,
+                    LocationId = eventData.LocationId,
                     EventCategory = eventData.Category
                 };
                 List<EventItemType> itemTypes = await _eventItemTypeDbAccess.GetAllEventItemTypesByEventId(salesOrder.EventId);

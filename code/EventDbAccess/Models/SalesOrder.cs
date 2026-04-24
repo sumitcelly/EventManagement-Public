@@ -35,6 +35,10 @@ public class SalesOrder
     public decimal SalesOrderTotal {get; set; }=0;
     public decimal TotalFees { get; internal set; }=0;
     public decimal PlatformFees { get; internal set; }=0;
+
+    public decimal SalesTax {get; set; }=0;
+
+    public bool TaxCollected {get; set; } = false;
 }
 
 public class UserSalesOrders : EventHeader
@@ -47,6 +51,26 @@ public class UserSalesOrders : EventHeader
 
     public required decimal PlatformFees { get; set; }
     public int SalesOrderId { get; set; }
+}
+
+public class SalesOrderForTax
+{
+     public int OrderId { get; set; }
+
+     public decimal OrderTotal { get; set; }
+
+     public string SalesOrderCode { get; set;}  =string.Empty;
+
+     public string EventName { get; set;} =string.Empty;
+
+     public string StripeAccountId { get; set; } =string.Empty;
+
+     public decimal SalesTax { get; set; } =0;
+
+     public string PaymentIntentId { get; set; } =string.Empty ;
+
+     public string CustomerEmail { get; set; } =string.Empty;
+
 }
 
 public class SalesOrderPaymentStatus
