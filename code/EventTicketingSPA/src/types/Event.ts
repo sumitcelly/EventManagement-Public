@@ -22,6 +22,7 @@ export interface EventHeader {
   eventUrlName?:string;
   ticketFeeMode?:TicketFeeMode;
   refundMode?:number;
+  eventCategory?:string;
 }
 
 export enum TicketFeeMode {

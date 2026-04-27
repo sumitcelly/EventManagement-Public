@@ -293,7 +293,7 @@ public class StripeAccess
 
     }
     
-    public async Task<string> GetLocationIdForAddress(string eventName,string streetAddress, string city, string state, string zipCode, string country="US")
+    public async Task<string> GetLocationIdForAddress(string eventName,string streetAddress, string city, string state, string zipCode, string organizerStripeId, string country="US")
     {
         
         // 1. Initialize the service
@@ -312,11 +312,14 @@ public class StripeAccess
             },
             // For tickets and events, the type MUST be 'performance'
             Type = "performance", 
-            Description = eventName
+            Description = eventName,
+
         };
 
         // 3. Create the location in Stripe
-        Location location = await locationService.CreateAsync(options);
+        Location location = await locationService.CreateAsync(options,new RequestOptions { 
+                StripeAccount = organizerStripeId
+        });
         return location.Id;
     }
     /// <summary>
@@ -346,6 +349,10 @@ public class StripeAccess
         {
             _logger.LogError($"Event location id is missing for event id {paymentModel.EventId}");
             throw new ArgumentException("Event location id is missing. Please provide complete address information for the event.");
+        }
+        else
+        {
+            _logger.LogInformation($"location id is {paymentModel.LocationId}");
         }
 
         if (string.IsNullOrWhiteSpace(paymentModel.EventCategory))
@@ -395,13 +402,13 @@ public class StripeAccess
             {
                 ApplicationFeeAmount = appFees,
             },
-            //one time payment
+            //one time Fpayment
             Mode = "payment",
-            UiMode = "embedded"
+            UiMode = "embedded_page"
 
         };
         options.AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true };
-
+        options.BillingAddressCollection = "required";
         options.ClientReferenceId = paymentModel.SalesOrderId.ToString();
         options.LineItems = new List<SessionLineItemOptions>();
 
@@ -463,19 +470,40 @@ public class StripeAccess
     {
         try 
         {
+            var piService = new PaymentIntentService();
+
+            var getOptions = new PaymentIntentGetOptions
+            {
+                // Optionally expand 'latest_charge' if your SDK version supports it 
+                // to ensure the field is fully populated.
+                Expand = new List<string> { "latest_charge" }
+            };
+            var pi = await piService.GetAsync(paymentIntentId, getOptions, new RequestOptions 
+            { 
+                StripeAccount = fromStripeAcctId,
+            });
+
+            // 2. Extract the Charge ID (ch_...)
+            string chargeId = pi.LatestChargeId; 
             var options = new  TransferCreateOptions
             {
                 Amount = (long)amount,
                 Currency = "usd",
                 Destination = _platformAcctId, // Your acct_xxx
                 Description = description,
-                SourceTransaction = paymentIntentId
+                Metadata = new Dictionary<string, string>
+                {
+                    { "original_payment_intent", paymentIntentId },
+                    { "order_id",orderId.ToString()},
+                    { "type", "sales_tax_recovery" }
+                }
             };
 
             // Act as the organizer to push the tax to your platform
             var requestOptions = new RequestOptions { StripeAccount = fromStripeAcctId };
             
-            await transferService.CreateAsync(options, requestOptions);
+            Transfer transfer = await transferService.CreateAsync(options, requestOptions);
+            _logger.LogInformation($"Collect tax result for {paymentIntentId} is {transfer.ToJson()}");
             return true;
         }
         catch (StripeException ex) when (ex.Message.Contains("insufficient funds"))
@@ -483,12 +511,14 @@ public class StripeAccess
             // Money is likely still 'Pending' in the organizer's account.
             // Leave as 'Pending' to try again tomorrow.
             _logger.LogInformation($"Funds not yet available for Order {orderId} for request {description}");
+            return false;
         }
         catch(Exception exc)
         {
-            _logger.LogError($"Error in transferring tax for {description} and order id {orderId}", exc);
+            _logger.LogError($"Error in transferring tax for {description} and order id {orderId}: {exc.Message}");
+            return false;
         }
-        return false;
+      
     }
 
     public static StripeWebHookData GetWebhookEventAndRefIdReceived(string json, IDictionary<string, StringValues> request)

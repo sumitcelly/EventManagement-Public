@@ -50,6 +50,8 @@ public class UserSalesOrders : EventHeader
     public required decimal TotalFees { get; set; }
 
     public required decimal PlatformFees { get; set; }
+
+    public decimal SalesTax { get; set; }=0;
     public int SalesOrderId { get; set; }
 }
 
@@ -84,6 +86,7 @@ public class SalesOrderPaymentStatus
     public required decimal PlatformFees { get; set; }
 
     public string QrImage { get; set; } = string.Empty;
+    public decimal SalesTax { get; internal set; }
 }
 
 public class SalerOrderReportItems

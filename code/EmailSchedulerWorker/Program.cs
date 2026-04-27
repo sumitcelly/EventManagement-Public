@@ -30,8 +30,8 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton<SQSHelper>();
         services.AddSingleton<StripeAccess>();
         services.AddDistributedMemoryCache();
-        services.AddHostedService<EmailSchedulerService>();
-        //services.AddHostedService<OrderCleanupService>();
+       // services.AddHostedService<EmailSchedulerService>();
+        services.AddHostedService<OrderCleanupService>();
         //services.AddHostedService<EmailStatusUpdateService>();
        
     })

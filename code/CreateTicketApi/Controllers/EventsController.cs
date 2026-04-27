@@ -21,13 +21,15 @@ namespace CreateTicketApi.Controllers
 
         private readonly NotificationTemplateAccess _notificationTemplateAccess;
 
+        private readonly EventOrganizerDBAccess _eventOrganizerDbAccess;
+
         private readonly StripeAccess _stripeAccess;
 
         public EventsController(ILogger<EventsController> logger, EventDbAccess EventDbAccess,
                             TicketAccess ticketContext, 
                             EmailCampaignDbAccess emailCampaignDbAccess,
                              NotificationTemplateAccess notificationTemplateAccess,
-                             StripeAccess stripeAccess)
+                             StripeAccess stripeAccess, EventOrganizerDBAccess eventOrganizerDBAccess)
         {
             _logger = logger;
             _EventDbAccess = EventDbAccess;
@@ -35,6 +37,7 @@ namespace CreateTicketApi.Controllers
             _emailCampaignDbAccess = emailCampaignDbAccess;
             _notificationTemplateAccess = notificationTemplateAccess;
             _stripeAccess = stripeAccess;
+            _eventOrganizerDbAccess = eventOrganizerDBAccess;
         }
 
         [HttpGet]
@@ -252,7 +255,22 @@ namespace CreateTicketApi.Controllers
             {
                 return BadRequest("event address details are not set");
             }
-            evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, evt.ZipCode);
+            EventOrganizer organizer= await _eventOrganizerDbAccess.GetOrganizerById(customerId);
+            if (organizer == null)
+            {
+                _logger.LogError($"Unable to locate event orgnaizer details for {customerId}");
+                return StatusCode(500, "Unable to locate event organizer details");
+            }
+             
+            if (!string.IsNullOrWhiteSpace(organizer.StripeAccountId))
+            {
+                evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, evt.ZipCode, organizer.StripeAccountId);
+            }
+            else
+            {
+                evt.LocationId = string.Empty;
+                _logger.LogInformation($"Stripe account not setup {customerId}. Not creating locationId.");      
+            }
             var id = await _EventDbAccess.CreateEvent(evt);
             if (id > 0)
                 return Ok(id);
@@ -279,9 +297,17 @@ namespace CreateTicketApi.Controllers
                 return  StatusCode(500,"the event could not be located");
             }
 
-            if (!string.Equals(evt.EventLocation, evtCurrent.EventLocation, StringComparison.OrdinalIgnoreCase))
+            EventOrganizer organizer= await _eventOrganizerDbAccess.GetOrganizerById(evt.EventOrganizerId);
+            if (organizer == null)
             {
-                evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, evt.ZipCode,evt.Country);
+                _logger.LogError($"Unable to locate event orgnaizer details for {evt.EventOrganizerId}");
+                return StatusCode(500, "Unable to locate event organizer details");
+            }
+            if (!string.IsNullOrWhiteSpace(organizer.StripeAccountId) &&
+                !string.Equals(evt.EventLocation, evtCurrent.EventLocation, StringComparison.OrdinalIgnoreCase))
+            {
+                evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, 
+                                            evt.ZipCode, organizer.StripeAccountId,evt.Country);
             }
             else
             {

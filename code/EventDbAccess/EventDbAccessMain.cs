@@ -455,7 +455,7 @@ namespace EventManagementDbAccess
       string query = @"INSERT INTO Events 
             (EventName,EventUrlName,EventHeadline, EventDescription, EventDate, Duration,
             EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
-            Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory,LocationId
+            Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory,LocationId,
             CreatedAt) 
             VALUES (@name,@eventUrlName,@headline, @desc, @date, @duration,
              @organizer, @location, @agenda, @tags, @isLive, @isPrivate,
@@ -661,6 +661,8 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@locationId",evt.LocationId);
       cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
 
+    //todo: The remaining fields for event which are not set will get overwritten with blank
+    //in the cache. need to fix this.
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
       if (rowsAffected > 0)
       { 

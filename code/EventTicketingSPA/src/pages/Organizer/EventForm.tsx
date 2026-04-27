@@ -18,6 +18,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from "axios";
 import { createUrlSlug, getFullUrlForEvent } from "../../utils/StringUtils";
 import { addHoursToDate } from "../../utils/DateUtils";
+import { TicketFeeMode } from "../../types/Event";
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   eventUrlName: yup.string().required("Event Url name is reqired"),
@@ -121,7 +122,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       isLive: res.data?.isLive || false,
       eventOrganizerId: res.data.organizerId,
       eventBannerUrl: res.data.eventBannerUrl,
-      eventCatergory: res.data.Category
+      eventCategory: res.data.Category,
+      ticketFeeMode: res.data.ticketFeeMode
      // eventUrlName: res.data.eventUrlName
     }
     //console.log("event date for basic info", eventBasicInfo.eventDate);
@@ -151,7 +153,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
     defaultValues: {
       tagList: eventDetails?.tags || [],
       fullAddress: eventDetails?.eventLocation || "",
-      eventCategory: eventDetails?.Category || "",
+      eventCategory: eventDetails?.category || "",
       lat: eventDetails?.latitude || 0,
       lng: eventDetails?.longitude || 0,
       street: eventDetails?.streetAddress || "",
@@ -180,8 +182,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         duration: data.duration,
         eventLocation: data.fullAddress,
         eventOrganizerId: data.organizerId,
-        eventBannerUrl: data.eventBannerUrl
-        
+        eventBannerUrl: data.eventBannerUrl,
+        //ticketFeeMode:data.ticketFeeMode
       }
       dispatch(updateEvent({event: eventBasicInfo}));
       console.log("redux update with even data", eventBasicInfo);
@@ -207,6 +209,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       //use the organizer if from redux (for existing event) or user's id for new event
       eventOrganizerId: eventCache?.eventOrganizerId || user?.customerId,
       isLive: eventCache?.isLive || false,
+      ticketFeeMode: eventCache.ticketFeeMode || 0,
       eventDescription: data.description,
       tags: data.tagList?.join(','),
       eventAgenda: data.agenda,
@@ -351,6 +354,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         eventDuration: eventDetails?.duration || 0,
         agenda: eventDetails?.eventAgenda || null,
         headline: eventDetails?.eventHeadline || null,
+        eventCategory: eventDetails?.category || null,
         eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toLocaleString('sv-SE').slice(0, 16) : "", // format for datetime-local input in local timezone
       }
     );

@@ -157,6 +157,8 @@ namespace EventManagementDbAccess
                         SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
                         TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
                         PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
+                        SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
+                       
                         UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
@@ -317,14 +319,14 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT SalesOrderCode,SalesOrderTotal,PlatformFees,TotalFees FROM salesorder WHERE OrderId = @orderId";
+                string query = "SELECT SalesOrderCode,SalesOrderTotal,PlatformFees,TotalFees,SalesTax FROM salesorder WHERE OrderId = @orderId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
                 
             
                 using var reader = await cmd.ExecuteReaderAsync();
-                string salesOrderCode = string.Empty;
+    
                 SalesOrderPaymentStatus paymentStatus;
                 if (await reader.ReadAsync())
                 {
@@ -333,12 +335,13 @@ namespace EventManagementDbAccess
                         SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
                         PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
                         TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+                        SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
 
                         SalesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
                                         reader.GetString(reader.GetOrdinal("SalesOrderCode")),
-                        QrImage = !string.IsNullOrEmpty(salesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)) : string.Empty
                     };
-                    
+                     paymentStatus.QrImage = !string.IsNullOrEmpty(paymentStatus.SalesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(paymentStatus.SalesOrderCode)) : string.Empty;
+                   
                 }
                 else
                 {
@@ -364,7 +367,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT SalesOrderCode, SalesOrderStatus,SalesOrderTotal,PlatformFees,TotalFees FROM salesorder WHERE OrderId = @orderId";
+                string query = "SELECT SalesOrderCode, SalesOrderStatus,SalesOrderTotal,PlatformFees,TotalFees,SalesTax FROM salesorder WHERE OrderId = @orderId";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@orderId", orderId);
@@ -391,6 +394,8 @@ namespace EventManagementDbAccess
                             SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
                             PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
                             TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
+                            SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
+                           
                             QrImage = string.IsNullOrEmpty(salesOrderCode)?string.Empty:
                                             System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)),
                             Paid = true,
@@ -472,7 +477,7 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"select a.EventId, a.SalesOrderCode,a.SalesOrderStatus, a.OrderId,
-                                a.SalesOrderTotal, a.TotalFees, a.PlatformFees,b.EventName,
+                                a.SalesOrderTotal, a.TotalFees, a.PlatformFees,a.SalesTax,b.EventName,
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
                                 b.EventSummary,b.Free
                                 from SalesOrder a, Events b
@@ -496,6 +501,7 @@ namespace EventManagementDbAccess
                             SalesOrderId = reader.GetInt16("OrderId"),
                             EventId = reader.GetInt32("EventId"),
                             EventName = reader.GetString("EventName"),
+                            SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
                             SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
                             TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
                             PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
@@ -563,6 +569,7 @@ namespace EventManagementDbAccess
                     SalesOrderTotal = order.SalesOrderTotal,
                     TotalFees = order.TotalFees,
                     PlatformFees = order.PlatformFees,
+                    SalesTax = order.SalesTax,
                     EventId = order.EventId,
                     UserId = order.UserId,
                     SalesOrderCode = order.SalesOrderCode ?? "",
@@ -1121,7 +1128,7 @@ namespace EventManagementDbAccess
                     StripeAccountId = reader.GetString(reader.GetOrdinal("StripeAccountId")),
                     OrderTotal = reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal")),
                     PaymentIntentId = reader.IsDBNull(reader.GetOrdinal("PaymentIntentId")) ? string.Empty : reader.GetString(reader.GetOrdinal("PaymentIntentId")),
-                    SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SalesTax")) / 100.0m,
+                    SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax")) ? 0 : reader.GetDecimal(reader.GetOrdinal("SalesTax")),
                 });
             }
 

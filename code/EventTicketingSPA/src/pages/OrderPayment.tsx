@@ -70,6 +70,7 @@ export default function OrderPayment() {
                salesOrderTotal: salesData.data?.salesOrderTotal,
                platformFees: salesData.data?.platformFees,
                totalFees: salesData.data?.totalFees,
+               salesTax:salesData.data?.salesTax || 0,
                paymentNeeded:true
              });
         }

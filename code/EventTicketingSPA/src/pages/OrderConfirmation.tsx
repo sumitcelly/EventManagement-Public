@@ -82,7 +82,8 @@ export default function OrderConfirmation() {
               salesOrderQrCodeImage: data.qrImage,
               salesOrderTotal: data.salesOrderTotal,
               platformFees: data.platformFees,
-              totalFees: data.totalFees
+              totalFees: data.totalFees,
+              salesTax: data?.salesTax || 0
             }));
             console.log('Payment confirmed, updated sales order data', salesOrderData);
           }
@@ -166,7 +167,8 @@ export default function OrderConfirmation() {
                                   salesOrderStatus: orderSuccessStatus,
                                   salesOrderTotal : salesOrderData.salesOrderTotal || 0,
                                   totalFees : salesOrderData.totalFees || 0,
-                                  platformFees : salesOrderData.platformFees || 0
+                                  platformFees : salesOrderData.platformFees || 0,
+                                  salesTax:salesOrderData.salesTax ||0
                               });
                             }}
                             >

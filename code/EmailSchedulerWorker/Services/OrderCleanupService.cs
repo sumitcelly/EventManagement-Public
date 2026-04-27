@@ -58,7 +58,7 @@ namespace EmailSchedulerWorker.Services
             {
                 try
                 {
-                    await ProcessOrderCleanupAsync(stoppingToken);
+                    //await ProcessOrderCleanupAsync(stoppingToken);
                     await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
                 }
                 catch (Exception ex)

@@ -233,6 +233,8 @@ namespace EventManagementDbAccess
         public decimal SalesOrderTotal { get; internal set; }
         public decimal TotalFees { get; internal set; }
         public decimal PlatformFees { get; internal set; }
+
+         public decimal SalesTax { get; internal set; }
     }
 
     public class OrderEmailDetails

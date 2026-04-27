@@ -98,8 +98,14 @@ export const calculateForCustomerAbsorbsAllFees = (
 
   useEffect(()=>{
       console.log('tickets is',tickets);
-
       console.log('data is',data);
+
+      // Guard: exit early if data hasn't loaded or tickets is undefined
+      if (!data || !tickets) {
+        console.warn('Waiting for data or tickets:', { data, tickets });
+        return;
+      }
+
       const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
       console.log('cart total',total);
 
@@ -113,22 +119,21 @@ export const calculateForCustomerAbsorbsAllFees = (
         ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed)));
         setTotal(displayTotal);
         setFees(displayFee);
-      
       }
-      if (feeMode === TicketFeeMode.OrganizerAbsorbsStripe)
+      else if (feeMode === TicketFeeMode.OrganizerAbsorbsStripe)
       {
         ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees));
         setTotal(displayTotal);
         setFees(displayFee);
-      
+      }
+      else {
+        console.warn('Unknown feeMode:', feeMode);
       }
 
-      //const finalTotal = (total + processingFees + platformFees).toFixed(2);
-      console.log(displayTotal);
-      console.log(displayFee);``
+      console.log('final values:', { displayTotal, displayFee, feeMode });
 
  
-  },[data,tickets]);
+  },[data,tickets,feeMode]);
    return (<>
                <div className="grid grid-cols-2 gap-y-1">
                 <div className="text-left">Service Fee:</div>

@@ -30,10 +30,7 @@ export default function TicketDetails() {
   }
 
   const location =useLocation();
-  //const { eventId, salesOrderCode,salesOrderId,salesOrderStatus } =
-  //useParams<{ eventId: string; salesOrderCode: string; salesOrderId: string;salesOrderStatus:string}>();
-  //console.log('eventId and salesOrderCode from params', eventId, salesOrderCode);
-  //const  eventDetails = useAppSelector((state:RootState) => state.event);
+  
   const salesOrderData:any = location.state || {};
   console.log('Sales order data received',salesOrderData);
   let eventId = 0, salesOrderCode = '', salesOrderId='', salesOrderStatus='';
@@ -201,13 +198,17 @@ export default function TicketDetails() {
          
          <div className="mt-4 text-accent-dark text-sm font-body space-y-2">
 
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Platform Fees:</span>
               <span>${orderDetails?.platformFees?.toFixed(2) || salesOrderData?.platformFees?.toFixed(2) || '0.00'}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between">
               <span>Total Fees:</span>
               <span>${orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees?.toFixed(2) || '0.00'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Sales tax:</span>
+              <span>${orderDetails?.salesTax.toFixed(2) || salesOrderData?.salesTax?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="flex justify-between">
               <span>Sales Order Total:</span>

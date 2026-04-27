@@ -6,11 +6,31 @@ using Microsoft.Extensions.Logging;
 
 namespace EventUtils;
 
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+public class LocalNoZDateTimeConverter : JsonConverter<DateTime>
+{
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.GetDateTime();
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        // This forces the format to ignore the timezone/Z
+        writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss"));
+    }
+}
+
 public static class CacheHelper
 {
+    public static JsonSerializerOptions serializerOptions = new JsonSerializerOptions();
+           
     static CacheHelper()
     {
         _logger = null;
+         serializerOptions.Converters.Add(new LocalNoZDateTimeConverter());
     }
  
     public static Microsoft.Extensions.Logging.ILogger _logger { get; set; }
@@ -43,7 +63,8 @@ public static class CacheHelper
             {
                 AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
             };
-            await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(value), options);
+          
+            await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(value, serializerOptions), options);
         }
 
         return value;
@@ -92,7 +113,7 @@ public static class CacheHelper
         {
             AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
         };
-        await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(data), options);
+        await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(data,serializerOptions), options);
         return true;
     }
 
@@ -136,7 +157,7 @@ public static class CacheHelper
         {
             AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
         };
-        cache.SetString(key, System.Text.Json.JsonSerializer.Serialize(item), options);
+        cache.SetString(key, System.Text.Json.JsonSerializer.Serialize(item,serializerOptions), options);
     }
     
     public static void RemoveCache<T>(this IDistributedCache cache, string primaryKey)
