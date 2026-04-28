@@ -309,7 +309,7 @@ namespace EventManagementDbAccess
         /// </summary>
         /// <param name="orderId">The sales order ID</param>
         /// <returns>The total amount paid for all items in the order</returns>
-        public async Task<int> GetOrderTotalPrice(int orderId)
+        public async Task<decimal> GetOrderTotalPrice(int orderId)
         {
             if (orderId <= 0)
                 throw new ArgumentException("Order ID must be greater than 0.", nameof(orderId));
@@ -335,7 +335,7 @@ namespace EventManagementDbAccess
                 using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
                 {
-                    return reader.GetInt16(0);
+                    return reader.GetDecimal(0);
                 }
 
                 return 0;

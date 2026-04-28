@@ -759,7 +759,7 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> UpdateSalesOrderRefundStatus(int orderId,SalesOrderStatus status, string refundId, int refundAmount)
+        public async Task<bool> UpdateSalesOrderRefundStatus(int orderId,SalesOrderStatus status, string refundId, decimal   refundAmount)
         {
             if (orderId <= 0)
                 throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));

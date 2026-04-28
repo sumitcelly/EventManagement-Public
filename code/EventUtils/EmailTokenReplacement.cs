@@ -30,6 +30,8 @@ namespace EventUtils
 
         public string EmailCode {get; set;} = string.Empty;
         public string GrandTotal { get;  set; } = string.Empty;
+
+        public string RefundAmount { get; set; } = string.Empty;
         public string? VenueName { get;  set; }
     }
     /// <summary>
@@ -63,7 +65,10 @@ namespace EventUtils
             "privacy_url",
             "registered_company",
             "registered_address",
-            "platform_name"
+            "platform_name",
+
+            //refund
+            "refund_amount"
         };
 
      
@@ -119,6 +124,9 @@ namespace EventUtils
                         break;
                     case "grand_total":
                            values[token] = tokenValues.GrandTotal;
+                           break;
+                     case "refund_amount":
+                           values[token] = tokenValues.RefundAmount;
                            break;
                     case "organizer_email":
                         values[token] = tokenValues.EventOrganizerEmail ?? "Not specified";

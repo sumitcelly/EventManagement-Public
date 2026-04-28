@@ -1,0 +1,78 @@
+<mjml>
+  <mj-head>
+    <mj-title>Refund Processing: {{event_name}}</mj-title>
+    <mj-preview>Your refund for {{event_name}} is being processed.</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#4a4a4a" line-height="24px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f7f9">
+
+    <!-- Header -->
+    <mj-section padding-bottom="0px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="800" color="#2563EB" align="center">
+          {{platform_name}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Card -->
+    <mj-section>
+      <mj-column background-color="#e2e8f0" border-radius="8px" padding="30px">
+        <mj-text font-size="24px" font-weight="bold" color="#1a1a1a" align="center">
+          Refund in Progress
+        </mj-text>
+        <mj-text align="center" font-size="16px" color="#4a4a4a">
+          We've initiated a refund for your order.
+        </mj-text>
+        
+        <mj-divider border-width="1px" border-color="#cbd5e1" padding="20px 0" />
+
+        <!-- Refund Details -->
+        <mj-text font-weight="bold" padding-bottom="0px">Event:</mj-text>
+        <mj-text padding-top="0px" padding-bottom="10px">{{event_name}}</mj-text>
+        
+        <mj-text font-weight="bold" padding-bottom="0px">Refund Amount:</mj-text>
+        <mj-text padding-top="0px" padding-bottom="10px" font-size="20px" font-weight="bold" color="#2563EB">{{refund_amount}}</mj-text>
+        
+        <mj-text font-weight="bold" padding-bottom="0px">Order Number:</mj-text>
+        <mj-text padding-top="0px" padding-bottom="10px">#{{order_code}}</mj-text>
+
+        <mj-divider border-width="1px" border-color="#cbd5e1" padding="20px 0" />
+        
+        <mj-text font-size="14px" color="#475569">
+          <strong>What happens next?</strong> Refunds typically take <strong>5-10 business days</strong> to appear on your bank statement. The funds will be returned to the original payment method used.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Organizer Section -->
+    <mj-section padding-top="10px">
+      <mj-column>
+        <mj-text font-size="14px" color="#64748b" padding-bottom="0px">
+          <strong>Event Details:</strong>
+        </mj-text>
+        <mj-text font-size="14px" color="#1a1a1a" padding-top="0px">
+          {{venue_address}} | {{event_date}}
+        </mj-text>
+        <mj-text font-size="13px" padding-top="0px">
+          <a href="mailto:{{support_email}}" style="color: #4F46E5; text-decoration: none;">Contact Support</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section padding-top="0px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#94a3b8">
+          This is an automated notification regarding your refund for {{event_name}}. <br/>
+          © {{registered_company}} | {{registered_address}} <br/>
+          <a href="{{privacy_url}}" style="color: #2563EB; text-decoration: none;">Privacy Policy</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

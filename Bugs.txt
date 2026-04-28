@@ -6,3 +6,6 @@ Often the url changes but the event does not show up until
 I refresh.
 
 The address is scrunched up on buy tickets page.
+
+
+Only General Category works when creating event

@@ -20,8 +20,8 @@ export const getFullUrlForEvent =(eventUrlName:string, orgName:string)=>
         return "Unable to determine event Url.";
     }
     if (eventUrlName)
-        return window.location.origin +"/"+orgName+"/"+eventUrlName;
+        return window.location.origin +"/eventdetails/"+orgName+"/"+eventUrlName;
     else
-        return window.location.origin +"/"+orgName;
+        return window.location.origin +"/eventdetails/"+orgName;
 
 }

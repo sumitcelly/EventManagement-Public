@@ -217,9 +217,9 @@ namespace CreateTicketApi.Controllers
         }
         
         [HttpPost]
-        [Route("/Payment/RefundOrder/{orderId}")]
+        [Route("/Payment/RefundOrder/{orderId}/{email}")]
         [Authorize(Policy = "OrderOwnedByUser")]
-        public async Task<IActionResult> RefundOrder(int orderId)
+        public async Task<IActionResult> RefundOrder(int orderId,string email)
         {
             if (orderId <=0)
                 return StatusCode(400,"Invalid order id sent");
@@ -242,13 +242,13 @@ namespace CreateTicketApi.Controllers
                 return StatusCode(409,"Event does not allow customer initiated refunds");
             }
 
-            int total = await _ticketAccess.GetOrderTotalPrice(orderId);
+            decimal total = await _ticketAccess.GetOrderTotalPrice(orderId);
             if (total == 0)
                 return StatusCode(404,"Unable to start refund as total paid is 0");
             EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);
             if (organizer == null)
                 return StatusCode(404,"Unable to locate organizer to start refund.");
-            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId,organizer.StripeAccountId );
+            var result = await _stripeAccess.RefundSalesOrder(total*100, orderId,order.PaymentIntentId,organizer.StripeAccountId,email);
             if (result.refundStatus)
             {
                 return StatusCode(200,"Initiated refund successfully");
@@ -335,23 +335,24 @@ namespace CreateTicketApi.Controllers
                 // Handle other event types as needed       
                 else if (stripeEvent.EventType.Contains("refund.created"))
                 {
-                    SalesOrderStatus tempStatus = stripeEvent.RefundStatus=="succeeded"?
+                    SalesOrderStatus tempStatus = stripeEvent.RefundStatus=="succeeded" || stripeEvent.RefundStatus == "pending"?
                                                     SalesOrderStatus.RefundSuccess
                                                     :SalesOrderStatus.RefundFailed;
                     _logger.LogInformation($"refund.created received for order id {stripeEvent.SalesOrderId} with refundid {stripeEvent.RefundId} and status {stripeEvent.RefundStatus}");
                        
                     if (tempStatus == SalesOrderStatus.RefundSuccess)
                     {
+                       await _emailUtils.SendRefundConfirmationEmail(stripeEvent.SalesOrderId,(stripeEvent.RefundAmount/100.0m).ToString("C"), stripeEvent.CustomerEmail);
                        bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus, "",0,stripeEvent.SalesOrderId);
                        if (ret)
                        {
                             _logger.LogInformation($"Returned tickets to pool status for {stripeEvent.SalesOrderId} in db is success");
 
                             ret =await _salesOrderDbAccess.UpdateSalesOrderRefundStatus(stripeEvent.SalesOrderId, tempStatus,
-                                    stripeEvent.RefundId, (int)stripeEvent.RefundAmount);
+                                    stripeEvent.RefundId, stripeEvent.RefundAmount);
                             _logger.LogInformation($"Refund update  for SalesOrder: {stripeEvent.SalesOrderId} in db is {ret}");
                        }
-                       if (!ret)
+                        else
                         {
                             _logger.LogError(@$"Failed to update refund status or return tickets to pool
                                          for SalesOrder ID: {stripeEvent.SalesOrderId}");

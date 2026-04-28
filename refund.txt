@@ -1,0 +1,19 @@
+Refund:
+
+need to send email for success with amount refunded.
+Also tell them it will be a few days.
+
+Email for failure of refund?
+
+
+Ui
+Explain how much will be refunded with 
+info on email sent for success.
+
+On myevents page and clicking through tickets. for eventattendee@polka
+Start getting error
+TicketDetails.tsx:156 Uncaught TypeError: Cannot read properties of undefined (reading 'eventItemType')
+    at TicketDetails
+	
+Make sure to only send email campaigns to customers with valid sales order status.
+So not refunded etc.

@@ -160,4 +160,86 @@ public class EmailUtils
 
         return true;
     }
+
+    public async Task<bool> SendRefundConfirmationEmail(int salesOrderId, string refundAmount,
+                                                        string attendeeEmail)
+    {
+        if (salesOrderId <=0)
+        {
+            _logger.LogError("Unable to refund without a sales order id");
+            return false;
+        }
+       
+        SalesOrder order = await _salesOrderDbAccess.GetSalesOrderById(salesOrderId);
+        if (order == null)
+        {
+          _logger.LogError($"Cannot find sales order for orderId {salesOrderId}");
+            return false;
+        }
+       
+        var tokenReplacer = new EmailTokenReplacement(_configuration);
+        var values = new Dictionary<string, string>();
+        // Fetch the email template
+        Tuple<string,string> emailContent = await _templateAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.RefundSuccess);
+
+        EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerById(order.CustomerId);
+        if (eventOrganizer == null)
+        {
+            throw new Exception($"Organizer with id {order.CustomerId} not found.");
+        }
+        EventHeader eventObj = await _eventDbAccess.GetEventHeaderById(order.EventId);
+        if (eventObj == null)
+        {
+            throw new Exception($"Event with ID {order.EventId} not found.");
+        }
+        string replacedContent = string.Empty, replacedSubject=string.Empty;
+        string eventDate = string.Empty,eventTime =string.Empty;
+        if (eventObj.Latitude!=0 && eventObj.Longitude!=0)
+        {
+            (eventDate, eventTime)= EventUtils.TimeZoneConverter.GetLocalDateTime((double)eventObj.Latitude,(double) eventObj.Longitude,eventObj.EventDate);
+        }
+        // Set values for supported tokens
+        if (!string.IsNullOrWhiteSpace(emailContent.Item1))
+        {
+            values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
+            {
+                EventLocalDate = eventDate,
+                EventLocalTime = eventTime,
+            
+                EventName = eventObj.EventName,
+                EventLocation = eventObj.EventLocation,
+                EventOrganizerEmail = eventOrganizer.OrganizerEmail,
+                EventOrganizerName = eventOrganizer.OrganizationName,
+                VenueName= " ",
+                QRCode = order.SalesOrderCode ?? string.Empty,
+                RefundAmount = !string.IsNullOrWhiteSpace(refundAmount)? refundAmount : order.RefundAmount.ToString("C"),
+            });
+            
+            replacedContent = tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent.Item1)), values);
+            replacedSubject = tokenReplacer.ReplaceEventNameInSubject(emailContent.Item2,eventObj.EventName);
+        }
+        
+        QueueResponse resp =await _sqsClient.QueueEmailMessage(
+            _configuration.GetValue<string>("FromEmail") ?? string.Empty,//from config
+            attendeeEmail,
+           replacedSubject,
+            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
+            string.Empty,
+            await _emailTransactionLogDbAccess.InsertEmailTransactionLog(new EmailTransactionLog()
+            {
+                RecipientEmail = attendeeEmail,
+                RefId =  order.OrderId,
+                EmailType = "RefundSuccess",           
+            })
+            );
+        
+        if (!resp.Success)
+        {
+            string status = resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry";
+            await _emailTransactionLogDbAccess.UpdateEmailTransactionLogStatus(order.OrderId, status, resp.Message);
+        }
+
+        return true;
+    }
 }

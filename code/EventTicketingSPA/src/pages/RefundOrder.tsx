@@ -81,7 +81,7 @@ export default function RefundOrder() {
     {
       try
       {
-        const res = await axiosClient.post(`/Payment/RefundOrder/${orderId}`);
+        const res = await axiosClient.post(`/Payment/RefundOrder/${orderId}/${user?.user?.email}`);
         if (res.status ==200)
         {
           toast.success(`Refund initiated succefully`);

@@ -243,7 +243,7 @@ public class StripeAccess
     /// <param name="paymentIntentId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(int amount, int salesOrderId,string paymentIntentId, string stripAcctId)
+    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(decimal amount, int salesOrderId,string paymentIntentId, string stripAcctId, string customerEmail)
     {
         if (amount <=0 || string.IsNullOrWhiteSpace(paymentIntentId))
         {
@@ -256,16 +256,24 @@ public class StripeAccess
         }
         try
         {
+      
             RefundService _refundService = new RefundService();
             var options = new RefundCreateOptions
             {
                 PaymentIntent = paymentIntentId,
-                Amount = amount,
+                //TODO revisit when we start collecting tax
+                //if tax was added to the app fee when creating the transsaction,
+                //it will get refunded as well. Right now we are not adding tax.
+                //this will pull the application fee amount from my platform account and give it to
+                //customer. But the amount requested must include the app fee amount. So totalticketcost+platformfees
+                //RefundApplicationFee = true,
+                Amount = (long)amount,
                 // Amount is optional here; Stripe refunds the full remaining amount by default
                 Reason = "requested_by_customer",
                 Metadata = new Dictionary<string, string>
                 {
                     { "SalesOrderId", salesOrderId.ToString() },
+                    {"CustomerEmail",customerEmail}
                    
                 }
             };  
@@ -579,11 +587,13 @@ public class StripeAccess
         else if (stripeEvent.Data.Object is Refund refund && refund!=null)
         {
             int orderId=0;
-           
+            
             if (refund.Metadata.TryGetValue("SalesOrderId", out string? tempId))
             {
                 int.TryParse(tempId, out orderId);
             }
+            refund.Metadata.TryGetValue("CustomerEmail", out string? email);
+            
             return new StripeWebHookData
             {
                 EventType = stripeEvent.Type,
@@ -592,7 +602,7 @@ public class StripeAccess
                 PaymentIntentId = refund.PaymentIntentId,
                 RefundStatus = refund.Status,
                 RefundAmount = refund.Amount,
-                
+                CustomerEmail = email ?? string.Empty,
             };
         }
         else if (stripeEvent.Data.Object is Account account && account!=null)
