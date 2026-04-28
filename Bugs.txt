@@ -1,0 +1,8 @@
+Running Bug List
+
+
+Still have issues with search bar.
+Often the url changes but the event does not show up until
+I refresh.
+
+The address is scrunched up on buy tickets page.

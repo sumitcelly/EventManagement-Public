@@ -1,0 +1,38 @@
+Tax Flow:
+Collecting taxes is a pain. Right now we are gettig the tax for the transaction
+because of code settings, settings on the platform (enable sales tax for colorado and admissions tax for Denver)
+and also on the connected account as well.
+
+Even with all that the OrderCleanupworker that has the tax collection also with the transfer api
+does not work. The error was stripe not allowing to pull money from the connected account.
+Maybe there is a way.
+
+
+The below is an option. It does use the tax calculation api that costs .05 cents
+which Stripe refunds 10 calls for 1 succeful transaction. The idea is to call this api as late as possible
+in the checkout process but before checkout session is created.
+
+
+The Ideal Flow for your Platform:
+
+Event Page: Show $23.00 ($20 Ticket + $3 Service Fee).
+Text: "Price includes all service fees. Sales tax added at checkout."
+Buy Button Click: Ask for the buyer's Zip Code on your site.
+The "Nickel" Moment: Your backend calls the Tax Calculation API using that Zip and your stored Venue ID. [1]
+Handoff to Stripe: You create the Embedded Checkout Session with:
+ApplicationFeeAmount = 300 (Profit) + 810 (Tax) = 1110
+Checkout UI: The user sees $23.00 + $8.10 Tax = $31.10.
+
+Why this is the best strategy:
+Trust: The user doesn't feel "tricked" because you already showed them the service fees. 
+They expect sales tax to appear at the end (just like on Amazon or DoorDash).
+Accuracy: By calling the API right before the handoff, your ApplicationFeeAmount will match the tax on the receipt
+ exactly.
+Compliance: You are following the "All-In" pricing rule for your own fees while letting the tax engine handle the government's share.
+Pro-Tip: Minimize "Abandonment Costs"
+To save your $0.05, don't call the Tax API when they just click "Buy Tickets." Only call it after they've entered their Zip Code and clicked the "Proceed to Payment" button.
+ This ensures they are 90% committed to the purchase before you spend that nickel. [1]
+ 
+ 
+ The alternate to the above is to keep a running total of taxes the organzier owes and either invoice it to them
+ or just add it to future transactions.

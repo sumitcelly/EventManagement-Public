@@ -596,8 +596,6 @@ namespace EventManagementDbAccess
                 _cache.AddOrUpdateCache<Event>(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),
                     TimeSpan.FromMinutes(base._cacheDurationInMinutes));
               _cache.AddOrUpdateCache<EventHeader>(evt,eventId.ToString(),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-             
- 
           }
         }
         return rowsAffected > 0;
@@ -666,10 +664,20 @@ namespace EventManagementDbAccess
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
       if (rowsAffected > 0)
       { 
-          _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-          _cache.AddOrUpdateCache(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-          _cache.AddOrUpdateCache<EventHeader>(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-  
+      
+          string cacheKey = CacheHelper.GetCacheKey<Event>(evt.EventId.ToString());
+          bool result = await _cache.UpdatePartialAsync<Event>(cacheKey,evt);
+          _logger.LogInformation($"Result for updating  event cache with key{cacheKey} is {result}");
+          //_cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          cacheKey = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName));
+          result = await _cache.UpdatePartialAsync<Event>(cacheKey,evt);
+          _logger.LogInformation($"Result for updating  event cache with key {cacheKey} is {result}");
+         // _cache.AddOrUpdateCache(evt, string.Format("{0}_{1}",evt.OrganizerUrlName,evt.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          //_cache.AddOrUpdateCache<EventHeader>(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+          cacheKey = CacheHelper.GetCacheKey<Event>(evt.EventId.ToString());
+          result = await _cache.UpdatePartialAsync<Event>(cacheKey,evt);
+          _logger.LogInformation($"Result for updating  event cache with key {cacheKey} is {result}");
+         
       }
       return rowsAffected > 0;
     }

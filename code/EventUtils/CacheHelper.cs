@@ -70,6 +70,35 @@ public static class CacheHelper
         return value;
     }
 
+    public static async Task<bool> UpdatePartialAsync<T>(this IDistributedCache cache, string cacheKey, T updateDto)
+    {
+    
+        var cachedValue = await cache.GetStringAsync(cacheKey);
+        if (cachedValue == null)
+            return false;
+
+        var existingObject = JsonSerializer.Deserialize<T>(cachedValue);
+
+        // Get all properties of the class
+        var properties = typeof(T).GetProperties();
+
+        foreach (var prop in properties)
+        {
+            // Get the value from the incoming Update DTO
+            var newValue = prop.GetValue(updateDto);
+
+            // Update if the value is not null
+            // This works for string, int?, bool?, and complex objects
+            if (newValue != null)
+            {
+                prop.SetValue(existingObject, newValue);
+            }
+        }
+
+        // Save back to Redis
+        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(existingObject,serializerOptions));
+        return true;
+    }
 
     /// <summary>
     /// Send key obtained from GetCacheKey. So a string Event:24 not just 24 which is primary key
