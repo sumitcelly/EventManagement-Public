@@ -234,6 +234,59 @@ public class StripeAccess
         
     }
 
+    /*
+    using Stripe;
+using System;
+using System.Threading.Tasks;
+
+public class StripeRefundHandler
+{
+    public async Task ProcessFullRefund(string paymentIntentId, long totalToCustomerCents, long platformFeeCents)
+    {
+        // 1. Retrieve the PaymentIntent with expanded latest_charge
+        var piService = new PaymentIntentService();
+        var piOptions = new PaymentIntentGetOptions();
+        piOptions.AddExpand("latest_charge");
+
+        var paymentIntent = await piService.GetAsync(paymentIntentId, piOptions);
+
+        // 2. Safety Check: Only refund successful payments
+        if (paymentIntent.Status != "succeeded")
+        {
+            throw new Exception($"Cannot refund PaymentIntent in status: {paymentIntent.Status}");
+        }
+
+        var charge = paymentIntent.LatestCharge;
+        string feeId = charge.ApplicationFeeId;
+
+        // 3. Step One: Refund the customer for the Ticket portion
+        // We set RefundApplicationFee to FALSE to control the split manually
+        var refundService = new RefundService();
+        var refundOptions = new RefundCreateOptions
+        {
+            PaymentIntent = paymentIntentId,
+            Amount = totalToCustomerCents, 
+            RefundApplicationFee = false, // Prevents Stripe from guessing proportions
+            Reason = "requested_by_customer"
+        };
+        
+        Refund refund = await refundService.CreateAsync(refundOptions);
+
+        // 4. Step Two: Refund the exact Tax + Profit from your platform account
+        // This pulls the money you previously reclaimed/withheld back to the customer
+        if (!string.IsNullOrEmpty(feeId))
+        {
+            var feeRefundService = new ApplicationFeeRefundService();
+            var feeOptions = new ApplicationFeeRefundCreateOptions
+            {
+                Amount = platformFeeCents // e.g., 1300 for $10 Tax + $3 Profit
+            };
+
+            await feeRefundService.CreateAsync(feeId, feeOptions);
+        }
+    }
+}
+*/
     /// <summary>
     /// Refunds the amount in cents for sales order id. The amount is expected to be the total price of the ticket(s), 
     /// no fees included since fees are not refunded.
@@ -266,7 +319,11 @@ public class StripeAccess
                 //it will get refunded as well. Right now we are not adding tax.
                 //this will pull the application fee amount from my platform account and give it to
                 //customer. But the amount requested must include the app fee amount. So totalticketcost+platformfees
-                //RefundApplicationFee = true,
+                RefundApplicationFee = false,
+          
+                
+                //set the amoun to whatever should go back to the customer (ticket + appfees +tax )
+                ///must set RefundApplicationFee so that fees+tax is pulled form the platform not connected account
                 Amount = (long)amount,
                 // Amount is optional here; Stripe refunds the full remaining amount by default
                 Reason = "requested_by_customer",
@@ -415,6 +472,7 @@ public class StripeAccess
             UiMode = "embedded_page"
 
         };
+        
         options.AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true };
         options.BillingAddressCollection = "required";
         options.ClientReferenceId = paymentModel.SalesOrderId.ToString();
@@ -476,8 +534,63 @@ public class StripeAccess
     public async Task<bool>  CollectTax(string fromStripeAcctId,string paymentIntentId, decimal amount,
                                         int orderId,string description)
     {
+        /*
+        // 1. Fetch the Payment Intent and expand the 'latest_charge'
+var piService = new PaymentIntentService();
+var piOptions = new PaymentIntentGetOptions();
+piOptions.AddExpand("latest_charge");
+var paymentIntent = await piService.GetAsync(session.PaymentIntentId, piOptions);
+
+// 2. The Transfer ID is on the charge object
+var transferId = paymentIntent.LatestCharge.TransferId;
+
+// 3. Now pull the tax back from that specific transfer
+var reversalService = new TransferReversalService();
+var reversalOptions = new TransferReversalCreateOptions
+{
+    Amount = session.TotalDetails.AmountTax, // This is the exact CO tax calculated
+    Description = "Reclaiming tax for Marketplace Facilitator remittance"
+};
+await reversalService.CreateAsync(transferId, reversalOptions);
+
+how to pull exactly:
+// 1. Get the exact tax Stripe calculated
+long taxAmountCents = session.TotalDetails.AmountTax; // e.g., 500
+
+// 2. Calculate the "tax-on-tax" processing fee
+// (The amount the organizer 'lost' because the total was higher)
+long taxProcessingFee = (long)Math.Ceiling(taxAmountCents * 0.029); // ~15 cents
+
+// 3. Pull back the Tax + the fee from the Transfer
+var reversalOptions = new TransferReversalCreateOptions
+{
+    Amount = taxAmountCents + taxProcessingFee, 
+    Description = "Reclaiming tax and processing fee adjustment"
+};
+await reversalService.CreateAsync(transferId, reversalOptions);
+
+// 1. Get the net amount transferred to the connected account
+// (Amount - Stripe Fee - Application Fee)
+var netAmountCents = paymentIntent.LatestCharge.Amount - 
+                     paymentIntent.LatestCharge.ApplicationFeeAmount - 
+                     paymentIntent.LatestCharge.BalanceTransaction.Fee;
+
+// 2. Calculate the 'Correction' needed to get organizer to $50.00 (5000 cents)
+long organizerGoal = 5000;
+long pullAmount = netAmountCents - organizerGoal; // e.g., 5486 - 5000 = 486
+
+// 3. Pull that correction back
+var reversalOptions = new TransferReversalCreateOptions
+{
+    Amount = pullAmount,
+    Description = "Reclaiming tax and fee adjustment to ensure $50 payout"
+};
+await reversalService.CreateAsync(transferId, reversalOptions);
+
+*/
         try 
         {
+            
             var piService = new PaymentIntentService();
 
             var getOptions = new PaymentIntentGetOptions

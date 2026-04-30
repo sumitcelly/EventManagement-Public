@@ -17,6 +17,22 @@ import { Button } from "flowbite-react";
 import Footer from "../components/Footer";
 import toast, { Toaster } from "react-hot-toast";
 
+const getOrderSummaryValues = (orderDetails: any, salesOrderData: any, returnDecimal: boolean = false) => {
+  if (returnDecimal) {
+    return {
+      totalFees: Number(orderDetails?.totalFees) || Number(salesOrderData?.totalFees) || 0,
+      salesTax: Number(orderDetails?.salesTax) || Number(salesOrderData?.salesTax) || 0,
+      salesOrderTotal: Number(orderDetails?.salesOrderTotal) || Number(salesOrderData?.salesOrderTotal) || 0
+    };
+  }
+  
+  return {
+    totalFees: orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees?.toFixed(2) || '0.00',
+    salesTax: orderDetails?.salesTax.toFixed(2) || salesOrderData?.salesTax?.toFixed(2) || '0.00',
+    salesOrderTotal: orderDetails?.salesOrderTotal.toFixed(2) || salesOrderData?.salesOrderTotal?.toFixed(2) || '0.00'
+  };
+};
+
 export default function TicketDetails() {
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -204,22 +220,26 @@ export default function TicketDetails() {
             </div> */}
             <div className="flex justify-between">
               <span>Total Fees:</span>
-              <span>${orderDetails?.totalFees.toFixed(2) || salesOrderData?.totalFees?.toFixed(2) || '0.00'}</span>
+              <span>${getOrderSummaryValues(orderDetails, salesOrderData).totalFees}</span>
             </div>
             <div className="flex justify-between">
               <span>Sales tax:</span>
-              <span>${orderDetails?.salesTax.toFixed(2) || salesOrderData?.salesTax?.toFixed(2) || '0.00'}</span>
+              <span>${getOrderSummaryValues(orderDetails, salesOrderData).salesTax}</span>
             </div>
             <div className="flex justify-between">
               <span>Sales Order Total:</span>
-              <span>${orderDetails?.salesOrderTotal.toFixed(2) || salesOrderData?.salesOrderTotal?.toFixed(2) || '0.00'}</span>
+              <span>${getOrderSummaryValues(orderDetails, salesOrderData).salesOrderTotal}</span>
             </div>
           </div>
          {/* Refund mode must be customer controlled (1)*/}
           {eventDetails?.refundMode ===1 && (orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" && (
             <div className="ml-auto mt-4">
               <button onClick={()=>history.push(`/refundorder`, 
-              {orderId:orderDetails?.salesOrderId || salesOrderId, eventId: eventDetails?.eventId })}
+              {orderId:orderDetails?.salesOrderId || salesOrderId, eventId: eventDetails?.eventId,
+                orderTotal: getOrderSummaryValues(orderDetails, salesOrderData,true).salesOrderTotal,
+                salesTax: getOrderSummaryValues(orderDetails, salesOrderData,true).salesTax,
+                totalFees: getOrderSummaryValues(orderDetails, salesOrderData,true).totalFees
+               })}
                   className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
                   >
                   Initiate refund

@@ -192,28 +192,7 @@ namespace CreateTicketApi.Controllers
 
             return Ok("This endpoint is not used currently. Please use the checkout session created in SalesOrderConductor to start the payment process.");
 
-            // try
-            // {
-            //     var result = await _stripeAccess.CreateCheckoutSession(salesOrderId, stripeAccountId,eventId, request);
-            //     //todo: update session id , order status, in db
-            //     if (result == null || string.IsNullOrEmpty(result.Item1) || string.IsNullOrEmpty(result.Item2))
-            //     {
-            //         return StatusCode(500, "Payment processing failed.");
-            //     }
-            //     else
-            //     {
-            //         _logger.LogInformation($"Payment session ID {result.Item2} created  successfully for sales order ID {salesOrderId}.");
-            //         // Update the sales order with the Stripe session ID
-            //         await _salesOrderDbAccess.UpdateSalesOrderStatusAndStripeSessionId(salesOrderId, SalesOrderStatus.Reserved, result.Item2);
-            //         return Ok(result.Item1);
-            //     }
-                
-            // }
-            // catch (Exception ex)
-            // {
-            //     _logger.LogError(ex, "Stripe charge failed.");
-            //     return StatusCode(500, "Payment processing failed.");
-            // }
+           
         }
         
         [HttpPost]
@@ -228,7 +207,7 @@ namespace CreateTicketApi.Controllers
             {
               return StatusCode(404,"Unable to find salesorder for id {orderId}");
             }
-            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded && order.SalesOrderStatus != SalesOrderStatus.RefundedPartially)
+            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded)
             {
                 return StatusCode(409,"Order is in invalid state to start refund");
             }
@@ -236,19 +215,23 @@ namespace CreateTicketApi.Controllers
             {
                 return StatusCode(409,"No paymentintentid found");
             }
+            if (order.SalesOrderTotal ==0)
+            {
+                return StatusCode(500,"There is no amount to refund.");
+            }
             EventHeader evt = await _eventDbAccess.GetEventHeaderById(order.EventId);
             if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
             {
                 return StatusCode(409,"Event does not allow customer initiated refunds");
             }
-
-            decimal total = await _ticketAccess.GetOrderTotalPrice(orderId);
-            if (total == 0)
-                return StatusCode(404,"Unable to start refund as total paid is 0");
+           
+           //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
+            //. We can choose to refund our fees)
+            decimal total = (order.SalesOrderTotal - order.TotalFees)*100 ;
             EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);
             if (organizer == null)
                 return StatusCode(404,"Unable to locate organizer to start refund.");
-            var result = await _stripeAccess.RefundSalesOrder(total*100, orderId,order.PaymentIntentId,organizer.StripeAccountId,email);
+            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId,organizer.StripeAccountId,email);
             if (result.refundStatus)
             {
                 return StatusCode(200,"Initiated refund successfully");
