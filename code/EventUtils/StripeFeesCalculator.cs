@@ -5,9 +5,10 @@ public static class StripeFeeCalculator
     /// <param name="platformProfit">Your desired profit (e.g., 100 for $1.00)</param>
     /// <param name="stripePercent">Default 0.029 (2.9%)</param>
     /// <param name="stripeFixed">Default 30 (30 cents)</param>
-    public static (long totalToCharge, long applicationFee) Calculate(
+    public static (long totalToCharge, long applicationFee, long stripeFee) Calculate(
         long targetNet, 
         long platformProfit, 
+        long tax,
         double stripePercent = 0.029, 
         long stripeFixed = 30)
     {
@@ -19,9 +20,9 @@ public static class StripeFeeCalculator
         
         // Your application fee must cover your profit PLUS the stripe fee 
         // if you want the organizer to keep exactly the targetNet.
-        long stripeFee = (long)Math.Ceiling(totalToCharge * stripePercent) + stripeFixed;
+        long stripeFee = (long)Math.Ceiling((totalToCharge+tax) * stripePercent) + stripeFixed;
         long applicationFee = platformProfit + stripeFee;
 
-        return (totalToCharge, applicationFee);
+        return (totalToCharge, applicationFee, stripeFee);
     }
 }

@@ -454,14 +454,21 @@ public class StripeRefundHandler
         long appFees = CalculatePlatformFee(paymentModel.LineItems);
         long totalItemsUnitPrice = (long)paymentModel.LineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
-        long finalTotal=0, totalFeesForTrans=0;
+
+        decimal amountaftertax= await CalculateAmountAfterTax("80920",totalItemsUnitPrice,paymentModel.LocationId,
+                                    ticketTaxCode,appFees, stripeAccountID);
+
+        decimal tax= amountaftertax-appFees-totalItemsUnitPrice;
+        _logger.LogInformation($"Amount after tax {amountaftertax} and tax is {tax}");  
+        long finalTotal=0, totalFeesForTrans=0, stripeFee=0;
         if (passOnAllFeesToCustomer)
         {
-           (finalTotal, totalFeesForTrans) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees);
+           (finalTotal, totalFeesForTrans, stripeFee) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees,(long)tax);
         }
         //absorb the stripe fees but pass on the application fees
         else
         {
+            //stripeFee = (long)(30 +(.029)*totalItemsUnitPrice);
             finalTotal = totalItemsUnitPrice + appFees;
             totalFeesForTrans = appFees;
         }
@@ -469,6 +476,7 @@ public class StripeRefundHandler
         _logger.LogInformation($"Fees after stripe calculation is {finalTotal} {totalFeesForTrans}");
 
         _logger.LogInformation($"Processing purchase for customer: {stripeAccountID} with {paymentModel.LineItems.Count} line items.");
+
         var options = new SessionCreateOptions
         {
             ReturnUrl = _paymentReturnUrl.Replace("event_id", paymentModel.EventId.ToString()).Replace("order_Id", paymentModel.SalesOrderId.ToString()),
@@ -488,8 +496,9 @@ public class StripeRefundHandler
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
-                ApplicationFeeAmount = appFees,
+                ApplicationFeeAmount = appFees + (long)tax
             },
+            
             //one time Fpayment
             Mode = "payment",
             UiMode = "embedded_page"
@@ -500,17 +509,15 @@ public class StripeRefundHandler
         options.BillingAddressCollection = "required";
         options.ClientReferenceId = paymentModel.SalesOrderId.ToString();
         options.LineItems = new List<SessionLineItemOptions>();
-
+      
         foreach (var item in paymentModel.LineItems)
-        {
-            
-          
+        {   
             options.LineItems.Add(new SessionLineItemOptions
             {
                 PriceData = new SessionLineItemPriceDataOptions
                 {
                     Currency = "usd",
-                    
+            
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
                          
@@ -532,14 +539,50 @@ public class StripeRefundHandler
      
         options.LineItems.Add(new SessionLineItemOptions {
             PriceData = new SessionLineItemPriceDataOptions {
-                UnitAmount = finalTotal - totalItemsUnitPrice, // The remaining "Service Fee" (approx $1.95)
+                UnitAmount = appFees, // The remaining "Service Fee" (approx $1.95)
                 Currency = "usd",
-                ProductData = new SessionLineItemPriceDataProductDataOptions { Name = "Service Fee" , TaxCode = _serviceTaxCode} // Tax code for service fees
+                 
+                ProductData = new SessionLineItemPriceDataProductDataOptions { 
+                    Name = "Platform Fees" ,      
+                      TaxDetails = new SessionLineItemPriceDataProductDataTaxDetailsOptions()
+                        {
+                             
+                            PerformanceLocation = paymentModel.LocationId,
+                             //use mechandise tax code for add on items since they are not event admission tickets, this is to handle the case where an order has both tickets and add on items
+                            TaxCode = ticketTaxCode
+                        },
+                        } // Tax code for service fees
             },
             Quantity = 1
-        });
-       options.CustomerEmail = customerEmailAddress;
-       
+            }
+        );
+        if (stripeFee >0)
+        {
+            options.LineItems.Add(new SessionLineItemOptions()
+            {
+                PriceData = new SessionLineItemPriceDataOptions {
+                UnitAmount = stripeFee, // The remaining "Service Fee" (approx $1.95)
+                Currency = "usd",
+                 
+                ProductData = new SessionLineItemPriceDataProductDataOptions { 
+                    Name = "Stripe Fees" ,
+                    TaxDetails = new SessionLineItemPriceDataProductDataTaxDetailsOptions()
+                        {
+                             
+                            PerformanceLocation = paymentModel.LocationId,
+                             //use mechandise tax code for add on items since they are not event admission tickets, this is to handle the case where an order has both tickets and add on items
+                            TaxCode = _serviceTaxCode
+                        },}
+                },
+                Quantity = 1
+            }
+            );
+        }
+        
+        options.CustomerEmail = customerEmailAddress;
+       //this is a direct charge model where the connected acct is the merchant of record.
+       //Not a destination charge model. The payment intent is on the organizer.
+       //We are not transferring money to the connected account. Just take a cut of the fees.
         var requestOptions = new RequestOptions
         {
             StripeAccount = stripeAccountID,
@@ -554,6 +597,61 @@ public class StripeRefundHandler
         return new Tuple<string, string>(session.ClientSecret, session.Id);
     }
 
+
+    public async Task<decimal> CalculateAmountAfterTax(string zipCode,decimal ticketCost, string perfLocation,
+                string taxCode, decimal platformFees, string stripeAccount,string country="US")
+    {
+        _logger.LogInformation($"Ticket cose {ticketCost},perfLocation {perfLocation}, fees {platformFees}, tax code {taxCode} ");
+        var taxService = new Stripe.Tax.CalculationService();
+
+        // 2. Prepare the calculation request
+        var calcOptions = new Stripe.Tax.CalculationCreateOptions
+        {
+            Currency = "usd",
+            CustomerDetails = new Stripe.Tax.CalculationCustomerDetailsOptions
+            {
+                // Address is required to determine the buyer's location
+                Address = new AddressOptions { PostalCode = zipCode, Country = country },
+                AddressSource = "billing" 
+            },
+            LineItems = new List<Stripe.Tax.CalculationLineItemOptions>
+            {
+                new Stripe.Tax.CalculationLineItemOptions
+                {
+                    Amount = (long)ticketCost, // $20.00 Ticket Price in cents
+                    Reference = "ticket_line_item", // Unique ID for this calculation
+                    TaxCode = taxCode, // E.g., Concert / Live Performance
+                    // The "Magic" location ID for Denver/Boulder
+                    PerformanceLocation = perfLocation ,
+                    
+                },
+                new Stripe.Tax.CalculationLineItemOptions
+                {
+                    Amount = (long)platformFees, // $20.00 Ticket Price in cents
+                    Reference = "platform_fees", // Unique ID for this calculation
+                    TaxCode = taxCode, // E.g., Concert / Live Performance
+                    // The "Magic" location ID for Denver/Boulder
+                    PerformanceLocation = perfLocation 
+                }
+            }
+        };
+
+        try
+        {
+        // 3. Execute the calculation
+            var calculation = await taxService.CreateAsync(calcOptions, new RequestOptions()
+            {
+                 StripeAccount = stripeAccount
+            });
+            return calculation.AmountTotal;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error calculating tax: {ex.Message}");
+            return 0;
+        }
+
+    }
     public async Task<bool>  CollectTax(string fromStripeAcctId,string paymentIntentId, decimal amount,
                                         int orderId,string description)
     {
