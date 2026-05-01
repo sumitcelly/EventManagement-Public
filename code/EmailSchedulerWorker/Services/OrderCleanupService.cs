@@ -58,8 +58,8 @@ namespace EmailSchedulerWorker.Services
             {
                 try
                 {
-                    //await ProcessOrderCleanupAsync(stoppingToken);
-                    await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
+                    await ProcessOrderCleanupAsync(stoppingToken);
+                    //await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
                 }
                 catch (Exception ex)
                 {
@@ -88,6 +88,14 @@ namespace EmailSchedulerWorker.Services
             }
         }
 
+
+        /// <summary>
+        /// not required since taxwill sit with current setup with customer.
+        /// And event if not, we will add it to application fees.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="hoursAgo"></param>
+        /// <returns></returns>
         private async Task ProcessTaxCollectionAsync(CancellationToken token, int hoursAgo)
         {
             try

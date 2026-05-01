@@ -457,7 +457,8 @@ public class StripeRefundHandler
         
         //From this article, https://docs.stripe.com/tax/tax-for-platforms
         //it seems I cannot even file for taxes with the direct charge model that I have.
-        //So no point calculating
+        //So no point calculating. We still need this so that I can accurately calculate the tax 
+        //since that changes the stripe fees and the customer gets a bit less (.029* tax)
         decimal amountaftertax= await CalculateAmountAfterTax("80920",totalItemsUnitPrice,paymentModel.LocationId,
                                     ticketTaxCode,appFees, stripeAccountID);
 
@@ -499,6 +500,8 @@ public class StripeRefundHandler
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
+                //add the tax to appFees if you want to move tax to our account and 
+                //pay for organizer.
                 ApplicationFeeAmount = appFees
             },
             
