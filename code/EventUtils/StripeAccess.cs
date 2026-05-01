@@ -296,20 +296,37 @@ public class StripeRefundHandler
     /// <param name="paymentIntentId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(decimal amount, int salesOrderId,string paymentIntentId, string stripAcctId, string customerEmail)
+    public async Task<(bool refundStatus, string refundId, bool isPartial)> RefundSalesOrder(decimal amount, decimal tax, int salesOrderId,
+                        string paymentIntentId, string stripeAcctId, string customerEmail)
     {
         if (amount <=0 || string.IsNullOrWhiteSpace(paymentIntentId))
         {
             _logger.LogError($"Cannot process refund if amount {amount} is 0 or payment intent id {paymentIntentId} is empty ");
             throw new ArgumentException("Either amount or payment intentId is invalid");
         }
-        if (string.IsNullOrWhiteSpace(stripAcctId))
+        if (string.IsNullOrWhiteSpace(stripeAcctId))
         {
-            throw new ArgumentNullException(stripAcctId, nameof(stripAcctId));
+            throw new ArgumentNullException(stripeAcctId, nameof(stripeAcctId));
         }
         try
         {
-      
+                // 1. Retrieve the PaymentIntent with expanded latest_charge
+            var piService = new PaymentIntentService();
+            var piOptions = new PaymentIntentGetOptions()
+            {
+                 
+            };
+            piOptions.AddExpand("latest_charge");
+            var requestOptions = new RequestOptions { StripeAccount = stripeAcctId };
+
+            var paymentIntent = await piService.GetAsync(paymentIntentId, piOptions,requestOptions);
+
+            // 2. Safety Check: Only refund successful payments
+            if (paymentIntent.Status != "succeeded")
+            {
+                throw new Exception($"Cannot refund PaymentIntent in status: {paymentIntent.Status}");
+            }
+
             RefundService _refundService = new RefundService();
             var options = new RefundCreateOptions
             {
@@ -319,9 +336,7 @@ public class StripeRefundHandler
                 //it will get refunded as well. Right now we are not adding tax.
                 //this will pull the application fee amount from my platform account and give it to
                 //customer. But the amount requested must include the app fee amount. So totalticketcost+platformfees
-                RefundApplicationFee = false,
-          
-                
+                RefundApplicationFee = false,      
                 //set the amoun to whatever should go back to the customer (ticket + appfees +tax )
                 ///must set RefundApplicationFee so that fees+tax is pulled form the platform not connected account
                 Amount = (long)amount,
@@ -335,19 +350,27 @@ public class StripeRefundHandler
                 }
             };  
 
-            var requestOptions = new RequestOptions
-            {
-                StripeAccount = stripAcctId// The organizer's Connect account ID
-            }; 
             Refund refund =  await _refundService.CreateAsync(options,requestOptions);
            
+            if (tax >0)
+            {
+               var transferOptions = new TransferCreateOptions
+                {
+                    Amount = (long)tax, // The $5.00 tax you pulled earlier
+                    Currency = "usd",
+                    Destination = stripeAcctId,
+                    Description = "Returning tax funds for customer refund",
+                   // SourceTransaction = paymentIntent.LatestCharge.Id
+                   
+                };
+                var transferService = new TransferService();
+                await transferService.CreateAsync(transferOptions);
+                
+
+            }
             _logger.LogInformation($"Status of refund for order id {salesOrderId} is {refund.Status}");
             _logger.LogInformation($"Refund object for sales order id {salesOrderId} is {refund.ToJson()}");
-            if (refund.Amount < amount)
-            {
-                _logger.LogCritical(@$"Amount refunded is less than requested for order id {salesOrderId}. 
-                    Request is {amount} and refunded is {refund.Amount}");
-            }
+       
             return (refund.Status == "succeeded", refund.Id, refund.Amount < amount);
         }
         catch (Exception ex)
@@ -534,60 +557,7 @@ public class StripeRefundHandler
     public async Task<bool>  CollectTax(string fromStripeAcctId,string paymentIntentId, decimal amount,
                                         int orderId,string description)
     {
-        /*
-        // 1. Fetch the Payment Intent and expand the 'latest_charge'
-var piService = new PaymentIntentService();
-var piOptions = new PaymentIntentGetOptions();
-piOptions.AddExpand("latest_charge");
-var paymentIntent = await piService.GetAsync(session.PaymentIntentId, piOptions);
 
-// 2. The Transfer ID is on the charge object
-var transferId = paymentIntent.LatestCharge.TransferId;
-
-// 3. Now pull the tax back from that specific transfer
-var reversalService = new TransferReversalService();
-var reversalOptions = new TransferReversalCreateOptions
-{
-    Amount = session.TotalDetails.AmountTax, // This is the exact CO tax calculated
-    Description = "Reclaiming tax for Marketplace Facilitator remittance"
-};
-await reversalService.CreateAsync(transferId, reversalOptions);
-
-how to pull exactly:
-// 1. Get the exact tax Stripe calculated
-long taxAmountCents = session.TotalDetails.AmountTax; // e.g., 500
-
-// 2. Calculate the "tax-on-tax" processing fee
-// (The amount the organizer 'lost' because the total was higher)
-long taxProcessingFee = (long)Math.Ceiling(taxAmountCents * 0.029); // ~15 cents
-
-// 3. Pull back the Tax + the fee from the Transfer
-var reversalOptions = new TransferReversalCreateOptions
-{
-    Amount = taxAmountCents + taxProcessingFee, 
-    Description = "Reclaiming tax and processing fee adjustment"
-};
-await reversalService.CreateAsync(transferId, reversalOptions);
-
-// 1. Get the net amount transferred to the connected account
-// (Amount - Stripe Fee - Application Fee)
-var netAmountCents = paymentIntent.LatestCharge.Amount - 
-                     paymentIntent.LatestCharge.ApplicationFeeAmount - 
-                     paymentIntent.LatestCharge.BalanceTransaction.Fee;
-
-// 2. Calculate the 'Correction' needed to get organizer to $50.00 (5000 cents)
-long organizerGoal = 5000;
-long pullAmount = netAmountCents - organizerGoal; // e.g., 5486 - 5000 = 486
-
-// 3. Pull that correction back
-var reversalOptions = new TransferReversalCreateOptions
-{
-    Amount = pullAmount,
-    Description = "Reclaiming tax and fee adjustment to ensure $50 payout"
-};
-await reversalService.CreateAsync(transferId, reversalOptions);
-
-*/
         try 
         {
             
@@ -597,34 +567,75 @@ await reversalService.CreateAsync(transferId, reversalOptions);
             {
                 // Optionally expand 'latest_charge' if your SDK version supports it 
                 // to ensure the field is fully populated.
-                Expand = new List<string> { "latest_charge" }
+                Expand = new List<string> { "latest_charge", "latest_charge.transfer"}
             };
-            var pi = await piService.GetAsync(paymentIntentId, getOptions, new RequestOptions 
+            var pi = await piService.GetAsync("pi_3TQxpG1gRFvi6FYp1g0XBBLi", getOptions, new RequestOptions 
             { 
                 StripeAccount = fromStripeAcctId,
             });
 
-            // 2. Extract the Charge ID (ch_...)
-            string chargeId = pi.LatestChargeId; 
-            var options = new  TransferCreateOptions
+             var transferId = string.Empty;
+            if (pi.LatestCharge?.Transfer?.Id == null || pi.LatestCharge.TransferId == null)
             {
-                Amount = (long)amount,
-                Currency = "usd",
-                Destination = _platformAcctId, // Your acct_xxx
-                Description = description,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "original_payment_intent", paymentIntentId },
-                    { "order_id",orderId.ToString()},
-                    { "type", "sales_tax_recovery" }
-                }
-            };
+                // Transfer hasn't been created yet - try fetching it from Transfers list
+                var transferService = new TransferService();
+               
+               TransferListOptions options1 = new TransferListOptions()
+               {
+                Destination= fromStripeAcctId,
+                   Limit=100
+               };
+               //options1.AddExtraParam("DestinationPayment",pi.LatestChargeId);
+                var transfers = await transferService.ListAsync(options1, new RequestOptions { StripeAccount = fromStripeAcctId });
+                
+                var transfer = transfers.Data.FirstOrDefault();
+                if (transfer != null)
+                    transferId = transfer.Id;
+                else
+                    throw new Exception($"No transfer found for charge {pi.LatestChargeId}");
+            }
+            else
+            {
+                transferId = pi.LatestCharge.Transfer.Id ?? pi.LatestCharge.TransferId;
+            }
 
-            // Act as the organizer to push the tax to your platform
-            var requestOptions = new RequestOptions { StripeAccount = fromStripeAcctId };
+// 2. Find the transfer that was created from this specific charge
             
-            Transfer transfer = await transferService.CreateAsync(options, requestOptions);
-            _logger.LogInformation($"Collect tax result for {paymentIntentId} is {transfer.ToJson()}");
+        // Using 'm' makes 0.029 a decimal, allowing it to work with your amount
+           long amountToPull = (long)Math.Round(amount - (amount * 0.029m));
+
+
+            // 3. Now pull the tax back from that specific transfer
+            var reversalService = new TransferReversalService();
+            var reversalOptions = new TransferReversalCreateOptions
+            {
+                Amount = amountToPull, // This is the exact CO tax calculated
+                Description = "Reclaiming tax for Marketplace Facilitator remittance",
+                
+            };
+            var reversal =  await reversalService.CreateAsync(transferId, reversalOptions);
+
+            // // 2. Extract the Charge ID (ch_...)
+            // string chargeId = pi.LatestChargeId; 
+            // var options = new  TransferCreateOptions
+            // {
+            //     Amount = (long)amount,
+            //     Currency = "usd",
+            //     Destination = _platformAcctId, // Your acct_xxx
+            //     Description = description,
+            //     Metadata = new Dictionary<string, string>
+            //     {
+            //         { "original_payment_intent", paymentIntentId },
+            //         { "order_id",orderId.ToString()},
+            //         { "type", "sales_tax_recovery" }
+            //     }
+            // };
+
+            // // Act as the organizer to push the tax to your platform
+            // var requestOptions = new RequestOptions { StripeAccount = fromStripeAcctId };
+            
+            // Transfer transfer = await transferService.CreateAsync(options, requestOptions);
+            _logger.LogInformation($"Collect tax result for {paymentIntentId} is {reversal.ToJson()}");
             return true;
         }
         catch (StripeException ex) when (ex.Message.Contains("insufficient funds"))

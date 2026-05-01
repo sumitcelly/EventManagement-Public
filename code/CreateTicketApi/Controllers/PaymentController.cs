@@ -202,43 +202,52 @@ namespace CreateTicketApi.Controllers
         {
             if (orderId <=0)
                 return StatusCode(400,"Invalid order id sent");
-            SalesOrder order =  await _salesOrderDbAccess.GetSalesOrderById(orderId);
-            if (order == null)
+            try
             {
-              return StatusCode(404,"Unable to find salesorder for id {orderId}");
+                SalesOrder order =  await _salesOrderDbAccess.GetSalesOrderById(orderId);
+                if (order == null)
+                {
+                return StatusCode(404,"Unable to find salesorder for id {orderId}");
+                }
+                if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded)
+                {
+                    return StatusCode(409,"Order is in invalid state to start refund");
+                }
+                if (string.IsNullOrWhiteSpace(order.PaymentIntentId))
+                {
+                    return StatusCode(409,"No paymentintentid found");
+                }
+                if (order.SalesOrderTotal ==0)
+                {
+                    return StatusCode(500,"There is no amount to refund.");
+                }
+                EventHeader evt = await _eventDbAccess.GetEventHeaderById(order.EventId);
+                if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
+                {
+                    return StatusCode(409,"Event does not allow customer initiated refunds");
+                }
+            
+            //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
+                //. We can choose to refund our fees)
+                decimal total = (order.SalesOrderTotal - order.TotalFees)*100 ;
+                EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);
+                if (organizer == null)
+                    return StatusCode(404,"Unable to locate organizer to start refund.");
+                
+                var result = await _stripeAccess.RefundSalesOrder(total, order.SalesTax*100, orderId,order.PaymentIntentId,organizer.StripeAccountId,email);
+                if (result.refundStatus)
+                {
+                    return StatusCode(200,"Initiated refund successfully");
+                }
+                else
+                {
+                    return StatusCode(500,"There was an issue initiating your refund");
+                }
             }
-            if (order.SalesOrderStatus != SalesOrderStatus.PaymentSucceeded)
+            catch (Exception ex)
             {
-                return StatusCode(409,"Order is in invalid state to start refund");
-            }
-            if (string.IsNullOrWhiteSpace(order.PaymentIntentId))
-            {
-                return StatusCode(409,"No paymentintentid found");
-            }
-            if (order.SalesOrderTotal ==0)
-            {
-                return StatusCode(500,"There is no amount to refund.");
-            }
-            EventHeader evt = await _eventDbAccess.GetEventHeaderById(order.EventId);
-            if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
-            {
-                return StatusCode(409,"Event does not allow customer initiated refunds");
-            }
-           
-           //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
-            //. We can choose to refund our fees)
-            decimal total = (order.SalesOrderTotal - order.TotalFees)*100 ;
-            EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);
-            if (organizer == null)
-                return StatusCode(404,"Unable to locate organizer to start refund.");
-            var result = await _stripeAccess.RefundSalesOrder(total, orderId,order.PaymentIntentId,organizer.StripeAccountId,email);
-            if (result.refundStatus)
-            {
-                return StatusCode(200,"Initiated refund successfully");
-            }
-            else
-            {
-                return StatusCode(500,"There was an issue initiating your refund");
+                _logger.LogError($"Error in regund ticket:"+ex.ToString());
+                return StatusCode(500,ex.ToString());
             }
             
         }
