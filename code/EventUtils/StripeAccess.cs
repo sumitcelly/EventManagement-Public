@@ -352,22 +352,22 @@ public class StripeRefundHandler
 
             Refund refund =  await _refundService.CreateAsync(options,requestOptions);
            
-            if (tax >0)
-            {
-               var transferOptions = new TransferCreateOptions
-                {
-                    Amount = (long)tax, // The $5.00 tax you pulled earlier
-                    Currency = "usd",
-                    Destination = stripeAcctId,
-                    Description = "Returning tax funds for customer refund",
-                   // SourceTransaction = paymentIntent.LatestCharge.Id
+            // if (tax >0)
+            // {
+            //    var transferOptions = new TransferCreateOptions
+            //     {
+            //         Amount = (long)tax, // The $5.00 tax you pulled earlier
+            //         Currency = "usd",
+            //         Destination = stripeAcctId,
+            //         Description = "Returning tax funds for customer refund",
+            //        // SourceTransaction = paymentIntent.LatestCharge.Id
                    
-                };
-                var transferService = new TransferService();
-                await transferService.CreateAsync(transferOptions);
+            //     };
+            //     var transferService = new TransferService();
+            //     await transferService.CreateAsync(transferOptions);
                 
 
-            }
+            // }
             _logger.LogInformation($"Status of refund for order id {salesOrderId} is {refund.Status}");
             _logger.LogInformation($"Refund object for sales order id {salesOrderId} is {refund.ToJson()}");
        
@@ -454,7 +454,10 @@ public class StripeRefundHandler
         long appFees = CalculatePlatformFee(paymentModel.LineItems);
         long totalItemsUnitPrice = (long)paymentModel.LineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
-
+        
+        //From this article, https://docs.stripe.com/tax/tax-for-platforms
+        //it seems I cannot even file for taxes with the direct charge model that I have.
+        //So no point calculating
         decimal amountaftertax= await CalculateAmountAfterTax("80920",totalItemsUnitPrice,paymentModel.LocationId,
                                     ticketTaxCode,appFees, stripeAccountID);
 
@@ -496,7 +499,7 @@ public class StripeRefundHandler
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
-                ApplicationFeeAmount = appFees + (long)tax
+                ApplicationFeeAmount = appFees
             },
             
             //one time Fpayment
