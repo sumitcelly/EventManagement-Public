@@ -8,6 +8,7 @@ const initialState: TicketFormValues = {
   tickets: [],
   fullname: '',
   email: '',
+  zipCode:''
 };
 
 // Async login action
@@ -16,9 +17,10 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    updatebuyer(state,action:PayloadAction<{fullname:string,email:string}>) {
+    updatebuyer(state,action:PayloadAction<{fullname:string,email:string,zipCode:string}>) {
       state.email = action.payload.email;
-      state.fullname = action.payload.fullname
+      state.fullname = action.payload.fullname;
+      state.zipCode = action.payload.zipCode;
     },
     updatetickets(state,action:PayloadAction<{tickets:Ticket[]}>) {
       state.tickets = action.payload.tickets;

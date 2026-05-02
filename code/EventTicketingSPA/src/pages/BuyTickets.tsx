@@ -23,6 +23,7 @@ import  Footer from "../components/Footer"
 const schema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email format"),
   fullname: yup.string().required("Fullname is required"),
+  zipCode: yup.string().required("Zipcode is required"),
   tickets: yup
     .array()
     .of(
@@ -106,6 +107,7 @@ export default function BuyTickets() {
       defaultValues: {
         fullname: cart.fullname || user?.user?.name,
         email: cart.email || user?.user?.email,
+        zipCode: cart.zipCode || '',
         tickets: cart.tickets.length>0 ? cart.tickets : [] 
       },
         mode: "onChange",          // 👈 validates as user types or changes field
@@ -118,6 +120,7 @@ export default function BuyTickets() {
       reset({
         fullname: user.user?.name || cart.fullname || '',
         email: user.user?.email || cart.email || '',
+        zipCode: cart.zipCode || '',
         tickets: cart.tickets?.length > 0 
           ? cart.tickets 
           : ticketTypesList.map((t: Ticket) => ({ 
@@ -141,7 +144,7 @@ export default function BuyTickets() {
   const onSubmit = async  (data: TicketFormValues) => {
     console.log(errors);
     console.log('submit',data);
-    dispatch(updatebuyer({ fullname: data.fullname, email: data.email }));
+    dispatch(updatebuyer({ fullname: data.fullname, email: data.email,zipCode: data.zipCode }));
     dispatch(updatetickets({ tickets: data.tickets }));
     //ionRouter.push(`/ordersummary/${id}`);
     await checkout(data);
@@ -176,6 +179,7 @@ export default function BuyTickets() {
         eventId: id,
         customerId: eventHeaderInfo.eventOrganizerId,
         emailAddress: formData.email,
+        zipCode: formData.zipCode,
         name: formData.fullname,
         deliveryType :"Email",
         stripeConnectedAccountId: eventHeaderInfo.organizerStripeAccountId,
@@ -248,104 +252,99 @@ return (
   (errors) => console.log("validation errors", errors)
 )}> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {ticketTypesList.map((item: Ticket, index:number) => 
-            (
-                <div  key={item.eventItemTypeId} className="flex flex-col">
-                  <div className="flex flex-row">
-                      <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
-                      <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
-                        <div className="text-l text-center text-secondary-color">
-                          <input
-                            key={item.eventItemTypeId}
-                            type="number"
-                            {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
-                            className="w-20 border rounded p-1"
-                            min={0}
-                            disabled={item.ticketsSold >= item.totalAllowed}
-                          />
-                        </div>  
-                  </div>
-                  
-                  <div className="w-1/3 ml-auto text-right mr-3">
-                    {item.ticketsSold >=item.totalAllowed && (
-                      <div className="text-red-500 text-sm ">
-                          Sold Out!
-                      </div>
-                    )}
-                    {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0 
-                        && (item.totalAllowed - item.ticketsSold) <= 5 && (      
-                      <div className="text-red-500 text-sm ">
-                          Very few left!
-                      </div>                  
-                    )}
-                    {errors?.tickets?.[index]?.quantity?.message && (
-                            <div className="text-red-500 text-sm ">
-                              {errors.tickets[index].quantity.message}
-                            </div>
-                      )}
-                  </div>
-                </div>
-              ))}
-
-               {errors.tickets && (
-                  <p className="text-red-500 text-sm mt-2">
-                     {errors.tickets.message || errors.tickets.root?.message}
-                  </p>
-                )}
-
+      {ticketTypesList.map((item: Ticket, index:number) => 
+      (
+          <div  key={item.eventItemTypeId} className="flex flex-col">
+            <div className="flex flex-row">
+                <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
+                <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
+                  <div className="text-l text-center text-secondary-color">
+                    <input
+                      key={item.eventItemTypeId}
+                      type="number"
+                      {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
+                      className="w-20 border rounded p-1"
+                      min={0}
+                      disabled={item.ticketsSold >= item.totalAllowed}
+                    />
+                  </div>  
+            </div>
             
-            <div className="flex flex-row mt-4 space-x-4">
-              {user.user == null && (
-              <div className="w-1/2 flex flex-col border-gray-300 justify-center">
-                {/* Fullname control*/}
-                <label className="text-sm font-medium">Full Name</label>
-                  <input
-                    type="text"
-                    {...register("fullname")}
-                    className="border rounded px-3 py-2"
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-sm">{errors.fullname?.message}</p>
-                  )}
-                
-                  {/* Email control*/}
-                  <label className="mt-3 block text-sm font-medium">Email</label>
-                  <input
-                    type="text"
-                    {...register("email")}
-                    className="border rounded px-3 py-2"
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-sm">{errors.email.message}</p>
-                  )}
+            <div className="w-1/3 ml-auto text-right mr-3">
+              {item.ticketsSold >=item.totalAllowed && (
+                <div className="text-red-500 text-sm ">
+                    Sold Out!
                 </div>
               )}
-
-              {/* Cart total and checkout */}
-              <div className="ml-auto mt-auto w-1/2 flex flex-col mt-2 ">
-                <div className="ml-auto"><CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0}/></div>
-                <button
-                    type="submit"                         
-                    className="mt-3  ml-auto bg-brand-dark text-white px-4 
-                        py-2 rounded hover:bg-blue-700">
-                    {!paymentNeeded()?'Confirm Order':'Proceed to payment'}
-                </button>
-                {/* By clicking "Checkout", you agree to our Terms of Service and Privacy Policy. */}
+              {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0 
+                  && (item.totalAllowed - item.ticketsSold) <= 5 && (      
+                <div className="text-red-500 text-sm ">
+                    Very few left!
+                </div>                  
+              )}
+              {errors?.tickets?.[index]?.quantity?.message && (
+                      <div className="text-red-500 text-sm ">
+                        {errors.tickets[index].quantity.message}
+                      </div>
+                )}
             </div>
-           
-            {checkoutError && checkoutError.length>0 &&  (
-                <div className="text-center mb-4">
-                    Your order could not be processed:
-                    
-                    {checkoutError && 
-                       checkoutError.map((item:SalesOrderErrors)=>
-                      (
-                        <div key={item.eventItemTypeId} className="text-xs">{item.error}: {cart.tickets.find(i=>i.eventItemTypeId === item.eventItemTypeId)?.name}</div>
-                      )
-                    )}  
-                </div>
-            )}
           </div>
+        ))}
+
+        {errors.tickets && (
+          <p className="text-red-500 text-sm mt-2">
+              {errors.tickets.message || errors.tickets.root?.message}
+          </p>
+        )}
+
+        <div className="flex flex-row mt-4 space-x-8">
+  
+  {/* Left Column: User Info & Zip */}
+  <div className="w-1/2 flex flex-col justify-start"> 
+    {/* Full Name & Email (Conditional) */}
+    {(user.user?.guest || user.user == null) && (
+      <>
+        <label className="text-sm font-medium">Full Name</label>
+        <input type="text" {...register("fullname")} className="border rounded px-3 py-2" />
+        {errors.fullname && (
+          <p className="text-red-500 text-sm">{errors.fullname?.message}</p>
+        )}
+
+        <label className="mt-4 block text-sm font-medium">Email</label>
+        <input type="text" {...register("email")} className="border rounded px-3 py-2" />
+        {errors.email && (
+          <p className="text-red-500 text-sm">{errors.email.message}</p>
+        )}
+      </>
+    )}
+
+    {/* Zipcode (Always visible if payment is needed) */}
+    {paymentNeeded() && (
+      <div className={(user.user?.guest || user.user == null) ? "mt-4" : ""}>
+        <label className="block text-sm font-medium">Zipcode</label>
+        <input type="text" {...register("zipCode")} className="border rounded px-3 py-2 w-full" />
+        {errors.zipCode && (
+          <p className="text-red-500 text-sm">{errors.zipCode.message}</p>
+        )}
+      </div>
+    )}
+  </div>
+
+  {/* Right Column: Totals and Checkout */}
+  <div className="flex-1 flex flex-col items-end justify-end"> 
+    <div className="w-full text-right">
+      <CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0}/>
+    </div>
+
+    <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
+      {!paymentNeeded() ? 'Confirm Order' : 'Proceed to payment'}
+    </button>
+  </div>
+</div>
+
+
+            
+
            
         </form>
     

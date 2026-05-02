@@ -21,6 +21,7 @@ export type TicketFormValues = {
   tickets: Ticket[];
   fullname: string;
   email:string ;
+  zipCode:string;
 };
 
 // For displaying tickets in the order confirmation page or when tickets are purchased

@@ -17,13 +17,10 @@ export default function EventSummary({eventBasic}: {eventBasic?:EventHeader}) {
   return (<>
             <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">
               <div className="text-xs font-bold mb-2">{event.eventName}</div>
-              <div className="mb-1 flex justify-between text-xs">
+              <div className="mb-1 flex justify-between space-x-4 p-2">
                 <span className="font-body">{new Date(event.eventDate).toLocaleString()}</span>
-                 <span className="font-body">{event.eventLocation} </span>
+                <span className="font-body">{event.eventLocation} </span>
               </div>
-              {/* <div className="mb-1">
-               
-              </div>        */}
             </div>
           </>
   );

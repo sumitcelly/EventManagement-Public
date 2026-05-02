@@ -421,7 +421,7 @@ public class StripeRefundHandler
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
     public async Task<Tuple<string, string>> CreateCheckoutSession(string stripeAccountID, PaymentModel paymentModel,
-                                                                string customerEmailAddress="", bool passOnAllFeesToCustomer = false)
+                                                                string customerEmailAddress, string zipCode,bool passOnAllFeesToCustomer = false)
     {
         
         if (string.IsNullOrEmpty(stripeAccountID))
@@ -459,7 +459,7 @@ public class StripeRefundHandler
         //it seems I cannot even file for taxes with the direct charge model that I have.
         //So no point calculating. We still need this so that I can accurately calculate the tax 
         //since that changes the stripe fees and the customer gets a bit less (.029* tax)
-        decimal amountaftertax= await CalculateAmountAfterTax("80920",totalItemsUnitPrice,paymentModel.LocationId,
+        decimal amountaftertax= await CalculateAmountAfterTax(zipCode,totalItemsUnitPrice,paymentModel.LocationId,
                                     ticketTaxCode,appFees, stripeAccountID);
 
         decimal tax= amountaftertax-appFees-totalItemsUnitPrice;
@@ -586,6 +586,7 @@ public class StripeRefundHandler
         }
         
         options.CustomerEmail = customerEmailAddress;
+        
        //this is a direct charge model where the connected acct is the merchant of record.
        //Not a destination charge model. The payment intent is on the organizer.
        //We are not transferring money to the connected account. Just take a cut of the fees.

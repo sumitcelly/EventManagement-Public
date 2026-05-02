@@ -163,6 +163,11 @@ public class SalesOrderConductor
         }
 
         bool paymentRequired = customerSalesOrder.SalesOrderItems.Any(item => item.Cost > 0);
+
+        if (paymentRequired && string.IsNullOrEmpty(customerSalesOrder.ZipCode))
+        {
+            throw new Exception("Zipcode is required for paid orders");
+        }
         // Create the sales order
         var salesOrder = new SalesOrder
         {
@@ -274,6 +279,7 @@ public class SalesOrderConductor
                 Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(customerSalesOrder.StripeConnectedAccountId,
                                                     paymentModel,
                                                     customerSalesOrder.EmailAddress, 
+                                                    customerSalesOrder.ZipCode,
                                                     eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
