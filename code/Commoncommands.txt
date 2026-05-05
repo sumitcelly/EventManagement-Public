@@ -1,0 +1,5 @@
+Get-Content .\EventsApi-20260505.txt -Wait -Tail 20
+
+Get-Content .\EventsWorker-20260505.txt  -Wait -Tail 20
+
+ ./ngrok http http://localhost:5220 --hostname=sc-dev-ticketspro.ngrok.io                                                                                                                 

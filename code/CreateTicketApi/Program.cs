@@ -8,16 +8,20 @@ using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+using Serilog;
+using Serilog.Events;
 
+Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddLogging(logging =>
-{
-    logging.ClearProviders();
-    logging.AddConsole();
-    logging.AddDebug();
-});
+// builder.Services.AddLogging(logging =>
+// {
+//     logging.ClearProviders();
+//     logging.AddConsole();
+//     logging.AddDebug();
+
+// });
 
 // Add CORS policy
 builder.Services.AddCors(options =>
@@ -122,43 +126,23 @@ builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
 builder.Services.AddSingleton(typeof(StripeAccess));
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSwaggerGen();
-//uncomment the following lines to enable API Key authentication in Swagger
-
-// builder.Services.AddSwaggerGen(c =>
-// {
-//     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-//     {
-//         Description = "The API Key to access the API",
-//         Type = SecuritySchemeType.ApiKey,
-//         Name = "x-api-key",
-//         In = ParameterLocation.Header,
-//         Scheme = "ApiKeyScheme"
-//     });
-
-//     var scheme = new OpenApiSecurityScheme
-//     {
-//         Reference = new OpenApiReference
-//         {
-//             Type = ReferenceType.SecurityScheme,
-//             Id = "ApiKey"
-//         },
-//         In = ParameterLocation.Header
-//     };
-
-//     var requirement = new OpenApiSecurityRequirement
-//     {
-//         { scheme, new string[] { } }
-//     };
-
-//     c.AddSecurityRequirement(requirement);
-// });
 
 // This registers the IHttpContextAccessor so your handler can use it
 builder.Services.AddHttpContextAccessor(); 
 
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Hide internal MS logs below Warning
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning) // Hide WebHost logs
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs", "EventsApi-.txt"), 
+    rollingInterval: RollingInterval.Day
+)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
 var app = builder.Build();
-
-
 
 
 // Configure the HTTP request pipeline.

@@ -7,8 +7,10 @@ using EmailSchedulerWorker.Services;
 using EventManagementDbAccess;
 using Stripe;
 using EventUtils;
+using Serilog;
+using Serilog.Events;
 
-Host.CreateDefaultBuilder(args)
+IHostBuilder builder = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
     {
         config.AddJsonFile("appsettings.json", optional: true)
@@ -31,15 +33,21 @@ Host.CreateDefaultBuilder(args)
         services.AddSingleton<StripeAccess>();
         services.AddDistributedMemoryCache();
        // services.AddHostedService<EmailSchedulerService>();
-        services.AddHostedService<OrderCleanupService>();
-        //services.AddHostedService<EmailStatusUpdateService>();
+        //services.AddHostedService<OrderCleanupService>();
+        services.AddHostedService<EmailStatusUpdateService>();
        
-    })
-    .ConfigureLogging(logging =>
-    {
-        logging.ClearProviders();
-        logging.AddConsole();
-        logging.AddDebug();
-    })
-    .Build()
-    .Run();
+    });
+    Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Hide internal MS logs below Warning
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning) // Hide WebHost logs
+    .MinimumLevel.Override("System", LogEventLevel.Warning)
+    .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs", "EventsWorker-.txt"), 
+    rollingInterval: RollingInterval.Day
+)
+    .CreateLogger();
+    builder.UseSerilog();
+   
+   builder.Build().Run();
+   
