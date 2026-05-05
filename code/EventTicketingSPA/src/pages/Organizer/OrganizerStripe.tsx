@@ -14,6 +14,7 @@ export default function OrganizerStripe({organizerInfo, organizerId}: {organizer
   
 const [stripeAcctId, setStripeAcctId] = useState(organizerInfo?.stripeAccountId);
 const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStatus);
+//const [stripeTaxStatus,setStripeTaxStatus] = useState("");
 
     console.log(`stripe acctid ${stripeAcctId} and status is ${stripeStatus}`);
 
@@ -27,6 +28,19 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
     enabled: !!stripeAcctId
     }
     );
+
+    const { data:liveStripeTaxStatus, isLoading:isTaxLoading } = useQuery(['gettaxStatus',organizerId], async () => {
+    const res = await axiosClient.get(`/payment/gettaxstatus/${stripeAcctId}`);
+    console.log('stripe tax status from backend', res?.data);
+    
+    return res.data;
+    },
+    {
+    staleTime: 1000 * 60 * 5,
+    enabled: !!stripeAcctId
+    }
+    );
+    
 
   useEffect(() => {
       console.log('MemberInfo changed:', organizerInfo);
@@ -124,6 +138,18 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
             <>
             <label className="font-semibold text-go-color mt-2">You are all connected to Stripe!</label>
             <label className="font-semibold text-go-color mt-2">Stripe Acct Id: {stripeAcctId}</label>
+            </>
+         )}
+
+         {liveStripeTaxStatus && liveStripeTaxStatus == "active" &&(
+            <>
+            <label className="font-semibold text-go-color mt-2">Your tax status is active!</label>
+            </>
+         )}
+
+          {liveStripeTaxStatus && liveStripeTaxStatus == "pending" &&(
+            <>
+            <label className="font-semibold text-secondary-color mt-2">Please update your tax information by visiting  https://dashboard.stripe.com/tax/setup.</label>
             </>
          )}
          

@@ -127,6 +127,32 @@ public class StripeAccess
         }
 
     }
+
+    public async Task<string> GetConnectedAccountTaxStatus(string connectedAcctId)
+    {
+        if (string.IsNullOrWhiteSpace(connectedAcctId))
+        {
+            throw new ArgumentNullException(nameof(connectedAcctId));
+        }
+
+     
+        var options = new Stripe.Tax.SettingsGetOptions();
+        var requestOptions = new RequestOptions
+        {
+            StripeAccount = connectedAcctId,
+        };
+        SettingsService svc= new SettingsService();
+        try
+        {
+            Settings taxSettings= await  svc.GetAsync(options, requestOptions);
+            return taxSettings.Status;
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError("Error retrieving tax settings for account {0} with error {1}",connectedAcctId, ex.Message);
+            return string.Empty;
+        }
+    }
     public async Task<bool> IsAccountOnboarded(string accountId)
     {
         if (string.IsNullOrEmpty(accountId))
@@ -514,6 +540,7 @@ public class StripeRefundHandler
         options.AutomaticTax = new SessionAutomaticTaxOptions { Enabled = true };
         options.BillingAddressCollection = "required";
         options.ClientReferenceId = paymentModel.SalesOrderId.ToString();
+     
         options.LineItems = new List<SessionLineItemOptions>();
       
         foreach (var item in paymentModel.LineItems)

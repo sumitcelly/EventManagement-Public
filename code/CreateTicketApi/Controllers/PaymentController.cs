@@ -46,6 +46,23 @@ namespace CreateTicketApi.Controllers
             _emailUtils = emailUtils ?? throw new ArgumentNullException(nameof(emailUtils), "EmailUtils cannot be null.");  
         }
 
+
+        [HttpGet("gettaxstatus/{stripeAcctId}")]
+        [Authorize(Policy = "OwnerOnly")]
+
+        public async Task<IActionResult> GetConnectedAcctTaxStatus(string stripeAcctId)
+        {
+            try
+            {
+                return StatusCode(200,await _stripeAccess.GetConnectedAccountTaxStatus(stripeAcctId));
+                
+            }
+            catch(Exception)
+            {
+                return StatusCode(500, "Error retrieving tax status");
+            }
+        }
+        
         [HttpPost("create-account/{customerId}")]
         [Authorize(Policy = "OwnerOnly")]
         [Authorize(Policy = "MatchingCustomer")]
