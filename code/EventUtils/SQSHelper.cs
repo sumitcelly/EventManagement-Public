@@ -22,8 +22,7 @@ public class SQSHelper
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        _amazonSQSClient = new AmazonSQSClient(configuration["AccessKeyId"], configuration["AccessKeySecret"],Amazon.RegionEndpoint.USWest2);     
-        
+        _amazonSQSClient = new AmazonSQSClient(Amazon.RegionEndpoint.USWest2);
         _emailStatusQueueUrl = configuration["SQS:StatusUrl"] ?? throw new Exception("Missing SQS Status QueueUrl.");
         _fromEmail = configuration["FromEmail"] ?? throw new Exception("Missing FromEmail in configuration.");
         _emailQueueUrl = configuration["SQS:QueueUrl"] ?? throw new Exception("Missing SQS QueueUrl.");

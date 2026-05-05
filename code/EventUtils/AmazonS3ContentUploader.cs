@@ -33,9 +33,7 @@ public class AmazonS3ContentUploader
         _logger = logger;
 
         _s3Client = new AmazonS3Client(
-            configuration["AccessKeyId"],
-            configuration["AccessKeySecret"],
-            Amazon.RegionEndpoint.USWest2);
+            Amazon.RegionEndpoint.USWest2); 
         if (string.IsNullOrEmpty(BucketName))
         {
             throw new ArgumentException("S3 bucket name is not configured.");
