@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using Serilog.Events;
+using Amazon.Extensions.Configuration.SystemsManager;
 
 Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -23,7 +24,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 // });
 
-// Add CORS policy
+if (builder.Environment.IsDevelopment())
+{
+    Console.WriteLine("Env is  dev");
+    // You can force a specific local profile for dev only
+    Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
+}
+
+
+builder.Configuration.AddSystemsManager(config =>
+{
+    config.Path = "/global/";
+    config.Optional = true;
+    config.ReloadAfter = TimeSpan.FromMinutes(15);
+});
+
+builder.Configuration.AddSystemsManager(configSource =>
+{
+    configSource.Path =builder.Environment.IsDevelopment() ? "/dev/" : "/prod/";
+    configSource.ReloadAfter = TimeSpan.FromMinutes(5); // Optional: How often to refresh
+    configSource.Optional = true; // Optional: Don't crash if AWS is down
+});
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -60,12 +83,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
     
-
-
-
-        // FOR LOCAL EMULATOR DEVELOPMENT:
-            
-    //});
 
 builder.Services.AddAuthorization(options =>
 {
