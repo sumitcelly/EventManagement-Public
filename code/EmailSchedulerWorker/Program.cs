@@ -54,7 +54,15 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
         services.AddScoped<EmailTransactionLogDbAccess>();
         services.AddSingleton<SQSHelper>();
         services.AddSingleton<StripeAccess>();
-        services.AddDistributedMemoryCache();
+        //services.AddDistributedMemoryCache();
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = config.GetConnectionString("Redis");
+            //use same instance as api only if you want them 2 share the data.
+            //todo: may have to revisit.
+            options.InstanceName = "EventsWorker_"; // Your "No. 2" prefix
+
+        });
        // services.AddHostedService<EmailSchedulerService>();
         services.AddHostedService<OrderCleanupService>();
         services.AddHostedService<EmailStatusUpdateService>();
