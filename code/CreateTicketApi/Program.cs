@@ -141,11 +141,17 @@ builder.Services.AddSingleton<EncryptionHelper>();
 builder.Services.AddSingleton(typeof(SQSHelper));
 builder.Services.AddSingleton(typeof(AmazonS3ContentUploader));
 builder.Services.AddSingleton(typeof(StripeAccess));
-builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSwaggerGen();
 
 // This registers the IHttpContextAccessor so your handler can use it
 builder.Services.AddHttpContextAccessor(); 
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "EventsApi_"; // Your "No. 2" prefix
+
+});
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

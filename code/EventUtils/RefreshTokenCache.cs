@@ -28,7 +28,7 @@ public  class RefreshTokenCache
 
    
         string key = $"refreshToken:{userId}:{tokenId}";
-        var cachedToken = await _cache.GetStringAsync(key);
+        var cachedToken = await _cache.GetOnlyAsync<string>(key);
         if (!string.IsNullOrWhiteSpace(cachedToken) && cachedToken.Equals(token))
         {
             return true;
@@ -53,16 +53,18 @@ public  class RefreshTokenCache
              AbsoluteExpiration = expiry
         };
 
-        await _cache.SetStringAsync(key, token, options);
+        await _cache.SetOnlyAsync<string>(key, token, expiry-DateTime.UtcNow);
     }
 
     public async Task InvalidateToken(string userId, string tokenId)
     {
-      
+ 
         //(string userId, string tokenId, _) = _jwtUtils.GetUserIdTokenIdAndExpiry(token);
         string key = $"refreshToken:{userId}:{tokenId}";
 
-        await _cache.RemoveAsync(key);
+        await _cache.RemoveAsyncHelper(key);
+      
+     
     }
 
 }

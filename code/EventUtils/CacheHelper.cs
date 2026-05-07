@@ -29,8 +29,8 @@ public static class CacheHelper
            
     static CacheHelper()
     {
-        _logger = null;
-         serializerOptions.Converters.Add(new LocalNoZDateTimeConverter());
+         
+        serializerOptions.Converters.Add(new LocalNoZDateTimeConverter());
     }
  
     public static Microsoft.Extensions.Logging.ILogger _logger { get; set; }
@@ -48,30 +48,40 @@ public static class CacheHelper
         }
 
         _logger?.LogInformation($"Attempting to get cache for key: {key}");
-    
-        var cachedValue = await cache.GetStringAsync(key);
-        if (cachedValue != null)
+        try
         {
-            _logger?.LogInformation($"Cache hit for key: {key}");
-            return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
-        }
-
-        var value = await factory();
-        if (value != null)
-        {
-            var options = new DistributedCacheEntryOptions
+            var cachedValue = await cache.GetStringAsync(key);
+            if (cachedValue != null)
             {
-                AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
-            };
-          
-            await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(value, serializerOptions), options);
+                _logger?.LogInformation($"Cache hit for key: {key}");
+                return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
+            }
+
+            var value = await factory();
+            if (value != null)
+            {
+                var options = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
+                };
+                await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(value, serializerOptions), options);
+            }
+            return value;
+        }
+        //TODO:trap redis timeout exception not this.
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Issue with redis  {ex.Message}"); 
+            //run the factory assuming this is a redis timeout exception
+            return await factory();      
         }
 
-        return value;
+      
     }
 
-    public static async Task<bool> UpdatePartialAsync<T>(this IDistributedCache cache, string cacheKey, T updateDto)
+    public static async Task<bool> UpdatePartialAsync<T>(this IDistributedCache cache, string cacheKey, T updateDto,Microsoft.Extensions.Logging.ILogger? logger = null)
     {
+         _logger = logger ?? _logger;
     
         var cachedValue = await cache.GetStringAsync(cacheKey);
         if (cachedValue == null)
@@ -95,8 +105,16 @@ public static class CacheHelper
             }
         }
 
-        // Save back to Redis
-        await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(existingObject,serializerOptions));
+        try
+        {
+            // Save back to Redis
+            await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(existingObject,serializerOptions));
+        }
+         catch (Exception ex)
+        {
+            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
+            return false;
+        }
         return true;
     }
 
@@ -110,7 +128,7 @@ public static class CacheHelper
     /// <param name="logger"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-     public static async Task<T?> GetOnlyAsync<T>(this IDistributedCache cache, string key, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
+    public static async Task<T?> GetOnlyAsync<T>(this IDistributedCache cache, string key, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
     {
         _logger = logger ?? _logger;
         if (string.IsNullOrEmpty(key))
@@ -120,15 +138,23 @@ public static class CacheHelper
 
 
         _logger?.LogInformation($"Attempting to get cache for key: {key}");
-    
-        var cachedValue = await cache.GetStringAsync(key);
-        if (cachedValue != null)
+        
+        try
         {
-            _logger?.LogInformation($"Cache hit for key: {key}");
-            return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
+            var cachedValue = await cache.GetStringAsync(key);
+            if (cachedValue != null)
+            {
+                _logger?.LogInformation($"Cache hit for key: {key}");
+                return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
+            }
+            else
+                return null;
         }
-        else
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
             return null;
+        }
     }
 
     public static async Task<bool> SetOnlyAsync<T>(this IDistributedCache cache, string key, T data, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
@@ -142,8 +168,30 @@ public static class CacheHelper
         {
             AbsoluteExpirationRelativeToNow = absoluteExpiration ?? TimeSpan.FromMinutes(60)
         };
-        await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(data,serializerOptions), options);
-        return true;
+        try
+        {
+            await cache.SetStringAsync(key, System.Text.Json.JsonSerializer.Serialize(data,serializerOptions), options);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
+            return false;
+        }
+        
+    }
+
+    public static async Task RemoveAsyncHelper(this IDistributedCache cache, string key)
+    {
+        try
+        {
+            await cache.RemoveAsync(key);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Issue with redis  {ex.Message}");
+            
+        }
     }
 
   
