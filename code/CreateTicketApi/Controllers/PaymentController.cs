@@ -326,18 +326,21 @@ namespace CreateTicketApi.Controllers
                             return StatusCode(500,$"Error in checkoutsession completed {ex} for order id {stripeEvent.SalesOrderId}");
                         }
                     }
+                    //For credit cards, paymentstatus should always be paid for this webhook.
+                    //only time it is unpaid is when using ACH etc. And unpaid does not mean failure.
+                    //In that case, we listen for the async events below.
                     else
                     {
-                         await _salesOrderDbAccess.UpdateSalesOrderStatus(
-                                        stripeEvent.SalesOrderId,
-                                        SalesOrderStatus.PaymentFailed
-                                        );
+                        _logger.LogInformation($@"Received unpaid status for {stripeEvent.SalesOrderId}. Not doing anything. Investigate.");
                     }
                     
                     // Process the completed checkout session (e.g., update order status)
                    _logger.LogInformation($"Checkout Session Completed for SalesOrder: {stripeEvent.SalesOrderId} with status {(stripeEvent.PaymentSucceeded? "PaymentSucceeded":"PaymentFailed")} ");
                 }
-                // Handle other event types as needed       
+                //May want to consider handling  payment_intent.payment_failed when doing
+                //subscriptions since they are not checkout sessions. And also async_payment_succeeded for delayed payment methods.
+                //This async_payment_failed failure is only relevant for ach and bank transfers.
+                //handle when supporting those methods.      
                 else if (stripeEvent.EventType.Contains("async_payment_failed"))
                 {
                 }
