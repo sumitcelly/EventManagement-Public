@@ -206,6 +206,7 @@ export default function BuyTickets() {
         }
         console.log(`Received 200 from order creation. checking error array...`);
         const salesOrderData = result.data?.salesOrderData;
+        console.log('Sales order data isss:', salesOrderData);
         if (salesOrderData?.SalesOrderItemsError && salesOrderData?.SalesOrderItemsError >0)
         {
           setcheckoutError(result.data?.SalesOrderItemsError);
@@ -215,7 +216,7 @@ export default function BuyTickets() {
         }
         else if (salesOrderData)
         {
-          console.log('Successfully created order with orderCode:'+salesOrderData.SalesOrderCode);
+          console.log('Successfully created order with orderCode:'+salesOrderData.salesOrderCode);
           if (!paymentNeeded())
           {
              history.push(`/orderconfirmation/event/${id}`, salesOrderData);

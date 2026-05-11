@@ -6,7 +6,12 @@ select * from events where eventid=39
 update events
 set eventdate='2026-09-29 17:00:00'
 where eventid=6
-select * from salesorder order by modifiedat desc
+
+select * from salesorder 
+where salesordercode='MPXH9JLZ'
+order by createdat desc
+
+
 pi_3TS2pI1gRFvi6FYp0ULrLlJV
 
 select * from eventsalesitem order by createdat desc

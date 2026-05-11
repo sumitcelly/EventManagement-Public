@@ -158,7 +158,7 @@ export default function OrderConfirmation() {
                             size="xs"
                             onClick={(e) => 
                             {
-                              e.stopPropagation();
+                              //e.stopPropagation();
                               history.push(`/ticketdetails`,
                               {
                                   eventId: event.eventId,

@@ -122,6 +122,7 @@ export default function TicketDetails() {
   const { data, isLoading } = useQuery( ['ticketDetails', eventId, salesOrderCode], async () => {
     //const idToUse = orderDetails?.eventId || eventId;
     //const codeToUse = orderDetails?.salesOrderCode || salesOrderCode;
+    console.log('Fetching ticket details for event', eventId, 'and sales order', salesOrderCode);
     const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
     console.log('user tickets from backend', res?.data);
     setticketData(res?.data || []);
@@ -142,11 +143,14 @@ export default function TicketDetails() {
    
   useEffect(() => {
      if (currentPage === 1)
-        setTotalItems(data?.length);
+     {
+        console.log('Setting total items for pagination',data?.length);
+        setTotalItems(ticketData?.length);
+     }
    
  
   }, []);
-  if ((encryptedOrderId && orderLoading) || eventLoading || isLoading) return <p>Loading...</p>;
+  if ((encryptedOrderId && orderLoading) || eventLoading || isLoading ) return <p>Loading...</p>;
   console.log('event details:',eventDetails);
   if (!eventDetails) {
     return (
