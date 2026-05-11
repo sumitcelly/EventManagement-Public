@@ -22,3 +22,13 @@ docker start my-redis (Turns it back on)
 
 //install and run the redis container
 docker run --name my-redis -p 6379:6379 -d redis
+
+docker build -t event-api -f CreateTicketApi/Dockerfile .
+
+
+docker run -it --rm `
+  --name event-api-container `
+  -p 5220:8080 `
+  -e ASPNETCORE_ENVIRONMENT=Development `
+  -v "${PWD}/CreateTicketApi/appsettings.Development.json:/app/appsettings.Development.json" `
+  event-api

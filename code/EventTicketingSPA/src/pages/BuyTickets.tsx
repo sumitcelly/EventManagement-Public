@@ -23,7 +23,7 @@ import  Footer from "../components/Footer"
 const schema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email format"),
   fullname: yup.string().required("Fullname is required"),
-  zipCode: yup.string().required("Zipcode is required"),
+  zipCode: yup.string().default(''),
   tickets: yup
     .array()
     .of(
@@ -102,7 +102,7 @@ export default function BuyTickets() {
   );
 
   console.log('tickettype is',ticketTypesList)
-  const { control,register, reset,handleSubmit,formState: { errors } } = useForm<TicketFormValues>({
+  const { control,register, reset,handleSubmit,formState: { errors }, setError } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
         fullname: cart.fullname || user?.user?.name,
@@ -142,6 +142,12 @@ export default function BuyTickets() {
   if (isLoading) return <p>Loading...</p>;
 
   const onSubmit = async  (data: TicketFormValues) => {
+    // Custom validation: zipcode required only if payment is needed
+    if (paymentNeeded() && !data.zipCode?.trim()) {
+      setError("zipCode", { message: "Zipcode is required" });
+      return;
+    }
+
     console.log(errors);
     console.log('submit',data);
     dispatch(updatebuyer({ fullname: data.fullname, email: data.email,zipCode: data.zipCode }));
@@ -248,7 +254,7 @@ return (
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
           <EventSummary/>
         {/* <form onSubmit={handleSubmit(
-  (data) => console.log("submit fired!", data),
+  onSubmit,
   (errors) => console.log("validation errors", errors)
 )}> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

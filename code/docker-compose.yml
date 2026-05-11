@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Web API Service
+  create-ticket-api:
+    build:
+      context: .
+      dockerfile: CreateTicketApi/Dockerfile
+    ports:
+      - "5220:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AWS_PROFILE=SC  # Specify which profile to use
+      # - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=yourdb;Uid=root;Pwd=password;
+      # - Redis__ConnectionString=redis-cache:6379
+    volumes:
+      # Mount AWS credentials from Windows host to Linux container
+      - ${USERPROFILE}/.aws:/root/.aws:ro
+    depends_on:
+      - redis-cache
+
+  # Background Service (Worker)
+  worker-service:
+    build:
+      context: .
+      dockerfile: EmailSchedulerWorker/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - AWS_PROFILE=SC
+      # - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=yourdb;Uid=root;Pwd=password;
+      # - Redis__ConnectionString=redis-cache:6379
+    volumes:
+      - ${USERPROFILE}/.aws:/root/.aws:ro
+    depends_on:
+      - redis-cache
+
+  # Redis Cache Service
+  redis-cache:
+    image: redis:latest
+    ports:
+      - "6379:6379"

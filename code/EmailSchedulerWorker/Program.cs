@@ -13,30 +13,32 @@ using Serilog.Events;
 IHostBuilder builder = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
     {
-        config.AddJsonFile("appsettings.json", optional: true)
-              .AddEnvironmentVariables();
-
-        if (context.HostingEnvironment.IsDevelopment())
+        if ( Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") 
         {
-            Console.WriteLine("Env is  dev");
-            // You can force a specific local profile for dev only
-            Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
+            Console.WriteLine("Env is dev");
+            config.AddJsonFile("appsettings.Development.json", optional: true);
+               
         }
+        //only add if you want docker compose to override the default valuesa
+        config.AddEnvironmentVariables();
 
-        config.AddSystemsManager(awsConfig =>
+        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!= "Development")
         {
-            
-            awsConfig.Path = "/global/";
-            awsConfig.Optional = true;
-            awsConfig.ReloadAfter = TimeSpan.FromMinutes(15);
-        });
+            config.AddSystemsManager(awsConfig =>
+            {
+                
+                awsConfig.Path = "/global/";
+                awsConfig.Optional = true;
+                awsConfig.ReloadAfter = TimeSpan.FromMinutes(15);
+            });
 
-        config.AddSystemsManager(awsConfig =>
-        {
-            awsConfig.Path = context.HostingEnvironment.IsDevelopment()? "/dev/":"/prod/";
-            awsConfig.Optional = true;
-            awsConfig.ReloadAfter = TimeSpan.FromMinutes(5);
-        });     
+            config.AddSystemsManager(awsConfig =>
+            {
+                awsConfig.Path = "/prod/";
+                awsConfig.Optional = true;
+                awsConfig.ReloadAfter = TimeSpan.FromMinutes(5);
+            }); 
+        }    
         
     })
     .ConfigureServices((context, services) =>
@@ -80,6 +82,7 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
     .CreateLogger();
     builder.UseSerilog();
 
+    Console.WriteLine("Env is  " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + "");
   
 
    builder.Build().Run();

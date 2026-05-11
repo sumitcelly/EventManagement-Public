@@ -31,21 +31,22 @@ if (builder.Environment.IsDevelopment())
     Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
 }
 
-
-builder.Configuration.AddSystemsManager(config =>
+if (!builder.Environment.IsDevelopment())
 {
-    config.Path = "/global/";
-    config.Optional = true;
-    config.ReloadAfter = TimeSpan.FromMinutes(15);
-});
+    builder.Configuration.AddSystemsManager(config =>
+    {
+        config.Path = "/global/";
+        config.Optional = true;
+        config.ReloadAfter = TimeSpan.FromMinutes(15);
+    });
 
-builder.Configuration.AddSystemsManager(configSource =>
-{
-    configSource.Path =builder.Environment.IsDevelopment() ? "/dev/" : "/prod/";
-    configSource.ReloadAfter = TimeSpan.FromMinutes(5); // Optional: How often to refresh
-    configSource.Optional = true; // Optional: Don't crash if AWS is down
-});
-
+    builder.Configuration.AddSystemsManager(configSource =>
+    {
+        configSource.Path = "/prod/";
+        configSource.ReloadAfter = TimeSpan.FromMinutes(5); // Optional: How often to refresh
+        configSource.Optional = true; // Optional: Don't crash if AWS is down
+    });
+}
 
 builder.Services.AddCors(options =>
 {
@@ -162,7 +163,7 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs", "EventsApi-.txt"), 
     rollingInterval: RollingInterval.Day
 )
-    .CreateLogger();
+.CreateLogger();
 builder.Host.UseSerilog();
 
 var app = builder.Build();
