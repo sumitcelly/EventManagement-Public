@@ -62,7 +62,7 @@ export default function OrderPayment() {
           //should find the order already generated. But if the webhook is delayed we may not have the ordercode in the db yet.
           //In that case we redirect to order confirmation page and let that check 
           // for order status since ordercode will be empty.
-          history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
+          history.push(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
             { paymentPending: false,
                salesOrderCode: salesData.data?.salesOrderCode, 
                salesOrderQrCodeImage: salesData.data?.qrImage,
@@ -73,13 +73,15 @@ export default function OrderPayment() {
                salesTax:salesData.data?.salesTax || 0,
                paymentNeeded:true
              });
+             return;
         }
       }
       if (response.data =="unpaid")
       {
         toast.error("Payment is still being processed. Please wait sometime.");
         console.log("Payment is still being processed. Please wait sometime.");
-        history.replace(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { paymentNeeded:true, salesOrderId: orderId, paymentPending:true});
+        history.push(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { paymentNeeded:true, salesOrderId: orderId, paymentPending:true});
+        return;
       }
       toast.error("Invalid payment session status. Please try again.");
       //setSessionStatus(response.data);
@@ -105,7 +107,7 @@ export default function OrderPayment() {
           <AppNavbar />
         </IonHeader>
         <IonContent className="ion-padding flex flex-col justify-center items-center h-full">
-          <Toaster position="top-right" />
+          {/* <Toaster position="top-right" /> */}
           <div className="p-4"> 
             <h2 className="text-xl font-bold mb-2">No payment session found. Please try again.</h2>
               <Button

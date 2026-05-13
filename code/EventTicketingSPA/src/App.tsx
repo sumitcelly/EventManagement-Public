@@ -2,7 +2,6 @@ import LoginPage from "./pages/Login";
 import MyEvents from "./pages/MyEvents";
 import TicketDetails from "./pages/TicketDetails";
 import { useSelector } from "react-redux";
-import { useEffect } from "react";
 
 //import { AuthState } from "./features/auth/authSlice";
 import { Reducer } from "@reduxjs/toolkit";
@@ -29,6 +28,8 @@ import OrderReport from "./pages/Organizer/OrderReport";
 import { BrowserRouter,  Route, Switch } from "react-router-dom";
 import { IonReactRouter } from "@ionic/react-router";
 import { IonContent, IonHeader, IonPage, IonRouterOutlet,IonTab,setupIonicReact } from "@ionic/react";
+//import { App as CapacitorApp } from '@capacitor/app';
+import { useEffect } from 'react';
 import SalesOrderTicket from "./components/SalesOrderTicket";
 import ScannerDashboard from "./pages/Scanner/Dashboard";
 import ScanTicket from "./pages/Scanner/ScanTicket";
@@ -68,11 +69,26 @@ export default function App() {
     return isAuthenticated && role;
   }
 
+  // Handle Capacitor back button
+  // useEffect(() => {
+  //   const handleBackButton = async () => {
+  //     // Go back in browser history
+  //     window.history.back();
+  //   };
+
+  //   CapacitorApp.addListener('backButton', handleBackButton);
+
+  //   return () => {
+  //     CapacitorApp.removeAllListeners();
+  //   };
+  // }, []);
+
   //setupIonicReact();
   return (
     <IonReactRouter>
-      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }} />
-      <IonRouterOutlet>
+      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }}  />
+      {/**causes lots of issues in web navigation, ionrouteroutlet. But maybe needed for capacitor/mobile */}
+      {/* <IonRouterOutlet> */}
         {/* No idea why adding it at beginning works. If put at end, then I always see Myevents page for 
         any route. Tooke me a day. I would expect it be other way*/}
         <Route
@@ -112,13 +128,16 @@ export default function App() {
           }
         />
        
-         <Route       
+         <Route   
+         exact    
+        
           path="/ticketdetails"
            render={() =>
             isAuthenticated ? <TicketDetails/> : <LoginPage/>
           }
           /> 
            <Route       
+
           path="/ticketdetails/:encryptedOrderId"
            render={() =>
             <TicketDetails/> 
@@ -138,6 +157,8 @@ export default function App() {
         />
 
           <Route
+          exact
+        
             path="/eventdetails/:customerName/:eventName"
             render={() =>
               <EventDetails /> 
@@ -155,7 +176,9 @@ export default function App() {
         />
       
         <Route
-          path="/searchevents/:keyword?/:location?"
+          exact
+         
+          path="/searchevents"
            render={() =>
             <SearchEvents  /> 
           }
@@ -177,6 +200,7 @@ export default function App() {
         {/* <Route path="/TeamManager/:organizerId/:mode"  render={() =>isAuthenticated?<TeamManager/>:<LoginPage/>}/>
          */}
         <Route
+        
           path="/buytickets/:id"
            render={() =>
               <BuyTickets /> 
@@ -184,6 +208,7 @@ export default function App() {
         />
 
         <Route
+       
           path="/orderpayment/event/:id"
            render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
         />
@@ -193,6 +218,7 @@ export default function App() {
         /> */}
 
          <Route
+           key="/orderconfirmation"
           path="/orderconfirmation/event/:eventId"
            render={() => isAuthenticated ? <OrderConfirmation /> : <LoginPage />}
         />
@@ -200,7 +226,7 @@ export default function App() {
         <Route path="/ScannerDashboard"  render={() =>checkScannerAccess()?<ScannerDashboard/>:<LoginPage/>}/>
         <Route path="/ScanTicket/:eventId"  render={() =>checkScannerAccess()?<ScanTicket/>:<LoginPage/>}/>
 
-        </IonRouterOutlet>
+        {/* </IonRouterOutlet> */}
       </IonReactRouter>
     );
   }

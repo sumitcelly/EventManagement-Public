@@ -18,6 +18,7 @@ export default function EventDetails() {
 
   const { customerName, eventName } = useParams<{ customerName: string,eventName:string }>();
   const ionRouter = useIonRouter();
+  const history = useHistory();
   const dispatch = useAppDispatch();
   const location = useLocation();
   const {mode}  = location.state as any || {};
@@ -89,7 +90,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     dispatch(updateEvent({event}));
     //need to think if this needs to be done after checking if the event id is different than the above?
     dispatch(resetCart());
-    ionRouter.push(`/buytickets/${eventDetails.eventId}`);
+    history.push(`/buytickets/${eventDetails.eventId}`);
   }
   
   if (isLoading) return <p>Loading...</p>;

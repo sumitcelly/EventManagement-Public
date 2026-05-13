@@ -219,6 +219,7 @@ export default function BuyTickets() {
           console.log('Successfully created order with orderCode:'+salesOrderData.salesOrderCode);
           if (!paymentNeeded())
           {
+             toast.success("Created order successfully");
              history.push(`/orderconfirmation/event/${id}`, salesOrderData);
           }
           else

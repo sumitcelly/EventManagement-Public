@@ -32,3 +32,9 @@ docker run -it --rm `
   -e ASPNETCORE_ENVIRONMENT=Development `
   -v "${PWD}/CreateTicketApi/appsettings.Development.json:/app/appsettings.Development.json" `
   event-api
+  
+  
+docker compose down
+docker compose up -d --build
+//build specific container (name is the name in compose file)
+docker compose up -d --build create-ticket-api

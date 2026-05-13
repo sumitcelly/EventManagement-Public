@@ -45,7 +45,7 @@ const fetchEvents = async ({ queryKey, pageParam }: QueryFunctionContext<[string
   console.log("Fetched events page with cursor", pageParam, "and results", res.data);
   return res.data;
 };
-export default function EventsPage() {
+export default function SearchEvents() {
    
   const { search } = useLocation();
 
@@ -97,10 +97,7 @@ export default function EventsPage() {
     });
   
     
-    if (isLoading) return 
-    {<p>Loading...</p>;
-      console.log("Loading events...");
-    }
+    if (isLoading) return <p>Loading...</p>;
 
     console.log("Rendering events page with data", data);
 
