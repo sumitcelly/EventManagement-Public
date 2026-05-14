@@ -15,9 +15,9 @@ namespace EventUtils;
 public class StripeAccess
 {
     private readonly Microsoft.Extensions.Logging.ILogger<StripeAccess> _logger;
-    private readonly string _connectReturnUrl = "http://localhost:5173/organizermanager/customerId/stripe";
-    private readonly string _connectRefreshUrl = "http://localhost:5173/organizermanager/customerId/stripe";
-    private readonly string _paymentReturnUrl = "http://localhost:5173/orderpayment/event/event_id?salesOrderId=order_Id&session_id={CHECKOUT_SESSION_ID}";
+    private readonly string _connectReturnUrl = "/organizermanager/customerId/stripe";
+    private readonly string _connectRefreshUrl = "/organizermanager/customerId/stripe";
+    private readonly string _paymentReturnUrl = "/orderpayment/event/event_id?salesOrderId=order_Id&session_id={CHECKOUT_SESSION_ID}";
 
     private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
 
@@ -29,6 +29,8 @@ public class StripeAccess
      private static  TransferService transferService = new TransferService();
 
     private static string _platformAcctId = "";
+
+    private static string _baseUrl="";
 
     public static readonly Dictionary<string, string> EventCategoryTaxMapping = new Dictionary<string, string>
     {
@@ -69,7 +71,7 @@ public class StripeAccess
         StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         WebhookSecret = configuration["Stripe:WebhookSecret"];
         _platformAcctId = configuration["Stripe:PlatformId"];
-
+        _baseUrl = configuration["BaseUrl"]?? "http://localhost:5173";
         if (string.IsNullOrEmpty(WebhookSecret))
         {
             throw new ArgumentException("Stripe webhook secret is not configured.");
@@ -197,9 +199,9 @@ public class StripeAccess
             {
                 Account = accountId,
                 //
-                RefreshUrl = _connectRefreshUrl.Replace("customerId",organizerId.ToString()),
+                RefreshUrl = _baseUrl +_connectRefreshUrl.Replace("customerId",organizerId.ToString()),
                 //the url to redirect the client to after they complete the account onboarding process
-                ReturnUrl = _connectReturnUrl.Replace("customerId",organizerId.ToString()),
+                ReturnUrl = _baseUrl+ _connectReturnUrl.Replace("customerId",organizerId.ToString()),
                 Type = "account_onboarding",
                 //collect incrementally, not upfront
                 CollectionOptions = new AccountLinkCollectionOptionsOptions(){ Fields ="currently_due"}
@@ -509,7 +511,7 @@ public class StripeRefundHandler
 
         var options = new SessionCreateOptions
         {
-            ReturnUrl = _paymentReturnUrl.Replace("event_id", paymentModel.EventId.ToString()).Replace("order_Id", paymentModel.SalesOrderId.ToString()),
+            ReturnUrl = _baseUrl+_paymentReturnUrl.Replace("event_id", paymentModel.EventId.ToString()).Replace("order_Id", paymentModel.SalesOrderId.ToString()),
             PaymentMethodTypes = new List<string>
             {
               "card"
@@ -806,7 +808,8 @@ public class StripeRefundHandler
         var stripeEvent = EventUtility.ConstructEvent(
                json,
               signature,
-               WebhookSecret
+               WebhookSecret,
+               throwOnApiVersionMismatch: false
            );
 
         if (stripeEvent == null)
