@@ -1,0 +1,15 @@
+The changes in vite.config are important. it has allowed host and proxy.
+
+make sure .env.local
+has VITE_API_BASE_URL= /api
+
+start stripe cli
+with stripe listen --forward-to http://localhost:5220/payment/stripewebhook
+
+Make sure to update appsettings.development.json for api towebhook
+shown in stripe cli.
+
+Start docker containers with
+docker compose up -d
+or build with
+> docker compose up -d --build create-ticket-api

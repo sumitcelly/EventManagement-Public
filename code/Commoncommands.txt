@@ -38,3 +38,6 @@ docker compose down
 docker compose up -d --build
 //build specific container (name is the name in compose file)
 docker compose up -d --build create-ticket-api
+
+//stripe cli
+stripe listen --forward-to http://localhost:5220/payment/stripewebhook
