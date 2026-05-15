@@ -86,7 +86,7 @@ namespace CreateTicketApi.Controllers
         }
 
        
-        [HttpGet("/SalesOrderQrImage/{orderId}")] 
+        [HttpGet("SalesOrderQrImage/{orderId}")] 
         [Authorize(Policy="OrderOwnedByUser")]
         public async Task<ActionResult> GetSalesOrderQrImage(int orderId)
         {
@@ -105,7 +105,7 @@ namespace CreateTicketApi.Controllers
         }
 
 
-        [HttpGet("/SalesOrderStatus/{orderId}")]
+        [HttpGet("SalesOrderStatus/{orderId}")]
         [Authorize(Policy="OrderOwnedByUser")]        
         public async Task<ActionResult> GetSalesOrderStatus(int orderId)
         {
@@ -126,7 +126,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("/SalesOrderRefundAmount/{orderId}/{eventId}")]
+        [HttpGet("SalesOrderRefundAmount/{orderId}/{eventId}")]
         [Authorize(Policy="OrderOwnedByUser")]        
         public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId, int eventId)
         {
@@ -149,7 +149,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("/SalesOrder/byEmailLinkId/{encryptedOrderId}")]
+        [HttpGet("byEmailLinkId/{encryptedOrderId}")]
         public async Task<ActionResult> GetSalesOrderByEmailLinkId(string encryptedOrderId)
         {
             _logger.LogInformation("Received request for sales order details with email link ID: {0}", encryptedOrderId);
@@ -179,7 +179,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("/SalesOrderByCustomer/{customerId}")]
+        [HttpGet("Customer/{customerId}")]
         [Authorize(Policy="FullAdminMinimum")]
         [Authorize(Policy="MatchingCustomer")] 
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
@@ -205,10 +205,10 @@ namespace CreateTicketApi.Controllers
                 return Ok( result);
             }
             else
-                return StatusCode(500, "Failed to delete sales order.");
+                return StatusCode(500, "Failed to retrieve sales order.s");
         }
 
-        [HttpGet("/DownloadOrderReport/{customerId}")]
+        [HttpGet("DownloadOrderReport/{customerId}")]
         [Authorize(Policy="FullAdminMinimum")]  
         [Authorize(Policy="MatchingCustomer")] 
         public  async Task<ActionResult> DownloadOrderReport(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
@@ -275,7 +275,7 @@ namespace CreateTicketApi.Controllers
       
 
         [HttpPost]
-        [Route("/SalesOrder/ReturnTickets/{stripeSessionId}/{orderStatus}")]
+        [Route("ReturnTickets/{stripeSessionId}/{orderStatus}")]
         [Authorize]
         public async Task<IActionResult> ReturnTicketsToPool(string stripeSessionId, string orderStatus)
         {
@@ -301,7 +301,7 @@ namespace CreateTicketApi.Controllers
 
         
         [HttpGet]
-        [Route("/SalesOrder/ByUserId/{userId}")]
+        [Route("ByUserId/{userId}")]
         [Authorize(Policy="MatchingUserId")] 
         public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int userId)
         {

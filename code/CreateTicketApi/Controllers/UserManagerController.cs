@@ -393,7 +393,7 @@ namespace CreateTicketApi.Controllers
         /// <returns></returns>
         /// 
         [Authorize]
-        [HttpPut("/user/{email}")]
+        [HttpPut("{email}")]
         public async Task<IActionResult> Update(string email, [FromBody] EventUser user)
         {
             //verify if user id in claim matches userid in the body, and email in the body matches email in the URL for security check

@@ -55,3 +55,7 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
+code/CreateTicketApi/CreateTicketApi.csproj.lscache
+code/EmailSchedulerWorker/EmailSchedulerWorker.csproj.lscache
+code/EventDbAccess/EventDbAccess.csproj.lscache
+code/EventUtils/EventUtils.csproj.lscache

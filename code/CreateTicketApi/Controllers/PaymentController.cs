@@ -213,7 +213,7 @@ namespace CreateTicketApi.Controllers
         }
         
         [HttpPost]
-        [Route("/Payment/RefundOrder/{orderId}/{email}")]
+        [Route("RefundOrder/{orderId}/{email}")]
         [Authorize(Policy = "OrderOwnedByUser")]
         public async Task<IActionResult> RefundOrder(int orderId,string email)
         {

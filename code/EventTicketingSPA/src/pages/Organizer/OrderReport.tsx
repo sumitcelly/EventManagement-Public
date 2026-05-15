@@ -108,7 +108,7 @@ export default function OrderReport() {
     const queryString = queryParams.toString();
     console.log("Generated query string:", queryString);
     try{
-      const response =await axiosClient.get(`/SalesOrderByCustomer/${customerId}?${queryString}`);
+      const response =await axiosClient.get(`/SalesOrder/Customer/${customerId}?${queryString}`);
       console.log('Order report data fetched successfully:', response.data);
       toast.success("Report data fetched.");
       //setOrders(response.data);
@@ -327,7 +327,7 @@ export default function OrderReport() {
                         });
                         try {
                           const response = await axiosClient.get(
-                            `/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
+                            `/SalesOrder/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
                             { responseType: 'blob' }
                           );
                           console.log("Report downloaded successfully:", response);

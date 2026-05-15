@@ -23,7 +23,7 @@ namespace CreateTicketApi.Controllers
 
         //This cannot be authorized since it is used by the public API to get the item types for an event. We will need to validate the event id and only return item types for valid events.
         [HttpGet]
-        [Route("/eventitemtype/all/{eventId}")]
+        [Route("all/{eventId}")]
         public async Task<ActionResult<List<EventItemType>>> GetAll(int eventId)
         {
             if (eventId <= 0)

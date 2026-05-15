@@ -66,7 +66,7 @@ export default function OrderConfirmation() {
       // Check YOUR database, not Stripe, to see if the Webhook finished
       try
       {
-        const res = await axiosClient.get(`/salesorderstatus/${salesOrderData.salesOrderId}`);
+        const res = await axiosClient.get(`/salesorder/salesorderstatus/${salesOrderData.salesOrderId}`);
         const data = res?.data;
         if (data) {
           console.log('sales order status check', res.data);

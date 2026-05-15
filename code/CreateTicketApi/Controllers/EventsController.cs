@@ -41,7 +41,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet]
-        [Route("/Events/Search")]
+        [Route("Search")]
         public async Task<List<EventHeader>> SearchEvents(string keyword = null ,
                                                          DateOnly startDate = default,
                                                          int intervalDay = 0,
@@ -59,7 +59,7 @@ namespace CreateTicketApi.Controllers
             return events;
         }
 
-        [HttpGet("/Events/Basics/{eventId}")]
+        [HttpGet("Basics/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         public async Task<ActionResult<EventHeader>> GetEventBasicsById(int eventId)
         {
@@ -74,7 +74,7 @@ namespace CreateTicketApi.Controllers
            
         }
 
-        [HttpGet("/Events/ByCustomer/{customerId}")]
+        [HttpGet("ByCustomer/{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<List<EventHeader>> GetEventsByCustomer(int customerId)
@@ -84,7 +84,7 @@ namespace CreateTicketApi.Controllers
             return evtList;
         }
 
-        [HttpGet("/Events/ForScanning/{customerId}")]
+        [HttpGet("ForScanning/{customerId}")]
         [Authorize(Policy = "ScanningAgent")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<List<EventHeader>> GetEventsForScanningByCustomer(int customerId)
@@ -94,7 +94,7 @@ namespace CreateTicketApi.Controllers
             return evtList;
         }
 
-        [HttpGet("/Events/Details/{id}")]
+        [HttpGet("Details/{id}")]
         public async Task<ActionResult<Event>> GetEventDetailsById(int id)
         {
             if (id<=0)
@@ -109,7 +109,7 @@ namespace CreateTicketApi.Controllers
         
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
-        [HttpGet("/Events/DetailsPreview/{customerId}/{customerName}/{eventName}")]
+        [HttpGet("DetailsPreview/{customerId}/{customerName}/{eventName}")]
         public async Task<ActionResult<Event>> GetEventPreviewDetailsById(int customerId, string customerName, string eventName)
         {
             if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(eventName))
@@ -128,7 +128,7 @@ namespace CreateTicketApi.Controllers
         }
 
 
-        [HttpGet("/Events/Details/{customerName}/{eventName}")]
+        [HttpGet("Details/{customerName}/{eventName}")]
         public async Task<ActionResult<Event>> GetEventDetailsByName(string customerName, string eventName)
         {
             if (string.IsNullOrWhiteSpace(customerName) || string.IsNullOrWhiteSpace(eventName))
@@ -149,7 +149,7 @@ namespace CreateTicketApi.Controllers
 
 
 
-        [HttpGet("/Events/Settings/{eventId}")]
+        [HttpGet("Settings/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
         public async Task<ActionResult<EventSettings>> GetEventSettings(int eventId)
@@ -164,7 +164,7 @@ namespace CreateTicketApi.Controllers
             return evt;
         }
 
-        [HttpPut("/Events/EventSettings/{eventId}")]
+        [HttpPut("EventSettings/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
         public async Task<ActionResult<bool>> UpdateEventSettings(int eventId, [FromBody] EventSettings status)
@@ -242,7 +242,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpPost("/events/{customerId}")]
+        [HttpPost("{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<ActionResult<int>> CreateEvent(int customerId, [FromBody] Event evt)

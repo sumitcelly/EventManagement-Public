@@ -191,7 +191,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("/byuserId/{userId:int}")]
+        [HttpGet("byuserId/{userId:int}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingUserId")]
         public async Task<IActionResult> GetMemberByUserId(int userId)

@@ -63,7 +63,7 @@ public class TicketController : ControllerBase
     // }
 
     [HttpPost]
-    [Route("/Ticket/Validate/{eventId}")]
+    [Route("Validate/{eventId}")]
     [Authorize(Policy = "ScanningAgent")]
     [Authorize(Policy = "EventOwnedByCustomer")]
     public async Task<string> ValidateTicket(int eventId,[FromBody]ScanData data)

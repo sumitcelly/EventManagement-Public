@@ -64,7 +64,11 @@ builder.Services.AddCors(options =>
    
 });
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Dynamically prepends "/api" to every single controller route automatically
+    options.Conventions.Add(new RoutePrefixConvention("api"));
+});
 
 
 builder.Services.AddRateLimiter(options => {

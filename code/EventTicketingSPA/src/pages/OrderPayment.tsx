@@ -55,7 +55,7 @@ export default function OrderPayment() {
       if (response.data =="paid")
       {
         toast.success("Payment successful! Your order is confirmed.");
-        const salesData = await axiosClient.get(`/SalesOrderQrImage/${orderId}`);
+        const salesData = await axiosClient.get(`/SalesOrder/SalesOrderQrImage/${orderId}`);
         if (salesData && salesData.data) {
           console.log('sales order data', salesData.data);
           //We only gnerate order after payment is confirmed by the webhook. The return url coming back from stripe

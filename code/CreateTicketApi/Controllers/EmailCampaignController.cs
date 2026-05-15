@@ -48,7 +48,7 @@ namespace CreateTicketApi.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet("/EmailCampaign/{customerId}")]
+        [HttpGet("{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> GetByOrganizerId(int customerId)
@@ -71,7 +71,7 @@ namespace CreateTicketApi.Controllers
             }
 
         }
-        [HttpPost("/EmailCampaign/Resolve/{eventId}")]
+        [HttpPost("Resolve/{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
         public async Task<IActionResult> ResolveReminderTemplate(int eventId, [FromBody] TemplateContentRequest request)
@@ -145,7 +145,7 @@ namespace CreateTicketApi.Controllers
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailTemplate)), values);        
         }
 
-        [HttpDelete("/EmailCampaign/{customerId}/{campaignId}")]
+        [HttpDelete("{customerId}/{campaignId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> Delete(int customerId, int campaignId)
