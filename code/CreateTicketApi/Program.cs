@@ -53,11 +53,15 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", "http://localhost:5173","http://localhost", "https://localhost","https://sc-dev-ticketspro.ngrok.io") // your React dev server
+            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", 
+                            "http://localhost:5173","http://localhost", 
+                             "https://localhost","https://sc-dev-ticketspro.ngrok.io",
+                            "https://dl27afdi0vyin.cloudfront.net") //Cloudfront
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies
         });
+   
 });
 // Add services to the container.
 builder.Services.AddControllers();
@@ -167,7 +171,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 var app = builder.Build();
-
+app.UseCors("AllowFrontend");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -178,9 +182,10 @@ if (app.Environment.IsDevelopment())
 
 //if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Docker"))
 {
-    app.UseHttpsRedirection();
+   // app.UseHttpsRedirection();
 }
-app.UseCors("AllowFrontend");
+
+
 app.UseAuthentication();
 app.UseAuthorization();
 
