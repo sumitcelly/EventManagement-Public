@@ -8,8 +8,9 @@ Get-Content .\EventsWorker-20260505.txt  -Wait -Tail 20
  aws sts get-caller-identity
  
  //set correct profile
-  $env:AWS_PROFILE = "SC"       
-  
+	
+  $Env:AWS_PROFILE = 'SC'
+
   //list porfile
   aws configure list-profiles
   
@@ -39,5 +40,26 @@ docker compose up -d --build
 //build specific container (name is the name in compose file)
 docker compose up -d --build create-ticket-api
 
+//start all containers in ec2-user@44
+docker compose -f docker-compose.prod.yml up -d
+//start specific
+docker compose -f docker-compose.prod.yml up -d create-ticket-api redis-cache
+
+
+//see all logs
+docker compose -f docker-compose.prod.yml logs
+ //list
+docker ps
+ //logs for one service
+docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
+
 //stripe cli
 stripe listen --forward-to http://localhost:5220/payment/stripewebhook
+
+//deploy
+aws s3 sync dist/ s3://ticketevents-code-975050117852-us-west-2-an      
+
+//ssh login
+
+ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@44.247.229.92                 
+
