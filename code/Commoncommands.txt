@@ -53,6 +53,12 @@ docker ps
  //logs for one service
 docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
 
+//start stop
+aws ec2 start-instances --instance-ids i-0f881f2b840a913d1
+aws ec2 stop-instances --instance-ids i-0f881f2b840a913d1
+
+
+
 //stripe cli
 stripe listen --forward-to http://localhost:5220/payment/stripewebhook
 
@@ -61,5 +67,32 @@ aws s3 sync dist/ s3://ticketevents-code-975050117852-us-west-2-an
 
 //ssh login
 
-ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@44.247.229.92                 
+ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.155   
+
+//connecting to db
+//first create a ssh tunnel via ec2 to mysql (mysql is off the internet and only accessible to ec2)
+//change ip
+ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@54.187.60.155
+
+//deployment
+
+//first get token (note the profile). On desktop
+aws ecr get-login-password --region us-west-2 --profile SC | docker login --username AWS --password-stdin 975050117852.dkr.ecr.us-west-2.amazonaws.com
+//on ec2
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 975050117852.dkr.ecr.us-west-2.amazonaws.com
+
+//build the container(s)
+docker compose build
+docker compose build create-ticket-api
+
+//push them
+docker compose push
+
+//now ssh into ec2 and recreate containers from ECR
+ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.155   
+docker compose -f docker-compose.prod.yml up -d --force-recreate
+
+//check logs
+
+docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
 

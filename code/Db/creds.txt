@@ -1,0 +1,6 @@
+ubt-cnu1xve9FPF!zwz
+admin
+
+54.187.60.155
+
+eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com

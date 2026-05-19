@@ -11,6 +11,8 @@ services:
       - "5220:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+    volumes:
+      - ./logs/worker:/app/logs
     depends_on:
       - redis-cache
     restart: always
