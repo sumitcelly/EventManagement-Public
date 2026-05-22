@@ -137,8 +137,8 @@ namespace CreateTicketApi.Controllers
                 GrandTotal = orderEmailData?.SalesOrderTotal >0 ? orderEmailData.SalesOrderTotal.ToString("C") : "$100.00",
                 VenueName= " ",
                 EventTicketLink = $"{_configuration["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString(),
-                                    _configuration["Encryption:Secretkey"] ?? string.Empty,
-                                    true)}"
+                                    _configuration["Encryption:Secretkey"] ?? string.Empty)
+                                    }"
 
             });
             
