@@ -94,7 +94,7 @@ namespace EventManagementDbAccess
             var emails = new List<string>();
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            var query = @"SELECT a.EmailAddress,a.FullName FROM eventuser a,EventSalesItem b WHERE b.EventId = @eventId
+            var query = @"SELECT a.EmailAddress,a.FullName FROM eventuser a,eventsalesitem b WHERE b.EventId = @eventId
                          AND a.UserId=b.UserId";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@eventId", eventId);
@@ -124,8 +124,8 @@ namespace EventManagementDbAccess
                     string sql = @$"Select a.FullName, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketStatus , b.PricePaid
-                                from eventmanagement.EventUser a, 
-                                eventmanagement.EventSalesItem b where
+                                from eventmanagement.eventuser a, 
+                                eventmanagement.eventsalesitem b where
                                 a.UserId=b.UserId and
                                 b.EventId='{eventId}' and b.TicketCode='{code}'";
                     await connection.OpenAsync();
@@ -469,9 +469,9 @@ namespace EventManagementDbAccess
                                 c.EventItemTypeId,c.Name as ItemName, b.PricePaid,
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketStatus 
-                                from eventmanagement.EventUser a, 
-                                eventmanagement.EventSalesItem b,
-                                eventmanagement.EventItemType c
+                                from eventmanagement.eventuser a, 
+                                eventmanagement.eventsalesitem b,
+                                eventmanagement.eventitemtype c
                                 where a.userid=b.userid
                                 AND b.EventItemTypeId = c.EventItemTypeId
                                 And b.EventId = c.EventId
@@ -539,7 +539,7 @@ namespace EventManagementDbAccess
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
                     string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketStatus, b.PricePaid, c.EventItemTypeId,c.Name 
-                                    from SalesOrder a, EventSalesItem b, EventItemType c
+                                    from salesorder a, eventsalesitem b, eventitemtype c
                                     where a.OrderId=b.SalesOrderId and
                                     b.EventItemTypeId=c.EventItemTypeId and
                                     a.SalesOrderCode=@salesOrderCode and 
@@ -596,7 +596,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT COUNT(*) FROM eventmanagement.EventSalesItem WHERE SalesOrderId = @salesOrderId";
+                    string sql = @"SELECT COUNT(*) FROM eventmanagement.eventsalesitem WHERE SalesOrderId = @salesOrderId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);
                     cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
@@ -621,7 +621,7 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"DELETE FROM eventmanagement.EventSalesItem 
+                    string sql = @"DELETE FROM eventmanagement.eventsalesitem 
                                    WHERE SalesOrderId = @salesOrderId AND UserId = @userId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);

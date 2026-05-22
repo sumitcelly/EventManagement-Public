@@ -480,7 +480,7 @@ namespace EventManagementDbAccess
                                 a.SalesOrderTotal, a.TotalFees, a.PlatformFees,a.SalesTax,b.EventName,
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
                                 b.EventSummary,b.Free
-                                from SalesOrder a, Events b
+                                from salesorder a, events b
                                 where a.EventId = b.EventId and
                                 a.UserId=@userId and b.eventDate>UTC_DATE() order by a.CreatedAt desc";
 
@@ -628,7 +628,7 @@ namespace EventManagementDbAccess
             {
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
-                string query = @"select orderid, stripeSessionId from SalesOrder  
+                string query = @"select orderid, stripeSessionId from salesorder  
                                 WHERE SalesOrderStatus = @reservedStatus 
                                AND DATE_ADD(ReservedAt, INTERVAL @timeoutThreshold MINUTE) < UTC_TIMESTAMP()";
                 // string query = @"UPDATE salesorder 
@@ -966,7 +966,7 @@ namespace EventManagementDbAccess
                                 from SalesOrder a
                                 JOIN Events b ON a.EventId = b.EventId
                                 JOIN EventUser c ON a.UserId = c.UserId
-                                LEFT JOIN EventSalesItem e ON e.salesorderid = a.orderid
+                                LEFT JOIN eventsalesitem e ON e.salesorderid = a.orderid
                                 LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
                                 WHERE 1=1 and a.customerId = @customerId ";
 
@@ -1105,7 +1105,7 @@ namespace EventManagementDbAccess
                             a.PaymentIntentId, b.StripeAccountId, c.EventName
                             FROM salesorder a
                             inner join eventorganizer b on a.CustomerId=b.CustomerId
-                            inner join Events c on a.EventId=c.EventId
+                            inner join events c on a.EventId=c.EventId
                             WHERE a.CreatedAt >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL @hoursAgo HOUR)
                             AND a.SalesTax > 0
                             AND a.TaxCollected = false

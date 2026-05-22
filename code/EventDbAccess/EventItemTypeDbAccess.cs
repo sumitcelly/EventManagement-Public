@@ -31,7 +31,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"INSERT INTO EventItemType 
+                string query = @"INSERT INTO eventItemType 
                     (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder, SalesStartDate,SalesEndDate,
                     TicketValidityStart, TicketValidityEnd, AddOn, CreatedAt) 
                     VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder,
@@ -125,7 +125,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT * FROM EventItemType WHERE EventItemTypeId = @eventItemTypeId";
+                string query = "SELECT * FROM eventItemType WHERE EventItemTypeId = @eventItemTypeId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", eventItemTypeId);
 
@@ -179,7 +179,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT * FROM EventItemType where EventId = @eventId";
+                string query = "SELECT * FROM eventitemtype where EventId = @eventId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventId", eventId);
 
@@ -262,7 +262,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"UPDATE EventItemType SET 
+                string query = @"UPDATE eventitemtype SET 
                     Name = @name,
                     Description = @description,
                     Cost = @cost,
@@ -320,7 +320,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "DELETE FROM EventItemType WHERE EventItemTypeId = @eventItemTypeId";
+                string query = "DELETE FROM eventitemtype WHERE EventItemTypeId = @eventItemTypeId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", eventItemTypeId);
 

@@ -38,8 +38,8 @@ namespace EventManagementDbAccess
                             EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,b.OrganizerEventBaseUrl,
                             MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
-                            FROM Events 
-                            inner join EventOrganizer b on b.CustomerId=Events.EventOrganizer
+                            FROM events 
+                            inner join eventorganizer b on b.CustomerId=events.eventorganizer
                             WHERE IsLive=1";
 
           if (!string.IsNullOrEmpty(keyword))
@@ -452,7 +452,7 @@ namespace EventManagementDbAccess
       using var connection = new MySqlConnection(this.ConnectionString);
       await connection.OpenAsync();
 
-      string query = @"INSERT INTO Events 
+      string query = @"INSERT INTO events 
             (EventName,EventUrlName,EventHeadline, EventDescription, EventDate, Duration,
             EventOrganizer, EventAddress,EventAgenda, EventTags,IsLive,Private,
             Latitude,Longitude,StreetAddress,City,State,ZipCode,EventCategory,LocationId,
@@ -501,7 +501,7 @@ namespace EventManagementDbAccess
         using var connection = new MySqlConnection(this.ConnectionString);
         await connection.OpenAsync();
 
-        string query = "DELETE FROM Events WHERE EventId = @eventId";
+        string query = "DELETE FROM events WHERE EventId = @eventId";
         using var cmd = new MySqlCommand(query, connection);
         cmd.Parameters.AddWithValue("@eventId", eventId);
 
@@ -520,7 +520,7 @@ namespace EventManagementDbAccess
         using var connection = new MySqlConnection(this.ConnectionString);
         await connection.OpenAsync();
 
-        string query = @"UPDATE Events SET   
+        string query = @"UPDATE events SET   
             IsLive = @isLive,
             RefundMode = @refundMode,
             TicketFeeDisplayMode = @ticketFeeDisplayMode
@@ -575,7 +575,7 @@ namespace EventManagementDbAccess
         
         using var connection = new MySqlConnection(this.ConnectionString);
         await connection.OpenAsync();
-        string query = @"UPDATE Events SET 
+        string query = @"UPDATE events SET 
             EventBannerFileName = @name
             where eventid=@eventId";
         using var cmd = new MySqlCommand(query, connection);
@@ -609,7 +609,7 @@ namespace EventManagementDbAccess
         using var connection = new MySqlConnection(this.ConnectionString);
         await connection.OpenAsync();
 
-        string query = @"UPDATE Events SET 
+        string query = @"UPDATE events SET 
             EventName = @name,
             EventUrlName = @eventUrlName,
             EventHeadline = @headline,
