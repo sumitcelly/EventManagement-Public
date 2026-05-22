@@ -12,6 +12,7 @@ using Serilog;
 using Serilog.Events;
 using Amazon.Extensions.Configuration.SystemsManager;
 
+
 Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -82,6 +83,11 @@ builder.Services.AddRateLimiter(options => {
         opt.QueueLimit = 0;
     });
 });
+
+// Bind the configuration section
+builder.Services.Configure<EncryptionOptions>(
+    builder.Configuration.GetSection(EncryptionOptions.SectionName));
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>    

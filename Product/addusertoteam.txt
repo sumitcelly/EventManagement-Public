@@ -1,0 +1,7 @@
+
+Admin adds user to team.
+Email sent with link to user. Link has encrypted id or email of user.
+Link really points to resetpassword screen.
+The page makes the api call which in turn gives us a token
+for the role of the user.
+User then changes password and is logged in.

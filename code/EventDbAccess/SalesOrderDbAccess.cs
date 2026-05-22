@@ -2,6 +2,7 @@ using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MySql.Data.MySqlClient;
 using Mysqlx.Crud;
 using System;
@@ -15,13 +16,17 @@ namespace EventManagementDbAccess
     {
         private EventItemTypeDbAccess _eventTypeAccess;
         private readonly TicketAccess _ticketAccess;
-        public SalesOrderDbAccess(IConfiguration connectionString, 
+        private readonly string _encryptionKey;
+        public SalesOrderDbAccess(IConfiguration configuration, 
                                     ILogger<SalesOrderDbAccess> logger, 
-                        EventItemTypeDbAccess eventItemTypeDbAccess,
-                        TicketAccess ticketAccess,  IDistributedCache cache) : base(connectionString, logger,cache)
+                                    EventItemTypeDbAccess eventItemTypeDbAccess,
+                                    IOptions<EncryptionOptions> encryptionOptions,
+                                    TicketAccess ticketAccess,  IDistributedCache cache) : 
+                                    base(configuration, logger,cache)
         {
             _eventTypeAccess = eventItemTypeDbAccess;
             _ticketAccess = ticketAccess;
+            _encryptionKey = encryptionOptions.Value.SecretKey;
         }
         
         public async Task<int> CreateSalesOrder(SalesOrder order)
@@ -554,7 +559,7 @@ namespace EventManagementDbAccess
                 throw new ArgumentException("EncryptedId cannot be null or empty.", nameof(encryptedId));
             try
             {
-                string decryptedString = EncryptionHelper.Decrypt(encryptedId);
+                string decryptedString = EncryptionHelper.Decrypt(encryptedId, _encryptionKey);
                 if (!int.TryParse(decryptedString, out int orderId))
                     throw new Exception("Invalid encrypted id format.");
                 

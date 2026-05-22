@@ -257,7 +257,7 @@ namespace EmailSchedulerWorker.Services
                 EventOrganizerEmail = eventOrganizer.OrganizerEmail,
                 EventOrganizerName = eventOrganizer.OrganizationName,
                 EventTicketLink = orderEmailData?.SalesOrderId>0?
-                                    $"{_config["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString(),true)}"
+                                    $"{_config["BaseUrl"]}/ticketdetails/{EncryptionHelper.Encrypt(orderEmailData.SalesOrderId.ToString(),_config["Encryption:Secretkey"]??string.Empty, true)}"
                                     :string.Empty
             });
             

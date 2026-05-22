@@ -114,6 +114,8 @@ namespace CreateTicketApi.Controllers
                 EventUser? user = null;
                 if (member.UserId == 0 && !string.IsNullOrWhiteSpace(member.Email))
                 {
+                    //A user can be linked to multiple  customers. 
+                    //TODO: Will need to enhance logic at login when we reach that stage to prompt user for which customer/organization they want to login to if they are linked to multiple ones. For now we will just link to the first one we find which is not ideal but should work for testing purposes.
                     user = await _userdbAccess.GetUserByEmail(member.Email);
                     if (user == null)
                     {

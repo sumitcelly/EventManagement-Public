@@ -9,25 +9,18 @@ using Microsoft.Extensions.Configuration;
 
 public class EncryptionHelper
 {
-    private static string Key {get; set; } = string.Empty;
-
-    public EncryptionHelper(IConfiguration configuration)
-    {
-        if (configuration == null)
-            throw new ArgumentNullException(nameof(configuration), "Configuration cannot be null.");
-        Key = configuration["Encryption:Key"] ?? throw new ArgumentException("Encryption key is not configured.", nameof(configuration));
-        if (string.IsNullOrEmpty(Key))
-            throw new ArgumentException("Encryption key is not configured.", nameof(configuration));
-    }
+   
 
 
-    public static string Encrypt(string plainText,bool urlEncode = false)
+    public static string Encrypt(string plainText,string key, bool urlEncode = false)
     {
         if (string.IsNullOrEmpty(plainText))
             throw new ArgumentException("Plain text cannot be null or empty.", nameof(plainText));
-
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+  
         using var aes = System.Security.Cryptography.Aes.Create();
-        aes.Key = Encoding.UTF8.GetBytes(Key.PadRight(32).Substring(0, 32));
+        aes.Key = Encoding.UTF8.GetBytes(key.PadRight(32).Substring(0, 32));
         aes.GenerateIV();
         var iv = aes.IV;
 
@@ -61,15 +54,17 @@ public class EncryptionHelper
     }
    
 
-    public static string Decrypt(string cipherText)
+    public static string Decrypt(string cipherText,string key)
     {
         if (string.IsNullOrEmpty(cipherText))
             throw new ArgumentException("Cipher text cannot be null or empty.", nameof(cipherText));
-
+        if (string.IsNullOrEmpty(key))
+            throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+            
         var fullCipher = Convert.FromBase64String(cipherText);
 
         using var aes = System.Security.Cryptography.Aes.Create();
-        aes.Key = Encoding.UTF8.GetBytes(Key.PadRight(32).Substring(0, 32));
+        aes.Key = Encoding.UTF8.GetBytes(key.PadRight(32).Substring(0, 32));
 
         // Extract IV
         var iv = new byte[aes.BlockSize / 8];
