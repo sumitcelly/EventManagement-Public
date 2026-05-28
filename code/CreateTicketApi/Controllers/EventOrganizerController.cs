@@ -106,7 +106,7 @@ namespace CreateTicketApi.Controllers
                     IsActive= true,
                     Role = UserRoles.Owner.ToString()
                 };
-                int memberId = await _organizerMembersDbAccess.AddMember(member);
+                (int memberId,string token) = await _organizerMembersDbAccess.AddMember(member);
                 if (memberId >0)
                 {
                     _logger.LogInformation($"Added user {userId} as owner of org {customerId}");

@@ -22,11 +22,18 @@ namespace EventUtils
 
         public string EventLocation { get; set; } = string.Empty;
 
+        //This is actually the organization name but since we have organizer_name token in email templates, we will use it to populate that token
         public string EventOrganizerName { get; set; } = string.Empty;
+
+        public string MemberRole { get; set; } = string.Empty;
+        public string MemberName { get; set; } = string.Empty;
+        public string TeamInviterName { get; set; } = string.Empty;
 
         public string EventOrganizerEmail { get; set; } = string.Empty;
 
         public string EventTicketLink { get; set; } = string.Empty;
+
+        public string InviteUrl { get; set; } = string.Empty;
 
         public string EmailCode {get; set;} = string.Empty;
         public string GrandTotal { get;  set; } = string.Empty;
@@ -53,7 +60,11 @@ namespace EventUtils
             "attendee_name",
             "organizer_email",
             "organizer_name",
+            "inviter_name",
             "ticket_url",
+            "invite_url",
+            "role_name",
+            "member_name",
             //email verification
             "email_code",
              //order tokens
@@ -131,6 +142,18 @@ namespace EventUtils
                     case "organizer_email":
                         values[token] = tokenValues.EventOrganizerEmail ?? "Not specified";
                         break;
+                    case "inviter_name":
+                         values[token] = tokenValues.TeamInviterName ?? "Not specified";
+                         break;
+                     case "role_name":
+                         values[token] = tokenValues.MemberRole ?? "Not specified";
+                         break;
+                     case "member_name":
+                         values[token] = tokenValues.MemberName ?? "Not specified";
+                        break;
+                     case "invite_url":
+                         values[token] = tokenValues.InviteUrl ?? "Not specified";
+                         break;
                     case "ticket_url":
                         values[token] = tokenValues.EventTicketLink ?? string.Empty;
                         break;
@@ -153,6 +176,18 @@ namespace EventUtils
             else
             {
                 return subject.Replace("{{platform_name}}",_globalTokens["{{platform_name}}"]);
+            }
+        }
+
+        public string ReplaceOrganizationbNameInSubject(string subject,string organizerName)
+        {
+            if (string.IsNullOrEmpty(subject))
+            {
+                return subject;
+            }
+            else
+            {
+                return subject.Replace("{{organizer_name}}",organizerName);
             }
         }
 

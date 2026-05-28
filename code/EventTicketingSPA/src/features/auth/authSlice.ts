@@ -15,7 +15,7 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
+    user: User | null;
   isAuthenticated: boolean | false,
   status: string |null,
   error: string | null
@@ -163,7 +163,21 @@ const authSlice = createSlice({
           state.status ="succeeded";
         }
       }
+    },
+     loginNewMember(state, action){
+      console.log('data in login as new member',action.payload);
+      accessToken = action.payload.accessToken;
+      
+      if (action.payload.user) {
+        state.user = action.payload.user;
+        if (action.payload.user.id >0)
+        {
+          state.isAuthenticated = true;
+          state.status ="succeeded";
+        }
+      }
     }
+
 
   },
   extraReducers: (builder) => {
@@ -199,6 +213,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout,changeUserRole,updateCustomerProfile, loginAsGuest, resetError } = authSlice.actions;
+export const { logout,changeUserRole,updateCustomerProfile, loginAsGuest,loginNewMember, resetError } = authSlice.actions;
 export default authSlice.reducer;
 

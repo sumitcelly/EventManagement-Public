@@ -34,7 +34,7 @@ const fetchEvents = async ({ queryKey, pageParam }: QueryFunctionContext<[string
   const [_key, keyword, city, state] = queryKey;
   
   const res = await axiosClient.get("/events/search", {
-    params: { 
+    params: {       
       keyword, 
       city, 
       state, 

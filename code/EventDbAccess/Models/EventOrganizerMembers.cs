@@ -14,6 +14,8 @@ public class EventOrganizerMembers
     public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
 
+    public string InvitationToken { get; set; } = string.Empty;
+
     public EventOrganizerMembers()
     {
     }

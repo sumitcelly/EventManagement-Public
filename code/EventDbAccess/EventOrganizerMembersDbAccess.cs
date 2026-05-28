@@ -22,7 +22,7 @@ namespace EventManagementDbAccess
             userDbAccess = userDb ?? throw new ArgumentNullException(nameof(userDb));
         }
 
-        public async Task<int> AddMember(EventOrganizerMembers member)
+        public async Task<(int,string)> AddMember(EventOrganizerMembers member)
         {
             if (member == null)
                 throw new ArgumentNullException(nameof(member));
@@ -33,29 +33,31 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"INSERT INTO eventorganizermembers 
-                    (CustomerId, UserId, Role, IsActive)
-                    VALUES (@CustomerId, @UserId, @Role, @IsActive)";
+                    (CustomerId, UserId, Role, IsActive,InvitationToken)
+                    VALUES (@CustomerId, @UserId, @Role, @IsActive,@InvitationToken)";
 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@CustomerId", member.CustomerId);
                 cmd.Parameters.AddWithValue("@UserId", member.UserId);
                 cmd.Parameters.AddWithValue("@Role", member.Role);
                 cmd.Parameters.AddWithValue("@IsActive", member.IsActive);
+                cmd.Parameters.AddWithValue("@InvitationToken", Guid.NewGuid().ToString());
 
                 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected == 0)
                 {
                     _logger.LogWarning($"Error adding member to orgid {member?.CustomerId}");
-                    return 0;
+                    return (0,string.Empty);
                 }
                 else
                 {
                     // Invalidate cache for this member
+                    //todo: look into more efficient cache invalidation strategy if needed, currently we are invalidating the entire cache for members of this customer which might not be optimal if there are many members and frequent changes. We can consider caching individual members or using a more sophisticated caching strategy if performance becomes an issue.
                     string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(member.CustomerId.ToString());
                     await _cache.RemoveAsync(cacheKey);
                     _logger.LogInformation($"Member with add  successfully to customer id {member.CustomerId}.");
-                    return Convert.ToInt16(cmd.LastInsertedId);
+                     return(Convert.ToInt16(cmd.LastInsertedId), cmd.Parameters["@InvitationToken"].Value.ToString() ?? "");
                 }
 
             }
@@ -76,7 +78,10 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"SELECT * FROM eventorganizermembers WHERE OrganizerMemberId = @OrganizerMemberId";
+                string query = @"SELECT a.OrganizerMemberId, a.CustomerId, a.UserId, a.Role, a.CreatedAt, a.ModifiedAt, a.IsActive, b.email, b.fullname
+                                FROM eventorganizermembers a
+                                INNER JOIN eventuser b ON a.UserId = b.UserId
+                                WHERE a.OrganizerMemberId = @OrganizerMemberId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@OrganizerMemberId", organizerMemberId);
 
@@ -91,7 +96,10 @@ namespace EventManagementDbAccess
                         Role = reader.GetString(reader.GetOrdinal("Role")),
                         CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                         ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
-                        IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive"))
+                        IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        FullName = reader.GetString(reader.GetOrdinal("FullName"))
+                      
                     };
                 }
                 return null;
@@ -154,6 +162,45 @@ namespace EventManagementDbAccess
             }
         }
 
+        public async Task<bool> SetMemberToActive(int memberId)
+        {
+            if (memberId <= 0)
+                throw new ArgumentException("MemberId must be greater than zero.", nameof(memberId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventorganizermembers 
+                                SET IsActive = true, 
+                                ModifiedAt = @ModifiedAt,
+                                InvitationToken = null
+                                WHERE OrganizerMemberId = @orgMemberId";
+
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@orgMemberId", memberId);
+                cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
+
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    _logger.LogWarning($"No member found with OrganizerMemberId {memberId} to activate.");
+                    return false;
+                }
+                else
+                {
+                    _logger.LogInformation($"Activated member with OrganizerMemberId {memberId} successfully.");
+                    return true;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error activating member: {ex.Message}");
+                throw;
+            }
+        }
         public async Task<bool> UpdateMember(EventOrganizerMembers member)
         {
             if (member == null)
@@ -165,16 +212,17 @@ namespace EventManagementDbAccess
                 await connection.OpenAsync();
 
                 string query = @"UPDATE eventorganizermembers 
-                                SET  Role = @role, 
-                                IsActive = @isActive
-                    WHERE OrganizerMemberId = @orgMemberId and CustomerId = @customerId";
+                                SET  Role = @role ,
+                                ModifiedAt = @ModifiedAt
+                                WHERE OrganizerMemberId = @orgMemberId and CustomerId = @customerId";
 
                 using var cmd = new MySqlCommand(query, connection);
 
                 cmd.Parameters.AddWithValue("@customerId", member.CustomerId);      
                 cmd.Parameters.AddWithValue("@orgMemberId", member.OrganizerMemberId);   
-                cmd.Parameters.AddWithValue("@role", member.Role);          
-                cmd.Parameters.AddWithValue("@isActive", member.IsActive);
+                cmd.Parameters.AddWithValue("@role", member.Role); 
+                cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);         
+                
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected == 0)
@@ -259,6 +307,49 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                 Console.WriteLine($"Error deleting member: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<EventOrganizerMembers> GetMemberByInvitationToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                throw new ArgumentException("Invitation token cannot be null or empty.", nameof(token));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"SELECT a.OrganizerMemberId, a.CustomerId, a.UserId, a.Role, a.CreatedAt, a.ModifiedAt, a.IsActive, b.email, b.fullname
+                                FROM eventorganizermembers a
+                                INNER JOIN eventuser b ON a.UserId = b.UserId
+                                WHERE a.InvitationToken = @token";
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@token", token);
+
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return new EventOrganizerMembers
+                    {
+                        OrganizerMemberId = reader.GetInt32(reader.GetOrdinal("OrganizerMemberId")),
+                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
+                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                        Role = reader.GetString(reader.GetOrdinal("Role")),
+                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
+                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
+                        IsActive = reader.GetBoolean(reader.GetOrdinal("IsActive")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
+                        FullName = reader.GetString(reader.GetOrdinal("FullName"))
+                       
+                    };
+                }
+                throw new KeyNotFoundException($"No member found with the provided invitation token.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving member by invitation token: {ex.Message}");
                 throw;
             }
         }

@@ -9,6 +9,7 @@ using System.Data;
 using Microsoft.AspNetCore.Authorization;
 using EventUtils;
 using System.Security.Claims;
+using CreateTicketApi.BusinessLogic;
 
 namespace CreateTicketApi.Controllers
 {
@@ -19,19 +20,22 @@ namespace CreateTicketApi.Controllers
         private readonly EventOrganizerMembersDbAccess _dbAccess;
         private readonly ILogger<EventOrganizerMembersController> _logger;
         private readonly UserDbAccess _userdbAccess;
+        private readonly EmailUtils _emailUtils;
 
         private readonly EventOrganizerDBAccess _eventOrganizerDbAcces;
 
          private readonly JwtUtils _tokenUtils;
         public EventOrganizerMembersController(EventOrganizerMembersDbAccess dbAccess, UserDbAccess userDbAccess,
                         EventOrganizerDBAccess eventOrganizerDbAcces, JwtUtils jwtUtils,
-                     ILogger<EventOrganizerMembersController> logger)
+                     ILogger<EventOrganizerMembersController> logger,
+                     EmailUtils emailUtils)
         {
             _dbAccess = dbAccess;
             _logger = logger;
             _userdbAccess = userDbAccess;
             _eventOrganizerDbAcces = eventOrganizerDbAcces;
             _tokenUtils = jwtUtils;
+            _emailUtils = emailUtils;
         }
 
         /// <summary>
@@ -81,7 +85,7 @@ namespace CreateTicketApi.Controllers
                 IsActive= true,
                 Role = UserRoles.Owner.ToString()
             };
-            int memberId = await _dbAccess.AddMember(member);
+            (int memberId,string token) = await _dbAccess.AddMember(member);
             if (memberId >0)
             {
                 _logger.LogInformation($"Added user {userId} as owner of org {customerId}");
@@ -132,18 +136,24 @@ namespace CreateTicketApi.Controllers
                         {
                             _logger.LogInformation($"Created user id {userId} for adding to organization {member.CustomerId} ");
                             member.UserId = userId;
+                            
                         }
                     }
                     else
                     {
                         _logger.LogInformation($"Retrived user id {user.UserId} for adding to organization {member.CustomerId} ");
                         member.UserId = user.UserId;
+                      
                     }
                 }
 
                 if (member.UserId > 0)
                 {
-                    var id = await _dbAccess.AddMember(member);
+                    (int id, string token)= await _dbAccess.AddMember(member);
+                    member.InvitationToken = token;
+                   
+                    string inviterName = User.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "A team member";
+                    await _emailUtils.SendMemberInvitationEmail(customerId,inviterName, member);
                     return Ok(new { OrganizerMemberId = id });
                 }
                 else
@@ -155,6 +165,28 @@ namespace CreateTicketApi.Controllers
             {
                 _logger.LogError(ex, "Error adding member.");
                 return StatusCode(500, "Error adding member.");
+            }
+        }
+
+        [HttpGet("validateToken/{token}")]
+        public async Task<IActionResult> ValidateInvitationToken(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return BadRequest("Token must be provided.");
+
+            try
+            {
+                var member = await _dbAccess.GetMemberByInvitationToken(token);
+                if (member == null)
+                    return NotFound("Invalid token.");
+                if (member.IsActive || DateTime.UtcNow > member.CreatedAt.AddDays(3)) // Assuming token expires after 3 days
+                    return BadRequest("Token has already been used or has expired.");
+                return Ok(member);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error validating invitation token.");
+                return StatusCode(500, "Error validating invitation token.");
             }
         }
 

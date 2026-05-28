@@ -39,6 +39,7 @@ import CampaignList from "./pages/Organizer/CampaignList";
 import CampaignAdd from "./pages/Organizer/CampaignAdd";
 import ResetPassword from "./pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
+import InviatationAccept from "./pages/InvitationAccept";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -119,6 +120,8 @@ export default function App() {
            }
           } 
         />
+        <Route path="/invitationaccept" render={() => <InviatationAccept />} />
+
         <Route path="/Dashboard"  render={() =>checkBasicAdminAccess()?<Dashboard/>:<LoginPage/>}/>
         <Route
           path="/myevents"

@@ -161,6 +161,61 @@ public class EmailUtils
         return true;
     }
 
+    public async Task<bool> SendMemberInvitationEmail(int customerId, string inviterName, EventOrganizerMembers member)
+    {
+        EventOrganizer eventOrganizer = await _eventOrganizerDBAccess.GetOrganizerById(customerId);
+        if (eventOrganizer == null)
+        {
+            throw new Exception($"Organizer with id {customerId} not found.");
+        }
+        
+        var tokenReplacer = new EmailTokenReplacement(_configuration);
+        var values = new Dictionary<string, string>();
+        // Fetch the email template
+        Tuple<string,string> emailContent = await _templateAccess.GetDefaultTemplateDetailsByName(NotificationTemplateAccess.TeamMemberInvitation);
+
+        string replacedContent = string.Empty, replacedSubject=string.Empty;
+        
+        // Set values for supported tokens
+        if (!string.IsNullOrWhiteSpace(emailContent.Item1))
+        {
+            values = EmailTokenReplacement.GetReplacementValues(new TokenValues()
+            {
+                EventOrganizerName = eventOrganizer.OrganizationName,
+                TeamInviterName = inviterName,
+                MemberRole = member.Role,
+                MemberName = member.FullName ?? string.Empty,
+                InviteUrl = $"{_configuration["BaseFrontEndUrl"]}/invitationaccept?token={member.InvitationToken}"
+            });
+            
+            replacedContent = tokenReplacer.ReplaceTokens(
+                System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(emailContent.Item1)), values);
+            replacedSubject = tokenReplacer.ReplaceOrganizationbNameInSubject(emailContent.Item2,eventOrganizer.OrganizationName);
+        }
+        
+        QueueResponse resp =await _sqsClient.QueueEmailMessage(
+            _configuration.GetValue<string>("FromEmail") ?? string.Empty,//from config
+            member.Email,
+           replacedSubject,
+            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(replacedContent)),
+            inviterName,
+            await _emailTransactionLogDbAccess.InsertEmailTransactionLog(new EmailTransactionLog()
+            {
+                RecipientEmail = member.Email ,
+                RefId =  member.OrganizerMemberId,
+                EmailType = "OrganizerMemberInvitation",           
+            })
+            );
+        
+        if (!resp.Success)
+        {
+            string status = resp.Retry ? "QueuingFailure_Retry" : "QueuingFailure_NoRetry";
+            await _emailTransactionLogDbAccess.UpdateEmailTransactionLogStatus(member.OrganizerMemberId, status, resp.Message);
+        }
+
+        return true;
+        
+    }
     public async Task<bool> SendRefundConfirmationEmail(int salesOrderId, string refundAmount,
                                                         string attendeeEmail)
     {

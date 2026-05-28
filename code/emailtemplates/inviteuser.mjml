@@ -1,0 +1,81 @@
+<mjml>
+  <mj-head>
+    <mj-title>Join the {{organization_name}} team on {{platform_name}}!</mj-title>
+    <mj-preview>You've been invited to join {{organization_name}} as a {{role_name}}.</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="16px" color="#4a4a4a" line-height="24px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f7f9">
+    
+    <!-- Header/Logo -->
+    <mj-section padding-bottom="0px">
+      <mj-column>
+        <mj-text font-size="20px" font-weight="800" color="#2563EB" align="center">
+          {{platform_name}}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Main Invitation Card -->
+    <mj-section>
+      <mj-column background-color="#ffffff" border-radius="8px" padding="30px" border="1px solid #e2e8f0">
+        
+        <mj-text font-size="24px" font-weight="bold" color="#1a1a1a" align="center">
+          You're Invited!
+        </mj-text>
+        
+        <mj-text align="center" font-size="16px" color="#64748b" padding-top="0px">
+          Team Invitation
+        </mj-text>
+        
+        <mj-divider border-width="1px" border-color="#e2e8f0" padding="20px 0" />
+
+        <!-- Invitation Context -->
+        <mj-text>
+          Hello {member_name},
+        </mj-text>
+        
+        <mj-text>
+          <strong>{{inviter_name}}</strong> has invited you to join the organization <strong>{{organizer_name}}</strong> on {{platform_name}}. 
+        </mj-text>
+
+        <!-- Role Callout Box -->
+        <mj-text font-weight="bold" padding-bottom="0px">Your Assigned Role:</mj-text>
+        <mj-text padding-top="5px" font-size="18px" color="#2563EB" font-weight="bold">
+          {{role_name}}
+        </mj-text>
+
+        <mj-text padding-top="15px">
+          Once you accept, you will be prompted to set up your account password and get access to your team dashboard.
+        </mj-text>
+
+        <!-- Call to Action (Uses the Secure UUID URL) -->
+        <mj-button background-color="#2563EB" color="white" font-weight="bold" font-size="16px" border-radius="6px" href="{{invite_url}}" padding-top="25px" padding-bottom="25px">
+          Accept Invitation & Set Password
+        </mj-button>
+
+        <mj-divider border-width="1px" border-color="#e2e8f0" padding="20px 0" />
+
+        <!-- Security / Expiration Notice -->
+        <mj-text font-size="13px" color="#64748b" line-height="18px">
+          <strong>Security Note:</strong> For your security, this invitation link will expire in 72 hours. If you did not expect this invitation, you can safely ignore this email.
+        </mj-text>
+        
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section padding-top="0px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" color="#94a3b8">
+          Sent by {{platform_name}} on behalf of {{organizer_name}}. <br/>
+          © {{registered_company}} | {{registered_address}} <br/>
+          <a href="{{privacy_url}}" style="color: #2563EB; text-decoration: none;">Privacy Policy</a> | <a href="mailto:{{support_email}}" style="color: #2563EB; text-decoration: none;">Contact Support</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

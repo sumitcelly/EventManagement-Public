@@ -2,7 +2,21 @@ select * from logincodes order by createdat desc
 delete from eventorganizermembers where customerid=42
 delete from eventorganizer where customerid=42
 
-select * from events where eventid=39
+ALTER TABLE eventorganizermembers
+ADD InvitationToken char(36) NULL;
+CREATE INDEX IX_TeamMembers_InvitationToken 
+ON eventorganizermembers (InvitationToken);
+
+select * from eventuser where Email = 'newuser1@gmail.com'
+
+select * from eventorganizermembers
+where email='dfd@jk.com'
+
+update eventorganizermembers
+set IsActive=1
+where userid=19
+
+select * from Events where eventid=39
 update events
 set eventdate='2026-09-29 17:00:00'
 where eventid=6

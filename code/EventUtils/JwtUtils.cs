@@ -48,7 +48,7 @@ public class JwtUtils
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
-    public string GenerateJwtToken(string userId, string role, int customerId = 0)
+    public string GenerateJwtToken(string userId, string role, int customerId = 0, string userName = "")
     {   
         if (string.IsNullOrEmpty(userId))
             throw new ArgumentException("User ID cannot be null or empty.", nameof(userId));
@@ -62,7 +62,8 @@ public class JwtUtils
             {
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Role, role),
-                new Claim("CustomerId", customerId.ToString())
+                new Claim("CustomerId", customerId.ToString()),
+                new Claim("name", userName)
             }),
             Expires = DateTime.UtcNow.AddMinutes(60),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -103,7 +104,7 @@ public class JwtUtils
         return result.IsValid;
     }
 
-    public Tuple<string, string, string> GetClaimsFromToken(string token)
+    public Tuple<string, string, string,string> GetClaimsFromToken(string token)
     {
         if (string.IsNullOrEmpty(token))
             throw new ArgumentException("Token cannot be null or empty.", nameof(token));
@@ -113,12 +114,14 @@ public class JwtUtils
         var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "nameid");
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
         var customerIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "CustomerId");
+        var userNameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "name");
         if (userIdClaim == null || roleClaim == null)
             throw new ArgumentException("Token does not contain required claims.");
-        return new Tuple<string, string, string>(
+        return new Tuple<string, string, string,string>(
             userIdClaim.Value,
             roleClaim.Value,
-            customerIdClaim?.Value ?? "0");
+            customerIdClaim?.Value ?? "0",
+            userNameClaim?.Value ?? string.Empty);
     }
 
     public Tuple<string, string,DateTime> GetUserIdTokenIdAndExpiry(string token)
@@ -153,7 +156,7 @@ public class JwtUtils
 
     }
 
-    public async Task<string> GenerateRefreshToken(string userId, string role, int customerId = 0)
+    public async Task<string> GenerateRefreshToken(string userId, string role, int customerId = 0, string userName = "")
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var refreshTokenDescriptor = new SecurityTokenDescriptor
@@ -163,6 +166,7 @@ public class JwtUtils
                 new Claim(ClaimTypes.NameIdentifier, userId),
                 new Claim(ClaimTypes.Role, role),
                 new Claim("CustomerId", customerId.ToString()),
+                new Claim("name", userName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), 
             }),
             Expires = DateTime.UtcNow.AddHours(240), // refresh lifetime (10 days)

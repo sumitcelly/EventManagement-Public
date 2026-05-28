@@ -1,6 +1,7 @@
 using Amazon.S3.Model;
 using EventManagementDbAccess;
 using EventUtils;
+using K4os.Compression.LZ4.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -89,13 +90,21 @@ namespace CreateTicketApi.Controllers
             EventOrganizerMembers? orgMember = await _eventOrganizerMembersDbAccess.GetContainingOrgByUserId(user.UserId);
             if (orgMember == null)
                 _logger.LogInformation($"User with email {user.Email} is not part of any organization.  Returning default role.");
-            string role = orgMember?.Role ?? UserRoles.Attendee.ToString(); // Default to "User" if no organization member found
+            string role = string.Empty;
+            if (orgMember!=null && orgMember.IsActive)
+            {
+                role = orgMember.Role;
+            }
+            else
+            {
+                role = UserRoles.Attendee.ToString(); // Default to "User" if no organization member found or not active
+            }
             _logger.LogInformation($"User {email} logged in with role {role}.");
 
 
             //create a JWT token or session here as needed
-            var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0, user.Name ?? string.Empty);
+            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0,user.Name ?? string.Empty);
            // Response.Cookies.Append("refreshToken", refreshToken);
             SetSecureCookie("refreshToken", refreshToken);
 
@@ -132,14 +141,14 @@ namespace CreateTicketApi.Controllers
             string userId = claims.Item1;
             string role = claims.Item2;
             string customerId = claims.Item3;
-            
+            string userName = claims.Item4;        
             await _tokenUtils.RevokeTokenInCache(refreshToken); // Revoke the old refresh token in cache
             //when stored in db, no need to store userId, role, customerId in token
-            var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId));
+            var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), role, Convert.ToInt16(customerId),userName);
             
             SetSecureCookie("refreshToken", newRefreshToken);
 
-            var newAccessToken = _tokenUtils.GenerateJwtToken(userId, role, Convert.ToInt16(customerId));
+            var newAccessToken = _tokenUtils.GenerateJwtToken(userId, role, Convert.ToInt16(customerId), userName);
 
             return Ok(new { accessToken = newAccessToken });
         }
@@ -253,8 +262,8 @@ namespace CreateTicketApi.Controllers
             _logger.LogInformation($"User {email} logged in with role {role}.");
 
             //create a JWT token or session here as needed
-            var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
-            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0);
+            var _accessToken = _tokenUtils.GenerateJwtToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0, user.Name ?? string.Empty);
+            string refreshToken = await _tokenUtils.GenerateRefreshToken(user.UserId.ToString(), role, orgMember?.CustomerId ?? 0, user.Name ?? string.Empty);
            // Response.Cookies.Append("refreshToken", refreshToken);
             SetSecureCookie("refreshToken", refreshToken);
 
@@ -265,6 +274,46 @@ namespace CreateTicketApi.Controllers
             });
         }
 
+        [HttpPost("setnewmemberpassword")]
+        public async Task<IActionResult> SetNewMemberPassword([FromBody] SetNewMemberPasswordRequest request)
+        {
+            if (string.IsNullOrEmpty(request.InvitationToken) || string.IsNullOrEmpty(request.Password))
+                return BadRequest("Token or new password is null or empty.");
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.UserName))
+                return BadRequest("Email or UserName is null or empty.");
+
+            var member = await _eventOrganizerMembersDbAccess.GetMemberByInvitationToken(request.InvitationToken);  
+            if (member == null)
+                return NotFound("Member not found.");           
+            if (member.IsActive || DateTime.UtcNow > member.CreatedAt.AddDays(3)) // Assuming token expires after 3 days
+                return BadRequest("Unable to set password. Invitation token is either already used or expired.");
+
+            var result = await  _userDbAccess.ResetPassword(member.UserId, request.Password);
+            _logger.LogInformation($"Set new password for user {member.UserId} with result {result}");
+            if (result)
+            {
+                if (await _eventOrganizerMembersDbAccess.SetMemberToActive(member.OrganizerMemberId)) // Activate the member after setting password 
+                {
+                    _logger.LogInformation("Activated member {memberId} for user {userId} in org {customerId}", member.OrganizerMemberId, member.UserId, member.CustomerId);
+                
+                    //create a JWT token or session here as needed
+                    var _accessToken = _tokenUtils.GenerateJwtToken(member.UserId.ToString(), member.Role, member.CustomerId, request.UserName ?? string.Empty);
+                    string refreshToken = await _tokenUtils.GenerateRefreshToken(member.UserId.ToString(), member.Role, member.CustomerId, request.UserName ?? string.Empty);
+                    SetSecureCookie("refreshToken", refreshToken);
+                    return Ok(new
+                    {
+                        accessToken = _accessToken,
+                        user = new { id = member.UserId, name= request.UserName, guest=false, email = request.Email, role = member.Role ?? null, customerId = member.CustomerId }
+                    });
+                }
+                else
+                {
+                    _logger.LogError("Failed to activate member {memberId} for user {userId} in org {customerId} after setting password", member.OrganizerMemberId, member.UserId, member.CustomerId);
+                    return StatusCode(500, "Failed to activate member after setting password.");
+                }
+            }
+            return StatusCode(500, "Failed to set new password.");
+         }
 
         // /// <summary>
         // ///This call can lead to enumeration of email addresses in DB. Do not expose it.
@@ -443,5 +492,15 @@ namespace CreateTicketApi.Controllers
         public required string Password { get; set; }
 
         public bool? Signup { get; set; }
+    }
+
+    public class SetNewMemberPasswordRequest
+    {
+        public required string InvitationToken { get; set; }
+        public required string Password { get; set; }
+
+        public required string UserName { get; set; }
+
+        public required string Email { get; set;}
     }
 }

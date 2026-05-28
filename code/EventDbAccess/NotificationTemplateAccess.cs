@@ -28,6 +28,8 @@ namespace EventManagementDbAccess
         public static readonly string EmailVerificationTemplateName = "EmailVerification";
         public static readonly string OrderConfirmationTemplateName = "OrderConfirmation";
 
+        public static readonly string TeamMemberInvitation = "TeamMemberInvitation";
+
          public static readonly string RefundSuccess = "RefundSuccess";
         
         public NotificationTemplateAccess(IConfiguration connectionString, ILogger<NotificationTemplateAccess> logger, IDistributedCache cache) : base(connectionString, logger, cache)
