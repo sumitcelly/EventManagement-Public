@@ -21,6 +21,11 @@ docker exec -it my-redis redis-cli
 docker stop my-redis (Turns it off)
 docker start my-redis (Turns it back on)
 
+//docker login in to redis and check keys
+docker exec -it my-redis redis-cli
+keys * --list all keys
+hgetall keyname
+
 //install and run the redis container
 docker run --name my-redis -p 6379:6379 -d redis
 
@@ -44,6 +49,9 @@ docker compose up -d --build create-ticket-api
 docker compose -f docker-compose.prod.yml up -d
 //start specific
 docker compose -f docker-compose.prod.yml up -d create-ticket-api redis-cache
+//restart
+docker compose -f docker-compose.prod.yml restart create-ticket-api
+
 
 
 //see all logs
