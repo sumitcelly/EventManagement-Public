@@ -157,6 +157,17 @@ public static class CacheHelper
         }
     }
 
+    /// <summary>
+    /// The key must be the key obtained from GetCacheKey. So a string Event:24 not just 24 which is primary key. This is a set operation only and will not update existing cache if it exists. It will overwrite the cache if it already exists. Use UpdatePartialAsync for partial updates to existing cache.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="cache"></param>
+    /// <param name="key"></param>
+    /// <param name="data"></param>
+    /// <param name="absoluteExpiration"></param>
+    /// <param name="logger"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static async Task<bool> SetOnlyAsync<T>(this IDistributedCache cache, string key, T data, TimeSpan? absoluteExpiration = null, Microsoft.Extensions.Logging.ILogger? logger = null) where T : class
     {
         _logger = logger ?? _logger;

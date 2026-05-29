@@ -292,7 +292,7 @@ namespace CreateTicketApi.Controllers
             _logger.LogInformation($"Set new password for user {member.UserId} with result {result}");
             if (result)
             {
-                if (await _eventOrganizerMembersDbAccess.SetMemberToActive(member.OrganizerMemberId)) // Activate the member after setting password 
+                if (await _eventOrganizerMembersDbAccess.SetMemberToActive(member.OrganizerMemberId,member.CustomerId)) // Activate the member after setting password 
                 {
                     _logger.LogInformation("Activated member {memberId} for user {userId} in org {customerId}", member.OrganizerMemberId, member.UserId, member.CustomerId);
                 

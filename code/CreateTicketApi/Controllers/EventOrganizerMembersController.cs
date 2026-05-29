@@ -196,7 +196,10 @@ namespace CreateTicketApi.Controllers
         {
             try
             {
-                var member = await _dbAccess.GetMemberById(organizerMemberId);
+                string custId = User.Claims.FirstOrDefault(c => c.Type == "CustomerId")?.Value ?? "0";
+                if (custId == "0" || !int.TryParse(custId, out int id))
+                    return Forbid("CustomerId claim is missing in token.");
+                var member = await _dbAccess.GetMemberById(organizerMemberId, id);
                 if (member == null)
                     return NotFound();
                 return Ok(member);

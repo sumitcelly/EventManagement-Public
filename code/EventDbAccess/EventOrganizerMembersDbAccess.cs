@@ -55,7 +55,19 @@ namespace EventManagementDbAccess
                     // Invalidate cache for this member
                     //todo: look into more efficient cache invalidation strategy if needed, currently we are invalidating the entire cache for members of this customer which might not be optimal if there are many members and frequent changes. We can consider caching individual members or using a more sophisticated caching strategy if performance becomes an issue.
                     string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(member.CustomerId.ToString());
-                    await _cache.RemoveAsync(cacheKey);
+                    var orgMembers = await _cache.GetOnlyAsync<List<EventOrganizerMembers>>(cacheKey);
+                    if (orgMembers != null && orgMembers.Count > 0
+                        && !orgMembers.Exists(x => x.OrganizerMemberId == member.OrganizerMemberId))
+                    {
+                        member.OrganizerMemberId = (int)cmd.LastInsertedId;
+                        orgMembers.Add(member);
+                        await _cache.SetOnlyAsync<List<EventOrganizerMembers>>(cacheKey, orgMembers);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Cache for customer id {member.CustomerId} is not set or empty, skipping cache update for new member addition.");
+                    }
+                    
                     _logger.LogInformation($"Member with add  successfully to customer id {member.CustomerId}.");
                      return(Convert.ToInt16(cmd.LastInsertedId), cmd.Parameters["@InvitationToken"].Value.ToString() ?? "");
                 }
@@ -68,7 +80,31 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<EventOrganizerMembers?> GetMemberById(int organizerMemberId)
+        public async Task<EventOrganizerMembers> GetMemberById(int organizerMemberId, int customerId)
+        {
+            if (organizerMemberId <= 0)
+                throw new ArgumentException("OrganizerMemberId must be greater than zero.", nameof(organizerMemberId));
+            if (customerId <= 0)
+                throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
+
+            string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(customerId.ToString());
+            List<EventOrganizerMembers>? orgMembers = await _cache.GetOrSetAsync(cacheKey, () => GetMembersByCustomerIdFromDb(customerId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            if (orgMembers != null)
+            {
+                var member = orgMembers.Find(x => x.OrganizerMemberId == organizerMemberId);
+                if (member != null)
+                    return member;
+            }
+             throw new KeyNotFoundException($"Member with ID {organizerMemberId} not found for customer id {customerId}.");
+        }
+
+        /// <summary>
+        /// Not used so far
+        /// </summary>
+        /// <param name="organizerMemberId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task<EventOrganizerMembers?> GetMemberByIdFromDb(int organizerMemberId)
         {
             if (organizerMemberId <= 0)
                 throw new ArgumentException("OrganizerMemberId must be greater than zero.", nameof(organizerMemberId));
@@ -162,11 +198,12 @@ namespace EventManagementDbAccess
             }
         }
 
-        public async Task<bool> SetMemberToActive(int memberId)
+        public async Task<bool> SetMemberToActive(int memberId, int customerId)
         {
             if (memberId <= 0)
                 throw new ArgumentException("MemberId must be greater than zero.", nameof(memberId));
-
+            if (customerId <= 0)
+                throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
             try
             {
                 using var connection = new MySqlConnection(ConnectionString);
@@ -190,6 +227,23 @@ namespace EventManagementDbAccess
                 }
                 else
                 {
+                    string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(customerId.ToString());
+                    var membersList = await _cache.GetOnlyAsync<List<EventOrganizerMembers>>(cacheKey);
+                    if (membersList != null && membersList.Count > 0)
+                    {
+                        var member = membersList.Find(x => x.OrganizerMemberId == memberId);
+                        if (member != null)
+                        {
+                            member.IsActive = true;
+                            member.InvitationToken = string.Empty;
+                            await _cache.SetOnlyAsync<List<EventOrganizerMembers>>(cacheKey, membersList);
+                            _logger.LogInformation($"Updated cache for member id {memberId} to active status.");
+                        }
+                        else
+                        {
+                            _logger.LogInformation($"Member with id {memberId} not found in cache to update active status.");
+                        }
+                    }
                     _logger.LogInformation($"Activated member with OrganizerMemberId {memberId} successfully.");
                     return true;
                 }
@@ -241,10 +295,21 @@ namespace EventManagementDbAccess
                     if (orgMembers != null)
                     {
                         var tempmember = orgMembers.Find(x=>x.OrganizerMemberId == member.OrganizerMemberId);
-                        if (tempmember != null && 
-                            (tempmember.Email != member.Email || tempmember.FullName != member.FullName))
+                        if (tempmember != null )
                         {
-                            updateUserInfo = true;
+                           
+                            if (!string.Equals(tempmember.Email, member.Email, StringComparison.OrdinalIgnoreCase) ||
+                                !string.Equals(tempmember.FullName, member.FullName, StringComparison.Ordinal))
+                            {
+                                updateUserInfo = true;
+                                tempmember.Email = member.Email;
+                                tempmember.FullName = member.FullName;
+                                _logger.LogInformation($"Member email or full name has changed for member id {member.OrganizerMemberId}, updating user info in database.");
+                            }
+                            
+                            tempmember.Role = member.Role;
+                            await _cache.SetOnlyAsync<List<EventOrganizerMembers>>(cacheKey, orgMembers);
+                            _logger.LogInformation($"Updated cache for member id {member.OrganizerMemberId} with new email and full name.");
                         }
                     }
                     if (updateUserInfo)
@@ -299,7 +364,21 @@ namespace EventManagementDbAccess
                 {
                     // Invalidate cache for this member
                     string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(customerId.ToString());
-                    await _cache.RemoveAsync(cacheKey);
+                    await _cache.GetOnlyAsync<List<EventOrganizerMembers>>(cacheKey).ContinueWith(task =>
+                    {
+                        if (task.Result != null)
+                        {
+                            var membersList = task.Result;
+                            var memberToRemove = membersList.Find(x => x.UserId == userId);
+                            if (memberToRemove != null)
+                            {
+                                membersList.Remove(memberToRemove);
+                                _cache.SetOnlyAsync<List<EventOrganizerMembers>>(cacheKey, membersList).Wait();
+                                _logger.LogInformation($"Removed member with user id {userId} from cache after deletion.");
+                            }
+                        }
+                    });
+                    
                     _logger.LogInformation($"Member with OrganizerMemberId {customerId} deleted successfully.");
                     return rowsAffected > 0;
                 }

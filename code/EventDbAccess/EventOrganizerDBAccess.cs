@@ -480,12 +480,13 @@ namespace EventManagementDbAccess
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 { 
-                    EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
+                    string cacheKey = CacheHelper.GetCacheKey<EventOrganizer>(organizerId.ToString());
+                    EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(cacheKey);
                     if (evtOrg!=null)
                     {
                         evtOrg.StripeAccountId = stripeAccountId ?? string.Empty;
                         evtOrg.StripeConnectStatus = stripeAccountStatus.ToString();
-                        await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                        await _cache.SetOnlyAsync<EventOrganizer>(cacheKey,evtOrg);
                     }
                 }
                 return rowsAffected > 0;
