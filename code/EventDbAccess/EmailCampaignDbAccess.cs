@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EventUtils;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,10 @@ namespace EventManagementDbAccess
 
     public class EmailCampaignDbAccess : BaseDbAccess
     {
-        public EmailCampaignDbAccess(IConfiguration configuration, ILogger<EmailCampaignDbAccess> logger, IDistributedCache cache) :base(configuration, logger, cache)
+        public EmailCampaignDbAccess(IConfiguration configuration,
+                                     ILogger<EmailCampaignDbAccess> logger, 
+                                    IDistributedCache cache) :
+                                    base(configuration, logger, cache)
         {
         
         }
@@ -36,7 +40,13 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
 
             var result = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(result);
+            int id=  Convert.ToInt32(result);
+            campaign.Id = id;
+
+            string key = CacheHelper.GetCacheKey<EmailCampaign>(id.ToString());
+            await _cache.SetOnlyAsync(key, campaign);
+
+            return id;
         }
 
         public async Task<List<EmailCampaign>> GetPendingCampaigns()
@@ -67,6 +77,12 @@ namespace EventManagementDbAccess
             return campaigns;       
         }
 
+        /// <summary>
+        /// Not being used
+        /// </summary>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>/
         public async Task<List<EmailCampaign>> GetEmailCampaignsByEventId(int eventId)
         {
             if (eventId <= 0)
@@ -99,16 +115,24 @@ namespace EventManagementDbAccess
             }
             return campaigns;
         }
-
-
         public async Task<EmailCampaign> GetEmailCampaignByCampaignId(int campaignId)
+        {
+            if (campaignId < 0)
+            {
+                throw new ArgumentException("CampaignId must be greater than zero.", nameof(campaignId));
+            }
+            string key = CacheHelper.GetCacheKey<EmailCampaign>(campaignId.ToString());
+            var cachedCampaign = await _cache.GetOrSetAsync<EmailCampaign>(key,()=> GetEmailCampaignByCampaignIdFromDb(campaignId));
+            return cachedCampaign ?? throw new Exception($"Unable to find campaign for id {campaignId}");
+        }
+
+        public async Task<EmailCampaign> GetEmailCampaignByCampaignIdFromDb(int campaignId)
         {
             if (campaignId <= 0)
             {
                 throw new ArgumentException("EventId must be greater than zero.", nameof(campaignId));
             }
-
-            
+   
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             var query = @"SELECT a.Id, a.templateid,a.eventid,a.sendat,a.status,a.Name,a.Description,a.Enabled,
@@ -200,8 +224,30 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@Status", campaign.Status);
             cmd.Parameters.AddWithValue("@ModifiedAt", DateTime.UtcNow);
             var rows = await cmd.ExecuteNonQueryAsync();
+
+            string key = CacheHelper.GetCacheKey<EmailCampaign>(campaign.Id.ToString());
+            EmailCampaign? cacheObj= await _cache.GetOnlyAsync<EmailCampaign>(key);
+            if (cacheObj != null)
+            {
+                cacheObj.EventId = campaign.EventId;
+                cacheObj.Name = campaign.Name;
+                cacheObj.Description = campaign.Description;
+                cacheObj.SendAt = campaign.SendAt;
+                cacheObj.TemplateId = campaign.TemplateId;
+                cacheObj.Status = campaign.Status;
+                cacheObj.ModifiedAt = DateTime.UtcNow;
+                await _cache.SetOnlyAsync(key, cacheObj);
+            }
+
             return rows > 0;
         }
+
+        /// <summary>
+        /// Leave this alone from a caching standpoint since we call this from the service
+        /// </summary>
+        /// <param name="campaignId"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
         public async Task<bool> UpdateEmailCampaignStatus(int campaignId, string status)
         {
             using var conn = new MySqlConnection(this.ConnectionString);
@@ -222,6 +268,9 @@ namespace EventManagementDbAccess
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Id", id);
             var rows = await cmd.ExecuteNonQueryAsync();
+            string key = CacheHelper.GetCacheKey<EmailCampaign>(id.ToString());
+            await _cache.RemoveAsyncHelper(key);
+
             return rows > 0;
         }
 

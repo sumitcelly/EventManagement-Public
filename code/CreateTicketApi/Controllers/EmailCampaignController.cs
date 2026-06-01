@@ -241,11 +241,12 @@ namespace CreateTicketApi.Controllers
                     //unless at some point we add clone functionality for existing reminder templates
                     if (emailCampaign.TemplateContentChange)
                     {
+                        string templateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName);
                         int templateId = await _templateAccess.AddEmailTemplate(new EmailTemplate()
                         {
                             Subject = emailCampaign.Subject,
                             TemplateContent = emailCampaign.TemplateContent,
-                            TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
+                            TemplateName =  templateName,
                             IsDefault= false,
                             TemplateDescription=emailCampaign.Description
                         });
@@ -260,7 +261,13 @@ namespace CreateTicketApi.Controllers
                            Description =emailCampaign.Description,
                            SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddMinutes(1):emailCampaign.SendAt,
                            Status ="Pending",
-                           TemplateId = templateId
+                           TemplateId = templateId,
+                           EventName = emailCampaign.EventName,
+                           TemplateName = templateName,
+                           TemplateContent=emailCampaign.TemplateContent,
+                           TemplateDescription = emailCampaign.Description,
+                           IsDefault= false,
+                           Subject = emailCampaign.Subject
                         });
                         if (createdID ==0)
                         {

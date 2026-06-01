@@ -76,6 +76,7 @@ export default function CampaignAdd(){
   const campaignData :any = location.state || {};
   const customerId = user?.customerId;
   const campaignId = campaignData?.id || 0;
+  const eventName = campaignData?.eventName || '';
   console.log('campaign id and customer id is', campaignData?.id,customerId);
 
   const { data:events, isLoading:isEventsLoading } = 
@@ -184,7 +185,8 @@ export default function CampaignAdd(){
       sendAt: data?.sendAt,
       sendNow: data?.sendNow,
       subject: data?.subject,
-      templateContentChange: true
+      templateContentChange: true,
+      eventName: eventName || data?.eventName
     };
 
     console.log('post data for campaign is',postData);

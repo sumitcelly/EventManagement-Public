@@ -8,7 +8,6 @@ public class EmailCampaignTemplate
 
     public required string TemplateContent { get; set; }  
 
-
     public DateTime SendAt {get; set;}
 
     public bool SendNow {get; set;}
@@ -19,5 +18,5 @@ public class EmailCampaignTemplate
 
     public bool TemplateContentChange {get;set;}
 
-
+    public string EventName { get; set; } = "";
 }

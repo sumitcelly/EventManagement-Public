@@ -326,7 +326,8 @@ namespace EventManagementDbAccess
                         else
                           _logger.LogCritical($"Result of user update is failure");
                     }
-                    await _cache.RemoveAsync(cacheKey);
+                    //no idea why i am removing the cache key here
+                    // await _cache.RemoveAsync(cacheKey);
                     _logger.LogInformation($"Member with OrganizerMemberId {member.OrganizerMemberId} updated successfully.");
                     return true;
                 }
