@@ -231,7 +231,7 @@ public class SalesOrderConductor
         }
 
         CustomerSalesOrder salesOrderReturn = new()
-                {UserId = attendee.UserId, EmailAddress = attendee.Email, Name = attendee.Name};
+                {UserId = attendee.UserId, EmailAddress = attendee.Email, Name = attendee.Name, SalesOrderId = orderId};
 
         if (errorItems.Count >0)
         {

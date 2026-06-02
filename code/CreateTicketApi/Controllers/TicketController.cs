@@ -1,10 +1,12 @@
 using CreateTicketApi.BusinessLogic;
+using CreateTicketApi.Mappers;
 using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -19,14 +21,20 @@ public class TicketController : ControllerBase
     private readonly TicketAccess _ticketContext;
     private readonly SalesOrderConductor _salesOrderConductor;
 
+    private readonly EventDbAccess _eventDbAccess;
 
+    private readonly IConfiguration _configuration;
     public TicketController(ILogger<TicketController> logger,
                             TicketAccess ticketContext,
-                            SalesOrderConductor conductor)
+                            SalesOrderConductor conductor,
+                            EventDbAccess dbAccess,
+                            IConfiguration configuration)
     {
         _logger = logger;
         _ticketContext = ticketContext;
         _salesOrderConductor = conductor;
+        _eventDbAccess = dbAccess;
+        _configuration = configuration;
 
     }
 
@@ -38,8 +46,8 @@ public class TicketController : ControllerBase
         return QRCodeUtils.GetQRText(Convert.FromBase64String(qrCode));
     }
 
-    [Authorize]
-    [HttpGet("ByEventIdAndSalesOrderQrCode/{id}/{salesOrderQrCode}")]
+    [Authorize(Policy="OrderOwnedByUser")]
+    [HttpGet("ByEventIdAndSalesOrderQrCode/{orderId}/{id}/{salesOrderQrCode}")]
     public async Task<IActionResult> Get(int id,string salesOrderQrCode)
     {
         if (id <= 0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
@@ -50,17 +58,54 @@ public class TicketController : ControllerBase
             return Unauthorized("Unable to retrieve user id");
         }
 
-        var order = await _salesOrderConductor.GetSalesOrderByQrCode(id, salesOrderQrCode,userId);
+        var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
         if (order == null)
             return NotFound();
         return Ok(order);
     }
 
-    // [HttpGet]
-    // public async Task<EventSalesItem> GetTicketByQRCode(string qrCode, int eventId)
-    // {
-    //     return await _ticketContext.GetEventTicketByQRCode(qrCode, eventId);
-    // }
+
+     [HttpGet]
+     [Route("GetPdfUrl/{salesOrderCode}/{eventId}")]
+    // [Authorize(Policy="OrderOwnedByUser")]
+     public async Task<IActionResult> GetPdfUrl(string salesOrderCode, int eventId)
+     {
+       if(string.IsNullOrWhiteSpace(salesOrderCode) || eventId <=0)
+            return BadRequest("Invalid sales order id or event id.");
+
+       EventHeader eventDetails = await _eventDbAccess.GetEventHeaderById(eventId);
+
+        string eventDate = string.Empty,eventTime =string.Empty;
+        if (eventDetails.Latitude!=0 && eventDetails.Longitude!=0)
+        {
+            (eventDate, eventTime)= EventUtils.TimeZoneConverter.GetLocalDateTime((double)eventDetails.Latitude,(double) eventDetails.Longitude,eventDetails.EventDate);
+        }
+        DateTime dtStart= DateTime.Parse(eventDate+" "+eventTime);
+        DateTime dtEnd=  dtStart.AddHours(eventDetails.Duration);
+        string eventDateTimeRange = $"{dtStart:MMMM dd, yyyy h:mm tt} - {dtEnd:MMMM dd, yyyy h:mm tt}";
+
+
+        if (eventDetails == null)
+        {  
+            _logger.LogWarning($"Event not found for event id: {eventId} when trying to get PDF URL for sales order code: {salesOrderCode}");
+            return NotFound("Event not found for the given event id.");
+        }
+        
+        var eventTickets = (await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderCode, eventId))?.ToList();
+        if (eventTickets == null || eventTickets.Count == 0)
+        {
+            _logger.LogWarning($"No tickets found for sales order code: {salesOrderCode} and event id: {eventId} when trying to get PDF URL.");
+            return NotFound("No tickets found for the given sales order and event.");
+        }
+        
+        TicketPdfData pdfData = PdfDataMapper.MapToTicketPdfData(eventDetails, eventTickets);
+        pdfData.EventDate = eventDateTimeRange;
+        byte[] pdfBytes= PdfGenerator.GenerateTicketsWithSkiaSharp(pdfData, _configuration["EmailTemplateValues:platform_name"]??"TestEvents", _configuration["BaseFrontEndUrl"]??"");
+        _logger.LogInformation($"Generated ticket PDF data for sales order: {salesOrderCode}, event: {eventId}");
+        
+        return File(pdfBytes, "application/pdf", $"Order_{salesOrderCode}_Tickets.pdf");
+
+     }
 
     [HttpPost]
     [Route("Validate/{eventId}")]

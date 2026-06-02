@@ -148,7 +148,9 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
-        var query = @"select a.EventId,a.EventName,a.EventUrlName,a.RefundMode, a.TicketFeeDisplayMode, a.EventHeadline,a.EventDate, a.EventBannerFileName,
+        var query = @"select a.EventId,a.EventName,a.Duration,a.EventUrlName,
+                    a.RefundMode, a.TicketFeeDisplayMode, a.EventHeadline,
+                    a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,a.Latitude,a.Longitude,
                     b.OrganizationName, b.OrganizerEventBaseUrl from events a, eventorganizer b 
@@ -175,6 +177,7 @@ namespace EventManagementDbAccess
                                 AmazonS3ContentUploader.ConvertKeyToUrl(reader.GetString(reader.GetOrdinal("EventBannerFileName"))),
             EventHeadline = reader.IsDBNull(reader.GetOrdinal("EventHeadline")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventHeadline")),
             EventDate = reader.GetDateTime(reader.GetOrdinal("EventDate")),
+            Duration = reader.GetInt16(reader.GetOrdinal("Duration")),
             OrganizerUrlName =  reader.IsDBNull(reader.GetOrdinal("OrganizerEventBaseUrl")) ? string.Empty: 
                                 reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
             EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventSummary")),
@@ -182,6 +185,7 @@ namespace EventManagementDbAccess
             Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal(reader.GetOrdinal("Longitude")),
 
             Free = reader.GetBoolean(reader.GetOrdinal("Free")),
+            EventOrganizer = reader.IsDBNull(reader.GetOrdinal("OrganizationName")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizationName")),
             EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
             EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString(reader.GetOrdinal("EventAddress"))
           };

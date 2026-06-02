@@ -19,6 +19,8 @@ public class CustomerSalesOrder
 
     public string StripeConnectedAccountId {get;set;} = string.Empty;
     public bool PaymentRequired { get; set; } = false;
+
+    public int SalesOrderId { get; set; } = 0;
     public List<SalesOrderItems> SalesOrderItems { get; set; } = new List<SalesOrderItems>();
 
     public List<ErrorResponseSalesOrderItems> SalesOrderItemsError { get; set; } = new List<ErrorResponseSalesOrderItems>();

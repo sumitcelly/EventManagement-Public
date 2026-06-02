@@ -444,42 +444,40 @@ namespace EventManagementDbAccess
         }
 
 
-        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderId(int salesOrderId, int eventId)
+        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderCode(string salesOrderCode, int eventId)
         {
-            if (salesOrderId <= 0 || eventId <= 0)
+            if (string.IsNullOrWhiteSpace(salesOrderCode) || eventId <= 0)
                 throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
 
-            string cacheKey = CacheHelper.GetCacheKey<IEnumerable<EventSalesItem>>($"{salesOrderId}");
-            IEnumerable<EventSalesItem>? cachedTicket = await _cache.GetOrSetAsync(cacheKey, () => GetEventTicketBySalesOrderIdFromDb(salesOrderId, eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
-            return cachedTicket ?? throw new KeyNotFoundException($"Ticket for Sales Order ID {salesOrderId} and Event ID {eventId} not found.");
+            string cacheKey = CacheHelper.GetCacheKey<IEnumerable<EventSalesItem>>($"{salesOrderCode}");
+            IEnumerable<EventSalesItem>? cachedTicket = await _cache.GetOrSetAsync(cacheKey, () => GetEventTicketBySalesOrderCodeFromDb(salesOrderCode, eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return cachedTicket ?? throw new KeyNotFoundException($"Ticket for Sales Order Code {salesOrderCode} and Event ID {eventId} not found.");
         }
         
             
-        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderIdFromDb(int salesOrderId, int eventId)
+        public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderCodeFromDb(string salesOrderQrCode, int eventId)
         {
-            if (salesOrderId <= 0 || eventId <= 0)
-                throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
+            if ( string.IsNullOrWhiteSpace(salesOrderQrCode) || eventId <= 0)
+                throw new ArgumentException("SalesOrderQrCode and EventId must be greater than zero.");
 
             List<EventSalesItem> ticketList = new List<EventSalesItem>();
             try
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @"SELECT a.FullName, a.Email, a.Sms,a.UserId, c.Description,
-                                c.EventItemTypeId,c.Name as ItemName, b.PricePaid,
+                    string sql = @"SELECT a.FullName, a.Email, a.Sms, a.UserId, c.Description,
+                                c.EventItemTypeId, c.Name as ItemName, b.PricePaid,
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketStatus 
-                                from eventmanagement.eventuser a, 
-                                eventmanagement.eventsalesitem b,
-                                eventmanagement.eventitemtype c
-                                where a.userid=b.userid
-                                AND b.EventItemTypeId = c.EventItemTypeId
-                                And b.EventId = c.EventId
-                                AND b.SalesOrderId = @salesOrderId 
+                                FROM eventmanagement.eventuser a
+                                INNER JOIN eventmanagement.eventsalesitem b ON a.UserId = b.UserId
+                                INNER JOIN eventmanagement.eventitemtype c ON b.EventItemTypeId = c.EventItemTypeId AND b.EventId = c.EventId
+                                INNER JOIN eventmanagement.salesorder d ON d.OrderId = b.SalesOrderId
+                                WHERE d.SalesOrderCode = @salesOrderCode 
                                 AND b.EventId = @eventId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);
-                    cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
+                    cmd.Parameters.AddWithValue("@salesOrderCode", salesOrderQrCode);
                     cmd.Parameters.AddWithValue("@eventId", eventId);
 
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
@@ -505,6 +503,7 @@ namespace EventManagementDbAccess
                                                 reader.GetString(reader.GetOrdinal("TicketStatus")):
                                                  string.Empty;
                             ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
+                            ticket.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(ticket.TicketCode));
                             ticket.EventItemType = new EventItemType()
                             {
                                 Description = reader.GetString(reader.GetOrdinal("Description")),
@@ -516,7 +515,7 @@ namespace EventManagementDbAccess
                         }
                     }
 
-                    _cache.AddOrUpdateCache(ticketList.AsEnumerable(), salesOrderId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+                    _cache.AddOrUpdateCache(ticketList.AsEnumerable(), salesOrderQrCode, TimeSpan.FromMinutes(base._cacheDurationInMinutes));
 
                 }
             }

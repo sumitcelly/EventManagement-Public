@@ -123,7 +123,9 @@ export default function TicketDetails() {
     //const idToUse = orderDetails?.eventId || eventId;
     //const codeToUse = orderDetails?.salesOrderCode || salesOrderCode;
     console.log('Fetching ticket details for event', eventId, 'and sales order', salesOrderCode);
-    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${eventId}/${salesOrderCode}`);
+    const salesOrderIdToUse = orderDetails?.salesOrderId || salesOrderId;
+    console.log('Using sales order id', salesOrderIdToUse, 'for fetching tickets');
+    const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${salesOrderIdToUse}/${eventId}/${salesOrderCode}`);
     console.log('user tickets from backend', res?.data);
     setticketData(res?.data || []);
     console.log('ticket data set for pagination from normal flow', ticketData);
