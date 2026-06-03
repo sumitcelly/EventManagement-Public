@@ -60,7 +60,7 @@ namespace CreateTicketApi.Controllers
        
 
         [HttpGet("CheckUniqueOrgName/{orgName}")]
-
+        [Authorize]
         public async Task<ActionResult<bool>> CheckUniqueOrgName(string orgName)=> 
                     !_organizerDbAccess.GetAllOrgNames().Result.Any(s=>string.Equals(StringUtils.CreateUrlSlug(s),orgName,StringComparison.OrdinalIgnoreCase));
                     

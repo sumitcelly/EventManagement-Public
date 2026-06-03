@@ -213,7 +213,7 @@ export default function TicketDetails() {
               <button onClick={()=>downloadPdf()}
                   className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
                   
-                    Download Pdf
+                    Download Tickets
               </button>
           </div>
          
