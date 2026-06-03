@@ -143,6 +143,29 @@ export default function TicketDetails() {
       //enabled: (orderDetails?.eventId || eventId) > 0 && !!(orderDetails?.salesOrderCode || salesOrderCode) && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
   });
    
+  const downloadPdf = async () => {
+    try {
+    
+      const eventIdToUse = orderDetails?.eventId || eventId;
+      const salesOrderCodeToUse = orderDetails?.salesOrderCode || salesOrderCode;
+      const res = await axiosClient.get(`/Ticket/GetPdfUrl/${salesOrderCodeToUse}/${eventIdToUse}`);
+      console.log('PDF download response', res);
+
+      if (res && res.data) {
+        // Open the pre-signed URL in a new tab to trigger the download
+        window.open(res.data, '_blank');
+      } else {
+        toast.error('Error generating PDF. Please try again later.');
+        console.error('Invalid response for PDF download', res);
+      }
+    }
+
+      catch (error) {
+        console.error('Error downloading PDF', error);
+        toast.error('Error downloading PDF');
+      }
+  }
+
   useEffect(() => {
      if (currentPage === 1)
      {
@@ -186,6 +209,13 @@ export default function TicketDetails() {
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
+         <div className="flex ml-auto mt-4">
+              <button onClick={()=>downloadPdf()}
+                  className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
+                  
+                    Download Pdf
+              </button>
+          </div>
          
          {/* Ticket Summary */}
          <div className="max-w-xl mx-auto mt-6 w-full">

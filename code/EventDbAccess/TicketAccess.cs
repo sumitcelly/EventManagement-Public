@@ -454,7 +454,15 @@ namespace EventManagementDbAccess
             return cachedTicket ?? throw new KeyNotFoundException($"Ticket for Sales Order Code {salesOrderCode} and Event ID {eventId} not found.");
         }
         
-            
+        
+
+        /// <summary>
+        /// gets only completed orders or orders that are payment succeeded. Status of PaymentSucceeded(7) or OrderCompleted(9)
+        /// </summary>
+        /// <param name="salesOrderQrCode"></param>
+        /// <param name="eventId"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task<IEnumerable<EventSalesItem>> GetEventTicketBySalesOrderCodeFromDb(string salesOrderQrCode, int eventId)
         {
             if ( string.IsNullOrWhiteSpace(salesOrderQrCode) || eventId <= 0)
@@ -474,6 +482,7 @@ namespace EventManagementDbAccess
                                 INNER JOIN eventmanagement.eventitemtype c ON b.EventItemTypeId = c.EventItemTypeId AND b.EventId = c.EventId
                                 INNER JOIN eventmanagement.salesorder d ON d.OrderId = b.SalesOrderId
                                 WHERE d.SalesOrderCode = @salesOrderCode 
+                                AND (d.SalesOrderStatus = 7 or d.SalesOrderStatus=9)
                                 AND b.EventId = @eventId";
                     await connection.OpenAsync();
                     using var cmd = new MySqlCommand(sql, connection);

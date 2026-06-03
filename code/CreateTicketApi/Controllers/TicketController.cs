@@ -96,6 +96,13 @@ public class TicketController : ControllerBase
 
         _logger.LogInformation($"File with key {fileKey} does not exist in S3. Generating PDF for sales order: {salesOrderCode}, event: {eventId}");
       
+        //todo: make sure event is not in the past before generating PDF. We can add a buffer time as well like event should be within next 1 year to avoid generating PDF for very old events by mistake.
+        if (eventDetails.EventDate < DateTime.UtcNow.AddYears(-1))
+        {
+            _logger.LogWarning($"Event date {eventDetails.EventDate} is too far in the past for event id: {eventId} when trying to get PDF URL for sales order code: {salesOrderCode}");
+            return BadRequest("Event date is too far in the past to generate PDF.");
+        }
+        
         string eventDate = string.Empty,eventTime =string.Empty;
         if (eventDetails.Latitude!=0 && eventDetails.Longitude!=0)
         {
@@ -118,6 +125,7 @@ public class TicketController : ControllerBase
             _logger.LogWarning($"No tickets found for sales order code: {salesOrderCode} and event id: {eventId} when trying to get PDF URL.");
             return NotFound("No tickets found for the given sales order and event.");
         }
+        //TODO: ensure sales order is in correct status before generating PDF. We can have a separate method to validate sales order status which can be reused in other places as well.
         
         TicketPdfData pdfData = PdfDataMapper.MapToTicketPdfData(eventDetails, eventTickets);
         pdfData.EventDate = eventDateTimeRange;
