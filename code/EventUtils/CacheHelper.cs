@@ -47,13 +47,13 @@ public static class CacheHelper
             throw new ArgumentNullException(nameof(factory), "Factory function cannot be null.");
         }
 
-        _logger?.LogInformation($"Attempting to get cache for key: {key}");
+        _logger.LogInformation($"Attempting to get cache for key: {key}");
         try
         {
             var cachedValue = await cache.GetStringAsync(key);
             if (cachedValue != null)
             {
-                _logger?.LogInformation($"Cache hit for key: {key}");
+                _logger.LogInformation($"Cache hit for key: {key}");
                 return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
             }
 
@@ -71,7 +71,7 @@ public static class CacheHelper
         //TODO:trap redis timeout exception not this.
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Issue with redis  {ex.Message}"); 
+            _logger.LogWarning($"Issue with redis  {ex.Message}"); 
             //run the factory assuming this is a redis timeout exception
             return await factory();      
         }
@@ -112,7 +112,7 @@ public static class CacheHelper
         }
          catch (Exception ex)
         {
-            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
+            _logger.LogWarning($"Issue with redis  {ex.Message}");       
             return false;
         }
         return true;
@@ -137,14 +137,14 @@ public static class CacheHelper
         }
 
 
-        _logger?.LogInformation($"Attempting to get cache for key: {key}");
+        _logger.LogInformation($"Attempting to get cache for key: {key}");
         
         try
         {
             var cachedValue = await cache.GetStringAsync(key);
             if (cachedValue != null)
             {
-                _logger?.LogInformation($"Cache hit for key: {key}");
+                _logger.LogInformation($"Cache hit for key: {key}");
                 return System.Text.Json.JsonSerializer.Deserialize<T>(cachedValue);
             }
             else
@@ -152,7 +152,7 @@ public static class CacheHelper
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
+            _logger.LogWarning($"Issue with redis  {ex.Message}");       
             return null;
         }
     }
@@ -186,7 +186,7 @@ public static class CacheHelper
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Issue with redis  {ex.Message}");       
+            _logger.LogWarning($"Issue with redis  {ex.Message}");       
             return false;
         }
         

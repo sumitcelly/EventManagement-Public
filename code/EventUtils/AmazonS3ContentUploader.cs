@@ -20,14 +20,15 @@ public class AmazonS3ContentUploader
         EventContentDocument,
         OrganizerAboutMeImage,
         OrganizerOtherImage,
-        OrganizerDocument 
+        OrganizerDocument,
+        TicketEventPdfDocument
     } 
 
     private readonly int _maxTimeForUrl = 30; // in minutes
 
     private readonly AmazonS3Client _s3Client;
 
-    private  static Microsoft.Extensions.Logging.ILogger? _logger { get; set; }
+    private  static Microsoft.Extensions.Logging.ILogger _logger { get; set; }
     public AmazonS3ContentUploader(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<AmazonS3ContentUploader> logger)
     {
         _logger = logger;
@@ -56,17 +57,17 @@ public class AmazonS3ContentUploader
         string key = string.Empty;
         if (contentPurpose.ToString().Contains("Image") && !CheckImageFileExtension(fileName))
         {
-            _logger?.LogError($"Unable to store image with filename {fileName} because extension is not valid");
+            _logger.LogError($"Unable to store image with filename {fileName} because extension is not valid");
             return key;
         }
         if (contentPurpose.ToString().Contains("Document") && !CheckDocFileExtension(fileName))
         {
-            _logger?.LogError($"Unable to store document with filename {fileName} because extension is not valid");
+            _logger.LogError($"Unable to store document with filename {fileName} because extension is not valid");
             return key;
         }
         if (contentPurpose.ToString().Contains("Event") && eventId==0)
         {
-             _logger?.LogError($"For event purpose, eventId must be valid");
+             _logger.LogError($"For event purpose, eventId must be valid");
             return key;
         }
         switch (contentPurpose)
@@ -74,6 +75,11 @@ public class AmazonS3ContentUploader
             case Purpose.EventBannerImage:
                 {                
                     key = $"public/{organizerId}/Events/{eventId}/Images/Banner/Main." + fileName.Split(".")[1];              
+                    break;
+                }
+            case Purpose.TicketEventPdfDocument:
+                {                
+                    key = $"private/{organizerId}/Events/{eventId}/Tickets/{fileName}";
                     break;
                 }
             case Purpose.OrganizerAboutMeImage:
@@ -92,25 +98,52 @@ public class AmazonS3ContentUploader
         }
         return key;
     }
-    public async Task UploadFileAsync(int organizerId, int  eventId,  Stream fileStream, string fileName, string contentType, Purpose purpose)
+
+    public async Task<bool> DoesS3ObjectExistAsync(string key)
     {
-        if (organizerId <=0 || fileStream == null || string.IsNullOrEmpty(fileName))
+        try
         {
-            throw new ArgumentException("Customer id, event id, file stream, and file name must be provided.");
+            await _s3Client.GetObjectMetadataAsync(BucketName, key);
+            return true;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> UploadFileAsync(string key,  Stream fileStream, string contentType)
+    {
+        if (string.IsNullOrEmpty(key) || fileStream == null)
+        {
+            throw new ArgumentException("Key and file stream must be provided.");
         }
 
+        try
+        {             
+            var request = new PutObjectRequest
+            {
+                BucketName = BucketName,
+                Key = key,
+                InputStream = fileStream,
+                ContentType = contentType
+            };
 
-        var request = new PutObjectRequest
+            var response = await _s3Client.PutObjectAsync(request);
+            
+            _logger.LogInformation($"File uploaded successfully to S3 with key: {key}");
+            return true;
+        }
+        catch (Exception ex)
         {
-            BucketName = BucketName,
-            Key = GetFileKey(fileName, organizerId, purpose, eventId),
-            InputStream = fileStream,
-            ContentType = contentType
-        };
+            _logger.LogError(ex, $"Error uploading file to S3 with key: {key}");
+            return false;
+          
+        }
+       
 
-        await _s3Client.PutObjectAsync(request);
     }
-   
+
 
     public async Task<string> GetPreSignedUrlForUpload(string fileName, int organizerId, Purpose purpose, string contentType,int eventId=0)
     {
@@ -131,6 +164,32 @@ public class AmazonS3ContentUploader
 
         // Implementation for generating a pre-signed URL
         // This is a placeholder for the actual URL generation logic
+        Console.WriteLine($"Generating pre-signed URL for {fileName} in bucket {BucketName}");
+        return preSignedUrl;
+    }
+
+     public async Task<string> GetPreSignedUrlTickets(string key, string fileName)
+     {
+        if (string.IsNullOrEmpty(key))
+        {
+            throw new ArgumentException("key name must be provided");
+        }
+        //todo verify content type
+        // Generate a pre-signed URL for the file upload
+        var preSignedUrl = await _s3Client.GetPreSignedURLAsync(new Amazon.S3.Model.GetPreSignedUrlRequest
+        {
+            BucketName = BucketName,
+            Key = key,
+            Verb = Amazon.S3.HttpVerb.GET,
+            //forces download with original file name when accessed, otherwise S3 would return the key name as file name which is not user friendly
+            ResponseHeaderOverrides = new ResponseHeaderOverrides 
+            { 
+                ContentDisposition = $"attachment; filename={fileName}" 
+            },
+            Expires = DateTime.UtcNow.AddMinutes(_maxTimeForUrl) // URL valid for 30 minutes
+        });
+
+       
         Console.WriteLine($"Generating pre-signed URL for {fileName} in bucket {BucketName}");
         return preSignedUrl;
     }

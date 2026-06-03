@@ -24,17 +24,21 @@ public class TicketController : ControllerBase
     private readonly EventDbAccess _eventDbAccess;
 
     private readonly IConfiguration _configuration;
+
+    private readonly AmazonS3ContentUploader _s3Uploader;
     public TicketController(ILogger<TicketController> logger,
                             TicketAccess ticketContext,
                             SalesOrderConductor conductor,
                             EventDbAccess dbAccess,
-                            IConfiguration configuration)
+                            IConfiguration configuration,
+                            AmazonS3ContentUploader s3Uploader)
     {
         _logger = logger;
         _ticketContext = ticketContext;
         _salesOrderConductor = conductor;
         _eventDbAccess = dbAccess;
         _configuration = configuration;
+        _s3Uploader = s3Uploader;
 
     }
 
@@ -58,7 +62,7 @@ public class TicketController : ControllerBase
             return Unauthorized("Unable to retrieve user id");
         }
 
-        var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
+         var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
         if (order == null)
             return NotFound();
         return Ok(order);
@@ -73,8 +77,25 @@ public class TicketController : ControllerBase
        if(string.IsNullOrWhiteSpace(salesOrderCode) || eventId <=0)
             return BadRequest("Invalid sales order id or event id.");
 
-       EventHeader eventDetails = await _eventDbAccess.GetEventHeaderById(eventId);
+        string fileName = $"Order_{salesOrderCode}_Tickets.pdf";
+        EventHeader eventDetails = await _eventDbAccess.GetEventHeaderById(eventId);
 
+        if (eventDetails == null || eventDetails.EventOrganizerId <=0)
+        {
+            _logger.LogWarning($"Event not found for event id: {eventId} when trying to get PDF URL for sales order code: {salesOrderCode}");
+            return NotFound("Event not found for the given event id.");
+        }
+
+        string fileKey = AmazonS3ContentUploader.GetFileKey(fileName, eventDetails.EventOrganizerId, 
+                EventUtils.AmazonS3ContentUploader.Purpose.TicketEventPdfDocument, eventId);
+        _logger.LogInformation($"Generated file key {fileKey} for sales order: {salesOrderCode}, event: {eventId}, organizer: {eventDetails.EventOrganizerId}");
+        if (await _s3Uploader.DoesS3ObjectExistAsync(fileKey))
+        {
+            return Ok(await _s3Uploader.GetPreSignedUrlTickets(fileKey, fileName));
+        }
+
+        _logger.LogInformation($"File with key {fileKey} does not exist in S3. Generating PDF for sales order: {salesOrderCode}, event: {eventId}");
+      
         string eventDate = string.Empty,eventTime =string.Empty;
         if (eventDetails.Latitude!=0 && eventDetails.Longitude!=0)
         {
@@ -102,8 +123,13 @@ public class TicketController : ControllerBase
         pdfData.EventDate = eventDateTimeRange;
         byte[] pdfBytes= PdfGenerator.GenerateTicketsWithSkiaSharp(pdfData, _configuration["EmailTemplateValues:platform_name"]??"TestEvents", _configuration["BaseFrontEndUrl"]??"");
         _logger.LogInformation($"Generated ticket PDF data for sales order: {salesOrderCode}, event: {eventId}");
-        
-        return File(pdfBytes, "application/pdf", $"Order_{salesOrderCode}_Tickets.pdf");
+        bool uploadResult = false;
+        using  (var stream = new MemoryStream(pdfBytes))
+        {
+            uploadResult =await _s3Uploader.UploadFileAsync(fileKey, stream, "application/pdf");
+            _logger.LogInformation($"Uploaded ticket PDF result to S3 for sales order: {salesOrderCode}, event: {eventId}, organizer: {eventDetails.EventOrganizerId} is {uploadResult.ToString().ToUpper()}");
+        }
+        return uploadResult ? Ok(await _s3Uploader.GetPreSignedUrlTickets(fileKey, fileName)) : StatusCode(500, "Error uploading PDF to storage.");
 
      }
 

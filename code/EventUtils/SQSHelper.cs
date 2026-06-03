@@ -103,14 +103,14 @@ public class SQSHelper
     public async Task<List<EmailStatusUpdate>> GetEmailStatusUpdates()
     {
         var response = await _amazonSQSClient.ReceiveMessageAsync(new ReceiveMessageRequest() { QueueUrl = _emailStatusQueueUrl, MaxNumberOfMessages = 10 });
-        _logger?.LogInformation($"Polled email status queue. HTTP Status: {response.HttpStatusCode}, Messages Received: {response.Messages?.Count ?? 0}");
+        _logger.LogInformation($"Polled email status queue. HTTP Status: {response.HttpStatusCode}, Messages Received: {response.Messages?.Count ?? 0}");
         if (response !=null && response.HttpStatusCode == System.Net.HttpStatusCode.OK && response.Messages != null && response.Messages.Count > 0)
         {
-            _logger?.LogInformation($"Received {response?.Messages?.Count} messages from email status queue.");
+            _logger.LogInformation($"Received {response?.Messages?.Count} messages from email status queue.");
         }
          else
         {
-            _logger?.LogInformation($"No messages received from email status queue.");
+            _logger.LogInformation($"No messages received from email status queue.");
             return new List<EmailStatusUpdate>();
         }
         var updates = new List<EmailStatusUpdate>();
@@ -129,7 +129,7 @@ public class SQSHelper
             }
             catch (Exception ex)
             {
-                _logger?.LogError($"Error processing message: {ex.Message}");
+                _logger.LogError($"Error processing message: {ex.Message}");
             }
             
         }
