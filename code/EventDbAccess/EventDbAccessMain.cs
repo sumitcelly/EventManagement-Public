@@ -153,9 +153,10 @@ namespace EventManagementDbAccess
                     a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress,a.Latitude,a.Longitude,
-                    b.OrganizationName, b.OrganizerEventBaseUrl from events a, eventorganizer b 
-                    WHERE a.EventOrganizer= b.CustomerId and 
-                    a.EventId = @eventId";
+                    b.OrganizationName, b.OrganizerEventBaseUrl
+                    from events a 
+                    inner join eventorganizer b on b.CustomerId=a.eventorganizer
+                    where a.EventId = @eventId";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventId", eventId);
@@ -492,9 +493,10 @@ namespace EventManagementDbAccess
       cmd.Parameters.AddWithValue("@createdAt", DateTime.UtcNow);
 
       int rowsAffected = await cmd.ExecuteNonQueryAsync();
+      evt.EventId = Convert.ToInt32(cmd.LastInsertedId);
       _cache.AddOrUpdateCache(evt, evt.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
 
-      return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
+      return rowsAffected > 0 ? evt.EventId : 0;
     }
 
     public async Task<bool> DeleteEvent(int eventId)
@@ -556,10 +558,21 @@ namespace EventManagementDbAccess
           tempEvent.RefundMode = settings.RefundMode;
           tempEvent.TicketFeeMode = settings.TicketFeeMode;
 
-          //maybe update eventheader cache also or just remove that cache and sync it with event cache
-         _cache.AddOrUpdateCache((EventHeader)tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes)); 
-          _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
-          _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
+        //maybe update eventheader cache also or just remove that cache and sync it with event cache
+         key = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString()); 
+         await _cache.GetOnlyAsync<EventHeader>(key).ContinueWith(headerTask =>
+         {
+             if (headerTask.Result != null)
+             {
+                 EventHeader header = headerTask.Result;
+                 header.RefundMode = tempEvent.RefundMode;
+                 header.TicketFeeMode = tempEvent.TicketFeeMode;
+                 header.IsLive = settings.IsLive;
+                 _cache.AddOrUpdateCache(header, eventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
+             }
+         });
+         _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
+         _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
         }
         else
         {

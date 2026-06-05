@@ -1,5 +1,6 @@
 import { Button, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useState, useEffect } from "react";
+import DOMPurify from "dompurify";
 
 export function RichTextEditorModal({
   modalTitle,
@@ -40,7 +41,7 @@ export function RichTextEditorModal({
         <div className="space-y-4 w-full">
           <div 
             className="border rounded p-4 bg-white prose prose-sm max-w-none w-full break-words overflow-x-auto"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
           />
           <div className="flex justify-end gap-4">
             <Button color="alternative" onClick={handleClose}>

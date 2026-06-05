@@ -295,22 +295,10 @@ namespace CreateTicketApi.Controllers
                         if (defaultIds.Contains(emailCampaign.TemplateId))
                         {
                             return StatusCode(500,$"Default template cannot be modified. Please choose a different template or create a new campaign with changes to template");
-                            // _logger.LogInformation("Default template being modifed {0}",emailCampaign.TemplateId);
-                            // templateId = await _templateAccess.AddEmailTemplate(new EmailTemplate()
-                            // {
-                            //     Subject = emailCampaign.Subject,
-                            //     TemplateContent = emailCampaign.TemplateContent,
-                            //     TemplateName = string.Format("{0}_{1}",emailCampaign.EventId,emailCampaign.EmailCampaignName),
-                            //     IsDefault= false,
-                            //     TemplateDescription=emailCampaign.Description
-                            // });
-                            // if (templateId <=0)
-                            // {
-                            //     return StatusCode(500,"Error creating template for campaign");
-                            // }
                         }
                         else
                         {
+                            //this updates the template in the db and the template cache as well.
                             await _templateAccess.UpdateEmailTemplate(new EmailTemplate()
                             {
                                 Id=templateId,
@@ -322,6 +310,13 @@ namespace CreateTicketApi.Controllers
                                 
                             });
                         }
+                        //this updates the campaign info in db and the campaign cache as well.
+                        //the template details being sent here like content and description are not being used
+                        //  for update but just for cache update. 
+                        // So even if there is no change in template we are sending the details
+                        //  to ensure cache has the latest info.
+                        //So essentially the template details are cached in 2 places - one in template cache and another in campaign cache. This is to ensure we have the details available in campaign cache for sending email without having to call template cache separately.
+                        //This is odd but I do not know of a better way to ensure we have all the details in campaign cache for email sending without having to call template cache separately.
                         bool result  = await _campaignDbAccess.UpdateEmailCampaign(new EmailCampaign()
                         {
                                 Id =  campaignId,
@@ -330,7 +325,11 @@ namespace CreateTicketApi.Controllers
                                 SendAt = emailCampaign.SendNow? DateTime.UtcNow : emailCampaign.SendAt,
                                 TemplateId = templateId,
                                 Status ="Pending",
-                                EventId = emailCampaign.EventId
+                                EventId = emailCampaign.EventId,
+                                TemplateContent=emailCampaign.TemplateContent,
+                                TemplateDescription = emailCampaign.Description,
+                                Subject = emailCampaign.Subject,
+                                IsDefault= false,
                         });
                         
                         if (!result)

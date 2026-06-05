@@ -13,6 +13,7 @@ import { useAppDispatch } from "../app/hook";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import DomPurify from "dompurify";
 
 export default function EventDetails() {
 
@@ -163,7 +164,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
             <li className="ml-5" key={index}>{line}</li>
           ))}
            */}
-           <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventAgenda }} />
+           <div className="ml-5" dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(eventDetails.eventAgenda) }} />
       </div>
     )}
 
@@ -171,7 +172,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     <div className="bg-brand-neutrallight text-sm font-body mt-3 text-primary-color 
               border rounded-lg p-2 shadow-lg bg-brand-panelbg">
         <div className="text-lg font-bold mb-1 text-center text-primary-color">More Info ...</div>
-        <div className="ml-5" dangerouslySetInnerHTML={{ __html: eventDetails.eventDescription }} />
+        <div className="ml-5" dangerouslySetInnerHTML={{ __html: DomPurify.sanitize(eventDetails.eventDescription) }} />
         {/* {eventDetails.eventDescription.split('\n').map((line:string, index:number) => (
           <p key={index} className="mb-2">{line}</p>
         ))} */}

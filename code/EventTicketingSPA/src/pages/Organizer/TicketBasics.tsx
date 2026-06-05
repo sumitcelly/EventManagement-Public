@@ -17,6 +17,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import {appendTime,toUTCDate, addHoursToDate,combineDateTime,combineDateTimeToLocale}   from '../../utils/DateUtils'
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import { richTextSchemaValidator } from "../../utils/RichTextSchemaValidation";
 
 
 const ticketSchema = (event: EventHeader)=>yup.object({
@@ -26,11 +27,9 @@ const ticketSchema = (event: EventHeader)=>yup.object({
         .typeError('Invalid number.'),
   maxPerOrder: yup.number().default(0).nullable().typeError('Invalid number.'),
   totalAllowed: yup.number().default(0).required().min(1, "Total allowed must be at least one.").typeError('Invalid number.'),
-  description: yup
-    .string()
-    .required("Description is required")
+  description: richTextSchemaValidator("Description")
     .test("not-empty", "Description is required", (value) => {
-  
+      if (!value) return false;
       const stripped = value?.replace(/<[^>]+>/g, "").trim(); // remove HTML tags
       return !!stripped;
     }),

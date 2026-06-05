@@ -1,11 +1,9 @@
 Running Bug List
 
+Create new event. Create ticket. Publish page says tickets need to be created.
 
-Still have issues with search bar.
-Often the url changes but the event does not show up until
-I refresh.
-
-The address is scrunched up on buy tickets page.
+Ticket page should have higher defaults and if error detected in hidden section,
+expand it.
 
 
 Only General Category works when creating event

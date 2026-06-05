@@ -236,6 +236,11 @@ namespace EventManagementDbAccess
                 cacheObj.TemplateId = campaign.TemplateId;
                 cacheObj.Status = campaign.Status;
                 cacheObj.ModifiedAt = DateTime.UtcNow;
+                cacheObj.Enabled = campaign.Enabled;
+                cacheObj.TemplateContent = campaign.TemplateContent;
+                cacheObj.Subject = campaign.Subject;
+                cacheObj.TemplateDescription = campaign.TemplateDescription;
+                cacheObj.IsDefault = campaign.IsDefault;
                 await _cache.SetOnlyAsync(key, cacheObj);
             }
 

@@ -4,7 +4,6 @@ import { useForm, Controller, set } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import RichTextEditor from "../../components/RichTextEditor";
-import { RichTextEditorModal } from "../../components/RichTextEditorModal";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
@@ -18,13 +17,14 @@ import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import axios from "axios";
 import Footer from "../../components/Footer";
+import {richTextSchemaValidator} from "../../utils/RichTextSchemaValidation";
 
 
 const memberSchema = yup.object({
   name: yup.string().required("Name is required."),
   description: yup.string().nullable().default(null),
   subject: yup.string().required("Subject is required."),
-  body:  yup.string().required("Body is required."),
+  body:  richTextSchemaValidator("Body"), 
   eventName:  yup.string().required("Event name is required.").default(""),
   sendAt: yup.string().default(new Date().toISOString().split('T')[0])
   .test("sendAt", "Send At must be a valid date in the future", function(value) {
@@ -51,7 +51,8 @@ const memberSchema = yup.object({
     });
   }
   return true;
-});
+}
+);
 
 type FormValues = {
   name: string;

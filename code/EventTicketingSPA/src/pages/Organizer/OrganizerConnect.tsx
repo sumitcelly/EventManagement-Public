@@ -3,7 +3,6 @@ import React, { EventHandler, use, useEffect, useState } from "react";
 import { useForm, Controller, set } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
@@ -16,12 +15,13 @@ import { TeamMember } from "../../types/Teams";
 import toast, { Toaster } from 'react-hot-toast';
 import Permissions from "../../components/Permissions";
 import { OrganizerInfo } from "../../types/Organizer";
+import { urlValidationSchema } from "../../utils/RichTextSchemaValidation";
 
 const memberSchema = yup.object({
-  organizerWebsite: yup.string().nullable().url("url is invalid").default(null),
-  organizerInstagram: yup.string().nullable().default(null),
-  organizerFacebook: yup.string().nullable().default(null),
-  organizerX: yup.string().nullable().default(null),
+  organizerWebsite:  urlValidationSchema.nullable().default(null),
+  organizerInstagram: urlValidationSchema.nullable().default(null),
+  organizerFacebook: urlValidationSchema.nullable().default(null),
+  organizerX: urlValidationSchema.nullable().default(null),
  
   });
 

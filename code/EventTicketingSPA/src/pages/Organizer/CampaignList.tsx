@@ -43,7 +43,7 @@ export default function CampaignList() {
         });
 
         // 2. Make API call
-        await axiosClient.delete(`/EmailCampaign/${campaignId}`, { headers: {
+        await axiosClient.delete(`/EmailCampaign/${user?.user?.customerId}/${campaignId}`, { headers: {
                   'Content-Type': 'application/json'}
                  },).then(response => {
           console.log('Delete successful:', response.data);

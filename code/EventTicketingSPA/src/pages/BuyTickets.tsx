@@ -19,6 +19,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { SalesOrderErrors } from "../types/Order";
 import { loginAsGuest } from "../features/auth/authSlice";
 import  Footer from "../components/Footer"
+import DomPurify from "dompurify";
 
 const schema = yup.object({
   email: yup.string().required("Email is required").email("Invalid email format"),
@@ -264,7 +265,8 @@ return (
       (
           <div  key={item.eventItemTypeId} className="flex flex-col">
             <div className="flex flex-row">
-                <div className="text-l text-secondary-color w-1/2 text-left">{item.name}:  {item.description}</div>
+                <div className="text-l text-secondary-color w-1/2 text-left"
+                  dangerouslySetInnerHTML={{ __html: item.name + ': ' + DomPurify.sanitize(item.description) }}/>
                 <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
                   <div className="text-l text-center text-secondary-color">
                     <input

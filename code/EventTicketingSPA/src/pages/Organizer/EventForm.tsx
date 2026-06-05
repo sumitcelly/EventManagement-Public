@@ -19,6 +19,7 @@ import axios from "axios";
 import { createUrlSlug, getFullUrlForEvent } from "../../utils/StringUtils";
 import { addHoursToDate } from "../../utils/DateUtils";
 import { TicketFeeMode } from "../../types/Event";
+import { richTextSchemaValidator, richTextSchemaValidatorWithoutrequired } from "../../utils/RichTextSchemaValidation";
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   eventUrlName: yup.string().required("Event Url name is reqired"),
@@ -50,15 +51,14 @@ const eventSchema = yup.object({
       // 3. Return the boolean result
       return isSameDay; 
       }),
-  description: yup
-    .string()
+    description: richTextSchemaValidator("Description")
     .test("not-empty", "Description is required", (value) => {
+       if (!value) return false; 
       const stripped = value?.replace(/<[^>]+>/g, "").trim(); // remove HTML tags
       return !!stripped;
-    })
-    .required("Description is required"),
+    }),
     //important to allow default (null) here if we want to allow null values. This ensures field is never undefined
-   agenda: yup.string().nullable().default(null) // <-- allow null or undefined,
+   agenda: richTextSchemaValidatorWithoutrequired.nullable().default(null) // <-- allow null or undefined,
 });
 
 type FormValues = {
