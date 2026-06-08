@@ -179,21 +179,23 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("checkout-session-status/{sessionId}/{stripAcctId}")]
-        [Authorize]
+      
         public async Task<IActionResult> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
         {
             //validate the  stripe session id belongs to the logged in user.
-            var tempOrder = await _salesOrderDbAccess.GetSalesOrderByStripeSessionId(sessionId);
-            if (tempOrder == null)
-            {
-                return BadRequest("Invalid session id.");
-            }
+            //commenting all this out since the session id is secruity in itself
+            //plus i cannot authorize the user since they maybe guest that already exists in db
+            // var tempOrder = await _salesOrderDbAccess.GetSalesOrderByStripeSessionId(sessionId);
+            // if (tempOrder == null)
+            // {
+            //     return BadRequest("Invalid session id.");
+            // }
             
-            string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
-            if (tempOrder.UserId <= 0 || tempOrder.UserId.ToString() != userId)
-            {
-                return Forbid("Invalid session id");
-            }
+            // string userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            // if (tempOrder.UserId <= 0 || tempOrder.UserId.ToString() != userId)
+            // {
+            //     return Forbid("Invalid session id");
+            // }
             return Ok(await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId));
         }
 

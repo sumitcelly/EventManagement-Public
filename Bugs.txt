@@ -5,5 +5,7 @@ Create new event. Create ticket. Publish page says tickets need to be created.
 Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
+Each ticket should show its QR code.
+
 
 Only General Category works when creating event

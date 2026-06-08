@@ -7,6 +7,7 @@ using Mysqlx.Crud;
 using System.Net;
 using System.Security.Claims;
 using EventUtils;
+using StackExchange.Redis;
 
 namespace CreateTicketApi.Controllers
 {
@@ -54,16 +55,22 @@ namespace CreateTicketApi.Controllers
                 {
                     //need to create temporary token here since this was guest checkout
                     _logger.LogInformation("Guest checkout detected. Creating and sending temp token");
-                    var _accessToken = _tokenUtils.GenerateGuestJwtToken(result.Item1.UserId.ToString(),
-                                         UserRoles.Attendee.ToString());
+                    //only send access token if this is a new guest user. 
+                    // If the email already existed in the system, we don't want to send them a token.
+                    // The order is created but needs to be accessed via their email.
+                    var _accessToken = !result.Item3? _tokenUtils.GenerateGuestJwtToken(result.Item1.UserId.ToString(),
+                                         UserRoles.Attendee.ToString()):null;
                     CustomerSalesOrder returnOrder = result.Item1;
                     return Ok(new
                     {
                         SalesOrderData= result.Item1,
                         AccessToken = _accessToken,
-                        User = new { id = returnOrder.UserId.ToString(), guest=true,email = returnOrder.EmailAddress, 
+                        GuestAlreadyExists = result.Item3,
+                        User = new { id = returnOrder.UserId.ToString(),
+                                     guest=true,
+                                    email = returnOrder.EmailAddress, 
                                     role = UserRoles.Attendee.ToString(), customerId = 0, 
-                                     name = returnOrder.Name ?? string.Empty }
+                                    name = returnOrder.Name ?? string.Empty }
                     });
                 }
             }

@@ -24,20 +24,17 @@ const stripePromise = loadStripe(pkStripe);
 
 export default function OrderPayment() {
   const history = useHistory();
-  const { id } = useParams<{ id: string }>();
-
-  const [sessionStatus, setSessionStatus] = useState<string | null>(null);
-  
   const  cart = useAppSelector((state:RootState) => state.cart);
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
   const user = useAppSelector((state:RootState) =>state.auth);
-  
+
   const stripeAccountId = eventHeaderInfo.organizerStripeAccountId;
   console.log(`stripe account id is ${stripeAccountId}`);
 
   const location = useLocation();
-  const salesOrderData:any = location.state || {};
+  const {salesOrderData,id} = location.state as any || {};
   console.log('sales order',salesOrderData);
+
 
   //these will obtain from the url params after redirection from stripe checkout
   const params = new URLSearchParams(window.location.search);
@@ -46,46 +43,75 @@ export default function OrderPayment() {
 
   console.log('session id and orderid from url', sessionId, orderId);
 
+  let underProcess =false
   const getSessionStatus = async (sessionId:string, stripeAcctId:string) => 
   {
     try 
     {
+      if (underProcess)
+        return;
+      underProcess = true;
       const response = await axiosClient.get(`/payment/checkout-session-status/${sessionId}/${stripeAcctId}`);
       console.log("Session status response:", response.data);
+      const savedGuestExists = sessionStorage.getItem('stripe_checkout_guest_exists');
+      const guestAlreadyExists = savedGuestExists && savedGuestExists !== "undefined"? JSON.parse(savedGuestExists) : false;
+      sessionStorage.removeItem('stripe_checkout_guest_exists');
+      console.log('guestexists:payment',guestAlreadyExists);
+
       if (response.data =="paid")
       {
         toast.success("Payment successful! Your order is confirmed.");
-        const salesData = await axiosClient.get(`/SalesOrder/SalesOrderQrImage/${orderId}`);
-        if (salesData && salesData.data) {
-          console.log('sales order data', salesData.data);
-          //We only gnerate order after payment is confirmed by the webhook. The return url coming back from stripe
-          //should find the order already generated. But if the webhook is delayed we may not have the ordercode in the db yet.
-          //In that case we redirect to order confirmation page and let that check 
-          // for order status since ordercode will be empty.
-          history.push(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, 
-            { paymentPending: false,
-               salesOrderCode: salesData.data?.salesOrderCode, 
-               salesOrderQrCodeImage: salesData.data?.qrImage,
-               salesOrderId: orderId,
-               salesOrderTotal: salesData.data?.salesOrderTotal,
-               platformFees: salesData.data?.platformFees,
-               totalFees: salesData.data?.totalFees,
-               salesTax:salesData.data?.salesTax || 0,
-               paymentNeeded:true
-             });
-             return;
+        if (!guestAlreadyExists)
+        {
+          const salesData = await axiosClient.get(`/SalesOrder/SalesOrderQrImage/${orderId}`);
+          if (salesData && salesData.data) {
+            console.log('sales order data', salesData.data);
+            //We only gnerate order after payment is confirmed by the webhook. The return url coming back from stripe
+            //should find the order already generated. But if the webhook is delayed we may not have the ordercode in the db yet.
+            //In that case we redirect to order confirmation page and let that check 
+            // for order status since ordercode will be empty.
+            history.push(`/orderconfirmation`, 
+              { orderData:{paymentPending: false,
+                salesOrderCode: salesData.data?.salesOrderCode, 
+                salesOrderQrCodeImage: salesData.data?.qrImage,
+                salesOrderId: orderId,
+                salesOrderTotal: salesData.data?.salesOrderTotal,
+                platformFees: salesData.data?.platformFees,
+                totalFees: salesData.data?.totalFees,
+                salesTax:salesData.data?.salesTax || 0,
+                orderRequiredPayment:true},
+                guestAlreadyExists: guestAlreadyExists
+              });
+              return;
+          }
+        }
+        else
+        {
+          console.log('Skipping order details retrieve since we will not show order code.');
+           history.push(`/orderconfirmation`, 
+              { orderData:
+                {
+                  paymentPending: false,
+                    salesOrderId: orderId,
+                  orderRequiredPayment:true
+                }  ,
+                guestAlreadyExists: true
+              });
+            return;
         }
       }
       if (response.data =="unpaid")
       {
         toast.error("Payment is still being processed. Please wait sometime.");
         console.log("Payment is still being processed. Please wait sometime.");
-        history.push(`/orderconfirmation/event/${eventHeaderInfo.eventId}`, { paymentNeeded:true, salesOrderId: orderId, paymentPending:true});
+        history.push(`/orderconfirmation`, 
+          {salesOrderData:{ orderRequiredPayment:true, salesOrderId: orderId, paymentPending:true},
+            guestAlreadyExists: guestAlreadyExists  
+        });
         return;
       }
       toast.error("Invalid payment session status. Please try again.");
-      //setSessionStatus(response.data);
-      return response.data;
+    
     } 
     catch (error) {
       console.error("Error fetching session status:", error);

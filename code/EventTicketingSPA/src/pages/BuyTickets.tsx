@@ -205,6 +205,9 @@ export default function BuyTickets() {
           console.log('guest login detected. Found token');
           dispatch(loginAsGuest(result.data));     
         }
+        const guestAlreadyExists = result.data?.guestAlreadyExists;
+        console.log('guestAlreadyExists',guestAlreadyExists);
+
         console.log(`Received 200 from order creation. checking error array...`);
         const salesOrderData = result.data?.salesOrderData;
         console.log('Sales order data isss:', salesOrderData);
@@ -221,7 +224,7 @@ export default function BuyTickets() {
           if (!paymentNeeded())
           {
              toast.success("Created order successfully");
-             history.push(`/orderconfirmation/event/${id}`, salesOrderData);
+             history.push(`/orderconfirmation`, {orderData:salesOrderData, guestAlreadyExists: guestAlreadyExists});
           }
           else
           {
@@ -233,8 +236,10 @@ export default function BuyTickets() {
             }
 
             setStripeSessionId(salesOrderData.checkoutSessionId);
+            if (guestAlreadyExists)
+              sessionStorage.setItem('stripe_checkout_guest_exists', JSON.stringify(guestAlreadyExists));
             console.log('Proceeding to payment with session id:',salesOrderData.checkoutSessionId);
-            history.push(`/orderpayment/event/${id}`, salesOrderData);
+            history.push(`/orderpayment`, {salesOrderData:salesOrderData, id: id});
           }
         }
       }

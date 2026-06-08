@@ -212,8 +212,8 @@ export default function App() {
 
         <Route
        
-          path="/orderpayment/event/:id"
-           render={() => isAuthenticated ? <OrderPayment /> : <LoginPage />}
+          path="/orderpayment"
+           render={() =>  <OrderPayment />}
         />
          {/* <Route
           path="/orderpayment"
@@ -222,8 +222,8 @@ export default function App() {
 
          <Route
            key="/orderconfirmation"
-          path="/orderconfirmation/event/:eventId"
-           render={() => isAuthenticated ? <OrderConfirmation /> : <LoginPage />}
+          path="/orderconfirmation"
+           render={ ()=><OrderConfirmation />}
         />
 
         <Route path="/ScannerDashboard"  render={() =>checkScannerAccess()?<ScannerDashboard/>:<LoginPage/>}/>

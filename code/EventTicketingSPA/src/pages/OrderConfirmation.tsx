@@ -24,20 +24,20 @@ export default function OrderConfirmation() {
   const user = useAppSelector((state:RootState) =>state.auth);
   const ionRouter = useIonRouter();
   const location = useLocation();
-  const [salesOrderData,setSalesOrderData] = useState<any>(location.state || {});
+  const {orderData, guestAlreadyExists} = location.state as any || {};
+  const [salesOrderData,setSalesOrderData] = useState<any>(orderData || {});
   const [checkingPaymentStatus,setCheckingPaymentStatus] = useState<boolean>(false);
-  const [orderStatus,setOrderStatus] = useState<string>(salesOrderData.paymentPending === true || 
-                                                        !salesOrderData.salesOrderCode
+  const [orderStatus,setOrderStatus] = useState<string>(salesOrderData.paymentPending === true 
                                                         ? "Pending":"Success");
 
   console.log('sales order receipt order code and data', salesOrderData.salesOrderCode, salesOrderData);
 
-
+  const showOrderCode = !guestAlreadyExists;
   const  event = useAppSelector((state:RootState) => state.event);
   const cart  = useAppSelector((state:RootState) => state.cart);
   const dispatch = useAppDispatch();
  
-  const orderSuccessStatus = salesOrderData.paymentNeeded ? "PaymentSucceeded":"OrderCompleted";
+  const orderSuccessStatus = salesOrderData.orderRequiredPayment ? "PaymentSucceeded":"OrderCompleted";
 
  //do not use dispatch directly in the function body
  //as it will be called on every render causing infinite loop
@@ -57,7 +57,7 @@ export default function OrderConfirmation() {
     //ordercode generation can be delayed if webhook processing is delayed
     //so this component will check for order status until payment is confirmed by webhook
     //which should have generated the order already
-    if  (!salesOrderData.paymentPending && salesOrderData.salesOrderCode) return;
+    if  (!salesOrderData.paymentPending) return;
     let attempts = 0;
     setCheckingPaymentStatus(true);
     const interval = setInterval(async () => {
@@ -137,51 +137,67 @@ export default function OrderConfirmation() {
                 <div className="animate-in fade-in duration-500">
                 {orderStatus === 'Success' ? (
                 <>
-                  {salesOrderData.salesOrderCode ? (
-                    <>
-                    <div className="text-center mb-4">
-                      Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
-                    </div>
-                  
-                    <div className="text-center mb-4">
-                      Your order reference code is <span className="font-bold">{salesOrderData.salesOrderCode}</span>
-                    </div>               
-                    <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
-                          salesOrderCode={salesOrderData.salesOrderCode || ""} 
-                          qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
-                    <div className="text-center mb-4 mt-2">
-                      You will receive an email confirmation to <span className="font-bold"> {user.user?.email || cart.email}</span> shortly with your e-tickets.
-                    </div>
-                    <div>
-                      <Button
-                            className="align-bottom ml-auto align-center"
-                            size="xs"
-                            onClick={(e) => 
-                            {
-                              //e.stopPropagation();
-                              history.push(`/ticketdetails`,
-                              {
-                                  eventId: event.eventId,
-                                  salesOrderCode: salesOrderData.salesOrderCode,
-                                  salesOrderId:salesOrderData.salesOrderId,
-                                  salesOrderStatus: orderSuccessStatus,
-                                  salesOrderTotal : salesOrderData.salesOrderTotal || 0,
-                                  totalFees : salesOrderData.totalFees || 0,
-                                  platformFees : salesOrderData.platformFees || 0,
-                                  salesTax:salesOrderData.salesTax ||0
-                              });
-                            }}
-                            >
-                            View your Tickets
-                      </Button>
-                    </div>
+                  {!showOrderCode ?(
+                      <>
+                      <div className="text-center mb-4">
+                        Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
+                      </div>
+                        <div className="text-center mb-4">
+                        Please check your email <span className="font-bold"> {user.user?.email || cart.email}</span> for your order confirmation and tickets.
+                        You can also login to your account to view your tickets.
+                      </div>
                     </>
-                  ) : (
-                    <div className="text-red-600">
-                      <h2 className="text-2xl font-bold">Order Delayed</h2>
-                      <p className="mt-2">Your payment succeeded but there is a delay in order generation. Please check your email in a few minutes.</p>
-                    </div>
-                  )}
+                  ):
+                  (
+                    salesOrderData.salesOrderCode? (
+                    <>
+                      <div className="text-center mb-4">
+                        Thank you for your order! You are all set to go to <span className="font-accent text-xl">{event.eventName}</span>.
+                      </div>
+                      <div className="text-center mb-4">
+                        Your order reference code is <span className="font-bold">{salesOrderData.salesOrderCode}</span>
+                      </div>               
+                      <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
+                            salesOrderCode={salesOrderData.salesOrderCode || ""} 
+                            qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
+                      <div className="text-center mb-4 mt-2">
+                        You will receive an email confirmation to <span className="font-bold"> {user.user?.email || cart.email}</span> shortly with your e-tickets.
+                      </div>
+                      <div>
+                        <Button
+                          className="align-bottom ml-auto align-center"
+                          size="xs"
+                          onClick={(e) => 
+                          {
+                            //e.stopPropagation();
+                            history.push(`/ticketdetails`,
+                            {
+                                eventId: event.eventId,
+                                salesOrderCode: salesOrderData.salesOrderCode,
+                                salesOrderId:salesOrderData.salesOrderId,
+                                salesOrderStatus: orderSuccessStatus,
+                                salesOrderTotal : salesOrderData.salesOrderTotal || 0,
+                                totalFees : salesOrderData.totalFees || 0,
+                                platformFees : salesOrderData.platformFees || 0,
+                                salesTax:salesOrderData.salesTax ||0
+                            });
+                          }}>
+                            View your Tickets
+                        </Button>
+                      </div>
+                      {/*End of showordercode*/}
+                        
+                    </>):(
+          
+                      <>
+                      {/* This case should be rare and only happen if there is a delay in order generation after payment confirmation. Webhook processing delay can cause this. */}
+                     
+                      <div className="text-red-600">
+                        <h2 className="text-2xl font-bold">Order Delayed</h2>
+                        <p className="mt-2">Your payment succeeded but there is a delay in order generation. Please check your email in a few minutes.</p>
+                      </div>
+                    </>
+                  ))}
                   </>
                   ) : (
                     <div className="text-red-600">

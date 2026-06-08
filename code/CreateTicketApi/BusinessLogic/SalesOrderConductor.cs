@@ -61,7 +61,7 @@ public class SalesOrderConductor
         return true;
     }
 
-    public async Task<(CustomerSalesOrder,bool)> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
+    public async Task<(CustomerSalesOrder,bool,bool)> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
     {
         if (order == null)
             throw new ArgumentNullException(nameof(order));
@@ -110,7 +110,7 @@ public class SalesOrderConductor
         });
         return eventSalesItems;
     }
-    public async Task<(CustomerSalesOrder,bool)> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
+    public async Task<(CustomerSalesOrder,bool,bool)> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
     {
         if (customerSalesOrder == null)
             throw new ArgumentNullException(nameof(customerSalesOrder));
@@ -129,6 +129,7 @@ public class SalesOrderConductor
    
         EventUser attendee;
         bool guestMode = false;
+        bool guestAlreadyExists = false;
         if (customerSalesOrder.UserId <= 0 && !string.IsNullOrWhiteSpace(customerSalesOrder.EmailAddress))
         {
             guestMode = true;
@@ -148,6 +149,7 @@ public class SalesOrderConductor
             else
             {
                 customerSalesOrder.UserId = attendee.UserId;
+                guestAlreadyExists = true;
                 _logger.LogInformation($"Existing attendee found with ID: {attendee.UserId}");
             }
         }
@@ -294,7 +296,7 @@ public class SalesOrderConductor
             
         }
         salesOrderReturn.SalesOrderItemsError = errorItems;
-        return (salesOrderReturn,guestMode);
+        return (salesOrderReturn,guestMode,guestAlreadyExists);
     }
     
     
