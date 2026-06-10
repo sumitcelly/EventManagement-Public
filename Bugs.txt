@@ -1,17 +1,20 @@
 Running Bug List
 
-Create new event. Create ticket. Publish page says tickets need to be created.
+Create new event. Create ticket. Publish page says tickets need to be created. -- Done
+
+Please show error when login fails lol. -- Done
+
+
+GetPdfUrl is essentially open endpoint. -- Done
+I cannot add [Authorize(Policy="OrderOwnedByUser")]
+since clicking from email link has no login token.
+
+
+Right click menu on event organizer shows up much higher when lots of events.
+
+Only General Category works when creating event ??
 
 Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
 Each ticket should show its QR code.
-
-Please show error when login fails lol.
-
-
-Only General Category works when creating event
-
-GetPdfUrl is essentially open endpoint.
-I cannot add [Authorize(Policy="OrderOwnedByUser")]
-since clicking from email link has no login token.

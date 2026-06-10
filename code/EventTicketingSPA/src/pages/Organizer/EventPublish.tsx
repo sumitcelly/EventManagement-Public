@@ -17,7 +17,7 @@ import { updateCustomerProfile } from "../../features/auth/authSlice";
 import { useDispatch } from "react-redux";
 
   
-export default function EventPublish({eventId}: {eventId?:string}) {
+export default function EventPublish({eventId,isActive}: {eventId?:string,isActive:boolean}) {
   const history = useHistory();
   const dispatch = useDispatch();
   
@@ -33,6 +33,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   const user = useAppSelector((state: RootState) => state?.auth.user);
   console.log('customer url name', user?.customerUrlName);
   const eventData = useAppSelector((state: RootState) => state?.event);
+  console.log ('event id in publish page', eventId);
 
   const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
     const res = await axiosClient.get(`/events/settings/${eventId}`);
@@ -41,7 +42,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
   },
     {
       staleTime: 1000 * 60 * 5,
-      enabled: !!eventId
+      enabled: !!eventId && isActive
     }
   );
 
@@ -143,7 +144,7 @@ export default function EventPublish({eventId}: {eventId?:string}) {
       return;
 
     let displayTotal ="0";
-    let displayFee ="0;"
+    let displayFee ="0"
     let stripeFees ="0";
     if (feeMode =="1")
     {
@@ -315,5 +316,5 @@ export default function EventPublish({eventId}: {eventId?:string}) {
 
   </div>
  
-  );
+  )
 }

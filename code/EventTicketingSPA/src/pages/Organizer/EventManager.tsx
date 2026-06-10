@@ -81,14 +81,14 @@ export function EventManager() {
 
             <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>
               {
-                (mode === "ticketlist" || !mode)
+                (mode === "ticketlist")
                 ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
                 :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
               }
             </TabItem>
 
             <TabItem  title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
-              <EventPublish eventId={eventId}/>
+              <EventPublish eventId={eventId} isActive={localActiveTab===2}/>
             </TabItem>
           </Tabs>
         </div>

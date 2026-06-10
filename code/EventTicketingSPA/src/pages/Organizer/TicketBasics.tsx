@@ -271,7 +271,11 @@ export default function TicketBasics( {eventId,ticketId,mode}:
         console.log('Ticket created successfully:', response.data);
         toast.success("Ticket Type created!");
         queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
-        //queryClient.s(['TicketDetails',eventId,response.data]);
+        //clearing this to force it to update settings so that if there were 0 tickets for the event to start with
+        // the settings are refreshed and the user can go live.
+        
+        queryClient.invalidateQueries(['settings', eventId]);
+       
         setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
       })
       .catch(error => {
@@ -440,7 +444,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
               type="date"
               {...register("tickeSalesStartDate")}
               className="border rounded p-2"
-               title={`Event is on ${eventBasics.eventDate.toDateString()} `}
+               title={`Event is on ${new Date(eventBasics.eventDate).toDateString()} `}
             
             />
           </div>
@@ -458,7 +462,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
             type="date"
             {...register("tickeSalesEndDate")}
             className="border rounded p-2"
-            title={`Event is on ${eventBasics.eventDate.toDateString()} `}
+            title={`Event is on ${new Date(eventBasics.eventDate).toDateString()} `}
           />
           <div className="min-h-[20px] max-w-[150px]">
             {errors.tickeSalesEndDate && (
@@ -481,7 +485,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
               type="time"
               {...register("tickevalidityStartDate")}
               className="border rounded p-2"
-              title = {`Event starts at ${eventBasics.eventDate.toLocaleTimeString('en-US',
+              title = {`Event starts at ${new Date(eventBasics.eventDate).toLocaleTimeString('en-US',
                 { hour: 'numeric',
                     minute: '2-digit',
                     hour12: true
