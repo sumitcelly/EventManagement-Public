@@ -7,6 +7,8 @@ expand it.
 
 Each ticket should show its QR code.
 
+Please show error when login fails lol.
+
 
 Only General Category works when creating event
 

@@ -24,6 +24,8 @@ public class TicketController : ControllerBase
 
     private readonly EventDbAccess _eventDbAccess;
 
+    private readonly SalesOrderDbAccess _salesOrderDbAccess;
+
     private readonly IConfiguration _configuration;
 
     private readonly AmazonS3ContentUploader _s3Uploader;
@@ -32,7 +34,8 @@ public class TicketController : ControllerBase
                             SalesOrderConductor conductor,
                             EventDbAccess dbAccess,
                             IConfiguration configuration,
-                            AmazonS3ContentUploader s3Uploader)
+                            AmazonS3ContentUploader s3Uploader,
+                            SalesOrderDbAccess salesOrderDbAccess)
     {
         _logger = logger;
         _ticketContext = ticketContext;
@@ -40,6 +43,7 @@ public class TicketController : ControllerBase
         _eventDbAccess = dbAccess;
         _configuration = configuration;
         _s3Uploader = s3Uploader;
+        _salesOrderDbAccess = salesOrderDbAccess;
 
     }
 
@@ -62,6 +66,38 @@ public class TicketController : ControllerBase
         return Ok(order);
     }
 
+
+     [HttpGet]
+     [Route("GetPdfUrlFromEmailLink/{encryptedOrderId}")]
+     [EnableRateLimiting("strict-ip-auth")]
+     public async Task<IActionResult> GetPdfUrlFromEmailLink(string encryptedOrderId)
+     {
+        _logger.LogInformation("Received request for sales order details with email link ID: {0}", encryptedOrderId);
+        if (string.IsNullOrEmpty(encryptedOrderId))
+            return BadRequest("Invalid encrypted order id.");
+        string decodedId = EncryptionHelper.UrlDecode(encryptedOrderId);
+        _logger.LogInformation("Decoded email link ID: {0}", decodedId);
+        
+        if (string.IsNullOrEmpty(decodedId))
+            return BadRequest("Invalid encrypted order id after decoding.");
+        try
+        {
+            var result = await _salesOrderDbAccess.GetEmailLinkOrderDetails(decodedId);
+            if (result != null)
+            {
+                _logger.LogInformation("Sales order details retrieved for email link ID: {0} {1}", encryptedOrderId, result.SalesOrderCode);
+                
+                return await GetPdfUrl(result.SalesOrderId, result.SalesOrderCode, result.EventId);
+            }
+            else
+                return NotFound("Sales order not found for the provided email link ID.");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error retrieving sales order: {ex.Message}");
+        }
+    }
+        
 
      [HttpGet]
      [Route("GetPdfUrl/{orderId}/{salesOrderCode}/{eventId}")]

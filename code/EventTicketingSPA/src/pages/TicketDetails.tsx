@@ -149,7 +149,13 @@ export default function TicketDetails() {
       const eventIdToUse = orderDetails?.eventId || eventId;
       const salesOrderCodeToUse = orderDetails?.salesOrderCode || salesOrderCode;
       const salesOrderIdToUse = orderDetails?.salesOrderId || salesOrderId;
-      const res = await axiosClient.get(`/Ticket/GetPdfUrl/${salesOrderIdToUse}/${salesOrderCodeToUse}/${eventIdToUse}`);
+      let res =null;
+      
+      if (encryptedOrderId)
+        res= await axiosClient.get(`/Ticket/GetPdfUrlFromEmailLink/${encryptedOrderId}`);
+      else
+        res = await axiosClient.get(`/Ticket/GetPdfUrl/${salesOrderIdToUse}/${salesOrderCodeToUse}/${eventIdToUse}`);
+      
       console.log('PDF download response', res);
 
       if (res && res.data) {

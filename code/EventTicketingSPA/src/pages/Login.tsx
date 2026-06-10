@@ -93,6 +93,11 @@ export default function Login() {
             {status === "loading" ? "Logging in..." : "Login"}
           </button>
         </div>
+        {status == "failed" && (
+          <div className="ml-auto text-sm text-secondary-color">
+            Login failed. Please check your credentials.
+          </div>
+        )}
       </form>
     </div>
       <Footer/>
