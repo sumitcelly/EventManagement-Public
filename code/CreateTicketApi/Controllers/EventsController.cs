@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using EventUtils;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [EnableRateLimiting("strict-ip-auth-organizer")]
     public class EventsController : ControllerBase
     {
         private readonly ILogger<EventsController> _logger;
@@ -40,6 +42,7 @@ namespace CreateTicketApi.Controllers
             _eventOrganizerDbAccess = eventOrganizerDBAccess;
         }
 
+        [EnableRateLimiting("public-browsing")]
         [HttpGet]
         [Route("Search")]
         public async Task<List<EventHeader>> SearchEvents(string keyword = null ,
@@ -94,6 +97,7 @@ namespace CreateTicketApi.Controllers
             return evtList;
         }
 
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("Details/{id}")]
         public async Task<ActionResult<Event>> GetEventDetailsById(int id)
         {
@@ -127,7 +131,8 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-
+        
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("Details/{customerName}/{eventName}")]
         public async Task<ActionResult<Event>> GetEventDetailsByName(string customerName, string eventName)
         {

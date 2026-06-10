@@ -61,12 +61,13 @@ namespace CreateTicketApi.Controllers
         [HttpGet("{email}")]
         public async Task<ActionResult<EventUser>> GetUserByEmail(string email)
         {
-            if (string.IsNullOrEmpty(email))
-                return BadRequest("Email is null or empty.");
-            var user = await _userDbAccess.GetUserByEmail(email);
-            if (user == null)
-                return NotFound();
-            return user;
+            return BadRequest();
+            // if (string.IsNullOrEmpty(email))
+            //     return BadRequest("Email is null or empty.");
+            // var user = await _userDbAccess.GetUserByEmail(email);
+            // if (user == null)
+            //     return NotFound();
+            // return user;
         }
 
         /// <summary>
@@ -75,6 +76,7 @@ namespace CreateTicketApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("login")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
             string email = request.Email;
@@ -116,15 +118,10 @@ namespace CreateTicketApi.Controllers
             });
         }
 
-        // [EnableRateLimiting("guest-checkout-policy")]
-        // [HttpPost("request-guest-token")]
-        // public IActionResult StartGuestCheckout([FromBody] TempTokenRequest request)
-        // {
-            
-        // }
-
-
+    
         [HttpPost("refresh")]
+        //Keep an eye on thos rate limit
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> Refresh()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -168,31 +165,32 @@ namespace CreateTicketApi.Controllers
         [HttpGet("me")]
         public async Task<IActionResult> GetMe()
         {
-            var refreshToken = Request.Cookies["refreshToken"];
-            if (string.IsNullOrEmpty(refreshToken))
-                return Unauthorized();
+            return BadRequest();
+            // var refreshToken = Request.Cookies["refreshToken"];
+            // if (string.IsNullOrEmpty(refreshToken))
+            //     return Unauthorized();
         
-            if (!await _tokenUtils.ValidateJwtToken(refreshToken))
-                return Unauthorized("Invalid refresh token.");
+            // if (!await _tokenUtils.ValidateJwtToken(refreshToken))
+            //     return Unauthorized("Invalid refresh token.");
         
-            var claims = _tokenUtils.GetClaimsFromToken(refreshToken);
-            string userId = claims.Item1;
-            string role = claims.Item2;
-            string customerId = claims.Item3;
+            // var claims = _tokenUtils.GetClaimsFromToken(refreshToken);
+            // string userId = claims.Item1;
+            // string role = claims.Item2;
+            // string customerId = claims.Item3;
         
-            var user = await _userDbAccess.GetUserById(int.Parse(userId));
-            if (user == null)
-                return NotFound("User not found.");
+            // var user = await _userDbAccess.GetUserById(int.Parse(userId));
+            // if (user == null)
+            //     return NotFound("User not found.");
         
-            return Ok(new
-            {
-                id = user.UserId,
-                email = user.Email,
-                role = role,
-                customerId = customerId,
-                name = user.Name,
-                guest=false
-            });
+            // return Ok(new
+            // {
+            //     id = user.UserId,
+            //     email = user.Email,
+            //     role = role,
+            //     customerId = customerId,
+            //     name = user.Name,
+            //     guest=false
+            // });
         }
         
         /// <summary>
@@ -202,6 +200,7 @@ namespace CreateTicketApi.Controllers
         /// <returns></returns>
         [Authorize]
         [HttpPost("ResetPassword")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> ResetPassword([FromBody] LoginRequest request)
         {
             string email = request.Email;
@@ -224,6 +223,7 @@ namespace CreateTicketApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("VerifyEmailCode")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> VerifyEmailCode([FromBody] LoginRequest request)
         {
             string email = request.Email;
@@ -275,6 +275,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost("setnewmemberpassword")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> SetNewMemberPassword([FromBody] SetNewMemberPasswordRequest request)
         {
             if (string.IsNullOrEmpty(request.InvitationToken) || string.IsNullOrEmpty(request.Password))
@@ -336,6 +337,7 @@ namespace CreateTicketApi.Controllers
         /// <param name="signup"></param>
         /// <returns></returns>
         [HttpGet("GenerateEmailCode/{email}/{signup?}")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<ActionResult<string>> GenerateEmailCode(string email, bool? signup = false)
         {
             if (string.IsNullOrEmpty(email))
@@ -410,6 +412,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost("logout")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> Logout()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -422,15 +425,17 @@ namespace CreateTicketApi.Controllers
 
             return Ok(new { message = "Logged out" });
         }
+
         [HttpPost]
         public async Task<ActionResult<int>> Create([FromBody] EventUser user)
         {
-            if (user == null)
-                return BadRequest("Invalid user.");
-            var id = await _userDbAccess.CreateUser(user);
-            if (id > 0)
-                return Ok(id);
-            return StatusCode(500, "Failed to create user.");
+            return NotFound();
+            // if (user == null)
+            //     return BadRequest("Invalid user.");
+            // var id = await _userDbAccess.CreateUser(user);
+            // if (id > 0)
+            //     return Ok(id);
+            // return StatusCode(500, "Failed to create user.");
         }
 
         /// <summary>
@@ -443,6 +448,7 @@ namespace CreateTicketApi.Controllers
         /// 
         [Authorize]
         [HttpPut("{email}")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> Update(string email, [FromBody] EventUser user)
         {
             //verify if user id in claim matches userid in the body, and email in the body matches email in the URL for security check
@@ -459,20 +465,11 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to update user.");
         }
 
-        [HttpDelete("{email}")]
-        public async Task<IActionResult> Delete(string email)
-        {
-            if (string.IsNullOrEmpty(email))
-                return BadRequest("Invalid user ID.");
-            var result = await _userDbAccess.DeleteUserByEmail(email);
-            if (result)
-                return Ok();
-            return StatusCode(500, "Failed to delete user.");
-        }
-
+       
    
         [Authorize]
         [HttpPost("UserSignup")]
+         [EnableRateLimiting("strict-ip-auth")]
         public async Task<ActionResult<int>> UserSignup([FromBody] EventUser user)
         {
             //Authorize because user email must be verified before signup

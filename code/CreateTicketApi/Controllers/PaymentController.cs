@@ -7,6 +7,7 @@ using EventManagementDbAccess;
 using CreateTicketApi.BusinessLogic;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 // Ensure StripeAccess is in this namespace
 
 namespace CreateTicketApi.Controllers
@@ -49,7 +50,8 @@ namespace CreateTicketApi.Controllers
 
         [HttpGet("gettaxstatus/{stripeAcctId}")]
         [Authorize(Policy = "OwnerOnly")]
-
+        
+        [EnableRateLimiting("financial_actions")]
         public async Task<IActionResult> GetConnectedAcctTaxStatus(string stripeAcctId)
         {
             try
@@ -66,6 +68,7 @@ namespace CreateTicketApi.Controllers
         [HttpPost("create-account/{customerId}")]
         [Authorize(Policy = "OwnerOnly")]
         [Authorize(Policy = "MatchingCustomer")]
+        [EnableRateLimiting("financial_actions")]
         public async Task<IActionResult> CreateStripeAccount(int customerId)
         {
             if (customerId <= 0)
@@ -105,6 +108,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("transactionfees")]
         public async Task<IActionResult> GetTransactionFees()
         {
@@ -118,6 +122,7 @@ namespace CreateTicketApi.Controllers
 
         [HttpGet("connect-status/{stripeAccountId}")]
         [Authorize(Policy = "FullAdminMinimum")]
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         public async Task<IActionResult> GetStripeAccountConnectStatus(string stripeAccountId)
         {
             if (string.IsNullOrEmpty(stripeAccountId))
@@ -146,6 +151,7 @@ namespace CreateTicketApi.Controllers
         [HttpPost("initiate-account-link/{customerId}")]
         [Authorize(Policy = "OwnerOnly")]
         [Authorize(Policy ="MatchingCustomer")]
+        [EnableRateLimiting("financial_actions")]
         public async Task<IActionResult> InitiateAccountLink(int customerId, [FromBody]string stripeAcctId)
         {
             if (string.IsNullOrEmpty(stripeAcctId))
@@ -178,6 +184,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [EnableRateLimiting("strict-ip-auth")]
         [HttpGet("checkout-session-status/{sessionId}/{stripAcctId}")]
       
         public async Task<IActionResult> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
@@ -209,7 +216,7 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("Invalid sales order ID or payment request.");
             }
 
-            return Ok("This endpoint is not used currently. Please use the checkout session created in SalesOrderConductor to start the payment process.");
+            return Ok("This endpoint is not used currently.");
 
            
         }
@@ -217,6 +224,7 @@ namespace CreateTicketApi.Controllers
         [HttpPost]
         [Route("RefundOrder/{orderId}/{email}")]
         [Authorize(Policy = "OrderOwnedByUser")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> RefundOrder(int orderId,string email)
         {
             if (orderId <=0)

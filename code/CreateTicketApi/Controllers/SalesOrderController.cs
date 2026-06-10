@@ -8,6 +8,7 @@ using System.Net;
 using System.Security.Claims;
 using EventUtils;
 using StackExchange.Redis;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CreateTicketApi.Controllers
 {
@@ -39,6 +40,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("ticket-reservation-policy")]
         public async Task<IActionResult> Create([FromBody] CustomerSalesOrder order)
         {
             if (order == null)
@@ -81,13 +83,14 @@ namespace CreateTicketApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            if (id <= 0)
-                return BadRequest("Id is null.");
-            var result = await _salesOrderConductor.DeleteSalesOrder(id);
-            if (result)
-                return Ok("Sales order deleted.");
-            else
-                return StatusCode(500, "Failed to delete sales order.");
+            return BadRequest();
+            // if (id <= 0)
+            //     return BadRequest("Id is null.");
+            // var result = await _salesOrderConductor.DeleteSalesOrder(id);
+            // if (result)
+            //     return Ok("Sales order deleted.");
+            // else
+            //     return StatusCode(500, "Failed to delete sales order.");
             // Implement delete logic here if needed
 
         }
@@ -95,6 +98,7 @@ namespace CreateTicketApi.Controllers
        
         [HttpGet("SalesOrderQrImage/{orderId}")] 
         [Authorize(Policy="OrderOwnedByUser")]
+        [EnableRateLimiting("ticket-reservation-policy")]
         public async Task<ActionResult> GetSalesOrderQrImage(int orderId)
         {
             if (orderId <= 0)
@@ -113,7 +117,8 @@ namespace CreateTicketApi.Controllers
 
 
         [HttpGet("SalesOrderStatus/{orderId}")]
-        [Authorize(Policy="OrderOwnedByUser")]        
+        [Authorize(Policy="OrderOwnedByUser")]    
+         [EnableRateLimiting("status-polling")]    
         public async Task<ActionResult> GetSalesOrderStatus(int orderId)
         {
             if (orderId <= 0)
@@ -134,7 +139,8 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("SalesOrderRefundAmount/{orderId}/{eventId}")]
-        [Authorize(Policy="OrderOwnedByUser")]        
+        [Authorize(Policy="OrderOwnedByUser")]  
+        [EnableRateLimiting("strict-ip-auth")]      
         public async Task<ActionResult> GetSalesOrderRefundAmount(int orderId, int eventId)
         {
             if (orderId <= 0 || eventId <=0)
@@ -157,6 +163,7 @@ namespace CreateTicketApi.Controllers
         }
 
         [HttpGet("byEmailLinkId/{encryptedOrderId}")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<ActionResult> GetSalesOrderByEmailLinkId(string encryptedOrderId)
         {
             _logger.LogInformation("Received request for sales order details with email link ID: {0}", encryptedOrderId);
@@ -189,6 +196,7 @@ namespace CreateTicketApi.Controllers
         [HttpGet("Customer/{customerId}")]
         [Authorize(Policy="FullAdminMinimum")]
         [Authorize(Policy="MatchingCustomer")] 
+        [EnableRateLimiting("reports")]
         public  async Task<ActionResult> GetSalesOrderByCustomer(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", string orderStatus = "",
                                                         string orderByColumn = "createat", bool isAscending = false,
@@ -218,6 +226,7 @@ namespace CreateTicketApi.Controllers
         [HttpGet("DownloadOrderReport/{customerId}")]
         [Authorize(Policy="FullAdminMinimum")]  
         [Authorize(Policy="MatchingCustomer")] 
+         [EnableRateLimiting("reports")]
         public  async Task<ActionResult> DownloadOrderReport(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", 
                                                         string orderStatus = "",
@@ -284,6 +293,7 @@ namespace CreateTicketApi.Controllers
         [HttpPost]
         [Route("ReturnTickets/{stripeSessionId}/{orderStatus}")]
         [Authorize]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> ReturnTicketsToPool(string stripeSessionId, string orderStatus)
         {
             if (string.IsNullOrEmpty(stripeSessionId) || string.IsNullOrEmpty(orderStatus))
@@ -310,6 +320,7 @@ namespace CreateTicketApi.Controllers
         [HttpGet]
         [Route("ByUserId/{userId}")]
         [Authorize(Policy="MatchingUserId")] 
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<ActionResult<List<UserSalesOrders>>> GetUpcomingSalesOrdersByUserId(int userId)
         {
             if (userId <= 0)

@@ -2,6 +2,7 @@ using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace CreateTicketApi.Controllers
 
     [ApiController]
     [Route("[controller]")]
+    [EnableRateLimiting("strict-ip-auth-organizer")]
     public class EmailCampaignController : ControllerBase
     {
         private readonly ILogger<EmailCampaignController> _logger;

@@ -2,6 +2,7 @@
 using EventManagementDbAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace CreateTicketApi.Controllers
         }
 
         //This cannot be authorized since it is used by the public API to get the item types for an event. We will need to validate the event id and only return item types for valid events.
+        
+        [EnableRateLimiting("public-browsing")]
         [HttpGet]
         [Route("all/{eventId}")]
         public async Task<ActionResult<List<EventItemType>>> GetAll(int eventId)
@@ -33,6 +36,7 @@ namespace CreateTicketApi.Controllers
             return items;
         }
 
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         [HttpGet("{eventId}/{id}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
@@ -46,6 +50,7 @@ namespace CreateTicketApi.Controllers
             return item;
         }
 
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         [HttpPost("{eventId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
@@ -59,6 +64,7 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to create EventItemType.");
         }
 
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         [HttpPut("{eventId}/{id}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
@@ -72,6 +78,7 @@ namespace CreateTicketApi.Controllers
             return StatusCode(500, "Failed to update EventItemType.");
         }
 
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         [HttpDelete("{eventId}/{id}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]

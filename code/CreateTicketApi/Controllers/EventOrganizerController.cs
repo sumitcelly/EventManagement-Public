@@ -2,6 +2,7 @@ using EventManagementDbAccess;
 using EventUtils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -33,6 +34,7 @@ namespace CreateTicketApi.Controllers
             _userDbAccess = userDbAccess;
         }
 
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("{id}")]
         public async Task<ActionResult<EventOrganizer>> GetById(int id)
         {
@@ -46,6 +48,7 @@ namespace CreateTicketApi.Controllers
             return organizer;
         }
 
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("ByName/{name}")]
         public async Task<ActionResult<EventOrganizer>> GetByEventBaseUrl(string name)
         {
@@ -56,14 +59,13 @@ namespace CreateTicketApi.Controllers
         }
         
       
-
-       
-
+        [EnableRateLimiting("strict-ip-auth")]
         [HttpGet("CheckUniqueOrgName/{orgName}")]
         [Authorize]
         public async Task<ActionResult<bool>> CheckUniqueOrgName(string orgName)=> 
                     !_organizerDbAccess.GetAllOrgNames().Result.Any(s=>string.Equals(StringUtils.CreateUrlSlug(s),orgName,StringComparison.OrdinalIgnoreCase));
-                    
+
+        [EnableRateLimiting("strict-ip-auth")]
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<int>> Add([FromBody] EventOrganizer organizer)
@@ -148,6 +150,7 @@ namespace CreateTicketApi.Controllers
             Response.Cookies.Append(name, value, options);
         }
 
+        [EnableRateLimiting("strict-ip-auth-organizer")]
         [HttpPut("{customerId}")]
         [Authorize(Policy = "MatchingCustomer")]
         [Authorize(Policy = "FullAdminMinimum")]

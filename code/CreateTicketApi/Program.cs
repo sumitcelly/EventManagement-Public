@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using Serilog.Events;
 using Amazon.Extensions.Configuration.SystemsManager;
+using System.Threading.RateLimiting;
+using System.Security.Claims;
 
 
 Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
@@ -76,11 +78,153 @@ builder.Services.AddControllers(options =>
 });
 
 
-builder.Services.AddRateLimiter(options => {
-    options.AddFixedWindowLimiter("guest-checkout-policy", opt => {
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.PermitLimit = 5; // Allow 5 attempts per minute
-        opt.QueueLimit = 0;
+
+// ----------------------------------------------------------------------
+// CONFIGURE COMBINED API RATE LIMITING POLICIES
+// ----------------------------------------------------------------------
+builder.Services.AddRateLimiter(options =>
+{
+    // Global rule when any rate limit policy is breached
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync("{\"error\": \"Too many requests. Please wait a moment before trying again.\"}", token);
+    };
+
+    // ==================================================================
+    // POLICY 1: Public Event Browsing (IP-Based, Lenient)
+    // ==================================================================
+    // Scope: GET /api/events, GET /api/events/{id}
+    // Why: Allows high capacity for browsing and lets search engines index pages.
+    // ==================================================================
+    options.AddPolicy("public-browsing", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anonymous-public",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 200,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+
+    options.AddPolicy("reports", context=> 
+       RateLimitPartition.GetConcurrencyLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "anonymous-public",
+            _ => new ConcurrencyLimiterOptions
+            {
+                PermitLimit = 1,
+                QueueLimit=1,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            })) ;
+
+     options.AddPolicy("financial_actions", context=> 
+       RateLimitPartition.GetConcurrencyLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "anonymous-public",
+            _ => new ConcurrencyLimiterOptions
+            {
+                PermitLimit = 1,
+                QueueLimit=0
+            })) ;
+    
+
+
+    // ==================================================================
+    // POLICY 2: Authentication / Login (IP-Based, Strict)
+    // ==================================================================
+    // Scope: POST /api/auth/login, POST /api/auth/register
+    // Why: Blocks automated brute-force attacks and credential stuffing.
+    // ==================================================================
+    options.AddPolicy("strict-ip-auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "auth-ip-anon",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    
+    //give organizer more requests
+    options.AddPolicy("strict-ip-auth-organizer", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "auth-ip-anon",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 2
+            }));
+
+        options.AddPolicy("strict-ip-auth-scanner", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "auth-ip-anon",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromSeconds(5),
+                QueueLimit = 0
+            }));
+
+    // ==================================================================
+    // POLICY 3: Checkout Session Verification (IP-Based Token Bucket)
+    // ==================================================================
+    // Scope: GET /api/payments/check-payment-status (Stripe callback polling)
+    // Why: Uses a Token Bucket to allow short bursts of status checks while 
+    //      preventing scripts from hitting Stripe's live API endpoints.
+    // ==================================================================
+    options.AddPolicy("status-polling", context =>
+        RateLimitPartition.GetTokenBucketLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "stripe-ip-anon",
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 30,
+                QueueLimit = 0,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(10),
+                TokensPerPeriod = 5
+            }));
+
+    // ==================================================================
+    // POLICY 4: Order Creation (Dynamic Email / User-ID Tracker)
+    // ==================================================================
+    // Scope: POST /api/orders/createorder (Hybrid checkout endpoint)
+    // Why: Solves the University Network bottleneck entirely by partitioning 
+    //      by unique client identifiers instead of shared public IP addresses.
+    // ==================================================================
+    options.AddPolicy("ticket-reservation-policy", context =>
+    {
+        // Track 1: Authenticated Checkout Flow
+        var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter($"auth-user-{userId}", _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+        }
+
+        // Track 2: Guest Checkout Flow (Reads custom header passed by React)
+        var buyerEmail = context.Request.Headers["X-Buyer-Email"].ToString();
+        if (!string.IsNullOrEmpty(buyerEmail))
+        {
+            return RateLimitPartition.GetFixedWindowLimiter($"guest-email-{buyerEmail.Trim().ToLower()}", _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+        }
+
+        // Track 3: IP Fallback
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "checkout-ip-anon";
+        return RateLimitPartition.GetFixedWindowLimiter($"checkout-ip-{ip}", _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
 });
 
@@ -199,7 +343,7 @@ app.UseCors("AllowFrontend");
    // app.UseHttpsRedirection();
 }
 
-
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -193,7 +193,14 @@ export default function BuyTickets() {
         paymentRequired: paymentNeeded(),
         salesOrderItemsError:[],
         salesOrderItems: formData.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity, cost: t.cost })),
-      });
+      },
+       {
+        headers: {
+          'Content-Type': 'application/json',
+          // Pass the email in the headers so the backend rate-limiter can see it instantly
+          'X-Buyer-Email': formData.email.trim().toLowerCase() 
+        }}
+    );
       if (result.status !=200)
       {
         toast.error("Order could not be created successfully." +result.status);

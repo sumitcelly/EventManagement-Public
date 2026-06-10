@@ -9,3 +9,7 @@ Each ticket should show its QR code.
 
 
 Only General Category works when creating event
+
+GetPdfUrl is essentially open endpoint.
+I cannot add [Authorize(Policy="OrderOwnedByUser")]
+since clicking from email link has no login token.

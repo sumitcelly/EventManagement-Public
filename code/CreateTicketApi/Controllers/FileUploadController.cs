@@ -6,12 +6,14 @@ using Amazon.S3.Model;
 using static EventUtils.AmazonS3ContentUploader;
 using Stripe;
 using EventManagementDbAccess;
-using Microsoft.AspNetCore.Authorization; // Adjust namespace if AmazonS3ContentUploader is elsewhere
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting; // Adjust namespace if AmazonS3ContentUploader is elsewhere
 
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [EnableRateLimiting("strict-ip-auth-organizer")]
     public class FileUploadController : ControllerBase
     {
         private readonly ILogger<FileUploadController> _logger;
@@ -38,6 +40,7 @@ namespace CreateTicketApi.Controllers
         /// Uploads a file to the local file system for development purposes.
         public async Task<IActionResult> UploadFileDev(IFormFile file, int organizationId, int eventId, string purpose)
         {
+            return BadRequest();
             if (file == null || file.Length == 0 || organizationId <=0 )
                 return BadRequest("File, customerName, and eventName are required.");
 

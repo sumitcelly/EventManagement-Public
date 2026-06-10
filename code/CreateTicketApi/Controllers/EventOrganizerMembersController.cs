@@ -10,11 +10,13 @@ using Microsoft.AspNetCore.Authorization;
 using EventUtils;
 using System.Security.Claims;
 using CreateTicketApi.BusinessLogic;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CreateTicketApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [EnableRateLimiting("strict-ip-auth-organizer")]
     public class EventOrganizerMembersController : ControllerBase
     {
         private readonly EventOrganizerMembersDbAccess _dbAccess;
@@ -46,6 +48,7 @@ namespace CreateTicketApi.Controllers
         /// <returns></returns>
         [HttpPost("AddOwner/{userId}")]
         [Authorize(Policy = "MatchingUserId")]
+        [EnableRateLimiting("strict-ip-auth")]
         public async Task<IActionResult> AddOwner(int userId,EventOrganizerMembers data)
         {
             if (userId <= 0 || data == null || data.CustomerId <= 0)
@@ -168,6 +171,7 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+        [EnableRateLimiting("strict-ip-auth")]
         [HttpGet("validateToken/{token}")]
         public async Task<IActionResult> ValidateInvitationToken(string token)
         {
@@ -210,6 +214,7 @@ namespace CreateTicketApi.Controllers
                 return StatusCode(500, "Error retrieving member.");
             }
         }
+
 
         [HttpGet("bycustomer/{customerId:int}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]

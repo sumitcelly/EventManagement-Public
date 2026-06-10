@@ -5,6 +5,7 @@ using EventUtils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 using System.Text.Json;
@@ -42,16 +43,9 @@ public class TicketController : ControllerBase
 
     }
 
-
-    [HttpPost("GetTicketCodeByBase64QR")]
-    public string GetTicketCodeByBase64QR([FromBody]string qrCode)
-    {
-
-        return QRCodeUtils.GetQRText(Convert.FromBase64String(qrCode));
-    }
-
     [Authorize(Policy="OrderOwnedByUser")]
     [HttpGet("ByEventIdAndSalesOrderQrCode/{orderId}/{id}/{salesOrderQrCode}")]
+    [EnableRateLimiting("ticket-reservation-policy")]
     public async Task<IActionResult> Get(int id,string salesOrderQrCode)
     {
         if (id <= 0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
@@ -62,7 +56,7 @@ public class TicketController : ControllerBase
             return Unauthorized("Unable to retrieve user id");
         }
 
-         var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
+        var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
         if (order == null)
             return NotFound();
         return Ok(order);
@@ -70,11 +64,12 @@ public class TicketController : ControllerBase
 
 
      [HttpGet]
-     [Route("GetPdfUrl/{salesOrderCode}/{eventId}")]
-    // [Authorize(Policy="OrderOwnedByUser")]
-     public async Task<IActionResult> GetPdfUrl(string salesOrderCode, int eventId)
+     [Route("GetPdfUrl/{orderId}/{salesOrderCode}/{eventId}")]
+     [Authorize(Policy="OrderOwnedByUser")]
+     [EnableRateLimiting("strict-ip-auth")]
+     public async Task<IActionResult> GetPdfUrl(int orderId,string salesOrderCode, int eventId)
      {
-       if(string.IsNullOrWhiteSpace(salesOrderCode) || eventId <=0)
+       if(orderId <=0 || string.IsNullOrWhiteSpace(salesOrderCode) || eventId <=0)
             return BadRequest("Invalid sales order id or event id.");
 
         string fileName = $"Order_{salesOrderCode}_Tickets.pdf";
@@ -145,6 +140,7 @@ public class TicketController : ControllerBase
     [Route("Validate/{eventId}")]
     [Authorize(Policy = "ScanningAgent")]
     [Authorize(Policy = "EventOwnedByCustomer")]
+    [EnableRateLimiting("strict-ip-auth-scanner")]
     public async Task<string> ValidateTicket(int eventId,[FromBody]ScanData data)
     {
         _logger.LogInformation($"ValidateTicket called with eventId: {eventId} and qrCode: {data.qrCode}");
