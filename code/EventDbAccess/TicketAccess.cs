@@ -12,6 +12,12 @@ using EventUtils;
 namespace EventManagementDbAccess
 {
 
+
+   /// <summary>
+   /// There are 2 caches here. One is storing tickets by Salesordercode used in getticketdetails on screen
+   /// and also for pdf tickets
+   /// The other is {eventid:ticketcode} used for scanning and validating tickets.
+   /// </summary>
     public class TicketAccess : BaseDbAccess
     {
         private EventItemTypeDbAccess _eventTypeAccess;
@@ -71,7 +77,7 @@ namespace EventManagementDbAccess
             return retVal?"Successful":"Failed";
         }
 
-        public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId = 1)
+        public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId)
         {
             if (string.IsNullOrEmpty(code))
             {
@@ -112,7 +118,11 @@ namespace EventManagementDbAccess
         {
             if (string.IsNullOrEmpty(code))
             {
-                throw new ArgumentNullException("code");
+                throw new ArgumentNullException(nameof(code));
+            }
+            if (eventId <= 0)
+            {
+                throw new ArgumentException(nameof(eventId));
             }
 
             //Todo: Need a UI model here to return data for attendee plus ticket
@@ -121,15 +131,19 @@ namespace EventManagementDbAccess
             {
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
                 {
-                    string sql = @$"Select a.FullName, a.Email, a.Sms, 
+                    string sql = @"Select a.FullName, a.Email, a.Sms, 
                                 b.CreatedAt, b.ModifiedAt, 
                                 b.TicketCode, b.TicketStatus , b.PricePaid
                                 from eventmanagement.eventuser a, 
                                 eventmanagement.eventsalesitem b where
                                 a.UserId=b.UserId and
-                                b.EventId='{eventId}' and b.TicketCode='{code}'";
+                                b.EventId= @eventId and 
+                                b.TicketCode=@code";
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
+                    cmd.Parameters.AddWithValue("@eventId", eventId);
+                    cmd.Parameters.AddWithValue("@code", code);
+
                     using (DbDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         if (reader == null || !reader.HasRows)
@@ -229,81 +243,6 @@ namespace EventManagementDbAccess
             return true;
         }
         
-        public async Task<int> AddEventTicket(EventSalesItem ticket)
-        {
-            if (ticket == null)
-            {
-                throw new ArgumentNullException(nameof(ticket));
-            }
-
-            try
-            {
-                using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
-
-                StringBuilder sb = new StringBuilder();
-                sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                        TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
-                        CreatedAt,ModifiedAt) ");
-                sb.Append(" VALUES (");
-
-                sb.Append(ticket.EventId);
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.User.UserId);
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append(ticket.TicketStatus);
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.TicketCode);
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.SalesOrderId);
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.EventItemType.EventItemTypeId);
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.EventItemType.Cost);
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
-                sb.Append("'");
-                sb.Append(",");
-                sb.Append("'");
-                sb.Append(ticket.ModifiedAt.ToString("yyyy-MM-dd HH:mm:ss"));
-                sb.Append("'");
-                sb.Append(")");
-
-                Console.WriteLine(sb.ToString());
-                mySqlConnection.Open();
-                MySqlCommand cmd = new MySqlCommand(sb.ToString(), mySqlConnection);
-                int i = await cmd.ExecuteNonQueryAsync();
-                if (i == 1)
-                {
-                    if (cmd.LastInsertedId > 0)
-                    {
-                        _cache.AddOrUpdateCache(ticket, $"{ticket.EventId}:{ticket.TicketCode}", TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-                    }
-                    return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
-                }
-                else
-                {
-                    throw new Exception("Failed to create ticket.");
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-        }
-
           /// <summary>
         /// Calculates the total of the pricepaid field in eventsalesitem table for a given order ID
         /// </summary>
@@ -620,6 +559,7 @@ namespace EventManagementDbAccess
             }
         }
 
+        
         public async Task<bool> RemoveEventTickets(int salesOrderId, int userId)
         {
             if (salesOrderId <= 0 || userId <= 0)

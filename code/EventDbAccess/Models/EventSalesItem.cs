@@ -30,6 +30,7 @@ namespace EventManagementDbAccess
     public enum TicketStatus
     {
         Scanned,
-        Live
+        Live,
+        Refunded
     }
 }

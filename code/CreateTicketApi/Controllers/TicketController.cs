@@ -60,7 +60,7 @@ public class TicketController : ControllerBase
             return Unauthorized("Unable to retrieve user id");
         }
 
-        var order = await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderQrCode, id);
+        var order = await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderQrCode, id);
         if (order == null)
             return NotFound();
         return Ok(order);
@@ -85,6 +85,13 @@ public class TicketController : ControllerBase
             var result = await _salesOrderDbAccess.GetEmailLinkOrderDetails(decodedId);
             if (result != null)
             {
+                if (result.SalesOrderStatus != SalesOrderStatus.OrderCompleted.ToString() && 
+                        result.SalesOrderStatus !=  SalesOrderStatus.PaymentSucceeded.ToString() )
+                {
+                    _logger.LogError(@$"Sales order  with id {decodedId} is in status {result.SalesOrderStatus.ToString()}.
+                                     Cannot generate pdf");
+                    return StatusCode(StatusCodes.Status422UnprocessableEntity,"Sales order in incorrect state to generate pdf");
+                }
                 _logger.LogInformation("Sales order details retrieved for email link ID: {0} {1}", encryptedOrderId, result.SalesOrderCode);
                 
                 return await GetPdfUrl(result.SalesOrderId, result.SalesOrderCode, result.EventId);
@@ -117,8 +124,17 @@ public class TicketController : ControllerBase
             return NotFound("Event not found for the given event id.");
         }
 
+        ///Need to check this here to make sure that we are not returning a pdf that was generated from S3 when the
+        /// order was valid but later refunded.
+        var eventTickets = (await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderCode, eventId))?.ToList();
+        if (eventTickets == null || eventTickets.Count == 0)
+        {
+            _logger.LogWarning($"No tickets found or sales order in incorret status for sales order code: {salesOrderCode} and event id: {eventId} when trying to get PDF URL.");
+            return NotFound("No tickets found for the given sales order and event.");
+        }
+
         string fileKey = AmazonS3ContentUploader.GetFileKey(fileName, eventDetails.EventOrganizerId, 
-                EventUtils.AmazonS3ContentUploader.Purpose.TicketEventPdfDocument, eventId);
+                AmazonS3ContentUploader.Purpose.TicketEventPdfDocument, eventId);
         _logger.LogInformation($"Generated file key {fileKey} for sales order: {salesOrderCode}, event: {eventId}, organizer: {eventDetails.EventOrganizerId}");
         if (await _s3Uploader.DoesS3ObjectExistAsync(fileKey))
         {
@@ -142,22 +158,7 @@ public class TicketController : ControllerBase
         DateTime dtStart= DateTime.Parse(eventDate+" "+eventTime);
         DateTime dtEnd=  dtStart.AddHours(eventDetails.Duration);
         string eventDateTimeRange = $"{dtStart:MMMM dd, yyyy h:mm tt} - {dtEnd:MMMM dd, yyyy h:mm tt}";
-
-
-        if (eventDetails == null)
-        {  
-            _logger.LogWarning($"Event not found for event id: {eventId} when trying to get PDF URL for sales order code: {salesOrderCode}");
-            return NotFound("Event not found for the given event id.");
-        }
-        
-        var eventTickets = (await _ticketContext.GetEventTicketBySalesOrderCodeFromDb(salesOrderCode, eventId))?.ToList();
-        if (eventTickets == null || eventTickets.Count == 0)
-        {
-            _logger.LogWarning($"No tickets found for sales order code: {salesOrderCode} and event id: {eventId} when trying to get PDF URL.");
-            return NotFound("No tickets found for the given sales order and event.");
-        }
-        //TODO: ensure sales order is in correct status before generating PDF. We can have a separate method to validate sales order status which can be reused in other places as well.
-        
+  
         TicketPdfData pdfData = PdfDataMapper.MapToTicketPdfData(eventDetails, eventTickets);
         pdfData.EventDate = eventDateTimeRange;
         byte[] pdfBytes= PdfGenerator.GenerateTicketsWithSkiaSharp(pdfData, _configuration["EmailTemplateValues:platform_name"]??"TestEvents", _configuration["BaseFrontEndUrl"]??"");

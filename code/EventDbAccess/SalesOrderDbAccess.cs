@@ -636,12 +636,7 @@ namespace EventManagementDbAccess
                 string query = @"select orderid, stripeSessionId from salesorder  
                                 WHERE SalesOrderStatus = @reservedStatus 
                                AND DATE_ADD(ReservedAt, INTERVAL @timeoutThreshold MINUTE) < UTC_TIMESTAMP()";
-                // string query = @"UPDATE salesorder 
-                //                 SET SalesOrderStatus = @abandonedStatus,                         
-                //                     ModifiedAt = @modifiedAt
-                //                 WHERE SalesOrderStatus = @reservedStatus 
-                //                 AND DATE_ADD(ReservedAt, INTERVAL @timeoutThreshold MINUTE) < UTC_TIMESTAMP()";
-            
+                
                 using var cmd = new MySqlCommand(query, connection);
             
                 cmd.Parameters.AddWithValue("@reservedStatus", (int)SalesOrderStatus.Reserved);
@@ -876,7 +871,7 @@ namespace EventManagementDbAccess
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
             if (rowsAffected > 0 && 
-                await UpdateTicketStatusForSalesOrder(status.ToString(), order.OrderId, connection, mySqlTransaction))
+                await UpdateTicketStatusForSalesOrder(TicketStatus.Refunded.ToString(), order.OrderId, connection, mySqlTransaction))
             {
                 _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
                 await mySqlTransaction.CommitAsync();

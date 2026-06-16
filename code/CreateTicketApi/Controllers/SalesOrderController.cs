@@ -138,6 +138,14 @@ namespace CreateTicketApi.Controllers
             }
         }
 
+
+         /// <summary>
+         /// Surprisingly this method is not being called from anywhere. Maybe it should be 
+         /// instead of ui determining the amount.
+         /// </summary>
+         /// <param name="orderId"></param>
+         /// <param name="eventId"></param>
+         /// <returns></returns>
         [HttpGet("SalesOrderRefundAmount/{orderId}/{eventId}")]
         [Authorize(Policy="OrderOwnedByUser")]  
         [EnableRateLimiting("strict-ip-auth")]      
