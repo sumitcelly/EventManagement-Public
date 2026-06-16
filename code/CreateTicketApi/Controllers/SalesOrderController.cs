@@ -96,17 +96,17 @@ namespace CreateTicketApi.Controllers
         }
 
        
-        [HttpGet("SalesOrderQrImage/{orderId}")] 
+        [HttpGet("SalesOrderPostPaymentDetails/{orderId}")] 
         [Authorize(Policy="OrderOwnedByUser")]
         [EnableRateLimiting("ticket-reservation-policy")]
-        public async Task<ActionResult> GetSalesOrderQrImage(int orderId)
+        public async Task<ActionResult> GetSalesOrderPostPaymentDetails(int orderId)
         {
             if (orderId <= 0)
                 return BadRequest("Invalid order id.");
 
             try
             {
-                var retData = await _dbAccess.GetSalesOrderQrImage(orderId);
+                var retData = await _dbAccess.GetSalesOrderPostPaymentDetails(orderId);
                 return Ok(retData);
             }
             catch (Exception ex)
@@ -118,7 +118,7 @@ namespace CreateTicketApi.Controllers
 
         [HttpGet("SalesOrderStatus/{orderId}")]
         [Authorize(Policy="OrderOwnedByUser")]    
-         [EnableRateLimiting("status-polling")]    
+        [EnableRateLimiting("status-polling")]    
         public async Task<ActionResult> GetSalesOrderStatus(int orderId)
         {
             if (orderId <= 0)
@@ -127,7 +127,7 @@ namespace CreateTicketApi.Controllers
             try
             {
                 _logger.LogInformation($"Retrieving sales order status for orderId: {orderId}");
-                 var data= await _dbAccess.GetSalesOrderPaymentStatus(orderId);
+                 var data= await _dbAccess.GetSalesOrderPostPaymentDetails(orderId);
                  _logger.LogInformation($"Retrieved sales order status data for orderId: {data}");
                  return Ok(data);
                 //return Ok(new { Paid = retData.paid , SalesOrderCode = retData.SalesOrderCode, SalesOrderQrCodeImage = retData.QrImage });
@@ -188,7 +188,7 @@ namespace CreateTicketApi.Controllers
                 if (result != null)
                 {
                     _logger.LogInformation("Sales order details retrieved for email link ID: {0} {1}", encryptedOrderId, result.SalesOrderCode);
-                    IEnumerable<EventSalesItem> tickets = await _salesOrderConductor.GetSalesOrderByQrCode(result.EventId, result.SalesOrderCode,result.UserId);
+                    IEnumerable<EventSalesItem> tickets = await _ticketAccess.GetEventTicketBySalesOrderCode(result.SalesOrderCode,result.EventId);
                     result.TicketDetails = [.. tickets];
                     return Ok(result);
                 }
@@ -299,19 +299,16 @@ namespace CreateTicketApi.Controllers
       
 
         [HttpPost]
-        [Route("ReturnTickets/{stripeSessionId}/{orderStatus}")]
-        [Authorize]
+        [Route("ReturnTickets/{orderId}/{orderStatus}")]
+        [Authorize(Policy = "OrderOwnedByUser")]
         [EnableRateLimiting("strict-ip-auth")]
-        public async Task<IActionResult> ReturnTicketsToPool(string stripeSessionId, string orderStatus)
+        public async Task<IActionResult> ReturnTicketsToPool(int orderId, string orderStatus)
         {
-            if (string.IsNullOrEmpty(stripeSessionId) || string.IsNullOrEmpty(orderStatus))
-                return BadRequest("Invalid session id or order status.");
+            if (orderId <=0 || string.IsNullOrEmpty(orderStatus))
+                return BadRequest("Invalid order id or order status.");
             if (Enum.TryParse<SalesOrderStatus>(orderStatus, true, out SalesOrderStatus tempStatus))  
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out var intUserId))
-                    return Unauthorized("User ID not found in token.");
-                var result = await _dbAccess.ReturnTicketsToPool(tempStatus, stripeSessionId, intUserId);
+            { 
+                var result = await _dbAccess.ReturnTicketsToPool(tempStatus, orderId);
                 if (result)
                     return Ok("Tickets returned to pool and sales order updated.");
                 else

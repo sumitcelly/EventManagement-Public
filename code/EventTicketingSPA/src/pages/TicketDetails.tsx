@@ -70,9 +70,7 @@ export default function TicketDetails() {
     ['orderDetails', encryptedOrderId], // structured query key
     async () => {
     
-     // const urlDecodedOrderId = encryptedOrderId ? decodeURIComponent(encryptedOrderId) : ''; 
-      
-      try {
+     try {
         const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${encryptedOrderId}`);
         console.log('salesDetails details from backend', res?.data);
         setticketData(res?.data?.ticketDetails || []);
@@ -138,7 +136,7 @@ export default function TicketDetails() {
      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
       cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       //refetchOnMount: 'always',
-      refetchOnWindowFocus: false,
+     // refetchOnWindowFocus: true,
       enabled: !!eventId && !!salesOrderCode && (!encryptedOrderId || !orderLoading)
       //enabled: (orderDetails?.eventId || eventId) > 0 && !!(orderDetails?.salesOrderCode || salesOrderCode) && (!encryptedOrderId || !orderLoading) //  wait for orderDetails if needed
   });
@@ -216,13 +214,24 @@ export default function TicketDetails() {
          <div className="ml-auto mb-4">
             <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
-         <div className="flex ml-auto mt-4">
-              <button onClick={()=>downloadPdf()}
-                  className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
-                  
-                    Download Tickets
-              </button>
-          </div>
+         {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" &&
+         (
+
+          <div className="flex ml-auto mt-4">
+                <button onClick={()=>downloadPdf()}
+                    className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400">
+                    
+                      Download Tickets
+                </button>
+            </div>
+         )}
+
+        {(orderDetails?.salesOrderStatus || salesOrderStatus) === "RefundSuccess" &&
+        (
+            
+            <h5 className="font-bold text-accent-dark mb-3 text-center">This order has been refunded</h5>
+           
+        )}
          
          {/* Ticket Summary */}
          <div className="max-w-xl mx-auto mt-6 w-full">

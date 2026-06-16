@@ -33,8 +33,8 @@ public class SalesOrder
     public DateTime RefundedAt {get;set; }
 
     public decimal SalesOrderTotal {get; set; }=0;
-    public decimal TotalFees { get; internal set; }=0;
-    public decimal PlatformFees { get; internal set; }=0;
+    public decimal TotalFees { get; set; }=0;
+    public decimal PlatformFees { get; set; }=0;
 
     public decimal SalesTax {get; set; }=0;
 

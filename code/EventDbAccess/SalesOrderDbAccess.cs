@@ -62,6 +62,8 @@ namespace EventManagementDbAccess
                 }
                 else
                 {
+                    order.OrderId = (int)cmd.LastInsertedId;
+                    _cache.AddOrUpdateCache(order, order.OrderId.ToString());
                     // Get the last inserted ID
                     return cmd.LastInsertedId > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
                 }
@@ -139,7 +141,20 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
+
         public async Task<SalesOrder> GetSalesOrderById(int orderId)
+        {
+            if (orderId<=0)
+            {
+                 throw new ArgumentNullException(nameof(orderId));
+            }
+
+            string cacheKey = CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString());
+            SalesOrder? order = await _cache.GetOrSetAsync(cacheKey, () => GetSalesOrderByIdFromDb(orderId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return order ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");          
+        }
+
+        public async Task<SalesOrder> GetSalesOrderByIdFromDb(int orderId)
         {
             try
             {
@@ -190,41 +205,28 @@ namespace EventManagementDbAccess
 
       
 
-        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string stripeSessionId, string paymentIntentId, decimal salesTotal,
+        public async Task<bool> FinalizeSalesOrder(int salesOrderId, string paymentIntentId, decimal salesTotal,
                                                 decimal platformFees, decimal totalFeesForTrans,
                                                 decimal salesTax)
         {
-            if (salesOrderId < 0 && String.IsNullOrEmpty(stripeSessionId))
-                throw new ArgumentException("Either salesOrderId or stripeSessionId must be provided.");
+            if (salesOrderId < 0)
+                throw new ArgumentException("Either salesOrderId  must be provided.");
             if (string.IsNullOrWhiteSpace(paymentIntentId))
                 throw new ArgumentException("Payment Intent id cannot be empty when finalizing order.");
             string query = string.Empty;
-            if (salesOrderId > 0)
-            {
-                query = @"UPDATE salesorder 
-                            SET SalesOrderStatus = @status, 
-                                SalesOrderCode =@orderCode,
-                                ModifiedAt = @modifiedAt,
-                                PaymentIntentId= @paymentIntentId,
-                                SalesOrderTotal = @salesTotal,
-                                PlatformFees = @platformFees,
-                                TotalFees = @totalFeesForTrans,
-                                SalesTax=@salesTax
-                            WHERE OrderId = @orderId";
-            }
-            else
-            {
-                query = @"UPDATE salesorder 
-                            SET SalesOrderStatus = @status, 
-                                SalesOrderCode = @orderCode,
-                                ModifiedAt = @modifiedAt,
-                                PaymentIntentId= @paymentIntentId,
-                                SalesOrderTotal = @salesTotal,
-                                PlatformFees = @platformFees,
-                                TotalFees = @totalFeesForTrans,
-                                SalesTax=@salesTax
-                            WHERE StripeSessionId = @stripeSessionId";
-            }       
+           _logger.LogInformation($"Finalize details OrderId:{salesOrderId}, totalFees:{totalFeesForTrans}, platformFee: {platformFees}");
+            query = @"UPDATE salesorder 
+                        SET SalesOrderStatus = @status, 
+                            SalesOrderCode =@orderCode,
+                            ModifiedAt = @modifiedAt,
+                            PaymentIntentId= @paymentIntentId,
+                            SalesOrderTotal = @salesTotal,
+                            PlatformFees = @platformFees,
+                            TotalFees = @totalFeesForTrans,
+                            SalesTax=@salesTax
+                        WHERE OrderId = @orderId";
+            
+           
             using var connection = new MySqlConnection(ConnectionString);
             await connection.OpenAsync();
             
@@ -240,22 +242,36 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@platformFees", platformFees);
                 cmd.Parameters.AddWithValue("@totalFeesForTrans",totalFeesForTrans);
                 cmd.Parameters.AddWithValue("@salesTax", salesTax);
-                if (salesOrderId > 0)
-                    cmd.Parameters.AddWithValue("@orderId", salesOrderId);
-                else
-                    cmd.Parameters.AddWithValue("@stripeSessionId", stripeSessionId);
-
+                cmd.Parameters.AddWithValue("@orderId", salesOrderId);
+               
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected == 0)
                 {
-                    _logger.LogWarning($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
-                    throw new Exception($"No sales order found to finalize for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
+                    _logger.LogWarning($"No sales order found to finalize for salesOrderid {salesOrderId}");
+                    throw new Exception($"No sales order found to finalize for salesOrderid {salesOrderId}");
                 }
-                
+                string key = CacheHelper.GetCacheKey<SalesOrder>(salesOrderId.ToString());
+                SalesOrder? orderinCache= await _cache.GetOnlyAsync<SalesOrder>(key);
+                if (orderinCache != null)
+                {
+                    orderinCache.SalesOrderStatus =SalesOrderStatus.PaymentSucceeded;
+                    orderinCache.SalesOrderCode = cmd.Parameters["@orderCode"].Value.ToString();
+                    orderinCache.PaymentIntentId = paymentIntentId;
+                    orderinCache.PlatformFees = platformFees/100.0m;
+                    orderinCache.SalesTax = salesTax/100.0m;
+                    orderinCache.SalesOrderTotal = salesTotal/100.0m;
+                    orderinCache.TotalFees = totalFeesForTrans/100.0m;
+                    await _cache.SetOnlyAsync<SalesOrder>(key, orderinCache);
+                }
+                else
+                {
+                    _logger.LogWarning($"Order with id {salesOrderId} not found in cache");
+                }
+
                 bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId,connection, mySqlTransaction);
                 if (!result)
                 {
-                    throw new Exception($"Failed to finalize tickets for salesOrderid {salesOrderId} or stripesession {stripeSessionId}");
+                    throw new Exception($"Failed to finalize tickets for salesOrderid {salesOrderId}");
                 }
                 mySqlTransaction.Commit();
                 
@@ -263,95 +279,36 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {   
                 mySqlTransaction.Rollback();
-                _logger.LogCritical($"Error finalizing sales order for salesOrderid {salesOrderId} or stripesession {stripeSessionId}: {0}", ex.Message);            
+                _logger.LogCritical($"Error finalizing sales order for salesOrderid {salesOrderId}: {0}", ex.Message);            
                 throw;
             }
             return true;
         }
 
-        /// <summary>
-        /// Todo: Cache this method if we find it is being called frequently in a short span of time as part of payment status check in the frontend after checkout, and optimize the db call if needed as well.
-        /// </summary>
-        /// <param name="sessionId"></param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        public async Task<SalesOrder> GetSalesOrderByStripeSessionId(string sessionId)
-        {
-            if (string.IsNullOrEmpty(sessionId))
-                throw new ArgumentException("Invalid session id provided", nameof(sessionId));
-            try
-            {
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
-
-                string query = "SELECT * FROM salesorder WHERE StripeSessionId = @sessionId";
-
-                using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@sessionId", sessionId);
-
-                using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    return new SalesOrder
-                    {
-                        OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
-                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
-                        SalesOrderCode =reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty: reader.GetString(reader.GetOrdinal("SalesOrderCode")),
-                        DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
-                        SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
-                        StripeSessionId =  reader.GetString(reader.GetOrdinal("StripeSessionId"))
-                    };
-                }
-                throw new Exception(string.Format("Unable to retrieve by session id {0}",sessionId));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogCritical($"Error retrieving sales order by stripesesion id: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task<SalesOrderPaymentStatus> GetSalesOrderQrImage(int orderId)
+        public async Task<SalesOrderPaymentStatus> GetSalesOrderPostPaymentDetails(int orderId)
         {
             try
             {
                 if (orderId <= 0)
                     throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
 
-                string query = "SELECT SalesOrderCode,SalesOrderTotal,PlatformFees,TotalFees,SalesTax FROM salesorder WHERE OrderId = @orderId";
-
-                using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@orderId", orderId);
-                
-            
-                using var reader = await cmd.ExecuteReaderAsync();
-    
-                SalesOrderPaymentStatus paymentStatus;
-                if (await reader.ReadAsync())
+                SalesOrder order = await GetSalesOrderById(orderId);
+                if (order == null)
                 {
-                    paymentStatus = new SalesOrderPaymentStatus()
-                    {
-                        SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
-                        PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
-                        TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
-                        SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
+                    throw new Exception($"Unable to locate order with id {orderId}");
+                }
 
-                        SalesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?string.Empty:
-                                        reader.GetString(reader.GetOrdinal("SalesOrderCode")),
-                    };
-                     paymentStatus.QrImage = !string.IsNullOrEmpty(paymentStatus.SalesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(paymentStatus.SalesOrderCode)) : string.Empty;
-                   
-                }
-                else
+                SalesOrderPaymentStatus paymentStatus =new SalesOrderPaymentStatus()
                 {
-                    throw new Exception($"Sales order for id {orderId} not found");
-                }
+                    SalesOrderTotal = order.SalesOrderTotal,
+                    PlatformFees = order.PlatformFees,
+                    TotalFees = order.TotalFees,
+                    SalesTax = order.SalesTax,
+                    SalesOrderCode = order.SalesOrderCode?? string.Empty,
+                    Paid = order.SalesOrderStatus == SalesOrderStatus.PaymentSucceeded,
+                    QrImage = !string.IsNullOrEmpty(order.SalesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(order.SalesOrderCode)) : string.Empty
+                };
+               
                 return paymentStatus;
 
                
@@ -362,115 +319,7 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
-
-        public async  Task<SalesOrderPaymentStatus>  GetSalesOrderPaymentStatus(int orderId)
-        {
-            try
-            {
-                if (orderId <= 0)
-                    throw new ArgumentException("OrderId must be greater than zero.", nameof(orderId));
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
-
-                string query = "SELECT SalesOrderCode, SalesOrderStatus,SalesOrderTotal,PlatformFees,TotalFees,SalesTax FROM salesorder WHERE OrderId = @orderId";
-
-                using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@orderId", orderId);
-                
-            
-                using var reader = await cmd.ExecuteReaderAsync();
-                SalesOrderStatus status = SalesOrderStatus.InProgress;
-                
-                if (await reader.ReadAsync())
-                {
-                    int enumStatus = reader.GetInt32(reader.GetOrdinal("SalesOrderStatus"));
-                    if (Enum.IsDefined(typeof(SalesOrderStatus), enumStatus))
-                        status =  (SalesOrderStatus)enumStatus;
-                    _logger.LogInformation($"Sales order status for order id {orderId} is {status}");
-                    if (status == SalesOrderStatus.PaymentSucceeded)
-                    {
-                        string salesOrderCode = reader.IsDBNull(reader.GetOrdinal("SalesOrderCode"))?
-                                                string.Empty:
-                                                reader.GetString(reader.GetOrdinal("SalesOrderCode"));
-
-                        return new SalesOrderPaymentStatus()
-                        {
-                            SalesOrderCode = salesOrderCode,
-                            SalesOrderTotal = reader.IsDBNull(reader.GetOrdinal("SalesOrderTotal"))?0: reader.GetDecimal(reader.GetOrdinal("SalesOrderTotal"))/100.0m,
-                            PlatformFees = reader.IsDBNull(reader.GetOrdinal("PlatformFees"))?0: reader.GetDecimal(reader.GetOrdinal("PlatformFees"))/100.0m,
-                            TotalFees = reader.IsDBNull(reader.GetOrdinal("TotalFees"))?0: reader.GetDecimal(reader.GetOrdinal("TotalFees"))/100.0m,
-                            SalesTax = reader.IsDBNull(reader.GetOrdinal("SalesTax"))?0: reader.GetDecimal(reader.GetOrdinal("SalesTax"))/100.0m,
-                           
-                            QrImage = string.IsNullOrEmpty(salesOrderCode)?string.Empty:
-                                            System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(salesOrderCode)),
-                            Paid = true,
-                        };
-                       
-                    }
-                    else
-                    {
-                        return new SalesOrderPaymentStatus()
-                        {
-                            SalesOrderCode = string.Empty,
-                            SalesOrderTotal = 0,
-                            PlatformFees =0, 
-                            TotalFees = 0, 
-                            QrImage = string.Empty,
-                            Paid = false,
-                        };
-                    }
-                }   
-                throw new Exception($"Sales order for id {orderId} not found");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error retrieving sales order qr image: {ex.Message}");
-                throw;
-            }
-        }
-
-
-
-
-        public async Task<SalesOrder> GetSalesOrderByQrCodeAndEventId(int eventId,string qrCode)
-        {
-            try
-            {
-                using var connection = new MySqlConnection(ConnectionString);
-                await connection.OpenAsync();
-
-                string query = "SELECT * FROM salesorder WHERE EventId = @eventId and SalesOrderCode=@qrCode";
-
-                using var cmd = new MySqlCommand(query, connection);
-                cmd.Parameters.AddWithValue("@eventId", eventId);
-                cmd.Parameters.AddWithValue("@qrCode", qrCode);
-
-                using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    return new SalesOrder
-                    {
-                        OrderId = reader.GetInt32(reader.GetOrdinal("OrderId")),
-                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId")),
-                        EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-                        UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
-                        ModifiedAt = reader.GetDateTime(reader.GetOrdinal("ModifiedAt")),
-                        SalesOrderCode = reader.GetString(reader.GetOrdinal("SalesOrderCode")),
-                        DeliveryType = reader.IsDBNull(reader.GetOrdinal("DeliveryType")) ? "Email" : reader.GetString(reader.GetOrdinal("DeliveryType")),
-                        SalesOrderStatus = (SalesOrderStatus)reader.GetInt32(reader.GetOrdinal("SalesOrderStatus")),
-                        StripeSessionId = reader.IsDBNull(reader.GetOrdinal("StripeSessionId")) ? string.Empty : reader.GetString(reader.GetOrdinal("StripeSessionId"))
-                    };
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error retrieving sales order: {ex.Message}");
-                throw;
-            }
-        }
-
+        
         public async Task<List<UserSalesOrders>> GetUpcomingSalesOrdersForUser(int userId)
         {
             try
@@ -544,6 +393,10 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@orderId", orderId);
                 //should delete all related records in Ticket table if necessary due to foreign key cascade delete
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    await _cache.RemoveAsync(CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString()));
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -567,7 +420,7 @@ namespace EventManagementDbAccess
                 if (order == null)
                     throw new Exception($"Sales Order could not be retrieved for id {orderId}");
                
-                
+                _logger.LogInformation($"For order id{decryptedString}, total fees is {order.TotalFees} total is {order.SalesOrderTotal} platform fees{order.PlatformFees}");
                 return new DecryptedOrderDetails
                 {
                     SalesOrderId = orderId,
@@ -642,7 +495,7 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@reservedStatus", (int)SalesOrderStatus.Reserved);
                 cmd.Parameters.AddWithValue("@timeoutThreshold", timeoutMinutes);
                 var reader = await cmd.ExecuteReaderAsync();
-                List<string> sessionIds = new List<string>();
+                List<int> orderIds = new List<int>();
                 while (await reader.ReadAsync())
                 {
                     int orderid = reader.GetInt32(reader.GetOrdinal("orderid"));
@@ -655,21 +508,21 @@ namespace EventManagementDbAccess
                     }
                     else
                     {
-                        sessionIds.Add(sessionid);
+                        orderIds.Add(orderid);
                     }
                 }
                 reader.Close();
-                sessionIds.ForEach(async session =>
+                orderIds.ForEach(async orderId =>
                 {
-                    _logger.LogInformation($"Returning tickets to pool for session id {session}");
-                    bool retVal = await ReturnTicketsToPool(SalesOrderStatus.Abandoned, session);
+                    _logger.LogInformation($"Returning tickets to pool for order id {orderId}");
+                    bool retVal = await ReturnTicketsToPool(SalesOrderStatus.Abandoned, 0,orderId);
                     if (!retVal)
                     {
-                        _logger.LogCritical($"Unable to return tickets to pool for session id {session}");
+                        _logger.LogCritical($"Unable to return tickets to pool for session id {orderId}");
                     }
                     else
                     {
-                        _logger.LogInformation($"Succefully returned tickets to pool for {session} which was Abandoned");
+                        _logger.LogInformation($"Succefully returned tickets to pool for {orderId} which was Abandoned");
                     }
                 });
                
@@ -719,6 +572,21 @@ namespace EventManagementDbAccess
                     cmd.Parameters.AddWithValue("@reservedAt", DateTime.UtcNow);
                 }
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    string key = CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString());
+                    SalesOrder? orderInCache = await _cache.GetOnlyAsync<SalesOrder>(key);
+                    if (orderInCache != null)
+                    {
+                        orderInCache.SalesOrderStatus = status;
+                        orderInCache.StripeSessionId = stripeSessionId ??string.Empty;
+                        await _cache.SetOnlyAsync<SalesOrder>(key, orderInCache);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Unable to locate order with id {orderId} in cache.");
+                    }
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -750,6 +618,20 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@orderId", orderId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                if (rowsAffected > 0)
+                {
+                    string key = CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString());
+                    SalesOrder? orderInCache = await _cache.GetOnlyAsync<SalesOrder>(key);
+                    if (orderInCache != null)
+                    {
+                        orderInCache.SalesOrderStatus = status;
+                        await _cache.SetOnlyAsync<SalesOrder>(key, orderInCache);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Unable to locate order with id {orderId} in cache.");
+                    }
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -786,6 +668,26 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@orderId", orderId);
 
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                
+                if (rowsAffected > 0)
+                {
+                    string key = CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString());
+                    SalesOrder? orderInCache = await _cache.GetOnlyAsync<SalesOrder>(key);
+                    if (orderInCache != null)
+                    {
+                        orderInCache.SalesOrderStatus = status;
+                        orderInCache.RefundId = refundId;
+                        //todo: is this conversion ok?
+                        orderInCache.RefundAmount = (int)refundAmount;
+                        orderInCache.RefundedAt = DateTime.UtcNow;
+                        orderInCache.ModifiedAt = DateTime.UtcNow;
+                        await _cache.SetOnlyAsync<SalesOrder>(key, orderInCache);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Unable to locate order with id {orderId} in cache.");
+                    }
+                }
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -805,24 +707,18 @@ namespace EventManagementDbAccess
     /// <param name="eventId"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status, string stripeSessionId,int userId=0,int orderId=0)
+    public async Task<bool> ReturnTicketsToPool(SalesOrderStatus status,int orderId, int userId=0)
     {
-        if (string.IsNullOrEmpty(stripeSessionId) && orderId <= 0)
+        if (orderId <= 0)
             throw new ArgumentException("Invalid stripe session id and order id provided");
 
-      if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
+        if (status == SalesOrderStatus.Reserved || status == SalesOrderStatus.InProgress || status == SalesOrderStatus.PaymentSucceeded || status == SalesOrderStatus.OrderCompleted)
             throw new ArgumentException("Unable to proceed with UpdateSalesOrderStatus dues to satus", nameof(status));
       
+        SalesOrder order = await GetSalesOrderById(orderId);
         
-        SalesOrder? order =null;
-        if(!string.IsNullOrWhiteSpace(stripeSessionId))
-            order  = await GetSalesOrderByStripeSessionId(stripeSessionId);
-        else if (orderId >0)
-        {
-            order = await GetSalesOrderById(orderId);
-        }
         if (order == null)
-            throw new Exception($"Unable to find order with session id {stripeSessionId}");
+            throw new Exception($"Unable to find order with session id {orderId}");
 
         if (userId > 0 && order.UserId != userId)
             throw new Exception($"User {userId} is not authorized to update order {order.OrderId}");
@@ -870,8 +766,10 @@ namespace EventManagementDbAccess
             cmd.Parameters.AddWithValue("@orderId", order.OrderId);
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
+  
             if (rowsAffected > 0 && 
-                await UpdateTicketStatusForSalesOrder(TicketStatus.Refunded.ToString(), order.OrderId, connection, mySqlTransaction))
+                await UpdateTicketStatusForSalesOrder(status.ToString(), order.OrderId,
+                            order.SalesOrderCode ?? string.Empty, connection, mySqlTransaction))
             {
                 _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
                 await mySqlTransaction.CommitAsync();
@@ -892,7 +790,8 @@ namespace EventManagementDbAccess
         }
     }
 
-    public async Task<bool> UpdateTicketStatusForSalesOrder(string status, int orderId, MySqlConnection conn, MySqlTransaction trans)
+    public async Task<bool> UpdateTicketStatusForSalesOrder(string status, int orderId, string salesOrderCode,
+                                                            MySqlConnection conn, MySqlTransaction trans)
     {
         if (string.IsNullOrEmpty(status) || orderId<=0)
         {
@@ -922,7 +821,26 @@ namespace EventManagementDbAccess
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
             if (rowsAffected > 0)
             {
-                _logger.LogInformation($"Tickets update to status {status} for order id {orderId}");
+                _logger.LogInformation($"Tickets updated to status {status} for order id {orderId}. Now updating ticket cache with status.");
+                //for abandoned or timed out orders, there will be no status code.
+                if (!string.IsNullOrWhiteSpace(salesOrderCode))
+                {
+                    string ticketCachekey = CacheHelper.GetCacheKey<IEnumerable<EventSalesItem>>(salesOrderCode);
+                    var ticketList =  await _cache.GetOnlyAsync<IEnumerable<EventSalesItem>>(ticketCachekey);
+                    if (ticketList?.Count() > 0)
+                    {
+                        ticketList?.ToList().ForEach(x => x.TicketStatus= status);
+                        await _cache.SetOnlyAsync<IEnumerable<EventSalesItem>>(ticketCachekey,ticketList);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Tickets not found in ticket cache by sales order code for code {salesOrderCode}");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation($"Sales order code not found for order id {orderId}");
+                }
                 return true;
             }
             throw new Exception($"Unable to updatr tickets for order {orderId}");

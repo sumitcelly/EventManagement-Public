@@ -18,3 +18,10 @@ Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
 Each ticket should show its QR code.
+
+On a user's ticket, when clicking on event, it takes to /eventdetails/37
+which is no longer working.
+
+Get this error when going through user tickets on user dashboard
+rror: Cannot read properties of undefined (reading 'eventItemType')
+    at TicketDetails (TicketDetails.tsx:206:69)

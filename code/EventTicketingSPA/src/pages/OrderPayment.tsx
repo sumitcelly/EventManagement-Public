@@ -63,7 +63,7 @@ export default function OrderPayment() {
         toast.success("Payment successful! Your order is confirmed.");
         if (!guestAlreadyExists)
         {
-          const salesData = await axiosClient.get(`/SalesOrder/SalesOrderQrImage/${orderId}`);
+          const salesData = await axiosClient.get(`/SalesOrder/SalesOrderPostPaymentDetails/${orderId}`);
           if (salesData && salesData.data) {
             console.log('sales order data', salesData.data);
             //We only gnerate order after payment is confirmed by the webhook. The return url coming back from stripe
@@ -248,7 +248,7 @@ export default function OrderPayment() {
         <CountdownMinutes displayString="Payment window expires in" initialMinutes={5} timerExpiredCallback={()=>
           {
             toast.error("Payment window has expired. Please try again.");
-            axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.checkoutSessionId}/Timedout`)
+            axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.salesOrderId}/Timedout`)
             .then(() => {
               history.replace(`/eventDetails/${eventHeaderInfo.eventId}`);
             })

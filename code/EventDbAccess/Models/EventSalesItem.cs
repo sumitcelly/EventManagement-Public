@@ -27,10 +27,13 @@ namespace EventManagementDbAccess
         public string? TicketStatus {get;set; }
     }
 
+    /// <summary>
+    /// there will be other statuses in the db like Abandoned, Refunded, or Timeout which is basically the sales order status 
+    /// being replicated.
+    /// </summary>
     public enum TicketStatus
     {
         Scanned,
-        Live,
-        Refunded
+        Live
     }
 }

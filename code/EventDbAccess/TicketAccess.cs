@@ -475,59 +475,7 @@ namespace EventManagementDbAccess
             return ticketList;
         }
 
-        public async Task<IEnumerable<EventSalesItem>>  GetEventTicketBasicsBySalesOrderQrCodeFromDb(string salesOrderCode, int eventId, int userId)
-        {
-            if (string.IsNullOrWhiteSpace(salesOrderCode) || eventId <= 0)
-                throw new ArgumentException("SalesOrderId and EventId must be greater than zero.");
-
-            List<EventSalesItem> ticketList = new List<EventSalesItem>();
-            try
-            {
-                using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
-                {
-                    string sql = @"SELECT a.OrderId, b.TicketCode,b.TicketStatus, b.PricePaid, c.EventItemTypeId,c.Name 
-                                    from salesorder a, eventsalesitem b, eventitemtype c
-                                    where a.OrderId=b.SalesOrderId and
-                                    b.EventItemTypeId=c.EventItemTypeId and
-                                    a.SalesOrderCode=@salesOrderCode and 
-                                    a.eventId=@eventId and a.userId=@userId";
-                    await connection.OpenAsync();
-                    using var cmd = new MySqlCommand(sql, connection);
-                    cmd.Parameters.AddWithValue("@salesOrderCode", salesOrderCode);
-                    cmd.Parameters.AddWithValue("@eventId", eventId);
-                    cmd.Parameters.AddWithValue("@userId", userId);
-
-                    using (DbDataReader reader = await cmd.ExecuteReaderAsync())
-                    {
-                        _logger.LogInformation($"Records affected: {reader.RecordsAffected}");
-                        while (await reader.ReadAsync())
-                        {
-                            EventSalesItem ticket = new EventSalesItem();
-                            ticket.TicketCode = !reader.IsDBNull(reader.GetOrdinal("TicketCode"))?
-                                                reader.GetString(reader.GetOrdinal("TicketCode")):
-                                                 string.Empty;
-                            ticket.TicketStatus = !reader.IsDBNull(reader.GetOrdinal("TicketStatus"))?
-                                                  reader.GetString(reader.GetOrdinal("TicketStatus")):
-                                                  string.Empty;
-                            ticket.PricePaid = reader.GetDecimal(reader.GetOrdinal("PricePaid"));
-                            ticket.EventItemType = new EventItemType()
-                            {
-                                EventItemTypeId = reader.GetInt32(reader.GetOrdinal("EventItemTypeId")),
-                                Name = reader.GetString(reader.GetOrdinal("Name"))
-                            };
-                            ticketList.Add(ticket);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-            return ticketList;
-        }
-
+        
         /// <summary>
         /// Not used yet
         /// </summary>

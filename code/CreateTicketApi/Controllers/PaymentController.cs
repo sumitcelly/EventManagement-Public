@@ -240,6 +240,18 @@ namespace CreateTicketApi.Controllers
                 {
                     return StatusCode(409,"Order is in invalid state to start refund");
                 }
+                if (string.IsNullOrWhiteSpace(order.SalesOrderCode))
+                {
+                    return StatusCode(422,"Sales order code is not generated for order");
+                }
+             
+                //going to db for most accurate status of tickets.
+                var tickets  = await _ticketAccess.GetEventTicketBySalesOrderCodeFromDb(order.SalesOrderCode,order.EventId);
+                if (tickets == null || tickets.Count() == 0 || tickets.Any(t=>t.TicketStatus != TicketStatus.Live.ToString()))
+                {
+                    return StatusCode(422,"One or more tickets are not in Live status to issue a refund for the order");
+                }
+
                 if (string.IsNullOrWhiteSpace(order.PaymentIntentId))
                 {
                     return StatusCode(409,"No paymentintentid found");
@@ -252,6 +264,10 @@ namespace CreateTicketApi.Controllers
                 if (evt == null || evt.RefundMode != RefundMode.CustomerControlled)
                 {
                     return StatusCode(409,"Event does not allow customer initiated refunds");
+                }
+                if (evt.EventDate < DateTime.Today)
+                {
+                    return StatusCode(422,"Event cannot be in the past for a refund.");
                 }
             
             //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
@@ -308,7 +324,6 @@ namespace CreateTicketApi.Controllers
                             // Finalize the sales order. generate tickets etc
                             //Task.Delay(10000).Wait();
                             bool result = await _salesOrderDbAccess.FinalizeSalesOrder(stripeEvent.SalesOrderId, 
-                                                                                stripeEvent.SessionId,
                                                                                 stripeEvent.PaymentIntentId,
                                                                                 stripeEvent.OrderTotal,
                                                                                 stripeEvent.PlatformFees,
@@ -365,7 +380,7 @@ namespace CreateTicketApi.Controllers
                     if (tempStatus == SalesOrderStatus.RefundSuccess)
                     {
                        await _emailUtils.SendRefundConfirmationEmail(stripeEvent.SalesOrderId,(stripeEvent.RefundAmount/100.0m).ToString("C"), stripeEvent.CustomerEmail);
-                       bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus, "",0,stripeEvent.SalesOrderId);
+                       bool ret = await _salesOrderDbAccess.ReturnTicketsToPool(tempStatus,stripeEvent.SalesOrderId);
                        if (ret)
                        {
                             _logger.LogInformation($"Returned tickets to pool status for {stripeEvent.SalesOrderId} in db is success");

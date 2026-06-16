@@ -61,55 +61,7 @@ public class SalesOrderConductor
         return true;
     }
 
-    public async Task<(CustomerSalesOrder,bool,bool)> UpdateSalesOrder(int salesOrderId, CustomerSalesOrder order)
-    {
-        if (order == null)
-            throw new ArgumentNullException(nameof(order));
-        if (salesOrderId <= 0)
-            throw new ArgumentException("OrderId cannot be null or empty.", nameof(salesOrderId));
 
-        // Update the sales order
-        // var previousTicketCount = await _ticketDbAccess.GetEventTicketCountBySalesOrderId(salesOrderId);
-        // if (previousTicketCount == 0)
-        //     throw new Exception($"Failed to retrieve tickts for previous order with ID {salesOrderId}.");
-
-        //Todo: ORder count can be same if they changed the type of ticket but not the count
-        // int newTicketCount = order.SalesOrderItems.Count();
-        // if (previousTicketCount == newTicketCount)
-        //     throw new Exception("Nothing to update since number of tickets in new and existing order are same.");
-
-        bool result = await _dbAccess.DeleteSalesOrder(salesOrderId);
-        if (!result)
-        {
-            throw new Exception($"Failed to delete sales order with ID {salesOrderId}. Cannot proceed with update.");
-        }
-        _logger.LogInformation($"Sales order {salesOrderId} deleted successfully. Proceeding to create new order with updated ticket count.");
-        // Create a new sales order with updated ticket count
-        return await CreateSalesOrder(order);      
-    }
-
-    public async Task<IEnumerable<EventSalesItem>> GetSalesOrderByQrCode(int id,string salesOrderQrCode, int userId)
-    {
-        if (id <= 0 ||userId<=0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
-            throw new ArgumentNullException($"Invalid argument sent evenid {id} or userId {userId} or salesordercode {salesOrderQrCode}");
-        
-        // Fetch the event sales items associated with the sales order
-        IEnumerable<EventSalesItem> eventSalesItems = await _ticketDbAccess.GetEventTicketBasicsBySalesOrderQrCodeFromDb(salesOrderQrCode,id,userId);
-        if (eventSalesItems == null || !eventSalesItems.Any())
-            throw new Exception($"No event sales items found for sales order ID {salesOrderQrCode}.");
-        eventSalesItems.ToList().ForEach(item =>
-        {
-            //item.SalesOrderId = salesOrder.OrderId;
-            item.QRBase64Image = System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(item.TicketCode));
-            item.TicketCode = item.TicketCode;
-            item.TicketStatus = item.TicketStatus;
-            item.EventItemType.Name = item.EventItemType.Name;
-            item.EventItemType.EventItemTypeId = item.EventItemType.EventItemTypeId;
-             // Clear the ticket code for security reasons
-            //var t= QRCodeUtils.GetQRText(Convert.FromBase64String(item.QRBase64Image)); // Decode the QR code to ensure it's valid
-        });
-        return eventSalesItems;
-    }
     public async Task<(CustomerSalesOrder,bool,bool)> CreateSalesOrder(CustomerSalesOrder customerSalesOrder)
     {
         if (customerSalesOrder == null)

@@ -60,10 +60,10 @@ public class TicketController : ControllerBase
             return Unauthorized("Unable to retrieve user id");
         }
 
-        var order = await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderQrCode, id);
-        if (order == null)
+        var ticketList = await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderQrCode, id);
+        if (ticketList == null)
             return NotFound();
-        return Ok(order);
+        return Ok(ticketList);
     }
 
 
@@ -127,10 +127,11 @@ public class TicketController : ControllerBase
         ///Need to check this here to make sure that we are not returning a pdf that was generated from S3 when the
         /// order was valid but later refunded.
         var eventTickets = (await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderCode, eventId))?.ToList();
-        if (eventTickets == null || eventTickets.Count == 0)
+        if (eventTickets == null || eventTickets.Count == 0 || 
+                eventTickets.Any(t=>t.TicketStatus != TicketStatus.Live.ToString()))
         {
             _logger.LogWarning($"No tickets found or sales order in incorret status for sales order code: {salesOrderCode} and event id: {eventId} when trying to get PDF URL.");
-            return NotFound("No tickets found for the given sales order and event.");
+            return UnprocessableEntity("No tickets found for the given sales order and event or tickets in incorrect status.");
         }
 
         string fileKey = AmazonS3ContentUploader.GetFileKey(fileName, eventDetails.EventOrganizerId, 
