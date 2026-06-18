@@ -3,7 +3,6 @@ import { HiOutlineDotsVertical } from "react-icons/hi";
 import {  useHistory } from "react-router-dom";
 import { YesNoModal } from "./YesNoModal"; 
 import { useState } from "react";
-import { useIonRouter } from "@ionic/react";
 
 export interface ListMenuData{
     viewLink:string,
@@ -25,31 +24,33 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
 
   return (
     <>
-      <Dropdown
-        
-        inline
-        label={<HiOutlineDotsVertical className="text-xl cursor-pointer"/>}
-      >
-        {linkData.viewLink && (
-          <DropdownItem onClick={() => history.push(linkData.viewLink)}>
-            View Details
+      <div className="relative">
+        <Dropdown
+          placement="bottom"
+          inline
+          label={<HiOutlineDotsVertical className="text-xs cursor-pointer"/>}
+        >
+          {linkData.viewLink && (
+            <DropdownItem onClick={() => history.push(linkData.viewLink)}>
+              Details
+            </DropdownItem>
+          )}
+          {linkData.editLink && (
+          <DropdownItem onClick={() => history.push(linkData.editLink, linkData?.editData)}>
+            Edit
           </DropdownItem>
-        )}
-        {linkData.editLink && (
-        <DropdownItem onClick={() => history.push(linkData.editLink, linkData?.editData)}>
-          Edit
-        </DropdownItem>
-        )}
-        
-        {linkData.previewData && (
-          <DropdownItem onClick={() => linkData?.previewData && linkData.previewData()}>
-            Preview
+          )}
+          
+          {linkData.previewData && (
+            <DropdownItem onClick={() => linkData?.previewData && linkData.previewData()}>
+              Preview
+            </DropdownItem>
+          )}
+          <DropdownItem onClick={() => setOpenModal(true)}>
+            Delete
           </DropdownItem>
-        )}
-        <DropdownItem onClick={() => setOpenModal(true)}>
-          Delete
-        </DropdownItem>
-      </Dropdown>
+        </Dropdown>
+      </div>
       {openModal && (
               <YesNoModal 
                   modalText="Are you sure you want to delete this event?" 
