@@ -16,7 +16,7 @@ module.exports = {
           dark: "#1E40AF",    // darker for focus/active
           neutral: "#b6c690ff", // background for events page. same as "light"
           neutrallight:  "#20c4aeff", // darker gray for text
-          panelbg:"#F9F9F7"
+          panelbg:"#eaead7"
         },
         accent: {
           DEFAULT: "#F59E0B", // accent (amber-500)

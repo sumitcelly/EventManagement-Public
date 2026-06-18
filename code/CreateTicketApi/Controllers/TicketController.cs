@@ -49,16 +49,12 @@ public class TicketController : ControllerBase
 
     [Authorize(Policy="OrderOwnedByUser")]
     [HttpGet("ByEventIdAndSalesOrderQrCode/{orderId}/{id}/{salesOrderQrCode}")]
-    [EnableRateLimiting("ticket-reservation-policy")]
+    [EnableRateLimiting("strict-ip-auth")]
     public async Task<IActionResult> Get(int id,string salesOrderQrCode)
     {
         if (id <= 0 || string.IsNullOrWhiteSpace(salesOrderQrCode))
             return BadRequest("Id is null.");
-        //Check if user owns this salesorder or not by passing it to the next method call
-        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out int userId))
-        {
-            return Unauthorized("Unable to retrieve user id");
-        }
+   
 
         var ticketList = await _ticketContext.GetEventTicketBySalesOrderCode(salesOrderQrCode, id);
         if (ticketList == null)

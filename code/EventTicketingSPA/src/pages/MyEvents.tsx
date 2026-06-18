@@ -24,6 +24,8 @@ interface UserSalesOrder {
   totalFees: number;
   platformFees: number;
   salesTax: number;
+  organizerUrlName: string;
+  eventUrlName: string;
 }
 
 
@@ -70,8 +72,8 @@ export default function MyEvents() {
               key={event.salesOrderCode}
               onClick={(e) =>{ 
                 console.log("Navigating to event details for eventId:", event.eventId);
-                history.push(`/eventdetails/${event.eventId}`,'forward'); }}
-              className="cursor-pointer"
+                history.push(`/eventdetails/${event.organizerUrlName}/${event.eventUrlName}`,'forward'); }}
+              className="cursor-pointer  bg-brand-panelbg"
             >
             <div className="flex items-center justify-between gap-4 w-full">
               <div className="min-w-0">
@@ -90,6 +92,7 @@ export default function MyEvents() {
               >
                 View tickets
               </IonRouterLink> */}
+              <div className="flex flex-col">
               <div
                 onClick={(e) => {
                   e.stopPropagation();
@@ -107,6 +110,8 @@ export default function MyEvents() {
                 className="ml-4 px-3 py-1 text-sm font-body text-white bg-brand-light rounded inline-flex cursor-pointer"
               >
                 View tickets
+              </div>
+              <p className="mt-1 ml-auto text-center text-xxs">{event.salesOrderCode}</p>
               </div>
             
               

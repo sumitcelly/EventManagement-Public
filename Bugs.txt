@@ -10,6 +10,8 @@ I cannot add [Authorize(Policy="OrderOwnedByUser")]
 since clicking from email link has no login token.
 
 
+Mapbox issue in selecting addresses with google address in play
+
 Right click menu on event organizer shows up much higher when lots of events.
 
 Only General Category works when creating event ??
@@ -17,11 +19,11 @@ Only General Category works when creating event ??
 Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
-Each ticket should show its QR code.
+Each ticket should show its QR code. -- Not done for security reasons
 
 On a user's ticket, when clicking on event, it takes to /eventdetails/37
-which is no longer working.
+which is no longer working. -- done
 
 Get this error when going through user tickets on user dashboard
 rror: Cannot read properties of undefined (reading 'eventItemType')
-    at TicketDetails (TicketDetails.tsx:206:69)
+    at TicketDetails (TicketDetails.tsx:206:69) -- done

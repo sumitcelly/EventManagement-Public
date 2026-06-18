@@ -333,9 +333,10 @@ namespace EventManagementDbAccess
                 string query = @"select a.EventId, a.SalesOrderCode,a.SalesOrderStatus, a.OrderId,
                                 a.SalesOrderTotal, a.TotalFees, a.PlatformFees,a.SalesTax,b.EventName,
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
-                                b.EventSummary,b.Free
-                                from salesorder a, events b
-                                where a.EventId = b.EventId and
+                                b.EventSummary,b.Free,b.EventUrlName, c.OrganizerEventBaseUrl
+                                from salesorder a
+                                inner join Events b on a.EventId = b.EventId
+                                inner join eventorganizer c on c.CustomerId = a.CustomerId and
                                 a.UserId=@userId and b.eventDate>UTC_DATE() order by a.CreatedAt desc";
 
                 using var cmd = new MySqlCommand(query, connection);
@@ -364,6 +365,8 @@ namespace EventManagementDbAccess
                             EventOrganizerId = reader.GetInt32("EventOrganizer"),
                             EventSummary = reader.IsDBNull(reader.GetOrdinal("EventSummary")) ? string.Empty : reader.GetString("EventSummary"),
                             Free = reader.GetBoolean("Free"),
+                            EventUrlName= reader.GetString("EventUrlName"),
+                            OrganizerUrlName= reader.GetString("OrganizerEventBaseUrl"),
                             EventLocation = reader.IsDBNull(reader.GetOrdinal("EventAddress")) ? string.Empty : reader.GetString("EventAddress")
                         });
                     }

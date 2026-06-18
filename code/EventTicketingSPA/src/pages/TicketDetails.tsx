@@ -37,7 +37,6 @@ export default function TicketDetails() {
   
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [ticketData,setticketData] = useState<any[]>([]);
 
   const history = useHistory();
   const onPageChange = (page: number)=>{
@@ -73,8 +72,6 @@ export default function TicketDetails() {
      try {
         const res = await axiosClient.get(`/SalesOrder/byEmailLinkId/${encryptedOrderId}`);
         console.log('salesDetails details from backend', res?.data);
-        setticketData(res?.data?.ticketDetails || []);
-        console.log('ticket data set for pagination from encrypted flow', ticketData);
         if (currentPage === 1)
           setTotalItems(res.data?.ticketDetails?.length || 0);
 
@@ -125,8 +122,6 @@ export default function TicketDetails() {
     console.log('Using sales order id', salesOrderIdToUse, 'for fetching tickets');
     const res = await axiosClient.get(`/Ticket/ByEventIdAndSalesOrderQrCode/${salesOrderIdToUse}/${eventId}/${salesOrderCode}`);
     console.log('user tickets from backend', res?.data);
-    setticketData(res?.data || []);
-    console.log('ticket data set for pagination from normal flow', ticketData);
     if (currentPage === 1)
         setTotalItems(res.data?.length);
    
@@ -172,16 +167,18 @@ export default function TicketDetails() {
   }
 
   useEffect(() => {
-     if (currentPage === 1)
-     {
-        console.log('Setting total items for pagination',data?.length);
-        setTotalItems(ticketData?.length);
+     if (currentPage === 1) {
+        const ticketDataToUse = encryptedOrderId ? orderDetails?.ticketDetails : data;
+        console.log('Setting total items for pagination', ticketDataToUse?.length);
+        setTotalItems(ticketDataToUse?.length || 0);
      }
-   
- 
-  }, []);
+  }, [data, orderDetails, encryptedOrderId]);
   if ((encryptedOrderId && orderLoading) || eventLoading || isLoading ) return <p>Loading...</p>;
   console.log('event details:',eventDetails);
+  
+  // Get ticket data from the appropriate source
+  const ticketData = encryptedOrderId ? orderDetails?.ticketDetails : data;
+  
   if (!eventDetails) {
     return (
       <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
@@ -202,7 +199,7 @@ export default function TicketDetails() {
           <div className="max-w-md mx-auto">
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
         
-          {ticketData && <SalesOrderTicket eventBasic={eventDetails} 
+          {ticketData && ticketData.length > 0 && <SalesOrderTicket eventBasic={eventDetails} 
               tickets={[{eventItemTypeId: ticketData[currentPage-1].eventItemType.eventItemTypeId, name: ticketData[currentPage-1].eventItemType.name, 
                 description:"", cost:0, quantity:1, ticketsSold:-1, totalAllowed:-1 }]}
               errorTicketList={[]} 
@@ -212,7 +209,7 @@ export default function TicketDetails() {
           }
           
          <div className="ml-auto mb-4">
-            <AppPagination totalItems={totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
+            <AppPagination totalItems={ orderDetails?.ticketDetails?.length || data?.length} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
          {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" &&
          (
@@ -237,10 +234,10 @@ export default function TicketDetails() {
          <div className="max-w-xl mx-auto mt-6 w-full">
             <h3 className="text-lg font-bold text-accent-dark mb-3">Ticket Summary</h3>
             <div className="space-y-2">
-              {ticketData && Object.values(
+              {ticketData && Array.isArray(ticketData) && ticketData.length > 0 && Object.values(
                 ticketData.reduce((acc: any, ticket: any) => {
-                  const typeName = ticket.eventItemType?.name || 'Unknown';
-                  const typeId = ticket.eventItemType?.eventItemTypeId;
+                  const typeName = ticket?.eventItemType?.name || 'Unknown';
+                  const typeId = ticket?.eventItemType?.eventItemTypeId;
                   const key = `${typeId}-${typeName}`;
                   
                   if (!acc[key]) {
