@@ -1,0 +1,25 @@
+npm install @ionic/react @ionic/react-router
+npm install @capacitor/core @capacitor/cli
+npx cap init
+npm install @capacitor/android
+npx cap add android
+npm install @capacitor/preferences
+npm install @capacitor/camera
+npm run build
+npx cap sync
+
+Remove-Item -Path node_modules, package-lock.json -Recurse -Force
+npm install
+npm run build
+
+
+npm install @ionic/react @ionic/react-router
+Could not resolve dependency:
+npm error peer react-router-dom@"^5.0.1" from @ionic/react-router@8.7.13
+
+
+npm install @ionic/react @ionic/react-router --legacy-peer-deps
+
+npm install @capacitor/core @capacitor/cli --legacy-peer-deps
+
+./ngrok http http://localhost:5220 --hostname=sc-dev-ticketspro.ngrok.io
