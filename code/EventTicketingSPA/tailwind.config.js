@@ -2,9 +2,10 @@ const flowbiteReact = require("flowbite-react/plugin/tailwindcss");
 
 // tailwind.config.js
 module.exports = {
-  // content: ["./src/**/*.{js,jsx,ts,tsx}", ".flowbite-react\\class-list.json"],
-  content: ["./src/**/*.{js,jsx,ts,tsx}", ".flowbite-react\\class-list.json", 
-            "node_modules/flowbite-typography/**/*.{js,jsx,ts,tsx}",],
+  
+  content: ["./src/**/*.{js,jsx,ts,tsx}",
+            "node_modules/flowbite-typography/**/*.{js,jsx,ts,tsx}",
+           ".flowbite-react/class-list.json"],
 
   theme: {
     extend: {
