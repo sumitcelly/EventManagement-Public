@@ -9,8 +9,8 @@ public static class StripeFeeCalculator
         long targetNet, 
         long platformProfit, 
         long tax,
-        double stripePercent = 0.029, 
-        long stripeFixed = 30)
+        double stripePercent, 
+        long stripeFixed)
     {
         // Formula: Total = (Net + Fixed + Profit) / (1 - Percent)
         double numerator = targetNet + stripeFixed + platformProfit;

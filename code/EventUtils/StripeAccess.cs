@@ -19,9 +19,11 @@ public class StripeAccess
     private readonly string _connectRefreshUrl = "/organizermanager/customerId/stripe";
     private readonly string _paymentReturnUrl = "/orderpayment/event/event_id?salesOrderId=order_Id&session_id={CHECKOUT_SESSION_ID}";
 
-    private readonly decimal _applicationFeePercentage = 0.03m; // Example: 10% application fee
+    private readonly decimal _applicationFeePercentage = 0;// Example: 10% application fee
+    private readonly decimal _stripeFeePercentage = 0; // Example: 2.9% Stripe fee
 
-    private readonly decimal _fixedTransactionFee = 1.0m; // Example: $0.30 fixed fee per transaction
+    private readonly long _stripeFixedFee = 0; // Example: 30 cents fixed fee
+    private readonly long _floorFee = 0; // Example: 35 cents minimum application fee
 
     private static string WebhookSecret { get; set; }
     private static  LocationService locationService = new LocationService();
@@ -76,7 +78,12 @@ public class StripeAccess
         {
             throw new ArgumentException("Stripe webhook secret is not configured.");
         }
-       // _applicationFeePercentage = Convert.ToDecimal(configuration["Stripe:ApplicationFeePercentage"]);
+       
+        _applicationFeePercentage= Convert.ToDecimal(configuration["Fees:Platform"]);
+        _stripeFeePercentage= Convert.ToDecimal(configuration["Fees:Stripe"]);
+        _stripeFixedFee= Convert.ToInt64(configuration["Fees:StripeFixed"]);
+        _floorFee= Convert.ToInt64(configuration["Fees:Floor"]);
+
         logger.LogInformation($"Initializing Stripe API with provided configuration. {StripeConfiguration.ApiVersion}");
     }
 
@@ -229,7 +236,7 @@ public class StripeAccess
         }
         long i = Convert.ToInt64(totalAmount * _applicationFeePercentage *100); // Example: 10% application fee
         _logger.LogInformation($"application fees amount is {i} using fees percent {_applicationFeePercentage}.");
-        return i;
+        return Math.Max(i, _floorFee); // Ensure the fee is at least the floor fee
     }
 
     public async Task<string> GetCheckOutSessionStatus(string sessionId, string stripeAccountID)
@@ -495,7 +502,7 @@ public class StripeRefundHandler
         long finalTotal=0, totalFeesForTrans=0, stripeFee=0;
         if (passOnAllFeesToCustomer)
         {
-           (finalTotal, totalFeesForTrans, stripeFee) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees,(long)tax);
+           (finalTotal, totalFeesForTrans, stripeFee) = StripeFeeCalculator.Calculate(totalItemsUnitPrice, appFees,(long)tax, (double)_stripeFeePercentage, _stripeFixedFee);
         }
         //absorb the stripe fees but pass on the application fees
         else

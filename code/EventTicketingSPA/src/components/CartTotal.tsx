@@ -25,8 +25,9 @@ const letCustomeAbsorbAllFees = false;
 export const calculateForCustomerAbsorbsAllFees = (
     targetNet: number, 
     platformFees: number, 
-    stripePercent: number = 0.029, 
-    stripeFixed: number = 30
+    stripePercent: number, 
+    stripeFixed: number,
+    floor: number
   ): { totalToCharge: number; serviceFee: number; displayTotal: string; displayFee: string , stripeFees:string} => {
     // Formula: Total = (Net + Fixed + Profit) / (1 - Percent)
 
@@ -40,7 +41,7 @@ export const calculateForCustomerAbsorbsAllFees = (
       };
     }   
 
-    const platformFeeAmt = parseFloat((targetNet * platformFees).toFixed(2));
+    const platformFeeAmt = Math.max(parseFloat((targetNet * platformFees).toFixed(2)), parseFloat((floor/100).toFixed(2)));
     const numerator = targetNet*100 + stripeFixed + platformFeeAmt*100;
     const denominator = 1 - stripePercent;
     
@@ -59,12 +60,13 @@ export const calculateForCustomerAbsorbsAllFees = (
   };
 
   export const calculateForOrganizerAbsorbsStripeFees =
-    (total: number, platformFees:number,stripePercent: number = 0.029, 
-    stripeFixed: number = 30 )=>
+    (total: number, platformFees:number,stripePercent: number, 
+    stripeFixed: number,
+    floor: number)=>
   {
-     const platformFeeAmt = parseFloat((total * platformFees).toFixed(2));
+     const platformFeeAmt =  Math.max(parseFloat((total * platformFees).toFixed(2)), parseFloat((floor/100).toFixed(2)));
      const displayTotal= (total + platformFeeAmt).toFixed(2);
-     const displayFee= platformFeeAmt.toFixed(2);
+     const displayFee=  platformFeeAmt.toFixed(2);
      console.log('fees',stripeFixed,displayTotal,(Number(displayTotal)*stripePercent*100).toFixed(2), stripeFixed);
      const stripeFees = (((total + platformFeeAmt)*stripePercent*100)+ stripeFixed).toFixed(2);
      return {displayTotal, displayFee, stripeFees};
@@ -116,13 +118,13 @@ export const calculateForCustomerAbsorbsAllFees = (
       let displayTotal="", displayFee="";
       if (feeMode === TicketFeeMode.CustomerAbsorbsAll)
       {
-        ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed)));
+        ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor)));
         setTotal(displayTotal);
         setFees(displayFee);
       }
       else if (feeMode === TicketFeeMode.OrganizerAbsorbsStripe)
       {
-        ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees));
+        ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor)));
         setTotal(displayTotal);
         setFees(displayFee);
       }

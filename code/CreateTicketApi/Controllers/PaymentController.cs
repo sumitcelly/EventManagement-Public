@@ -117,6 +117,7 @@ namespace CreateTicketApi.Controllers
                 PlatformFees= _configuration["Fees:Platform"],
                 StripeFees = _configuration["Fees:Stripe"],
                 StripeFixed =_configuration["Fees:StripeFixed"],
+                Floor = _configuration["Fees:Floor"]
             }) ;
         }
 

@@ -152,7 +152,8 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
       ({displayTotal, displayFee, stripeFees} = calculateForCustomerAbsorbsAllFees(20,  
                                     transactionFees?.platformFees,
                                     Number(transactionFees?.stripeFees),
-                                    Number(transactionFees?.stripeFixed)));
+                                    Number(transactionFees?.stripeFixed),
+                                    Number(transactionFees?.floor)));
        
     }
     if (feeMode == "2")
@@ -161,7 +162,8 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
        ({displayTotal, displayFee, stripeFees} = calculateForOrganizerAbsorbsStripeFees(20, 
                             transactionFees?.platformFees,
                             Number(transactionFees?.stripeFees),
-                            Number(transactionFees?.stripeFixed)));
+                            Number(transactionFees?.stripeFixed),
+                            Number(transactionFees?.floor)));
         
         console.log('org absorbs',displayTotal,displayFee, stripeFees);
     }
