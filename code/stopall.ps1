@@ -3,7 +3,7 @@
 # =========================================================================
 
 # 1. DEFINE YOUR CONFIGURATION RESOURECES (Update your IDs here!)
-$AWS_PROFILE   = "SC"
+$AWS_PROFILE   = "default"
 $AWS_REGION    = "us-west-2"
 $EC2_INSTANCE  = "i-0f881f2b840a913d1"       
 $RDS_INSTANCE  = "eventmgmtdb"

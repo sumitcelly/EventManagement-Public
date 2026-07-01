@@ -31,7 +31,7 @@ if (builder.Environment.IsDevelopment())
 {
     Console.WriteLine("Env is  dev");
     // You can force a specific local profile for dev only
-    Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
+    //Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
 }
 else
 {
