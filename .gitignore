@@ -50,6 +50,7 @@ CodeCoverage/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
+.DS_Store
 # NUnit
 *.VisualState.xml
 TestResult.xml

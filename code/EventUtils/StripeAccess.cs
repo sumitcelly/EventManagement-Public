@@ -227,15 +227,15 @@ public class StripeAccess
         }
     }
 
-    private long CalculatePlatformFee(List<PaymentLineItemModel> lineItems)
+    private long CalculatePlatformFee(List<PaymentLineItemModel> lineItems, decimal appFeePercentage)
     {
         decimal totalAmount = 0;
         foreach (var item in lineItems)
         {
             totalAmount += item.Price * item.Quantity;
         }
-        long i = Convert.ToInt64(totalAmount * _applicationFeePercentage *100); // Example: 10% application fee
-        _logger.LogInformation($"application fees amount is {i} using fees percent {_applicationFeePercentage}.");
+        long i = Convert.ToInt64(totalAmount * appFeePercentage *100); // Example: 10% application fee
+        _logger.LogInformation($"application fees amount is {i} using fees percent {appFeePercentage}.");
         return Math.Max(i, _floorFee); // Ensure the fee is at least the floor fee
     }
 
@@ -456,7 +456,9 @@ public class StripeRefundHandler
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
     public async Task<Tuple<string, string>> CreateCheckoutSession(string stripeAccountID, PaymentModel paymentModel,
-                                                                string customerEmailAddress, string zipCode,bool passOnAllFeesToCustomer = false)
+                                                                string customerEmailAddress, string zipCode,
+                                                                bool passOnAllFeesToCustomer = false,
+                                                                decimal? platformFeeOverride = null)
     {
         
         if (string.IsNullOrEmpty(stripeAccountID))
@@ -486,7 +488,7 @@ public class StripeRefundHandler
         string ticketTaxCode = EventCategoryTaxMapping.ContainsKey(paymentModel.EventCategory) ? EventCategoryTaxMapping[paymentModel.EventCategory] : _defaultTicketTaxCode;
         _logger.LogInformation($"Tax code {ticketTaxCode} will be applied for event category {paymentModel.EventCategory} and event id {paymentModel.EventId}.");
         
-        long appFees = CalculatePlatformFee(paymentModel.LineItems);
+        long appFees = CalculatePlatformFee(paymentModel.LineItems, platformFeeOverride ?? _applicationFeePercentage);
         long totalItemsUnitPrice = (long)paymentModel.LineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
         

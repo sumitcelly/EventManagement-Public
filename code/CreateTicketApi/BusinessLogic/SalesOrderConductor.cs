@@ -17,9 +17,11 @@ public class SalesOrderConductor
     private readonly EventItemTypeDbAccess _eventItemTypeDbAccess;
     private readonly StripeAccess _stripeAccess;
     private readonly EventDbAccess _eventDbAccess;
+
+    private readonly EventOverrideBaseDbAccess _eventOverrideDbAccess;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
                     EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess, EventItemTypeDbAccess eventItemTypeDbAccess,
-                    EmailUtils emailUtils, StripeAccess stripeAccess, EventDbAccess eventDbAccess)
+                    EmailUtils emailUtils, StripeAccess stripeAccess, EventDbAccess eventDbAccess, EventOverrideBaseDbAccess eventOverrideDbAccess)
     {
         if (dbAccess == null)
             throw new ArgumentNullException(nameof(dbAccess));
@@ -35,6 +37,8 @@ public class SalesOrderConductor
 
         if (stripeAccess == null)
             throw new ArgumentNullException(nameof(_stripeAccess));
+        if (eventOverrideDbAccess == null)
+            throw new ArgumentNullException(nameof(eventOverrideDbAccess));
 
         _dbAccess = dbAccess;
         _ticketDbAccess = ticketAccess;
@@ -43,6 +47,7 @@ public class SalesOrderConductor
         _stripeAccess = stripeAccess;
         _emailUtils = emailUtils;
         _eventDbAccess = eventDbAccess;
+        _eventOverrideDbAccess = eventOverrideDbAccess;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
     }
@@ -234,7 +239,8 @@ public class SalesOrderConductor
                                                     paymentModel,
                                                     customerSalesOrder.EmailAddress, 
                                                     customerSalesOrder.ZipCode,
-                                                    eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll);
+                                                    eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll,
+                                                    platformFeeOverride: _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId).Result?.CustomPercentage);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
                 await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.Reserved,result.Item2);

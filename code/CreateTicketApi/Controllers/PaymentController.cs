@@ -27,6 +27,8 @@ namespace CreateTicketApi.Controllers
         private readonly EventDbAccess _eventDbAccess;
         private readonly EmailUtils _emailUtils;
         private readonly TicketAccess _ticketAccess;
+
+        private readonly EventOverrideBaseDbAccess _eventOverrideDbAccess;
         public PaymentController(
             ILogger<PaymentController> logger,
             StripeAccess stripeAccess,
@@ -35,7 +37,8 @@ namespace CreateTicketApi.Controllers
             EventOrganizerDBAccess eventOrganizerDbAccess,
             EmailUtils emailUtils,
             TicketAccess ticketAccess,
-            EventDbAccess eventDbAccess)
+            EventDbAccess eventDbAccess,
+            EventOverrideBaseDbAccess eventOverrideDbAccess)
         {
             _logger = logger;
             _stripeAccess = stripeAccess;
@@ -44,6 +47,7 @@ namespace CreateTicketApi.Controllers
             _eventOrganizerDbAccess = eventOrganizerDbAccess;
             _ticketAccess = ticketAccess;
             _eventDbAccess = eventDbAccess;
+            _eventOverrideDbAccess = eventOverrideDbAccess ?? throw new ArgumentNullException(nameof(eventOverrideDbAccess), "EventOverrideBaseDbAccess cannot be null.");
             _emailUtils = emailUtils ?? throw new ArgumentNullException(nameof(emailUtils), "EmailUtils cannot be null.");  
         }
 
@@ -109,16 +113,32 @@ namespace CreateTicketApi.Controllers
         }
 
         [EnableRateLimiting("public-browsing")]
-        [HttpGet("transactionfees")]
-        public async Task<IActionResult> GetTransactionFees()
+        [HttpGet("transactionfees/{eventId}")]
+        public async Task<IActionResult> GetTransactionFees(int eventId)
         {
-            return Ok( new
+            if (eventId <= 0)
             {
-                PlatformFees= _configuration["Fees:Platform"],
-                StripeFees = _configuration["Fees:Stripe"],
-                StripeFixed =_configuration["Fees:StripeFixed"],
-                Floor = _configuration["Fees:Floor"]
-            }) ;
+                return BadRequest("Invalid event ID.");
+            }
+
+            try
+            {
+                var eventFeeOverride = await _eventOverrideDbAccess.GetEventFeeOverride(eventId);
+              
+                return Ok(new
+                {
+                    PlatformFees = eventFeeOverride?.CustomPercentage.ToString() ?? _configuration["Fees:Platform"],
+                    StripeFees = _configuration["Fees:Stripe"],
+                    StripeFixed = _configuration["Fees:StripeFixed"],
+                    Floor = _configuration["Fees:Floor"],
+                });
+                
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving transaction fees for event ID {eventId}");
+                return StatusCode(500, "Error retrieving transaction fees.");
+            }
         }
 
         [HttpGet("connect-status/{stripeAccountId}")]

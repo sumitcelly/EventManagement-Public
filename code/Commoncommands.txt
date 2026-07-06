@@ -40,6 +40,11 @@ docker run -it --rm `
   event-api
   
   
+dotnet test --logger "console;verbosity=detailed"
+
+docker stop vault-api 2>$null; docker rm vault-api 2>$null; docker build -t secure-notes-vault .; docker run -d -p 5000:8080 --name vault-api secure-notes-vault
+
+ 
 docker compose down
 docker compose up -d --build
 //build specific container (name is the name in compose file)

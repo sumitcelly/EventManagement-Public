@@ -9,6 +9,7 @@ import { TicketFeeMode } from "../types/Event";
 type CartTotalProps = {
   control: Control<TicketFormValues>;
   feeMode: TicketFeeMode;
+  eventId: string; // Optional eventId prop
 };
 
   /**
@@ -74,7 +75,7 @@ export const calculateForCustomerAbsorbsAllFees = (
   }
   
   
-  export default function CartTotal({ control, feeMode }: CartTotalProps) {
+  export default function CartTotal({ control, feeMode, eventId }: CartTotalProps) {
 
     console.log('fee Mode',TicketFeeMode[feeMode]);
 
@@ -84,7 +85,7 @@ export const calculateForCustomerAbsorbsAllFees = (
 
     const { data, isLoading } = 
     useQuery(['TransactionFees'], async () => {
-      const res = await axiosClient.get(`/payment/transactionfees`);
+      const res = await axiosClient.get(`/payment/transactionfees/${eventId}`);
       console.log('TransactionFees fetched from backend',res.data);
       return res.data;
   

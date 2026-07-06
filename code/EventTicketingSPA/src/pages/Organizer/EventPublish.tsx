@@ -48,7 +48,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
 
    const { data:transactionFees, isLoading:transLoading } = 
     useQuery(['TransactionFees'], async () => {
-      const res = await axiosClient.get(`/payment/transactionfees`);
+      const res = await axiosClient.get(`/payment/transactionfees/${eventId}`);
       console.log('TransactionFees fetched from backend',res.data);
       return res.data;
   

@@ -355,7 +355,7 @@ return (
   {/* Right Column: Totals and Checkout */}
   <div className="flex-1 flex flex-col items-end justify-end"> 
     <div className="w-full text-right">
-      <CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0}/>
+      <CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
     </div>
 
     <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">

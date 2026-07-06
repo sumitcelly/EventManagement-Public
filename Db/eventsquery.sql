@@ -9,6 +9,38 @@ ON eventorganizermembers (InvitationToken);
 
 select * from eventuser where Email = 'newuser1@gmail.com'
 
+
+select * 	from EVENTs where EventName like 'Drin%'
+
+	
+
+
+CREATE TABLE `eventfeeoverrides` (
+  `EventId` int NOT NULL,
+  `CustomPercentage` decimal(5,4) NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ModifiedAt` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`EventId`),
+  CONSTRAINT `eventfeeoverrides_ibfk_1` FOREIGN KEY (`EventId`) REFERENCES `events` (`EventId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `eventmanagement`.`eventfeeoverrides`
+(
+`EventId`,
+`CustomPercentage`
+)
+VALUES
+(6,
+1.5)
+
+update `eventmanagement`.`eventfeeoverrides`
+set CustomPercentage=0.020
+where EventId>0
+
+select * from notificationtemplates 
+where id=4
+select * from eventfeeoverrides
+
 select * from eventorganizermembers
 where email='dfd@jk.com'
 
