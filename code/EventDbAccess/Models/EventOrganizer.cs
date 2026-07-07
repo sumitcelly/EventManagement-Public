@@ -21,7 +21,7 @@ namespace EventManagementDbAccess
         public string OrganizerX { get; set; } = string.Empty;
         public string StripeAccountId { get; set; } = string.Empty;
         public string OrganizerPhone { get; set; } = string.Empty;
-        public string OrganizerCountry { get; set; } = "USA";
+        public string OrganizerCountry { get; set; } = "US";
 
         public string StripeConnectStatus { get; set; } = string.Empty;
 

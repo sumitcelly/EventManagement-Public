@@ -154,7 +154,7 @@ public class StripeAccess
         try
         {
             Settings taxSettings= await  svc.GetAsync(options, requestOptions);
-            return taxSettings.Status;
+            return taxSettings.Status;  
         }
         catch(Exception ex)
         {
@@ -162,32 +162,43 @@ public class StripeAccess
             return string.Empty;
         }
     }
-    public async Task<bool> IsAccountOnboarded(string accountId)
+    public async Task<object> GetStripeAccountStatus(string accountId)
     {
         if (string.IsNullOrEmpty(accountId))
         {
             throw new ArgumentException("Stripe account ID cannot be null or empty.", nameof(accountId));
         }
 
-        _logger.LogInformation($"Initiating account link for Stripe account: {accountId}");
+        _logger.LogInformation($"Checking account onboarding status for Stripe account: {accountId}");
         try
         {
             var service = new AccountService();
             Account acct = service.Get(accountId);
             if (acct != null)
             {
-               return acct.DetailsSubmitted;
+               _logger.LogInformation($"Account details for account ID: {accountId} - DetailsSubmitted: {acct.DetailsSubmitted}, ChargesEnabled: {acct.ChargesEnabled}, PayoutsEnabled: {acct.PayoutsEnabled}");
+               return new 
+                {
+                   Connected =true,
+                   acct.DetailsSubmitted,
+                   acct.ChargesEnabled, 
+                   acct.PayoutsEnabled,
+                   RequirementsPending = acct.Requirements?.CurrentlyDue.Count > 0
+                };
             }
             else
             {
-                _logger.LogCritical($"An error occurred when calling the Stripe API to get account status: no acct object returned for acctid {accountId}" );
-                return false;
+                _logger.LogCritical($"Unable to retrieve account details for account ID: {accountId}");
+                return new
+                {
+                   Connected = false,
+                };
             }
         }
         catch (Exception ex)
         {
             _logger.LogCritical("An error occurred when calling the Stripe API to get account status:  " + ex.Message);
-            throw new InvalidOperationException("Failed to get account status.", ex);
+            return new { Connected = false };
         }
     }
     public async Task<string> InitiateAccountLink(int organizerId,string accountId)
@@ -211,7 +222,7 @@ public class StripeAccess
                 ReturnUrl = _baseUrl+ _connectReturnUrl.Replace("customerId",organizerId.ToString()),
                 Type = "account_onboarding",
                 //collect incrementally, not upfront
-                CollectionOptions = new AccountLinkCollectionOptionsOptions(){ Fields ="currently_due"}
+                CollectionOptions = new AccountLinkCollectionOptionsOptions(){ Fields ="eventually_due"}
 
             };
 
@@ -885,6 +896,7 @@ public class StripeRefundHandler
                 CustomerId = customerId,
                 DetailsSubmitted = account.DetailsSubmitted,
                 ChargedEnabled = account.ChargesEnabled,
+                PayoutEnabled = account.PayoutsEnabled,
                 RequirementsPending = account.Requirements?.CurrentlyDue.Count > 0
             };
         }
@@ -912,6 +924,8 @@ public class StripeWebHookData
    public string AccountId { get; set; }= string.Empty;
 
     public bool DetailsSubmitted { get; set; } = false;
+
+    public bool PayoutEnabled { get; set; } = false;
 
     public bool RequirementsPending { get; set; } = false;
 

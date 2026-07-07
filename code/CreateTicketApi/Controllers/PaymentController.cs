@@ -141,25 +141,23 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        [HttpGet("connect-status/{stripeAccountId}")]
+        [HttpGet("connect-status/{customerId}/{stripeAccountId}")]
         [Authorize(Policy = "FullAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
         [EnableRateLimiting("strict-ip-auth-organizer")]
-        public async Task<IActionResult> GetStripeAccountConnectStatus(string stripeAccountId)
+        public async Task<IActionResult> GetStripeAccountConnectStatus(int customerId, string stripeAccountId)
         {
             if (string.IsNullOrEmpty(stripeAccountId))
             {
                 return BadRequest("Stripe account ID cannot be null or empty.");
             }
+            if (customerId <= 0)
+            {
+                return BadRequest("Invalid organizer ID.");
+            }
             try
             {
-                int customerId = await _eventOrganizerDbAccess.GetOrganizerIdByStripeAccountId(stripeAccountId); // just to check if the stripe account id is valid and belongs to an organizer in our system
-                string userCustomerId = User.FindFirst("CustomerId")?.Value.ToString() ?? "";
-                if (customerId <= 0 || customerId.ToString() != userCustomerId)
-                {
-                    return BadRequest("Invalid Stripe account ID.");
-                }
-
-                return  Ok(await  _stripeAccess.IsAccountOnboarded(stripeAccountId));
+                return  Ok(await  _stripeAccess.GetStripeAccountStatus(stripeAccountId));
                 
             }
             catch (Exception ex)
@@ -431,11 +429,12 @@ namespace CreateTicketApi.Controllers
                 }
                 else if (stripeEvent.EventType.Contains("account.updated"))
                 {
-                    StripeAccountStatus status = stripeEvent.ChargedEnabled ? StripeAccountStatus.Completed:
+                    StripeAccountStatus status = stripeEvent.ChargedEnabled && stripeEvent.PayoutEnabled ? StripeAccountStatus.Completed:
                                                 (stripeEvent.RequirementsPending ? StripeAccountStatus.RequirementsPending: 
                                                 StripeAccountStatus.InProgress);
+                    
                     _logger.LogInformation(@$"updating stripe account: {stripeEvent.AccountId} for 
-                                        event customer id {stripeEvent.CustomerId} to status {status}");     
+                                                event customer id {stripeEvent.CustomerId} to status {status}");     
                     bool result = await _eventOrganizerDbAccess.UpdateStripeStatus(stripeEvent.CustomerId, stripeEvent.AccountId, status);
                     _logger.LogInformation($"Result of account status updating for customerid {stripeEvent.CustomerId} is {result}");
                 }

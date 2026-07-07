@@ -25,7 +25,7 @@ const memberSchema = yup.object({
   orgName: yup.string().required("Organization name required."),
   eventBaseUrl: yup.string().required("Organizer Base Url is required.").default(window.location.origin),
   description: yup.string().required("Organizer company description is required"),
-  country: yup.string().required("Country is required").default("USA"),
+  country: yup.string().required("Country is required").default("US"),
   aboutMe: yup.string().required("Organizer about me is required."),
   imagePreview: yup.string().nullable().default(null),
   organizerPhone: yup.string().required("Phone"),
@@ -250,7 +250,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
         description: organizerInfo.organizerDescription || '',
         //imagePreview: organizerInfo.organizerImageUrl || '',
         aboutMe: organizerInfo.organizerAboutMe || '',
-        country: organizerInfo.organizerCountry || 'USA',
+        country: organizerInfo.organizerCountry || 'US',
         organizerPhone: organizerInfo.organizerPhone || '',
         
       };

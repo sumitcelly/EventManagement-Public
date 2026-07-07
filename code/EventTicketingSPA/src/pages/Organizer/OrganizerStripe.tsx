@@ -11,49 +11,42 @@ import { useEffect, useState } from "react";
 
   
 export default function OrganizerStripe({organizerInfo, organizerId}: {organizerInfo?: OrganizerInfo, organizerId?:string}) {
-  
-const [stripeAcctId, setStripeAcctId] = useState(organizerInfo?.stripeAccountId);
-const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStatus);
+
+const stripeAcctId = organizerInfo?.stripeAccountId;
 //const [stripeTaxStatus,setStripeTaxStatus] = useState("");
 
-    console.log(`stripe acctid ${stripeAcctId} and status is ${stripeStatus}`);
+    console.log(`stripe acctid ${stripeAcctId} and organizerId ${organizerId}`);
 
-    const { data:liveStripeStatus, isLoading } = useQuery(['validateStripeStatus',organizerId], async () => {
-    const res = await axiosClient.get(`/payment/connect-status/${stripeAcctId}`);
-    console.log('stripe validation details from backend', res?.data);
-    return res.data;
+    const { data:liveStripeStatus, isLoading } = useQuery(['validateStripeStatus',organizerId], 
+    async () => {
+        const res = await axiosClient.get(`/payment/connect-status/${organizerId}/${stripeAcctId}`);
+        console.log('stripe validation details from backend', res?.data);
+        return res.data;
+    },
+    {
+        staleTime: 1000 * 60 * 5,
+        enabled: !!stripeAcctId
+    }
+    );
+
+    const { data:liveStripeTaxStatus, isLoading:isTaxLoading } =
+    useQuery(['gettaxStatus',organizerId], async () => {
+        const res = await axiosClient.get(`/payment/gettaxstatus/${stripeAcctId}`);
+        console.log('stripe tax status from backend', res?.data);
+        
+        return res.data;
     },
     {
     staleTime: 1000 * 60 * 5,
     enabled: !!stripeAcctId
     }
     );
-
-    const { data:liveStripeTaxStatus, isLoading:isTaxLoading } = useQuery(['gettaxStatus',organizerId], async () => {
-    const res = await axiosClient.get(`/payment/gettaxstatus/${stripeAcctId}`);
-    console.log('stripe tax status from backend', res?.data);
-    
-    return res.data;
-    },
-    {
-    staleTime: 1000 * 60 * 5,
-    enabled: !!stripeAcctId
-    }
-    );
-    
-
-  useEffect(() => {
-      console.log('MemberInfo changed:', organizerInfo);
-      if (organizerInfo) {
-        setStripeAcctId(organizerInfo.stripeAccountId);
-        setStripeStatus(organizerInfo.stripeConnectStatus);   
-      }
-    }, [organizerInfo]);
     
 
   const createStripeAccount = async()=>{
     try
     {
+        toast.loading("Redirecting to stripe for account creation...");
         const res = await axiosClient.post(`/payment/create-account/${organizerId}`, { headers: {
         'Content-Type': 'application/json'}
     });
@@ -77,6 +70,7 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
   const linkStripeAccount = async(stripeId:string | undefined) =>{
     try
     {
+        toast.loading("Redirecting to stripe for account linking...");
         const res = await axiosClient.post(`/payment/initiate-account-link/${organizerId}`,stripeId,
         {
              headers: {
@@ -100,12 +94,12 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
   
   return (  
      
-    <div className="max-w-md mx-auto  text-center">
+    <div className="max-w-md mx-auto">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col items-center">
          {/* <Toaster position="top-right" /> */}
          {/**We have nothing with stripe*/}
-         {(!stripeAcctId || !stripeStatus) &&(
+         {(!stripeAcctId || !liveStripeStatus.connected) &&(
             <div className="flex items-center">
                 <button 
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
@@ -116,46 +110,74 @@ const [stripeStatus,setStripeStatus] = useState(organizerInfo?.stripeConnectStat
             </div>
          )}
          
-         {/*We have stripe id but live status is false */}
-         {(stripeAcctId && !liveStripeStatus)  &&(
+         {/*We have stripe id. Lets check if something is pending */}
+         {(stripeAcctId && liveStripeStatus.connected)  && (
             <>
-            <label className="font-semibold text-secondary-color items-center">Your Stripe connection for stripe account <i>{stripeAcctId}</i> is not complete.</label>
-            {stripeStatus === "RequirementsPending" &&(
-                 <label className="font-semibold text-secondary-color mt-2">There are requirments pending on your stripe account.</label>
-            )}
+            <div className="font-semibold text-secondary-color">Stripe Integration Checklist for <i>{stripeAcctId}</i></div>
+            
+            <div className="flex flex-col mt-2">
+                <div className="font-semibold text-secondary-color">
+                    <span>{!liveStripeStatus.requirementsPending ? "✅" : "❌"} Requirements Collected</span>
+                </div>
 
-            <div 
-            className="bg-brand-dark text-white text-xs mt-2  text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-            onClick={()=>linkStripeAccount(stripeAcctId)}
-            >
-                Complete Stripe Connection
+                <div className="font-semibold text-secondary-color mt-2">
+                    <span>{liveStripeStatus.chargesEnabled ? "✅" : "❌"} Charges Enabled</span>
+                    {!liveStripeStatus.chargesEnabled && <p className="error">Stripe is still verifying your business details.</p>}
+                </div>
+
+                <div className="font-semibold text-secondary-color mt-2">
+                    <span>{liveStripeStatus.payoutsEnabled ? "✅" : "❌"} Bank Account Verified for Payouts</span>
+                </div>
             </div>
-            </>
-         )}
-
-
-         {liveStripeStatus &&(
-            <>
-            <label className="font-semibold text-go-color mt-2">You are all connected to Stripe!</label>
-            <label className="font-semibold text-go-color mt-2">Stripe Acct Id: {stripeAcctId}</label>
-            </>
-         )}
+            
+           {!liveStripeStatus.chargesEnabled || 
+            !liveStripeStatus.payoutsEnabled || 
+            !liveStripeStatus.detailsSubmitted ||
+            liveStripeStatus.requirementsPending
+            ? (
+                <button 
+                    className="bg-brand-dark text-white text-xs mt-2  text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                    onClick={()=>linkStripeAccount(stripeAcctId)}
+                    >
+                    Complete Stripe Connection
+                </button>
+             )
+            : 
+            (
+                 <div className="flex flex-col mt-2">
+                    <div className="font-semibold text-go-color mt-2">You are all connected to Stripe!</div>
+                   
+                    {/* <div className="font-semibold text-go-color mt-2">Stripe Acct Id: {stripeAcctId}</div> */}
+                
+                </div>
+            )
+            
+        }
 
          {liveStripeTaxStatus && liveStripeTaxStatus == "active" &&(
-            <>
-            <label className="font-semibold text-go-color mt-2">Your tax status is active!</label>
-            </>
+          
+            <div className="font-semibold text-secondary-color mt-2">
+                    <span>{"✅"} Tax Status: Active</span>
+            </div>
+           
+           
          )}
 
           {liveStripeTaxStatus && liveStripeTaxStatus == "pending" &&(
             <>
-            <label className="font-semibold text-secondary-color mt-2">Please update your tax information by visiting  https://dashboard.stripe.com/tax/setup.</label>
+             <div className="font-semibold text-secondary-color mt-2">
+                    <span>{"❌"} Tax Status: Pending</span>
+            </div>
+            <div className="font-semibold text-secondary-color mt-2">Please update your tax information by 
+                visiting  https://dashboard.stripe.com/tax/setup.</div>
             </>
          )}
          
-      </div>
 
-  </div>
+        </>
+         )}
+      </div>
+    </div>
  
-  );
+  )
 }

@@ -13,7 +13,10 @@ select * from eventuser where Email = 'newuser1@gmail.com'
 select * 	from EVENTs where EventName like 'Drin%'
 
 	
-
+select * from eventorganizer where CustomerId=40
+update eventorganizer
+set OrganizerCountry='US'
+where CustomerId=40
 
 CREATE TABLE `eventfeeoverrides` (
   `EventId` int NOT NULL,
