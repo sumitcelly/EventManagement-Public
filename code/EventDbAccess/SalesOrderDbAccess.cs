@@ -14,9 +14,11 @@ namespace EventManagementDbAccess
 {
     public class SalesOrderDbAccess :BaseDbAccess
     {
+        
         private EventItemTypeDbAccess _eventTypeAccess;
         private readonly TicketAccess _ticketAccess;
         private readonly string _encryptionKey;
+        private readonly IConfiguration _configuration;
         public SalesOrderDbAccess(IConfiguration configuration, 
                                     ILogger<SalesOrderDbAccess> logger, 
                                     EventItemTypeDbAccess eventItemTypeDbAccess,
@@ -27,6 +29,7 @@ namespace EventManagementDbAccess
             _eventTypeAccess = eventItemTypeDbAccess;
             _ticketAccess = ticketAccess;
             _encryptionKey = encryptionOptions.Value.SecretKey;
+            _configuration = configuration;
         }
         
         public async Task<int> CreateSalesOrder(SalesOrder order)
@@ -207,7 +210,7 @@ namespace EventManagementDbAccess
 
         public async Task<bool> FinalizeSalesOrder(int salesOrderId, string paymentIntentId, decimal salesTotal,
                                                 decimal platformFees, decimal totalFeesForTrans,
-                                                decimal salesTax)
+                                                decimal salesTax, bool simulationMode = false)
         {
             if (salesOrderId < 0)
                 throw new ArgumentException("Either salesOrderId  must be provided.");
@@ -235,7 +238,7 @@ namespace EventManagementDbAccess
             { 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@status", (int)SalesOrderStatus.PaymentSucceeded);
-                cmd.Parameters.AddWithValue("@orderCode",PasswordGenerator.GetPassword()); 
+                cmd.Parameters.AddWithValue("@orderCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]); 
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@paymentIntentId", paymentIntentId);   
                 cmd.Parameters.AddWithValue("@salesTotal", salesTotal);
@@ -268,7 +271,7 @@ namespace EventManagementDbAccess
                     _logger.LogWarning($"Order with id {salesOrderId} not found in cache");
                 }
 
-                bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId,connection, mySqlTransaction);
+                bool result =await _ticketAccess.FinalizeTicketsForOrder(salesOrderId,connection, mySqlTransaction, simulationMode);
                 if (!result)
                 {
                     throw new Exception($"Failed to finalize tickets for salesOrderid {salesOrderId}");

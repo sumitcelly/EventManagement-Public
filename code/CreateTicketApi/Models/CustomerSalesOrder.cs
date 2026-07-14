@@ -16,6 +16,7 @@ public class CustomerSalesOrder
 
     public string CheckoutSessionId {get;set;} = string.Empty;
     public string CheckoutSessionSecret {get;set;} = string.Empty;
+    public string CheckoutSessionPublishableKey {get;set;} = string.Empty;
 
     public string StripeConnectedAccountId {get;set;} = string.Empty;
     public bool PaymentRequired { get; set; } = false;
@@ -26,6 +27,8 @@ public class CustomerSalesOrder
     public List<ErrorResponseSalesOrderItems> SalesOrderItemsError { get; set; } = new List<ErrorResponseSalesOrderItems>();
 
     // Additional properties can be added as needed
+
+    public bool SimulationMode { get; set; } = false;
 }
 
 public class ErrorResponseSalesOrderItems

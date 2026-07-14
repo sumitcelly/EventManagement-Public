@@ -27,13 +27,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // });
 
+builder.Configuration["HostEnvironment:Name"] = builder.Environment.EnvironmentName;
+
 if (builder.Environment.IsDevelopment())
 {
     Console.WriteLine("Env is  dev");
     // You can force a specific local profile for dev only
     //Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
 }
-else
+else    
 {
     Console.WriteLine($"Env is  {builder.Environment.IsProduction()}");
 }

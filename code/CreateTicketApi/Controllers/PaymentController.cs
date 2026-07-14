@@ -320,7 +320,7 @@ namespace CreateTicketApi.Controllers
             _logger.LogInformation(json);
             try
             {
-                var stripeEvent = StripeAccess.GetWebhookEventAndRefIdReceived(json, HttpContext.Request.Headers);
+                var stripeEvent = _stripeAccess.GetWebhookEventAndRefIdReceived(json, HttpContext.Request.Headers);
                 if (stripeEvent == null)
                 {                          
                     _logger.LogError("Invalid Stripe webhook event data.");
@@ -347,7 +347,8 @@ namespace CreateTicketApi.Controllers
                                                                                 stripeEvent.OrderTotal,
                                                                                 stripeEvent.PlatformFees,
                                                                                 stripeEvent.TotalFeesForTransaction,
-                                                                                stripeEvent.TotalTax
+                                                                                stripeEvent.TotalTax,
+                                                                                stripeEvent.SimulationMode
                                                                                );
                             if (!result)
                             {

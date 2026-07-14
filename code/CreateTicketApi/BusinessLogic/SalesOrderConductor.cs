@@ -167,7 +167,6 @@ public class SalesOrderConductor
                     EventItemType = new EventItemType
                     {
                         EventItemTypeId = item.EventTicketTypeId,
-
                     },
                     TicketCode = !paymentRequired?EventUtils.PasswordGenerator.GetPassword():null
                     // Generate a unique ticket code only if payment is not required otherwise
@@ -175,7 +174,7 @@ public class SalesOrderConductor
                 };
                 itemList.Add(salesItem);
             }
-            int result = await _ticketDbAccess.AddEventTickets(itemList);
+            int result = await _ticketDbAccess.AddEventTickets(itemList, customerSalesOrder.SimulationMode);
             if (result <0)
             {
                 string error = result == -1 ? "Ticket are sold out for this item." : "An error occurred while creating ticket.";
@@ -235,7 +234,7 @@ public class SalesOrderConductor
                 }
                 paymentModel.LineItems = checkoutItems ?? new List<PaymentLineItemModel>();
               
-                Tuple<string,string> result = await _stripeAccess.CreateCheckoutSession(customerSalesOrder.StripeConnectedAccountId,
+                Tuple<string,string,string> result = await _stripeAccess.CreateCheckoutSession(customerSalesOrder.StripeConnectedAccountId,
                                                     paymentModel,
                                                     customerSalesOrder.EmailAddress, 
                                                     customerSalesOrder.ZipCode,
@@ -243,6 +242,7 @@ public class SalesOrderConductor
                                                     platformFeeOverride: _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId).Result?.CustomPercentage);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
+                salesOrderReturn.CheckoutSessionPublishableKey = result.Item3;
                 await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.Reserved,result.Item2);
                 _logger.LogInformation($"Sales order {orderId} checkout created with session id {result.Item2}");
             }

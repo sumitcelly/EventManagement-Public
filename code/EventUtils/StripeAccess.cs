@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using Microsoft.Extensions.Logging;
-
 using Amazon.Runtime.Internal.Util;
 using System.Threading.Tasks;
 using System.Collections;
@@ -51,12 +50,15 @@ public class StripeAccess
 
     public static readonly string _defaultMechandiseTaxCode = "txcd_99999999"; // Default tax code for merchandise
 
-    public StripeAccess(IConfiguration configuration, Microsoft.Extensions.Logging.ILogger<StripeAccess> logger)
+    private static IConfiguration _configuration;
+    public StripeAccess(IConfiguration configuration, 
+                        Microsoft.Extensions.Logging.ILogger<StripeAccess> logger)
     {
         if (configuration == null)
         {
             throw new ArgumentNullException(nameof(configuration), "Configuration cannot be null.");
         }
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration), "Configuration cannot be null.");
 
         if (logger == null)
         {
@@ -83,7 +85,7 @@ public class StripeAccess
         _stripeFeePercentage= Convert.ToDecimal(configuration["Fees:Stripe"]);
         _stripeFixedFee= Convert.ToInt64(configuration["Fees:StripeFixed"]);
         _floorFee= Convert.ToInt64(configuration["Fees:Floor"]);
-
+       
         logger.LogInformation($"Initializing Stripe API with provided configuration. {StripeConfiguration.ApiVersion}");
     }
 
@@ -466,10 +468,11 @@ public class StripeRefundHandler
     /// <returns>Tuple containing client secret to be used by UI (Item1) and
     /// SessionId (item2)</returns>
     /// <exception cref="ArgumentException"></exception>
-    public async Task<Tuple<string, string>> CreateCheckoutSession(string stripeAccountID, PaymentModel paymentModel,
+    public async Task<Tuple<string, string,string>> CreateCheckoutSession(string stripeAccountID, PaymentModel paymentModel,
                                                                 string customerEmailAddress, string zipCode,
                                                                 bool passOnAllFeesToCustomer = false,
-                                                                decimal? platformFeeOverride = null)
+                                                                decimal? platformFeeOverride = null,
+                                                                bool simulationMode = false)
     {
         
         if (string.IsNullOrEmpty(stripeAccountID))
@@ -544,7 +547,8 @@ public class StripeRefundHandler
                 { "EventId", paymentModel.EventId.ToString() },
                 { "PlatformFees", appFees.ToString() },
                 { "TotalFeesForTransaction", totalFeesForTrans.ToString() },
-                { "PassOnAllFeesToCustomer", passOnAllFeesToCustomer.ToString() }
+                { "PassOnAllFeesToCustomer", passOnAllFeesToCustomer.ToString() },
+                {"SimulationMode", simulationMode.ToString() }
             },
             PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
             {
@@ -642,15 +646,19 @@ public class StripeRefundHandler
         var requestOptions = new RequestOptions
         {
             StripeAccount = stripeAccountID,
-            
         };
+        if (simulationMode)
+        {
+            _logger.LogInformation($"Simulation mode is enabled. Using test Stripe key for account {stripeAccountID}.");
+            requestOptions.ApiKey =  SimulationModeStripeSecret;
+        }
         var service = new Stripe.Checkout.SessionService();
         
         Stripe.Checkout.Session session = await service.CreateAsync(options, requestOptions);
         _logger.LogInformation($"Stripe session created with ID: {session.Id}");
         _logger.LogInformation($"session details {session.ReturnUrl}", session.Url);
         ///return the client secret to the frontend to complete the payment
-        return new Tuple<string, string>(session.ClientSecret, session.Id);
+        return new Tuple<string, string,string>(session.ClientSecret, session.Id,simulationMode?SimulationModeStripePK:_configuration["Stripe:PublishableKey"]);
     }
 
 
@@ -807,7 +815,16 @@ public class StripeRefundHandler
       
     }
 
-    public static StripeWebHookData GetWebhookEventAndRefIdReceived(string json, IDictionary<string, StringValues> request)
+    /// <summary>
+    /// In development or test environments, this property retrieves the Stripe test secret key from configuration appsettings file.
+    /// </summary>
+    private static string SimulationModeStripeSecret => _configuration["Stripe:TestSecretKey"] ?? _configuration["Stripe:SecretKey"];
+    
+    private static string SimulationModeStripePK => _configuration["Stripe:TestPublishableKey"] ?? _configuration["Stripe:PublishableKey"];
+    
+    private static string SimulationWebhookSecret => _configuration["Stripe:TestWebhookSecret"] ?? _configuration["Stripe:WebhookSecret"];
+    
+    public StripeWebHookData GetWebhookEventAndRefIdReceived(string json, IDictionary<string, StringValues> request)
     {
         if (request == null)
         {
@@ -825,19 +842,55 @@ public class StripeRefundHandler
             throw new ArgumentException("Stripe-Signature header cannot be null or empty.");
         }
 
-        var stripeEvent = EventUtility.ConstructEvent(
-               json,
-              signature,
-               WebhookSecret,
-               throwOnApiVersionMismatch: false
-           );
+        Event stripeEvent= null;
+        try
+        {
+            stripeEvent = EventUtility.ConstructEvent(
+                json,
+                signature,
+                WebhookSecret,
+                throwOnApiVersionMismatch: false
+            );
+        }
+        catch (StripeException)
+        {
+            try
+            {
+                // Fallback: If verification fails, try validating against your test/sandbox secret
+                if (!string.IsNullOrEmpty(SimulationWebhookSecret))
+                {
+                    _logger.LogInformation("Attempting to verify webhook signature using the simulation webhook secret.");
+                    stripeEvent = EventUtility.ConstructEvent(json, signature, SimulationWebhookSecret, throwOnApiVersionMismatch: false);
+                }
+            }
+            catch (StripeException)
+            {
+                _logger.LogError("Invalid Stripe webhook signature. Verification failed for both production and simulation secrets.");
+               throw new InvalidOperationException("Failed to construct Stripe event from the request.");
+            }
+        }
 
+      
         if (stripeEvent == null)
         {
             throw new InvalidOperationException("Failed to construct Stripe event from the request.");
         }
         else if (stripeEvent.Data.Object is Session session && session!=null)
         {
+            bool isSim = false;
+            if (session.Metadata.TryGetValue("SimulationMode", out string? simMode))
+            {
+                bool.TryParse(simMode, out isSim);
+            }
+            if (_configuration["HostEnvironment:Name"] == "Production"
+             && !stripeEvent.Livemode && !isSim)
+            {
+                // High-alert condition: Stripe says this is FAKE sandbox money, 
+                // but your internal metadata flag thinks it's a real purchase order!
+                _logger.LogCritical($"Security Alert: Mismatched livemode flag detected on session {session.Id}");
+                throw new InvalidOperationException("Livemode mismatch detected. Potential security issue.");
+            }
+
             decimal platformFeeAmt=0, totalFeesForTrans=0;
            
             if (session.Metadata.TryGetValue("PlatformFees", out string? tempId))
@@ -861,6 +914,7 @@ public class StripeRefundHandler
                 OrderTotal = session.AmountTotal.HasValue ? session.AmountTotal.Value:0,
                 CustomerEmail = session.CustomerEmail,
                 TotalTax = session.TotalDetails?.AmountTax ?? 0,
+                SimulationMode =  isSim
             };
         }
         else if (stripeEvent.Data.Object is Refund refund && refund!=null)
@@ -882,6 +936,7 @@ public class StripeRefundHandler
                 RefundStatus = refund.Status,
                 RefundAmount = refund.Amount,
                 CustomerEmail = email ?? string.Empty,
+                SimulationMode = false
             };
         }
         else if (stripeEvent.Data.Object is Account account && account!=null)
@@ -941,6 +996,8 @@ public class StripeWebHookData
     public long TotalTax { get; internal set; }
 
     public bool ChargedEnabled {get;set;} = false;
+
+    public bool SimulationMode { get; set; } = false;
 
     public override string ToString()
     {

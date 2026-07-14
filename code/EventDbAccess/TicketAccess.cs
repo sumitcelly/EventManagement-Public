@@ -21,9 +21,11 @@ namespace EventManagementDbAccess
     public class TicketAccess : BaseDbAccess
     {
         private EventItemTypeDbAccess _eventTypeAccess;
+        private readonly IConfiguration _configuration;
         public TicketAccess(IConfiguration config, ILogger<TicketAccess> logger, EventItemTypeDbAccess itemTypeDbAccess, IDistributedCache cache) : base(config, logger, cache)
         {
             _eventTypeAccess = itemTypeDbAccess;
+            _configuration = config;
         }
         public async Task<string> ValidateTicket(string code, int eventId)
         {
@@ -34,6 +36,11 @@ namespace EventManagementDbAccess
             if (eventId < 0)
             {
                 throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+            if (code == _configuration["SimulationModeCode"])
+            {
+                _logger.LogInformation($"Simulation mode code {code} used for event {eventId}. Ticket validation successful.");
+                return "SimulationMode:Successful but cannot grant access to event.";
             }
             bool retVal = false;
             try
@@ -180,7 +187,10 @@ namespace EventManagementDbAccess
             return ticket;
         }
 
-        public async Task<bool> FinalizeTicketsForOrder(int orderID, MySqlConnection mySqlConnection, MySqlTransaction transaction)
+        public async Task<bool> FinalizeTicketsForOrder(int orderID,
+                                 MySqlConnection mySqlConnection, 
+                                 MySqlTransaction transaction,
+                                 bool simulationMode = false)
         {
             if (orderID <= 0)
             {
@@ -216,7 +226,7 @@ namespace EventManagementDbAccess
                             where TicketId=@ticketId";
                         using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
                         updateCmd.Parameters.AddWithValue("@modifiedAt",DateTime.UtcNow);
-                        updateCmd.Parameters.AddWithValue("@ticketCode",PasswordGenerator.GetPassword());
+                        updateCmd.Parameters.AddWithValue("@ticketCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]);
                         updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
                         updateCmd.Parameters.AddWithValue("@status", TicketStatus.Live.ToString());
                         int rowsAffected = updateCmd.ExecuteNonQuery();
@@ -292,7 +302,7 @@ namespace EventManagementDbAccess
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="InvalidDataException"></exception>
-        public async Task<int> AddEventTickets(List<EventSalesItem> tickets, bool insertTicketCode = true)
+        public async Task<int> AddEventTickets(List<EventSalesItem> tickets, bool simulationMode = false)
         {
             int retVal =0;
             if (tickets == null)
@@ -320,8 +330,16 @@ namespace EventManagementDbAccess
                 try
                 {
                     StringBuilder sb = new StringBuilder();
-                    await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction);
-                  
+                    if (!simulationMode)
+                    {
+                        //update the sold count in cache first. If this fails, we will not proceed to insert tickets
+                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Simulation mode enabled. Not updating sold count in cache for eventId: {eventId.Value}, itemType: {itemType.Value}, ticketsCount: {tickets.Count}");
+                    }
+                    
                     sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");

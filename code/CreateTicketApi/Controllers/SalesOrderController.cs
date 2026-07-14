@@ -46,6 +46,10 @@ namespace CreateTicketApi.Controllers
             if (order == null)
                 return BadRequest("Order is null.");
 
+            if (order.SimulationMode)
+            {
+                _logger.LogInformation("Simulation mode enabled for sales order creation.");
+            }
             var result = await _salesOrderConductor.CreateSalesOrder(order);
             if (result.Item1 == null)
                 return StatusCode(500, "Failed to create sales order.");

@@ -1,0 +1,17 @@
+simulation mode
+
+The idea is to give the organizer some comfort before publishing
+an event.
+
+On the publish page, a button starts a ticket buy page for the eventbut in simulation mode.
+In this  the page displays the mode name and that no real money will change hands and a fake CC
+is used.
+When the user clicks buy, an order is generated but no tickets are deducted from the total count.
+Createcheckoutsession is called with this flag which triggers stripe in test mode.
+stripe test checkout is shown to the user with instructions on top to use the fake CC.
+
+When the transaction complets, webhook codes will generate a fake QR code maybe with QR string of "FAKETIICKET"
+How do we know about fake mode here? maybe pass in stripe checkout.
+
+On the ticket confirm page, show instrcuction on how to check transaction with test mode .
+
