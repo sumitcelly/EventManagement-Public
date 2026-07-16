@@ -22,7 +22,7 @@ export default function EventDetails() {
   const history = useHistory();
   const dispatch = useAppDispatch();
   const location = useLocation();
-  const {mode}  = location.state as any || {};
+  const {mode, simulationMode}  = location.state as any || {};
   const user = useAppSelector((state:RootState) => state.auth.user);
  
 
@@ -91,7 +91,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     dispatch(updateEvent({event}));
     //need to think if this needs to be done after checking if the event id is different than the above?
     dispatch(resetCart());
-    history.push(`/buytickets/${eventDetails.eventId}`);
+    history.push(`/buytickets`,{id: eventDetails.eventId, simulationMode: simulationMode});
   }
   
   if (isLoading) return <p>Loading...</p>;

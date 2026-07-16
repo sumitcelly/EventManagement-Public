@@ -10,6 +10,8 @@ ON eventorganizermembers (InvitationToken);
 select * from eventuser where Email = 'newuser1@gmail.com'
 
 
+select * from events where eventid=37
+select * from eventitemtype where eventid=37
 select * 	from EVENTs where EventName like 'Drin%'
 
 	

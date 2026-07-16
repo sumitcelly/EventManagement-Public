@@ -19,6 +19,8 @@ public class SalesOrderConductor
     private readonly EventDbAccess _eventDbAccess;
 
     private readonly EventOverrideBaseDbAccess _eventOverrideDbAccess;
+
+    private readonly EventOrganizerDBAccess _eventOrganizerDbAccess;
     public SalesOrderConductor(ILogger<SalesOrderConductor> logger, SalesOrderDbAccess dbAccess, TicketAccess ticketAccess,
                     EventOrganizerDBAccess eventOrganizerDbAccess, UserDbAccess attendeeDbAccess, EventItemTypeDbAccess eventItemTypeDbAccess,
                     EmailUtils emailUtils, StripeAccess stripeAccess, EventDbAccess eventDbAccess, EventOverrideBaseDbAccess eventOverrideDbAccess)
@@ -48,6 +50,7 @@ public class SalesOrderConductor
         _emailUtils = emailUtils;
         _eventDbAccess = eventDbAccess;
         _eventOverrideDbAccess = eventOverrideDbAccess;
+        _eventOrganizerDbAccess = eventOrganizerDbAccess;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _logger.LogInformation("SalesOrderConductor initialized.");
     }
@@ -83,6 +86,10 @@ public class SalesOrderConductor
         
         //Todo:Need to compare price of item from ui with price in db for eventitemtype table and warn user if there is a mismatch.
         //
+
+        EventOrganizer organizer = await _eventOrganizerDbAccess.GetOrganizerById(customerSalesOrder.CustomerId);
+        if (organizer == null)
+            throw new Exception($"Invalid CustomerId {customerSalesOrder.CustomerId} sent");
    
         EventUser attendee;
         bool guestMode = false;
@@ -121,11 +128,23 @@ public class SalesOrderConductor
             }
         }
 
+        List<EventItemType> eventItemTypes = await _eventItemTypeDbAccess.GetAllEventItemTypesByEventId(customerSalesOrder.EventId);
+        if (eventItemTypes == null || eventItemTypes.Count == 0)
+            throw new Exception($"No EventItemTypes found for EventId {customerSalesOrder.EventId}");
         bool paymentRequired = customerSalesOrder.SalesOrderItems.Any(item => item.Cost > 0);
 
         if (paymentRequired && string.IsNullOrEmpty(customerSalesOrder.ZipCode))
         {
             throw new Exception("Zipcode is required for paid orders");
+        }
+        if (paymentRequired && string.IsNullOrEmpty(organizer.StripeAccountId))
+        {
+            throw new Exception("Organizer does not have a valid stripe account id");
+        }
+    
+        if (paymentRequired && organizer.StripeConnectStatus != StripeAccountStatus.Completed.ToString())
+        {
+            throw new Exception("Organizer does not have a valid stripe connect status");
         }
         // Create the sales order
         var salesOrder = new SalesOrder
@@ -153,6 +172,35 @@ public class SalesOrderConductor
                 throw new ArgumentException("EventTicketTypeId cannot be null or empty.", nameof(item.EventTicketTypeId));
             if (item.Quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than zero.", nameof(item.Quantity));
+            var eventItemType = eventItemTypes.FirstOrDefault(e => e.EventItemTypeId == item.EventTicketTypeId);
+            if (eventItemType == null)
+            {
+                throw new Exception($"Invalid EventTicketTypeId {item.EventTicketTypeId} sent for EventId {customerSalesOrder.EventId}");
+            }
+            if (eventItemType.TotalAllowed < eventItemType.TicketsSold + item.Quantity)
+            {
+                errorItems.Add(new ErrorResponseSalesOrderItems
+                {
+                    EventItemTypeId = item.EventTicketTypeId,
+                    PaymentRequired = item.Cost > 0,
+                    Error = "Ticket are sold out for this item."
+                });
+                _logger.LogInformation($"Ticket are sold out for Item {eventItemType.Name} for EventId {customerSalesOrder.EventId}");
+                break;
+            }
+            if (eventItemType.Cost != item.Cost)
+            {
+                errorItems.Add(new ErrorResponseSalesOrderItems
+                {
+                    EventItemTypeId = item.EventTicketTypeId,
+                    PaymentRequired = item.Cost > 0,
+                    Error = $"Price mismatch for EventTicketTypeId {item.EventTicketTypeId}. Expected: {eventItemType.Cost}, Received: {item.Cost}"
+                });
+                _logger.LogInformation($"Price mismatch for EventTicketTypeId {item.EventTicketTypeId}. Expected: {eventItemType.Cost}, Received: {item.Cost}");
+                break;
+            }
+            _logger.LogInformation(@$"Prevalidation checks passed.
+                                     Creating {item.Quantity} tickets for EventTicketTypeId {item.EventTicketTypeId} for SalesOrderId {orderId}");
             List<EventSalesItem> itemList = new List<EventSalesItem>();
 
             for (int i = 0; i < item.Quantity; i++)
@@ -168,7 +216,7 @@ public class SalesOrderConductor
                     {
                         EventItemTypeId = item.EventTicketTypeId,
                     },
-                    TicketCode = !paymentRequired?EventUtils.PasswordGenerator.GetPassword():null
+                    TicketCode = !paymentRequired?PasswordGenerator.GetPassword():null
                     // Generate a unique ticket code only if payment is not required otherwise
                     //wait until payment is confirmed
                 };
@@ -198,13 +246,14 @@ public class SalesOrderConductor
         }
         else
         {
-            if (!customerSalesOrder.PaymentRequired)
+            if (!paymentRequired)
             {
                 await _emailUtils.SendOrderConfirmationEmail(salesOrder, attendee);
                 await _dbAccess.UpdateSalesOrderStatusAndStripeSessionId(orderId, SalesOrderStatus.OrderCompleted, string.Empty);
             }
             else
             {
+               
                 Event eventData = await _eventDbAccess.GetEventDetailsById(customerSalesOrder.EventId);   
                 if (eventData == null)
                     throw new Exception("Invalid event Id sent");
@@ -234,12 +283,13 @@ public class SalesOrderConductor
                 }
                 paymentModel.LineItems = checkoutItems ?? new List<PaymentLineItemModel>();
               
-                Tuple<string,string,string> result = await _stripeAccess.CreateCheckoutSession(customerSalesOrder.StripeConnectedAccountId,
+                Tuple<string,string,string> result = await _stripeAccess.CreateCheckoutSession(organizer.StripeAccountId,
                                                     paymentModel,
                                                     customerSalesOrder.EmailAddress, 
                                                     customerSalesOrder.ZipCode,
                                                     eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll,
-                                                    platformFeeOverride: _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId).Result?.CustomPercentage);
+                                                    platformFeeOverride: _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId).Result?.CustomPercentage,
+                                                    simulationMode: customerSalesOrder.SimulationMode);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;
                 salesOrderReturn.CheckoutSessionPublishableKey = result.Item3;

@@ -156,7 +156,33 @@ export default function OrderConfirmation() {
                       </div>
                       <div className="text-center mb-4">
                         Your order reference code is <span className="font-bold">{salesOrderData.salesOrderCode}</span>
-                      </div>               
+                      </div>     
+                      {salesOrderData.salesOrderCode.startsWith("TESTTICKET") && (
+                        <div className="text-center mb-4 text-red-600">
+                          
+                          <div className="mt-4 p-4 text-left max-w-md mx-auto bg-red-50 rounded-xl border border-red-200 shadow-sm flex flex-col space-y-3">
+                            <div className="flex items-center space-x-2 text-sm font-bold text-red-900 justify-center sm:justify-start">
+                              <span>📊</span>
+                              <h4>Verify This Inside Stripe</h4>
+                            </div>
+                            <p className="text-xs text-red-800/90 leading-relaxed text-center sm:text-left">
+                              Your checkout pipeline is completely functional! Because this was a sandbox simulation, no real currency was moved. To audit the transaction log data:
+                            </p>
+                            <ol className="text-xs text-red-900/90 space-y-2 pl-5 list-decimal leading-relaxed">
+                              <li>
+                                Log into your primary 
+                                <a href="https://stripe.com" target="_blank" rel="noreferrer" className="underline font-semibold hover:text-red-700">Stripe Dashboard</a>.
+                              </li>
+                              <li>
+                                Locate the global <strong className="text-red-950 font-bold">"Test Mode"</strong> toggle switch in the upper-right corner and flip it <strong className="text-red-950 font-bold">ON</strong>.
+                              </li>
+                              <li>
+                                Navigate straight to the <strong className="text-red-950 font-bold">Payments</strong> tab to view your simulated checkout ledger.
+                              </li>
+                            </ol>            
+                          </div>
+                        </div>
+                      )}          
                       <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
                             salesOrderCode={salesOrderData.salesOrderCode || ""} 
                             qrBase64String={salesOrderData.salesOrderQrCodeImage}/>

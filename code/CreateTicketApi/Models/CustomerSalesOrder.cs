@@ -17,10 +17,6 @@ public class CustomerSalesOrder
     public string CheckoutSessionId {get;set;} = string.Empty;
     public string CheckoutSessionSecret {get;set;} = string.Empty;
     public string CheckoutSessionPublishableKey {get;set;} = string.Empty;
-
-    public string StripeConnectedAccountId {get;set;} = string.Empty;
-    public bool PaymentRequired { get; set; } = false;
-
     public int SalesOrderId { get; set; } = 0;
     public List<SalesOrderItems> SalesOrderItems { get; set; } = new List<SalesOrderItems>();
 

@@ -7,9 +7,10 @@ import CartTotal from "../components/CartTotal"
 import { TicketFormValues, Ticket } from "../types/Tickets";
 import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
-import { useHistory, useParams } from "react-router";
+import { useHistory, useLocation, useParams } from "react-router";
 import OrderSummary from "./OrderSummaryDefunct";
 import EventSummary from "../components/EventSummary";
+import SimulationInfo from "../components/SimulationInfo";
 import axiosClient from "../api/axiosClient";
 import { useQuery } from "react-query";
 import { useEffect, useState } from "react";
@@ -67,6 +68,7 @@ const schema = yup.object({
 
 export default function BuyTickets() {
 
+  const location = useLocation();
   const history = useHistory();
   const dispatch = useAppDispatch();
   const  cart = useAppSelector((state:RootState) => state.cart);
@@ -76,7 +78,7 @@ export default function BuyTickets() {
   const [stripeSessionId,setStripeSessionId] = useState<string | null>(null);
 
   const ionRouter = useIonRouter();
-  const { id } = useParams<{ id: string }>();
+  const { id, simulationMode ,organizerId} = location.state as any || {};
   const [checkoutError,setcheckoutError] = useState([]);
   console.log('stripe session id in buy tickets',stripeSessionId);
   
@@ -103,7 +105,7 @@ export default function BuyTickets() {
   );
 
   console.log('tickettype is',ticketTypesList)
-  const { control,register, reset,handleSubmit,formState: { errors }, setError } = useForm<TicketFormValues>({
+  const { control,register, reset,handleSubmit,watch,formState: { errors }, setError } = useForm<TicketFormValues>({
       resolver: yupResolver(schema),
       defaultValues: {
         fullname: cart.fullname || user?.user?.name,
@@ -142,9 +144,13 @@ export default function BuyTickets() {
   if (error) console.error('Error fetching ticket types:', error);
   if (isLoading) return <p>Loading...</p>;
 
+  const watchedTickets = watch("tickets") ?? [];
+
   const onSubmit = async  (data: TicketFormValues) => {
+    const requiresPayment = paymentNeeded(data.tickets);
+
     // Custom validation: zipcode required only if payment is needed
-    if (paymentNeeded() && !data.zipCode?.trim()) {
+    if (requiresPayment && !data.zipCode?.trim()) {
       setError("zipCode", { message: "Zipcode is required" });
       return;
     }
@@ -157,7 +163,9 @@ export default function BuyTickets() {
     await checkout(data);
   };
  
-  const paymentNeeded =  ()=> ticketTypesList.some((t:any) => t.cost && t.cost > 0);
+  const paymentNeeded =  (tickets: TicketFormValues['tickets'] = []) =>
+    tickets.some((t: any) => (Number(t?.quantity) || 0) > 0 && (Number(t?.cost) || 0) > 0);
+  
   const checkout = async (formData:TicketFormValues) => {       
     try
     {
@@ -184,13 +192,12 @@ export default function BuyTickets() {
       const result = await axiosClient.post("/salesOrder", {
         userId: user == null || user.user?.guest? 0: user.user?.id, 
         eventId: id,
-        customerId: eventHeaderInfo.eventOrganizerId,
+        simulationMode: simulationMode,
+        customerId: eventHeaderInfo.eventOrganizerId || organizerId || 0,
         emailAddress: formData.email,
         zipCode: formData.zipCode,
         name: formData.fullname,
         deliveryType :"Email",
-        stripeConnectedAccountId: eventHeaderInfo.organizerStripeAccountId,
-        paymentRequired: paymentNeeded(),
         salesOrderItemsError:[],
         salesOrderItems: formData.tickets.filter(t=>t.quantity && t.quantity>0).map(t => ({ eventTicketTypeId: t.eventItemTypeId, quantity: t.quantity, cost: t.cost })),
       },
@@ -228,14 +235,15 @@ export default function BuyTickets() {
         else if (salesOrderData)
         {
           console.log('Successfully created order with orderCode:'+salesOrderData.salesOrderCode);
-          if (!paymentNeeded())
+          if (!paymentNeeded(watchedTickets))
           {
              toast.success("Created order successfully");
              history.push(`/orderconfirmation`, {orderData:salesOrderData, guestAlreadyExists: guestAlreadyExists});
           }
           else
           {
-            if (!salesOrderData?.checkoutSessionSecret || !salesOrderData?.checkoutSessionId)
+            if (!salesOrderData?.checkoutSessionSecret || !salesOrderData?.checkoutSessionId || 
+              !salesOrderData?.checkoutSessionPublishableKey)
             {
               console.log('Unable to proceed to payment due to incomplete setup.');
               toast.error("Unable to proceed to payment due to incomplete setup. Please try again later.");
@@ -246,7 +254,7 @@ export default function BuyTickets() {
             if (guestAlreadyExists)
               sessionStorage.setItem('stripe_checkout_guest_exists', JSON.stringify(guestAlreadyExists));
             console.log('Proceeding to payment with session id:',salesOrderData.checkoutSessionId);
-            history.push(`/orderpayment`, {salesOrderData:salesOrderData, id: id});
+            history.push(`/orderpayment`, {salesOrderData:salesOrderData, id: id, simulationMode: simulationMode});
           }
         }
       }
@@ -268,6 +276,7 @@ return (
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
         <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
           <EventSummary/>
+          {simulationMode ? <SimulationInfo /> : null}
         {/* <form onSubmit={handleSubmit(
   onSubmit,
   (errors) => console.log("validation errors", errors)
@@ -341,7 +350,7 @@ return (
     )}
 
     {/* Zipcode (Always visible if payment is needed) */}
-    {paymentNeeded() && (
+    {paymentNeeded(watchedTickets) && (
       <div className={(user.user?.guest || user.user == null) ? "mt-4" : ""}>
         <label className="block text-sm font-medium">Zipcode</label>
         <input type="text" {...register("zipCode")} className="border rounded px-3 py-2 w-full" />
@@ -359,7 +368,7 @@ return (
     </div>
 
     <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
-      {!paymentNeeded() ? 'Confirm Order' : 'Proceed to payment'}
+      {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}
     </button>
   </div>
 </div>

@@ -26,6 +26,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
   const [stripeFees, setStripeFees]=useState("0");
 
   const [feeMode, setFeeMode]=useState("0");
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const queryClient = useQueryClient();
   const refundModeRef = useRef<HTMLSelectElement>(null);
@@ -297,11 +298,79 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
 
             )}
         </div>
-        
+
+        {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+          
+          {/* Modal Container Card */}
+          <div className="relative bg-white max-w-lg w-full rounded-2xl p-6 shadow-2xl border border-slate-100 flex flex-col space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Header */}
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">🧪</span>
+              <h3 className="text-lg font-bold text-slate-900">Run a Checkout Simulation</h3>
+            </div>
+
+            {/* Description Paragraphs */}
+            <div className="text-slate-600 text-sm space-y-3 leading-relaxed">
+              <p>
+                Before publishing your event live to the public, let's verify that your 
+                ticket delivery system, email configurations, and Stripe account connections 
+                are functioning perfectly.
+              </p>
+              <p>
+                Clicking below will launch a secure sandbox environment. You will be redirected 
+                to a test payment page where you can complete a mock checkout using a fake credit card.
+              </p>
+            </div>
+
+            {/* Feature Highlights Grid */}
+            <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-700 space-y-2 border border-slate-100">
+              <div className="flex items-start space-x-2">
+                <span className="text-indigo-600 font-bold">👉</span>
+                <p><strong>What to expect:</strong> You will receive a fully functional test ticket in your email inbox complete with its scanning barcode.</p>
+              </div>
+              <div className="flex items-start space-x-2">
+                <span className="text-indigo-600 font-bold">👉</span>
+                <p><strong>Cost:</strong> Free ($0.00). No real money will be processed or charged.</p>
+              </div>
+            </div>
+
+            {/* Action Buttons Container */}
+            <div className="flex flex-col sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 pt-2">
+              <button 
+                onClick={() => {history.push(`/buytickets`,{id: eventId, simulationMode: true, organizerId: user?.customerId}); setIsModalOpen(false);}} 
+              
+                className="w-full sm:w-auto inline-flex justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-all"
+              >
+                Run Simulation
+              </button>
+              
+              <button 
+                onClick={() => setIsModalOpen(false)} 
+                // disabled={isLoading}
+                className="w-full sm:w-auto mt-2 sm:mt-0 inline-flex justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                Cancel and Dismiss
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       </div>
     
     {data && (
       <div className="flex flex-row mt-4">
+          <button
+                className="bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                onClick={() => setIsModalOpen(true)}
+                disabled={mutation.isLoading}
+              >
+                Run Checkout Simulation
+          </button>
+          <div className="flex-grow"></div>
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
                onClick={() => mutate({ status: isLiveRef.current?.checked || false, eventId: eventId, 

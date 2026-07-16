@@ -8,6 +8,7 @@ import { useLocation, useParams } from "react-router";
 import { Button } from "flowbite-react";
 import { useState, useEffect } from "react";
 import EventSummary from "../components/EventSummary";
+import SimulationInfo from "../components/SimulationInfo";
 import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import {loadStripe} from '@stripe/stripe-js';
@@ -19,8 +20,7 @@ import toast, { Toaster } from "react-hot-toast";
 import CountdownMinutes from "../components/CountdownMinutes";
 import Footer from "../components/Footer";
 
-const pkStripe =  import.meta.env.VITE_STRIPE_PK;
-const stripePromise = loadStripe(pkStripe);
+
 
 export default function OrderPayment() {
   const history = useHistory();
@@ -32,9 +32,11 @@ export default function OrderPayment() {
   console.log(`stripe account id is ${stripeAccountId}`);
 
   const location = useLocation();
-  const {salesOrderData,id} = location.state as any || {};
+  const {salesOrderData,id, simulationMode} = location.state as any || {};
   console.log('sales order',salesOrderData);
 
+  const pkStripe =  salesOrderData?.checkoutSessionPublishableKey || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
+  const stripePromise = loadStripe(pkStripe);
 
   //these will obtain from the url params after redirection from stripe checkout
   const params = new URLSearchParams(window.location.search);
@@ -139,7 +141,7 @@ export default function OrderPayment() {
               <Button
                 className="align-bottom mt-auto align-center ml-4"
                   size="xs"
-                  onClick={() => history.push(`/buytickets/${id}`)}
+                  onClick={() => history.push(`/buytickets`,{id:id})}
                   >
                   Back to Cart
               </Button>
@@ -168,7 +170,7 @@ export default function OrderPayment() {
               <Button
                 className="align-bottom mt-auto align-center ml-4"
                   size="xs"
-                  onClick={() => history.push(`/buytickets/${id}`)}
+                  onClick={() => history.push(`/buytickets`,{id:id})}
                   >
                   Back to Cart
               </Button>
@@ -191,7 +193,7 @@ export default function OrderPayment() {
               <Button
                 className="align-bottom mt-auto align-center ml-4"
                   size="xs"
-                  onClick={() => history.push(`/buytickets/${id}`)}
+                  onClick={() => history.push(`/buytickets`,{id:id})}
                   >
                   Back to Cart
               </Button>
@@ -214,7 +216,7 @@ export default function OrderPayment() {
               <Button
                 className="align-bottom mt-auto align-center ml-4"
                   size="xs"
-                  onClick={() => history.push(`/buytickets/${id}`)}
+                  onClick={() => history.push(`/buytickets`,{id:id})}
                   >
                   Back to Cart
               </Button>
@@ -242,6 +244,7 @@ export default function OrderPayment() {
 
       <div className="flex flex-col max-w-md mx-auto mt-6 border border-gray-300 rounded-lg p-6 shadow-lg">
         <EventSummary/>
+        {simulationMode ? <SimulationInfo /> : null}
         <div className="bg-brand-neutral rounded">
         <div className="text-xl font-bold font-heading mb-4 text-primary-color text-center mt-2">Complete your Payment</div>
         <div className="text-center text-bold mb-4">
@@ -254,7 +257,7 @@ export default function OrderPayment() {
             })
             .catch((error) => {
               console.error("Error cancelling checkout session:", error);
-              history.replace(`/buytickets/${eventHeaderInfo.eventId}`);
+              history.replace(`/buytickets`,{id: eventHeaderInfo.eventId});
             });
           }
         }/>

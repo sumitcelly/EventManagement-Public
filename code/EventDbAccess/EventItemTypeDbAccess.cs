@@ -66,56 +66,73 @@ namespace EventManagementDbAccess
                 throw;
             }
         }
-
-        // public async Task<EventItemType> GetEventItemTypeById(int eventItemTypeId)
-        // {
-        //     if (eventItemTypeId <= 0)
-        //         throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventItemTypeId));
-
-        //     string cacheKey = CacheHelper.GetCacheKey<EventItemType>(eventItemTypeId.ToString());
-        //     EventItemType? cachedEvent = await _cache.GetOrSetAsync<EventItemType>(cacheKey, () => GetEventItemTypeByIdFromDb(eventItemTypeId), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-        //     return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventItemTypeId} not found.") ;
-        // }
-
         
         public async Task<bool> UpdateTicketSoldCountInCache(int eventId, int eventItemTypeId, int quantity)
         {
-            bool success = false;
-            if (eventId<=0 || eventItemTypeId <= 0)
+            if (eventId <= 0 || eventItemTypeId <= 0)
             {
-                throw new ArgumentException($"Argument(s) are invalid");
+                throw new ArgumentException("Argument(s) are invalid");
             }
+
+            if (quantity == 0)
+            {
+                return true;
+            }
+
             try
-            {               
-                _logger.LogInformation($"{quantity} is available for evenitemtype {eventItemTypeId}.");
+            {
                 string cacheKey = CacheHelper.GetCacheKey<List<EventItemType>>(eventId.ToString());
-                _logger.LogInformation($"Found cache key{cacheKey}. Incrementing ticket sold by {quantity}");
+                _logger.LogInformation("Found cache key {CacheKey}. Updating ticket sold by {Quantity}", cacheKey, quantity);
+
                 var data = await _cache.GetOnlyAsync<List<EventItemType>>(cacheKey);
-                if (data != null)
+                if (data == null)
                 {
-                    _logger.LogInformation($"Found item in cache with eventid {eventId}");
-                    var itemType = data.FirstOrDefault(i => i.EventItemTypeId == eventItemTypeId);
-                    if (itemType != null)
-                    {
-                        itemType.TicketsSold+=quantity;
-                        await _cache.SetOnlyAsync(cacheKey, data);
-                        _logger.LogInformation($"Updated tickets sold in cache to {itemType.TicketsSold} for event itemid {eventItemTypeId}");
-                    }
-                }                    
-                    //_cache.RemoveCache<List<EventItemType>>(eventId.ToString());
-              
+                    _logger.LogWarning("No cached ticket list found for event {EventId}; skipping cache update.", eventId);
+                    return false;
+                }
+
+                _logger.LogInformation("Found item in cache with eventid {EventId}", eventId);
+                var itemType = data.FirstOrDefault(i => i.EventItemTypeId == eventItemTypeId);
+                if (itemType == null)
+                {
+                    _logger.LogWarning("Event item type {EventItemTypeId} was not found in cache for event {EventId}.", eventItemTypeId, eventId);
+                    return false;
+                }
+
+                int newSoldCount = itemType.TicketsSold + quantity;
+                if (quantity > 0 && newSoldCount > itemType.TotalAllowed)
+                {
+                    _logger.LogWarning(
+                        "Cannot update tickets sold in cache. Current tickets sold: {CurrentSold}, Quantity to add: {Quantity}, Total allowed: {TotalAllowed}",
+                        itemType.TicketsSold,
+                        quantity,
+                        itemType.TotalAllowed);
+                    return false;
+                }
+
+                if (newSoldCount < 0)
+                {
+                    _logger.LogWarning(
+                        "Cannot update tickets sold in cache for event item {EventItemTypeId}. Resulting sold count would be negative: {NewSoldCount}",
+                        eventItemTypeId,
+                        newSoldCount);
+                    return false;
+                }
+
+                _logger.LogInformation("{Quantity} is available for event item type {EventItemTypeId}.", quantity, eventItemTypeId);
+                itemType.TicketsSold = newSoldCount;
+                await _cache.SetOnlyAsync(cacheKey, data);
+                _logger.LogInformation("Updated tickets sold in cache to {TicketsSold} for event itemid {EventItemTypeId}", itemType.TicketsSold, eventItemTypeId);
+                return true;
             }
             catch (Exception exc)
             {
-                Console.WriteLine(exc.Message);
-
+                _logger.LogError(exc, "Error updating ticket sold count in cache for event {EventId} and item type {EventItemTypeId}.", eventId, eventItemTypeId);
+                return false;
             }
-
-            return success;
-            
         }
 
-        public async Task<EventItemType> GetEventItemTypeById(int eventItemTypeId)
+        public async Task<EventItemType?> GetEventItemTypeById(int eventItemTypeId)
         {
             if (eventItemTypeId <= 0)
                 throw new ArgumentException("EventItemTypeId must be greater than zero.", nameof(eventItemTypeId));
@@ -242,7 +259,13 @@ namespace EventManagementDbAccess
                         _logger.LogWarning($"{quantity} ticket is  not available for evenitemtype {itemType}.");
                         throw new Exception($"Not enough tickets available for {itemType}");
                     }
-                    await UpdateTicketSoldCountInCache(eventId, itemType, quantity);
+
+                    bool cacheUpdated = await UpdateTicketSoldCountInCache(eventId, itemType, quantity);
+                    if (!cacheUpdated)
+                    {
+                        _logger.LogWarning("Ticket sold count updated in DB but cache update failed for event {EventId} and item type {EventItemTypeId}.", eventId, itemType);
+                        throw new InvalidOperationException($"Unable to update ticket sold count cache for {itemType}");
+                    }
                 }
                 return true;
             }

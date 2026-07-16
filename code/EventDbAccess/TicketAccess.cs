@@ -37,7 +37,7 @@ namespace EventManagementDbAccess
             {
                 throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
             }
-            if (code == _configuration["SimulationModeCode"])
+            if (code.StartsWith(_configuration["SimulationModeCode"]))
             {
                 _logger.LogInformation($"Simulation mode code {code} used for event {eventId}. Ticket validation successful.");
                 return "SimulationMode:Successful but cannot grant access to event.";
@@ -226,7 +226,7 @@ namespace EventManagementDbAccess
                             where TicketId=@ticketId";
                         using MySqlCommand updateCmd = new MySqlCommand(query, mySqlConnection,transaction);
                         updateCmd.Parameters.AddWithValue("@modifiedAt",DateTime.UtcNow);
-                        updateCmd.Parameters.AddWithValue("@ticketCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]);
+                        updateCmd.Parameters.AddWithValue("@ticketCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]+"_"+PasswordGenerator.GetPassword());
                         updateCmd.Parameters.AddWithValue("@ticketId", ticketId);
                         updateCmd.Parameters.AddWithValue("@status", TicketStatus.Live.ToString());
                         int rowsAffected = updateCmd.ExecuteNonQuery();
@@ -304,98 +304,128 @@ namespace EventManagementDbAccess
         /// <exception cref="InvalidDataException"></exception>
         public async Task<int> AddEventTickets(List<EventSalesItem> tickets, bool simulationMode = false)
         {
-            int retVal =0;
+            int retVal = 0;
             if (tickets == null)
             {
                 throw new ArgumentNullException(nameof(tickets));
             }
+
             if (tickets.Count == 0)
             {
                 throw new ArgumentNullException("No tickets provided to add");
             }
 
-
-            int? eventId = tickets.First()?.EventId;
+            var firstTicket = tickets.First();
+            int? eventId = firstTicket?.EventId;
             if (!eventId.HasValue || eventId <= 0)
-                throw new InvalidDataException($"Invalid event id received for adding tickets with value: {eventId}");
-            int? itemType = tickets.First()?.EventItemType?.EventItemTypeId;
-            if (!itemType.HasValue || itemType <= 0)
-                throw new InvalidDataException($"Invalid event item type id received for adding tickets with value: {eventId}");
-
-            using MySqlConnection mySqlConnection = new MySqlConnection(this.ConnectionString);
-            mySqlConnection.Open();
-
-            using (var transaction = mySqlConnection.BeginTransaction())
             {
-                try
+                throw new InvalidDataException($"Invalid event id received for adding tickets with value: {eventId}");
+            }
+
+            int? itemType = firstTicket?.EventItemType?.EventItemTypeId;
+            if (!itemType.HasValue || itemType <= 0)
+            {
+                throw new InvalidDataException($"Invalid event item type id received for adding tickets with value: {eventId}");
+            }
+
+            if (tickets.Any(ticket => ticket.EventId != eventId || ticket.EventItemType?.EventItemTypeId != itemType))
+            {
+                throw new InvalidDataException("All tickets in the batch must belong to the same event and ticket type.");
+            }
+
+            if (tickets.Any(ticket => ticket.User?.UserId is null or <= 0))
+            {
+                throw new InvalidDataException("Each ticket must have a valid user before it can be inserted.");
+            }
+
+            using MySqlConnection mySqlConnection = new(this.ConnectionString);
+            await mySqlConnection.OpenAsync();
+
+            using var transaction = mySqlConnection.BeginTransaction();
+            try
+            {
+                StringBuilder sb = new();
+                if (!simulationMode)
                 {
-                    StringBuilder sb = new StringBuilder();
-                    if (!simulationMode)
+                    if (!await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count))
                     {
-                        //update the sold count in cache first. If this fails, we will not proceed to insert tickets
-                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, tickets.Count);
+                        throw new InvalidOperationException($"Unable to update ticket sold count cache for {itemType.Value}");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("Simulation mode enabled. Not updating sold count in cache for eventId: {EventId}, itemType: {ItemType}, ticketsCount: {TicketsCount}", eventId.Value, itemType.Value, tickets.Count);
+                }
+
+                sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
+                    TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
+                    CreatedAt,ModifiedAt) VALUES ");
+                int index = 0;
+                var parameters = new List<MySqlParameter>();
+                foreach (var ticket in tickets)
+                {
+                    if (index > 0) sb.Append(",");
+                    sb.Append($@"(@EventId{index}, @UserId{index}, @TicketStatus{index},@TicketCode{index},
+                                        @SalesOrderId{index}, @EventItemTypeId{index},@PricePaid{index},@CreatedAt{index},@ModifiedAt{index})");
+
+                    parameters.Add(new MySqlParameter($"@EventId{index}", ticket.EventId));
+                    parameters.Add(new MySqlParameter($"@UserId{index}", ticket.User!.UserId));
+                    parameters.Add(new MySqlParameter($"@TicketStatus{index}", ticket.TicketStatus));
+                    parameters.Add(new MySqlParameter($"@TicketCode{index}", ticket.TicketCode));
+                    parameters.Add(new MySqlParameter($"@SalesOrderId{index}", ticket.SalesOrderId));
+                    parameters.Add(new MySqlParameter($"@EventItemTypeId{index}", ticket.EventItemType!.EventItemTypeId));
+                    parameters.Add(new MySqlParameter($"@PricePaid{index}", ticket.PricePaid));
+                    parameters.Add(new MySqlParameter($"@CreatedAt{index}", DateTime.UtcNow));
+                    parameters.Add(new MySqlParameter($"@ModifiedAt{index}", DateTime.UtcNow));
+
+                    index++;
+                }
+
+                using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
+                {
+                    cmd.Parameters.AddRange(parameters.ToArray());
+                    int i = await cmd.ExecuteNonQueryAsync();
+                    if (i == tickets.Count)
+                    {
+                        _logger.LogInformation("Successfully inserted {TicketCount} tickets for sales order {SalesOrderId}.", tickets.Count, tickets.First().SalesOrderId);
                     }
                     else
                     {
-                        _logger.LogInformation($"Simulation mode enabled. Not updating sold count in cache for eventId: {eventId.Value}, itemType: {itemType.Value}, ticketsCount: {tickets.Count}");
+                        throw new Exception("Unable to insert ticketrecord");
                     }
-                    
-                    sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
-                    TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
-                    CreatedAt,ModifiedAt) VALUES ");
-                    int index = 0;
-                    var parameters = new List<MySqlParameter>();
-                    foreach (var ticket in tickets)
-                    {
-                        if (index > 0) sb.Append(","); // comma between VALUES
-                        sb.Append($@"(@EventId{index}, @UserId{index}, @TicketStatus{index},@TicketCode{index},
-                                        @SalesOrderId{index}, @EventItemTypeId{index},@PricePaid{index},@CreatedAt{index},@ModifiedAt{index})");
-
-                        parameters.Add(new MySqlParameter($"@EventId{index}", ticket.EventId));
-                        parameters.Add(new MySqlParameter($"@UserId{index}", ticket.User.UserId));
-                        parameters.Add(new MySqlParameter($"@TicketStatus{index}", ticket.TicketStatus));
-                        parameters.Add(new MySqlParameter($"@TicketCode{index}", ticket.TicketCode));
-                        parameters.Add(new MySqlParameter($"@SalesOrderId{index}", ticket.SalesOrderId));
-                        parameters.Add(new MySqlParameter($"@EventItemTypeId{index}", ticket.EventItemType.EventItemTypeId));
-                        parameters.Add(new MySqlParameter($"@PricePaid{index}", ticket.PricePaid));             
-                        parameters.Add(new MySqlParameter($"@CreatedAt{index}", DateTime.UtcNow));
-                        parameters.Add(new MySqlParameter($"@ModifiedAt{index}", DateTime.UtcNow));
-
-                        index++;
-                    }
-
-
-                    Console.WriteLine(sb.ToString());
-
-                    using (MySqlCommand cmd = new(sb.ToString(), mySqlConnection, transaction))
-                    {
-                        cmd.Parameters.AddRange(parameters.ToArray());
-                        int i = cmd.ExecuteNonQuery();
-                        if (i == tickets.Count)
-                        {
-                            _logger.LogInformation($@"Successfully inserted {tickets.Count()} tickets  for sales Order {tickets.First().SalesOrderId} 
-                                        Return value for last ticket id is{cmd.LastInsertedId}");
-
-                        }
-                        else
-                        {
-                            throw new Exception("Unable to insert ticketrecord");
-
-                        }
-                    }
-
-                    await transaction.CommitAsync();
                 }
-                catch (Exception ex)
+
+                if (!simulationMode)
                 {
-                    transaction.Rollback();
-                    retVal = ex.Message.ToLower().Contains("not enough") ? -1 : -2;
-                    Console.WriteLine(ex.Message + ex.InnerException);
-                    _logger.LogCritical(ex.Message);
-                    //set the cache back only if the error was due to a reason different than count being exceeded
-                    if (retVal == -2)
-                        await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, -tickets.Count);
+                    if (!await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction))
+                    {
+                        throw new InvalidOperationException($"Unable to update ticket sold count in database for {itemType.Value}");
+                    }
                 }
+                else
+                {
+                    _logger.LogInformation("Simulation mode enabled. Not updating sold count in database for eventId: {EventId}, itemType: {ItemType}, ticketsCount: {TicketsCount}", eventId.Value, itemType.Value, tickets.Count);
+                }
+
+                await transaction.CommitAsync();
+                return retVal;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                retVal = ex.Message.ToLower().Contains("not enough") ? -1 : -2;
+                Console.WriteLine(ex.Message + ex.InnerException);
+                _logger.LogCritical(ex.Message);
+
+                if (!simulationMode && retVal == -2)
+                {
+                    bool cacheReverted = await _eventTypeAccess.UpdateTicketSoldCountInCache(eventId.Value, itemType.Value, -tickets.Count);
+                    if (!cacheReverted)
+                    {
+                        _logger.LogWarning("Unable to revert ticket sold count in cache for event {EventId} and item type {ItemType} after a failed insert.", eventId.Value, itemType.Value);
+                    }
+                }
+
                 return retVal;
             }
         }
@@ -514,7 +544,7 @@ namespace EventManagementDbAccess
                     using var cmd = new MySqlCommand(sql, connection);
                     cmd.Parameters.AddWithValue("@salesOrderId", salesOrderId);
 
-                    object result = await cmd.ExecuteScalarAsync();
+                    object? result = await cmd.ExecuteScalarAsync();
                     return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
                 }
             }

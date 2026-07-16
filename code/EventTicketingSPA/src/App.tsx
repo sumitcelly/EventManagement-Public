@@ -204,7 +204,7 @@ export default function App() {
          */}
         <Route
         
-          path="/buytickets/:id"
+          path="/buytickets"
            render={() =>
               <BuyTickets /> 
           }

@@ -238,7 +238,7 @@ namespace EventManagementDbAccess
             { 
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@status", (int)SalesOrderStatus.PaymentSucceeded);
-                cmd.Parameters.AddWithValue("@orderCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]); 
+                cmd.Parameters.AddWithValue("@orderCode",!simulationMode ? PasswordGenerator.GetPassword() : _configuration["SimulationModeCode"]+"_"+PasswordGenerator.GetPassword()); 
                 cmd.Parameters.AddWithValue("@modifiedAt", DateTime.UtcNow);
                 cmd.Parameters.AddWithValue("@paymentIntentId", paymentIntentId);   
                 cmd.Parameters.AddWithValue("@salesTotal", salesTotal);
