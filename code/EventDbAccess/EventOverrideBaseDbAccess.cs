@@ -29,8 +29,8 @@ namespace EventManagementDbAccess
         public async Task<EventFeeOverride?> GetEventFeeOverride(int eventId)
         {
             if (eventId <= 0)
-                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
-
+                return null;
+                
             string cacheKey = CacheHelper.GetCacheKey<EventFeeOverride>(eventId.ToString());
 
             EventFeeOverride? cached = await _cache.GetOrSetAsync<EventFeeOverride>(cacheKey, () => GetEventFeeOverrideFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);

@@ -116,11 +116,6 @@ namespace CreateTicketApi.Controllers
         [HttpGet("transactionfees/{eventId}")]
         public async Task<IActionResult> GetTransactionFees(int eventId)
         {
-            if (eventId <= 0)
-            {
-                return BadRequest("Invalid event ID.");
-            }
-
             try
             {
                 var eventFeeOverride = await _eventOverrideDbAccess.GetEventFeeOverride(eventId);

@@ -48,7 +48,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
   );
 
    const { data:transactionFees, isLoading:transLoading } = 
-    useQuery(['TransactionFees'], async () => {
+    useQuery(['TransactionFees', eventId], async () => {
       const res = await axiosClient.get(`/payment/transactionfees/${eventId}`);
       console.log('TransactionFees fetched from backend',res.data);
       return res.data;
@@ -236,7 +236,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
         )}
         
         <div className="flex flex-col space-y-2 mt-6">
-          <div className="flex flex-row space-x-2  items-center">
+          <div className="flex flex-row space-x-2  items-center mb-2">
             <label htmlFor="isLive">Is Live</label>
             <input
             type="checkbox"
@@ -248,15 +248,15 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
         
 
          <label className="font-semibold mr-auto">Refund Mode</label>
-           <select ref={refundModeRef} className="w-3/5">
+           <select ref={refundModeRef} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="0">No refunds allowed</option>
               <option value="1">Customer initiates refunds</option>
             </select>
         </div>
 
          <div className="flex flex-col space-y-1 mt-4">
-          <label className="block font-semibold mb-1 mr-auto">Fee Display Mode</label>
-           <select value={feeMode} className="w-3/5" onChange={handleModeChange} >
+          <label className="block font-semibold mb-1 mr-auto">Fee Mode</label>
+           <select value={feeMode} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={handleModeChange} >
               <option value="0">None(None required for free tickets)</option>
               <option value="1">Customer absorbs Stripe fees</option>
               <option value="2">Organizer absorbs Stripe fees</option>

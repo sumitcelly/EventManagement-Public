@@ -1,6 +1,22 @@
-import { BsFacebook, BsInstagram, BsTwitter, BsGithub } from 'react-icons/bs';
+import { Link } from 'react-router-dom';
+import { useAppSelector } from '../app/hook';
 
-export default function TicketFooter() {
+export default function Footer() {
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const role = user?.role || "";
+  const getSellTicketLink = () => {
+    if (!isAuthenticated) {
+      return "/login";
+    }
+    if (isAuthenticated && (role === "Owner" || role === "FullAdmin" || role === "RestrictedAdmin")) {
+      return "/Dashboard";
+    }
+    if (isAuthenticated && role === "Attendee") {
+      return "/OrganizerManager";
+    }
+    return "/";
+  };
+
   return (
     <footer className="border-t  bg-brand-neutral px-4 py-3 sm:px-6 dark:bg-gray-900 mt-auto w-full">
       <div className="w-full max-w-screen-xl mx-auto">
@@ -18,19 +34,14 @@ export default function TicketFooter() {
               </h2>
               <ul className="text-gray-700 dark:text-gray-400 font-medium text-xs">
                 <li className="mb-2">
-                  <a href="#" className="hover:underline">
-                    Find Events
-                  </a>
-                </li>
-                <li className="mb-2">
-                  <a href="#" className="hover:underline">
+                  <Link to={getSellTicketLink()} className="hover:underline">
                     Sell Tickets
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:underline">
+                  <Link to="/pricing" className="hover:underline">
                     Pricing
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -40,19 +51,19 @@ export default function TicketFooter() {
               </h2>
               <ul className="text-gray-700 dark:text-gray-400 font-medium text-xs">
                 <li className="mb-2">
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     Help Center
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-2">
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     Contact Us
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     FAQs
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -62,19 +73,19 @@ export default function TicketFooter() {
               </h2>
               <ul className="text-gray-700 dark:text-gray-400 font-medium text-xs">
                 <li className="mb-2">
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li className="mb-2">
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:underline">
+                  <Link to="#" className="hover:underline">
                     Refund Policy
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -83,22 +94,8 @@ export default function TicketFooter() {
         <hr className="my-3 border-gray-200 sm:mx-auto dark:border-gray-700" />
         <div className="w-full sm:flex sm:items-center sm:justify-between">
           <span className="text-xs text-gray-500 sm:text-center dark:text-gray-400">
-            © 2024 <a href="#" className="hover:underline">TicketPro™</a>. All Rights Reserved.
+            © 2024 <Link to="#" className="hover:underline">TicketPro™</Link>. All Rights Reserved.
           </span>
-          <div className="flex mt-2 space-x-4 sm:justify-center sm:mt-0">
-            <a href="#" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-              <BsFacebook className="w-4 h-4" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-              <BsInstagram className="w-4 h-4" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-              <BsTwitter className="w-4 h-4" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">
-              <BsGithub className="w-4 h-4" />
-            </a>
-          </div>
         </div>
       </div>
     </footer>
