@@ -79,28 +79,18 @@ export function PricingTable({ eventId }: PricingTableProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              
-              {/* Row 1: Platform Cut */}
-              <tr className="hover:bg-slate-50/50 transition-colors">
-                <td className="p-3 font-medium text-slate-900">
-                  Platform Service Fee
-                  <span className="block text-xs font-normal text-slate-400 mt-0.5">Keeps our ticketing software running smoothly</span>
-                </td>
-                <td className="p-3 text-right font-mono font-semibold text-indigo-600">
-                  {fees.platformFees*100}%
-                </td>
-              </tr>
-
-              {/* Row 2: Platform Safety Floor */}
-              <tr className="hover:bg-slate-50/50 transition-colors">
-                <td className="p-3 font-medium text-slate-900">
-                    Applies per complete transaction order, not per single ticket
-                  <span className="block text-xs font-normal text-slate-400 mt-0.5">Applies only to low-ticket microtransactions to cover data validation overhead</span>
-                </td>
-                <td className="p-3 text-right font-mono font-semibold text-slate-900">
-                  {formatCents(fees.floor)} <span className="text-xs font-normal text-slate-400">/ transaction</span>
-                </td>
-              </tr>
+              <tr className="hover:bg-slate-50/50 transition-colors bg-indigo-50/20">
+                  <td className="p-3 font-medium text-slate-900">
+                    Platform Service Fee
+                    <span className="block text-xs font-normal text-slate-500 mt-0.5">
+                      {fees.platformFees*100}% of the total order. If the order total is very low, it clamps to a minimum floor of just ${(fees.floor/100).toFixed(2)} total.
+                    </span>
+                  </td>
+                  <td className="p-3 text-right font-mono text-xs font-semibold text-indigo-600 leading-tight">
+                    <span className="text-base font-bold">{fees.platformFees*100}%</span>
+                    <span className="block font-sans text-[10px] text-slate-400 font-normal mt-0.5">(${(fees.floor/100).toFixed(2)} order min)</span>
+                  </td>
+               </tr>
 
               {/* Row 3: Card Processor Cut */}
               <tr className="hover:bg-slate-50/50 transition-colors">

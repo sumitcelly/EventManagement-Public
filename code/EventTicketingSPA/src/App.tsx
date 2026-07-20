@@ -96,12 +96,20 @@ export default function App() {
         <Route
           exact
           path="/"
-           render={() =>
+           render={({ location }) =>
            {
               if (isAuthenticated && checkBasicAdminAccess())
                 return <Dashboard />;
+              
               else if (isAuthenticated)
-                return <MyEvents />;
+              {
+                const ref = new URLSearchParams(location.search).get('ref');
+                
+                if (ref === "selltickets")
+                  return <OrganizerManager />
+                else
+                  return <MyEvents />;
+              }
               else
                 return <LoginPage />;
            }
@@ -110,12 +118,19 @@ export default function App() {
       
         <Route
           path="/login"
-           render={() =>
+           render={({ location }) =>
            {
               if (isAuthenticated && checkBasicAdminAccess())
                 return <Dashboard />;
               else if (isAuthenticated)
-                return <MyEvents />;
+              {
+                const ref = new URLSearchParams(location.search).get('ref');
+                console.log('ref is ' + ref);
+                if (ref === "selltickets")
+                  return <OrganizerManager />
+                else
+                  return <MyEvents />;
+              }
               else
                 return <LoginPage />;
            }

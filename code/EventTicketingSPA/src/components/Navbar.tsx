@@ -241,6 +241,7 @@ export function AppNavbar() {
   
         {(!isAuthenticated || user?.guest) &&(
           <>
+            <NavbarLink href="/login?ref=selltickets">Organize Events</NavbarLink>
             <NavbarLink href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>
             <NavbarLink href="/auth/sendsecurecode/signup">Signup</NavbarLink>
           </>

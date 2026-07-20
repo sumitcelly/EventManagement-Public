@@ -6,7 +6,7 @@ export default function Footer() {
   const role = user?.role || "";
   const getSellTicketLink = () => {
     if (!isAuthenticated) {
-      return "/login";
+      return "/login?ref=selltickets";
     }
     if (isAuthenticated && (role === "Owner" || role === "FullAdmin" || role === "RestrictedAdmin")) {
       return "/Dashboard";
@@ -35,7 +35,7 @@ export default function Footer() {
               <ul className="text-gray-700 dark:text-gray-400 font-medium text-xs">
                 <li className="mb-2">
                   <Link to={getSellTicketLink()} className="hover:underline">
-                    Sell Tickets
+                    Organize Events
                   </Link>
                 </li>
                 <li>
