@@ -113,6 +113,19 @@ namespace CreateTicketApi.Controllers
         }
 
         [EnableRateLimiting("public-browsing")]
+        [HttpGet("companydetails")]
+        public async Task<IActionResult> GetCompanyDetails()
+        {
+            return Ok(new
+            {
+                SupportEmail=_configuration["EmailTemplateValues:support_email"],
+                CompanyName = _configuration["EmailTemplateValues:platform_name"],
+                TagLine = _configuration["EmailTemplateValues:tagline"],
+                RegisteredCompanyName = _configuration["EmailTemplateValues:registered_company"]
+            });
+        }
+
+        [EnableRateLimiting("public-browsing")]
         [HttpGet("transactionfees/{eventId}")]
         public async Task<IActionResult> GetTransactionFees(int eventId)
         {

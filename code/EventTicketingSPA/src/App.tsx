@@ -40,7 +40,8 @@ import CampaignAdd from "./pages/Organizer/CampaignAdd";
 import ResetPassword from "./pages/ResetPassword";
 import { Toaster } from "react-hot-toast";
 import InviatationAccept from "./pages/InvitationAccept";
-import PricingDetails from "./pages/PriceDetails";
+import PricingDetails from "./pages/Global/PriceDetails";
+import HelpCenter from "./pages/Global/HelpCenter";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -138,6 +139,7 @@ export default function App() {
         />
         <Route path="/invitationaccept" render={() => <InviatationAccept />} />
         <Route path="/pricing" render={() => <PricingDetails />} />
+        <Route path="/helpcenter" render={() => <HelpCenter />} />
         
         <Route path="/Dashboard"  render={() =>checkBasicAdminAccess()?<Dashboard/>:<LoginPage/>}/>
         <Route

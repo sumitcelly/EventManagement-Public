@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
 import axiosClient from '../api/axiosClient';
+import { PricingDetails } from "../utils/PricingQuery";
 
 
 
@@ -8,27 +9,9 @@ interface PricingTableProps {
 }
 
 export function PricingTable({ eventId }: PricingTableProps) {
-   const {
-        data: fees, // provide default empty array
-        isLoading,
-        error
-  } = 
-  useQuery(
-    ['pricing', 'global'], // structured query key
-    async () => {
-     
-      const res = await axiosClient.get(`/payment/transactionfees/${Number(eventId) || 0}`); // Use eventId if provided, else default to 0 for global
-      console.log('Event ticket type details', res?.data);
-      return res.data;
-    },
-     {
-      staleTime: 1000 * 60 * 60,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 60, // Cache persists for 30 minutes
-      //refetchOnMount: 'always',
-      refetchOnWindowFocus: false,
-    }
-  );
 
+  const { data: pricingData, isLoading, error } = PricingDetails(eventId);
+  
   // Loading Skeleton State
   if (isLoading) {
     return (
@@ -45,7 +28,7 @@ export function PricingTable({ eventId }: PricingTableProps) {
   }
 
   // Graceful Error Fallback
-  if (error || !fees) {
+  if (error || !pricingData) {
     return (
       <div className="w-full max-w-xl mx-auto p-4 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">
         ⚠️ Failed to synchronize live pricing structures: {'Server issues'}. Standard platform base rates apply.
@@ -83,12 +66,12 @@ export function PricingTable({ eventId }: PricingTableProps) {
                   <td className="p-3 font-medium text-slate-900">
                     Platform Service Fee
                     <span className="block text-xs font-normal text-slate-500 mt-0.5">
-                      {fees.platformFees*100}% of the total order. If the order total is very low, it clamps to a minimum floor of just ${(fees.floor/100).toFixed(2)} total.
+                      {pricingData.platformFees*100}% of the total order. If the order total is very low, it clamps to a minimum floor of just ${(pricingData.floor/100).toFixed(2)} total.
                     </span>
                   </td>
                   <td className="p-3 text-right font-mono text-xs font-semibold text-indigo-600 leading-tight">
-                    <span className="text-base font-bold">{fees.platformFees*100}%</span>
-                    <span className="block font-sans text-[10px] text-slate-400 font-normal mt-0.5">(${(fees.floor/100).toFixed(2)} order min)</span>
+                    <span className="text-base font-bold">{pricingData.platformFees*100}%</span>
+                    <span className="block font-sans text-[10px] text-slate-400 font-normal mt-0.5">(${(pricingData.floor/100).toFixed(2)} order min)</span>
                   </td>
                </tr>
 
@@ -99,7 +82,7 @@ export function PricingTable({ eventId }: PricingTableProps) {
                   <span className="block text-xs font-normal text-slate-400 mt-0.5">Standard card rate charged directly by credit payment networks</span>
                 </td>
                 <td className="p-3 text-right font-mono font-semibold text-slate-900">
-                  {(fees.stripeFees*100).toFixed(2)}% + {formatCents(fees.stripeFixed)}
+                  {(pricingData.stripeFees*100).toFixed(2)}% + {formatCents(pricingData.stripeFixed)}
                 </td>
               </tr>
 

@@ -1,8 +1,8 @@
-import "../components/PricingTable";
-import { PricingTable } from "../components/PricingTable";
-import AppNavbar from "../components/Navbar";
+import "../../components/PricingTable";
+import { PricingTable } from "../../components/PricingTable";
+import AppNavbar from "../../components/Navbar";
 import { IonContent, IonHeader, IonPage } from "@ionic/react";
-import Footer  from '../components/Footer';
+import Footer  from '../../components/Footer';
 
 export default function PricingDetails() {
 return(
