@@ -292,12 +292,40 @@ namespace CreateTicketApi.Controllers
                 {
                     return StatusCode(409,"Event does not allow customer initiated refunds");
                 }
-                if (evt.EventDate < DateTime.Today)
+    
+                // Normalize event date to UTC in a safe way depending on DateTime.Kind
+                var eventDate = evt.EventDate;
+                DateTime eventUtc;
+                if (eventDate.Kind == DateTimeKind.Utc)
                 {
-                    return StatusCode(422,"Event cannot be in the past for a refund.");
+                    eventUtc = eventDate;
+                }
+                else if (eventDate.Kind == DateTimeKind.Local)
+                {
+                    eventUtc = eventDate.ToUniversalTime();
+                }
+                else // Unspecified: assume stored as UTC and mark explicitly
+                {
+                    eventUtc = DateTime.SpecifyKind(eventDate, DateTimeKind.Utc);
+                }
+
+                // Read optional refund cutoff (hours) from configuration; default to 2 hours when invalid
+                double refundCutoff = 2;
+                var cfg = _configuration["RefundCutoff"];
+                if (!string.IsNullOrWhiteSpace(cfg) && double.TryParse(cfg, out var rc) && rc > 0)
+                {
+                    refundCutoff = rc;
+                }
+
+                // Calculate cutoff as event time minus the configured hours
+                var cutoff = eventUtc.AddHours(-refundCutoff);
+                if (DateTime.UtcNow > cutoff)
+                {
+                    _logger.LogInformation("Refund blocked: current UTC {Now} after cutoff {Cutoff} for event date {EventDate}", DateTime.UtcNow, cutoff, eventUtc);
+                    return UnprocessableEntity($"Refunds must happen at least {refundCutoff} hours prior to the event.");
                 }
             
-            //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
+                //we refund the cost of tickets +salestax but not stripe or platform fees (stripe wont refund regardless
                 //. We can choose to refund our fees)
                 decimal total = (order.SalesOrderTotal - order.TotalFees)*100 ;
                 EventOrganizer organizer =await  _eventOrganizerDbAccess.GetOrganizerById(order.CustomerId);

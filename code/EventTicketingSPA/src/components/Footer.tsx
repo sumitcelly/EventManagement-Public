@@ -61,7 +61,7 @@ export default function Footer() {
               <ul className="text-gray-700 dark:text-gray-400 font-medium text-xs">
                 <li className="mb-2">
                   <Link to="/helpcenter" className="hover:underline">
-                    FAQ and Help center
+                    Help Center & FAQ
                   </Link>
                 </li>
                 <li className="mb-2">
