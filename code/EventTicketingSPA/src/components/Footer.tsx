@@ -31,7 +31,7 @@ export default function Footer() {
       <div className="w-full max-w-screen-xl mx-auto">
         <div className="grid w-full justify-between sm:flex sm:justify-between md:grid-cols-3">
           <div className="mb-3 md:mb-0">
-            <h2 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">{data.companyName}</h2>
+            <h2 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">{data.platformName}</h2>
             <p className="mt-2 max-w-xs text-gray-500 text-xs dark:text-gray-400">
               The most reliable way to discover and book tickets for local events.
             </p>

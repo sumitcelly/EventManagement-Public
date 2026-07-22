@@ -43,6 +43,7 @@ import InviatationAccept from "./pages/InvitationAccept";
 import PricingDetails from "./pages/Global/PriceDetails";
 import HelpCenter from "./pages/Global/HelpCenter";
 import { RefundPolicy } from "./pages/Global/RefundPolicy";
+import PrivacyPolicy from "./pages/Global/PrivacyPolicy";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -142,6 +143,7 @@ export default function App() {
         <Route path="/pricing" render={() => <PricingDetails />} />
         <Route path="/refundpolicy" render={() => <RefundPolicy />} />
         <Route path="/helpcenter" render={() => <HelpCenter />} />
+        <Route path="/privacypolicy" render={() => <PrivacyPolicy />} />
         
         <Route path="/Dashboard"  render={() =>checkBasicAdminAccess()?<Dashboard/>:<LoginPage/>}/>
         <Route

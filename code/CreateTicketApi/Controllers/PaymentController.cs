@@ -119,10 +119,14 @@ namespace CreateTicketApi.Controllers
             return Ok(new
             {
                 SupportEmail=_configuration["EmailTemplateValues:support_email"],
-                CompanyName = _configuration["EmailTemplateValues:platform_name"],
+                PlatformName = _configuration["EmailTemplateValues:platform_name"],
                 TagLine = _configuration["EmailTemplateValues:tagline"],
                 RefundCutoff= _configuration["RefundCutoff"],
-                RegisteredCompanyName = _configuration["EmailTemplateValues:registered_company"]
+                RegisteredAddress = _configuration["EmailTemplateValues:registered_address"],
+                LegalEmail = _configuration["EmailTemplateValues:legal_email"],
+                HelpCenterUrl = _configuration["EmailTemplateValues:helpcenter_url"],
+                RegisteredCompanyName = _configuration["EmailTemplateValues:registered_company"],
+                PlatformUrl = _configuration["EmailTemplateValues:platform_url"],
             });
         }
 
