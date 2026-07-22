@@ -121,6 +121,7 @@ namespace CreateTicketApi.Controllers
                 SupportEmail=_configuration["EmailTemplateValues:support_email"],
                 CompanyName = _configuration["EmailTemplateValues:platform_name"],
                 TagLine = _configuration["EmailTemplateValues:tagline"],
+                RefundCutoff= _configuration["RefundCutoff"],
                 RegisteredCompanyName = _configuration["EmailTemplateValues:registered_company"]
             });
         }

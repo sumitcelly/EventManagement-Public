@@ -3,10 +3,14 @@ import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import Footer  from '../../components/Footer';
 import AppNavbar from '../../components/Navbar';
 import { usePricingDetails } from '../../utils/PricingQuery';
+import { useCompanyDetails } from '../../utils/CompanyQuery';
+
 
 export function RefundPolicy() {
 const { data: pricingData, isLoading, error } = usePricingDetails(0);
-if (isLoading) {
+const  {data: companyData, isLoading: companyLoading, error:companyError} = useCompanyDetails();
+
+if (isLoading || companyLoading) {
     return (
       <div className="w-full max-w-xl mx-auto p-4 bg-slate-50 text-slate-900 text-xs rounded-xl border border-slate-100">
         Loading pricing and company details...
@@ -17,7 +21,14 @@ if (isLoading) {
   if (error || !pricingData) {
     return (
       <div className="w-full max-w-xl mx-auto p-4 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">
-        ⚠️ Failed to synchronize live pricing and company structures. Standard platform base rates apply.
+        ⚠️ Failed to synchronize live pricing  structures. Standard platform base rates apply.
+      </div>
+    );
+  }
+   if (companyError || !companyData) {
+    return (
+      <div className="w-full max-w-xl mx-auto p-4 bg-red-50 text-red-700 text-xs rounded-xl border border-red-100">
+        ⚠️ Failed to synchronize live company data.
       </div>
     );
   }
@@ -67,7 +78,7 @@ if (isLoading) {
                 Because the platform does not hold or manage your ticket funds, <strong>the individual Event Organizer maintains complete sole legal and financial authority over refund rules and approvals</strong>. 
             </p>
             <p>
-                During event creation, organizers choose whether to toggle <strong>Self-Service Refunds</strong> on or off. Refunds are cutoff 2 hours prior to the event.
+                During event creation, organizers choose whether to toggle <strong>Self-Service Refunds</strong> on or off. Refunds are cutoff {companyData.refundCutoff} hours prior to the event.
             </p>
             </div>
 
