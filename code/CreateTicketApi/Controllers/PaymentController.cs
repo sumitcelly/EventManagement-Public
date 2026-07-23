@@ -127,6 +127,7 @@ namespace CreateTicketApi.Controllers
                 HelpCenterUrl = _configuration["EmailTemplateValues:helpcenter_url"],
                 RegisteredCompanyName = _configuration["EmailTemplateValues:registered_company"],
                 PlatformUrl = _configuration["EmailTemplateValues:platform_url"],
+                PrivacyUrl = _configuration["EmailTemplateValues:privacy_url"]
             });
         }
 
