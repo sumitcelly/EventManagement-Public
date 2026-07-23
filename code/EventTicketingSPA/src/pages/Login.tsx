@@ -10,6 +10,7 @@ import { IonPage, IonContent, IonHeader,IonRoute, useIonRouter } from '@ionic/re
 import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
 import Footer from "../components/Footer";
+import { useCompanyDetails } from "../utils/CompanyQuery";
 
 interface LoginFormInputs {
   email: string;
@@ -38,6 +39,7 @@ export default function Login() {
   const onSubmit = (data :LoginFormInputs) => {
     dispatch(loginUser(data));
   };
+  
 
   return (
     <IonPage>
@@ -77,22 +79,34 @@ export default function Login() {
             <p className="text-red-500 text-sm">{errors.password.message}</p>
           )}
         </div>
-        <div className="flex flex-row items-center justify-between">
-          <a href="#" className="text-sm text-blue-600 hover:underline"
-          onClick={(e) => {e.preventDefault(); 
-                  history.push(`/auth/sendsecurecode/resetpassword?email=`+getValues('email')); 
-                  
-                }}
-          >Forgot Password?
-          </a>
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {status === "loading" ? "Logging in..." : "Login"}
-          </button>
-        </div>
+        <div className="flex flex-col">
+          <div className="flex flex-row items-center justify-between">
+            <a href="#" className="text-sm text-blue-600 hover:underline"
+              onClick={(e) => {e.preventDefault(); 
+                      history.push(`/auth/sendsecurecode/resetpassword?email=`+getValues('email')); 
+                      
+                    }}
+              >Forgot Password?
+              </a>
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {status === "loading" ? "Logging in..." : "Login"}
+              </button>
+            </div>
+            <div className="text-center text-[11px] mt-4 max-w-xs mx-auto text-slate-400">
+                By logging in, you reaffirm your ongoing agreement to {import.meta.env.VITE_COMPANY_NAME}'s{' '}
+                <a href="/tos" className="text-indigo-600 underline hover:text-indigo-500">
+                  Terms of Service
+                </a>{' '}
+                and{' '}
+                <a href="/privacypolicy" className="text-indigo-600 underline hover:text-indigo-500">
+                  Privacy Policy
+                </a>.
+              </div>
+            </div>
         {status == "failed" && (
           <div className="ml-auto text-sm text-secondary-color">
             Login failed. Please check your credentials.

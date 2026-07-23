@@ -67,7 +67,7 @@ const schema = yup.object({
 
 
 export default function BuyTickets() {
-
+  
   const location = useLocation();
   const history = useHistory();
   const dispatch = useAppDispatch();
@@ -359,9 +359,20 @@ return (
         )}
       </div>
     )}
+    <p className={paymentNeeded(watchedTickets)? "text-[11px] mt-3 max-w-sm mx-auto": "text-[11px] mt-12 max-w-sm mx-auto"}>
+        By clicking  {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}, 
+        you explicitly agree to {import.meta.env.VITE_COMPANY_NAME}'s
+        
+        {' '}<a href="/tos" className="underline hover:text-slate-600">Terms of Service</a>,
+        {' '}<a href="/privacypolicy" className="underline hover:text-slate-600">Privacy Policy</a>,{' '}and our non-refundable
+        {' '}<a href="/refundpolicy" className="underline hover:text-slate-600">Refund Policy</a> parameters.
+      
+    </p>
+
   </div>
 
   {/* Right Column: Totals and Checkout */}
+ 
   <div className="flex-1 flex flex-col items-end justify-end"> 
     <div className="w-full text-right">
       <CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
@@ -370,14 +381,17 @@ return (
     <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
       {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}
     </button>
+   
   </div>
+  
+   
 </div>
 
 
             
 
            
-        </form>
+  </form>
     
     </div>
      <Footer/>  

@@ -114,7 +114,17 @@ export default function SignupForm()  {
           
           <PasswordFields onChange={(state) => setPasswordState(state)} />
 
-          <div className="flex flex-row">
+          <div className="flex flex-col">
+            <label className="flex items-start space-x-2 text-xs text-slate-600 max-w-sm mx-auto">
+              <input type="checkbox" required className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+              <span>
+                I explicitly accept {import.meta.env.VITE_COMPANY_NAME}'s {' '}
+                <a href="/tos" className="text-indigo-600 underline hover:text-indigo-500">Terms of Service</a>{' '}
+                and acknowledge the data rules outlined in the{' '}
+                <a href="/privacypolicy" className="text-indigo-600 underline hover:text-indigo-500">Privacy Policy</a>.
+              </span>
+            </label>
+
           {/* SUBMIT BUTTON */}
               <button type="submit" 
                   className="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
