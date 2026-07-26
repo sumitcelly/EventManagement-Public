@@ -109,7 +109,7 @@ export function AppNavbar() {
     <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md">
       <NavbarBrand href="/">
         <img src="/vite.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
-        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">EventsNow</span>
+        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{import.meta.env.VITE_PLATFORM_Name}</span>
       </NavbarBrand>
       {/* for screens mediume and lrger, shows up at the end on right  */}
       <div className="flex md:order-2">
