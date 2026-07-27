@@ -45,6 +45,7 @@ import HelpCenter from "./pages/Global/HelpCenter";
 import { RefundPolicy } from "./pages/Global/RefundPolicy";
 import PrivacyPolicy from "./pages/Global/PrivacyPolicy";
 import TOS from "./pages/Global/Tos";
+import { FeaturesShowcase } from "./pages/Global/FeatureShowcase";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -115,7 +116,7 @@ export default function App() {
                   return <MyEvents />;
               }
               else
-                return <LoginPage />;
+                return <FeaturesShowcase />;
            }
           }
         />

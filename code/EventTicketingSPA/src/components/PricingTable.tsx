@@ -66,12 +66,12 @@ export function PricingTable({ eventId }: PricingTableProps) {
                   <td className="p-3 font-medium text-slate-900">
                     Platform Service Fee
                     <span className="block text-xs font-normal text-slate-500 mt-0.5">
-                      {pricingData.platformFees*100}% of the total order. If the order total is very low, it clamps to a minimum floor of just ${(pricingData.floor/100).toFixed(2)} total.
+                     Platform fee of {pricingData.platformFees * 100}%  of the total order or a minimum of ${(pricingData.floor/100).toFixed(2)} cents per ticket—whichever amount is greater.
                     </span>
                   </td>
                   <td className="p-3 text-right font-mono text-xs font-semibold text-indigo-600 leading-tight">
-                    <span className="text-base font-bold">{pricingData.platformFees*100}%</span>
-                    <span className="block font-sans text-[10px] text-slate-400 font-normal mt-0.5">(${(pricingData.floor/100).toFixed(2)} order min)</span>
+                    <span className="text-base font-bold">{pricingData.platformFees*100}%</span> or
+                    <span className="block font-sans text-[10px] text-slate-400 font-normal mt-0.5">(${(pricingData.floor/100).toFixed(2)} per ticket minimum)</span>
                   </td>
                </tr>
 
@@ -98,7 +98,8 @@ export function PricingTable({ eventId }: PricingTableProps) {
             
             {/* Highlighted Bundle Advantage */}
             <div className="pt-1.5 border-t border-slate-200/60 text-indigo-950/90">
-                🚀 <strong>The Bundle Advantage:</strong> Unlike platforms that charge flat fees on *every single ticket*, our system calculates the fee on the <strong>entire checkout order total</strong>. Our minimum processing cushion protects you on multi-ticket group and family purchases.
+                🚀 <strong>Capped Micro-Ticket Fees:</strong> Unlike legacy platforms that stack heavy, per-ticket surcharges, our processing rate is only {pricingData.platformFees*100}% of the total order value, or a minimum of ${(pricingData.floor/100).toFixed(2)} per ticket— <strong>whichever is higher</strong>.
+                This structural cap guarantees massive fee savings for multi-ticket group and family purchases.
             </div>
 
             <p className="text-slate-400 text-[10px] italic pt-1">
