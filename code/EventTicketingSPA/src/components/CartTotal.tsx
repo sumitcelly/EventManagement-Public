@@ -28,11 +28,12 @@ export const calculateForCustomerAbsorbsAllFees = (
     platformFees: number, 
     stripePercent: number, 
     stripeFixed: number,
-    floor: number
+    floor: number,
+    totalTickets: number
   ): { totalToCharge: number; serviceFee: number; displayTotal: string; displayFee: string , stripeFees:string} => {
     // Formula: Total = (Net + Fixed + Profit) / (1 - Percent)
 
-    if (targetNet <=0) {
+    if (targetNet <=0 || totalTickets ==0) {
       return {
         totalToCharge: 0, 
         serviceFee: 0,
@@ -42,7 +43,7 @@ export const calculateForCustomerAbsorbsAllFees = (
       };
     }   
 
-    const platformFeeAmt = Math.max(parseFloat((targetNet * platformFees).toFixed(2)), parseFloat((floor/100).toFixed(2)));
+    const platformFeeAmt = Math.max(parseFloat((targetNet * platformFees).toFixed(2)), totalTickets*parseFloat((floor/100).toFixed(2)));
     const numerator = targetNet*100 + stripeFixed + platformFeeAmt*100;
     const denominator = 1 - stripePercent;
     
@@ -63,9 +64,10 @@ export const calculateForCustomerAbsorbsAllFees = (
   export const calculateForOrganizerAbsorbsStripeFees =
     (total: number, platformFees:number,stripePercent: number, 
     stripeFixed: number,
-    floor: number)=>
+    floor: number,
+    totalTickets: number)=>
   {
-     const platformFeeAmt =  Math.max(parseFloat((total * platformFees).toFixed(2)), parseFloat((floor/100).toFixed(2)));
+     const platformFeeAmt =  Math.max(parseFloat((total * platformFees).toFixed(2)), totalTickets* parseFloat((floor/100).toFixed(2)));
      const displayTotal= (total + platformFeeAmt).toFixed(2);
      const displayFee=  platformFeeAmt.toFixed(2);
      console.log('fees',stripeFixed,displayTotal,(Number(displayTotal)*stripePercent*100).toFixed(2), stripeFixed);
@@ -111,7 +113,7 @@ export const calculateForCustomerAbsorbsAllFees = (
 
       const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
       console.log('cart total',total);
-
+      const totalTickets = tickets.reduce((sum: number, t:Ticket) => sum + t.quantity,0);
       const platformFees = parseFloat((total * Number(data?.platformFees)).toFixed(2));
 
       console.log('total and plattform fees',total,platformFees);
@@ -119,13 +121,13 @@ export const calculateForCustomerAbsorbsAllFees = (
       let displayTotal="", displayFee="";
       if (feeMode === TicketFeeMode.CustomerAbsorbsAll)
       {
-        ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor)));
+        ({displayTotal, displayFee} = calculateForCustomerAbsorbsAllFees(total,  data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor), Number(totalTickets)));
         setTotal(displayTotal);
         setFees(displayFee);
       }
       else if (feeMode === TicketFeeMode.OrganizerAbsorbsStripe)
       {
-        ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor)));
+        ({displayTotal, displayFee} = calculateForOrganizerAbsorbsStripeFees(total, data?.platformFees, Number(data?.stripeFees), Number(data?.stripeFixed), Number(data?.floor), Number(totalTickets)));
         setTotal(displayTotal);
         setFees(displayFee);
       }

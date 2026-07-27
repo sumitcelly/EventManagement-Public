@@ -24,7 +24,7 @@ docker start my-redis (Turns it back on)
 //docker login in to redis and check keys
 docker exec -it my-redis redis-cli
 keys * --list all keys
-hgetall keyname
+hgetall keyname -- value of key
 
 //install and run the redis container
 docker run --name my-redis -p 6379:6379 -d redis

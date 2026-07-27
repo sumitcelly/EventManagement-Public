@@ -13,6 +13,8 @@ namespace EventManagementDbAccess
     {
         public int EventId { get; set; }
         public decimal CustomPercentage { get; set; }
+
+        public decimal CustomFloor {get;set;}
     }
 
     public class EventOverrideBaseDbAccess : BaseDbAccess
@@ -46,7 +48,7 @@ namespace EventManagementDbAccess
             {
                 using var connection = new MySqlConnection(this.ConnectionString);
                 await connection.OpenAsync();
-                var query = @"SELECT EventId, CustomPercentage FROM eventmanagement.eventfeeoverrides WHERE EventId = @eventId";
+                var query = @"SELECT EventId, CustomPercentage,CustomFloor FROM eventmanagement.eventfeeoverrides WHERE EventId = @eventId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventId", eventId);
 
@@ -60,7 +62,8 @@ namespace EventManagementDbAccess
                     return new EventFeeOverride
                     {
                         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
-                        CustomPercentage = reader.GetDecimal(reader.GetOrdinal("CustomPercentage"))
+                        CustomPercentage = reader.GetDecimal(reader.GetOrdinal("CustomPercentage")),
+                        CustomFloor = reader.IsDBNull(reader.GetOrdinal("CustomFloor"))?0:reader.GetDecimal(reader.GetOrdinal("CustomFloor"))
                     };
                 }
             }

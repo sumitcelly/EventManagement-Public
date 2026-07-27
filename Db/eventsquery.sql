@@ -11,10 +11,14 @@ select * from eventuser where Email = 'newuser1@gmail.com'
 
 Select * from logincodes order by createdat desc
 
-select * from events where eventid=37
+select * from events where EventName like 'Drinks%'
 select * from eventitemtype where eventid=37
 select * 	from EVENTs where EventName like 'Drin%'
+select * 	from eventfeeoverrides where EventId=6
 
+update eventfeeoverrides
+set CustomFloor=75
+where eventid>0
 	
 select * from eventorganizer where CustomerId=40
 update eventorganizer

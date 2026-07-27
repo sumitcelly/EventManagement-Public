@@ -282,13 +282,14 @@ public class SalesOrderConductor
                     
                 }
                 paymentModel.LineItems = checkoutItems ?? new List<PaymentLineItemModel>();
-              
+                EventFeeOverride? overrideFees =  await _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId);
                 Tuple<string,string,string> result = await _stripeAccess.CreateCheckoutSession(organizer.StripeAccountId,
                                                     paymentModel,
                                                     customerSalesOrder.EmailAddress, 
                                                     customerSalesOrder.ZipCode,
                                                     eventData.TicketFeeMode == TicketFeeMode.CustomerAbsorbsAll,
-                                                    platformFeeOverride: _eventOverrideDbAccess.GetEventFeeOverride(eventData.EventId).Result?.CustomPercentage,
+                                                    platformFeeOverride: overrideFees?.CustomPercentage,
+                                                    floorFeesOverride: overrideFees?.CustomFloor,
                                                     simulationMode: customerSalesOrder.SimulationMode);
                 salesOrderReturn.CheckoutSessionSecret = result.Item1;
                 salesOrderReturn.CheckoutSessionId = result.Item2;

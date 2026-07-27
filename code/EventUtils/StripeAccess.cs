@@ -240,16 +240,20 @@ public class StripeAccess
         }
     }
 
-    private long CalculatePlatformFee(List<PaymentLineItemModel> lineItems, decimal appFeePercentage)
+    private long CalculatePlatformFee(List<PaymentLineItemModel> lineItems, decimal appFeePercentage, decimal floorFees)
     {
-        decimal totalAmount = 0;
-        foreach (var item in lineItems)
+        if (lineItems == null || lineItems.Count == 0)
         {
-            totalAmount += item.Price * item.Quantity;
+            return 0;
         }
-        long i = Convert.ToInt64(totalAmount * appFeePercentage *100); // Example: 10% application fee
-        _logger.LogInformation($"application fees amount is {i} using fees percent {appFeePercentage}.");
-        return Math.Max(i, _floorFee); // Ensure the fee is at least the floor fee
+
+        decimal totalAmount = lineItems.Sum(item => item.Price * item.Quantity);
+        long percentageFee = (long)Math.Round(totalAmount * appFeePercentage * 100m, MidpointRounding.AwayFromZero);
+        long minimumFee = (long)Math.Round(lineItems.Sum(item => item.Quantity) * floorFees, MidpointRounding.AwayFromZero);
+
+        long fee = Math.Max(percentageFee, minimumFee);
+        _logger.LogInformation("application fees amount is {Fee} using fees percent {AppFeePercentage} and floor fee {FloorFees}.", fee, appFeePercentage, floorFees);
+        return fee;
     }
 
     public async Task<string> GetCheckOutSessionStatus(string sessionId, string stripeAccountID)
@@ -472,6 +476,7 @@ public class StripeRefundHandler
                                                                 string customerEmailAddress, string zipCode,
                                                                 bool passOnAllFeesToCustomer = false,
                                                                 decimal? platformFeeOverride = null,
+                                                                decimal? floorFeesOverride = null,
                                                                 bool simulationMode = false)
     {
         
@@ -502,7 +507,7 @@ public class StripeRefundHandler
         string ticketTaxCode = EventCategoryTaxMapping.ContainsKey(paymentModel.EventCategory) ? EventCategoryTaxMapping[paymentModel.EventCategory] : _defaultTicketTaxCode;
         _logger.LogInformation($"Tax code {ticketTaxCode} will be applied for event category {paymentModel.EventCategory} and event id {paymentModel.EventId}.");
         
-        long appFees = CalculatePlatformFee(paymentModel.LineItems, platformFeeOverride ?? _applicationFeePercentage);
+        long appFees = CalculatePlatformFee(paymentModel.LineItems, platformFeeOverride ?? _applicationFeePercentage, floorFeesOverride ?? _floorFee);
         long totalItemsUnitPrice = (long)paymentModel.LineItems.Sum(item => item.Price * item.Quantity * 100);
         _logger.LogInformation($"Total items price in cents: {totalItemsUnitPrice}");
         
