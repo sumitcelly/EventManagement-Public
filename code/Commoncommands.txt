@@ -79,13 +79,14 @@ stripe listen --forward-to http://localhost:5220/api/payment/stripewebhook
 aws s3 sync dist/ s3://ticketevents-code-975050117852-us-west-2-an      
 
 //ssh login
+ssh -i ~/.ssh/eventmgtmlogin.pem  ec2-user@35.91.6.76
 
 ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.155   
 
 //connecting to db
 //first create a ssh tunnel via ec2 to mysql (mysql is off the internet and only accessible to ec2)
 
-ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@54.187.60.155
+ssh -i ~/.ssh/eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@35.91.6.76
 
 //open mysql with aws connection (already created)
 
@@ -113,4 +114,11 @@ docker compose -f docker-compose.prod.yml up -d --force-recreate
 //check logs
 
 docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
+
+//live stream logs
+docker compose -f docker-compose.prod.yml logs --tail 50 -f create-ticket-api
+
+//check for errors
+docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api | grep -i error
+
 

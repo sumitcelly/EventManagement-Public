@@ -1,0 +1,80 @@
+
+Flows:
+Home Page:
+1. Signup--> Enter email->REceive code-> Enter code
+    a) If already existing user, shows dashboard (ticket)
+    b) If not, then takes you to signup page with name.
+2. Find my tickets -->Enter email->REceive code-> Enter code
+    a) User should login to ticket dashboard.
+
+3. Organize an Event--> Takes to login screen
+    a) If user already organizer, then takes to organizer dashbord.
+        New Event should be on top.
+    b) If not, then takes to OrganizerManager page where they can fill out form.
+        After form filled out, see a modal about becoming organizer and land on
+        Organizer dashboard.
+4. Within Organizer Manager, make sure to test image add/ update and stripe connection information.
+    Also make sure all form valiidations work.
+
+5. Search: make sure results are accurate. Mobile test
+
+
+After login:
+Event dashboard:
+1. You should not be able to edit an event in the past. Maybe later have it as past and upcoming
+events.
+
+New Event:
+
+1. Create events. check flow. Check validations. REfelct on event category.
+
+2. Ticket page. Show ticket dashboard when one clicks on it.
+    Maybe remove timed entry. Expand the things that are hidden?
+
+3. Publish Settings. Check if settings apply right away.
+
+Email Campaigns:
+
+1. Make sure the grid title and data are aligned. Make suer status is correct.
+
+2. New Campaign:
+    a) Only future events should be shown.
+    b) Test worker for campaign.
+
+Order Report:
+ 1. UI boxes could be smaller, the search a little cleaner.
+ Consider adding, totals area with total revenue, total tickets sold,
+ total remaining per ticket type.
+
+Manage Teams
+1. Teams workflow.
+
+Ticket Buyer.
+
+1. Events should be shown only for future events.
+
+2.  When click on events, show tickets only for those with sales started.
+    If not, then maybe show sales start so and so date.
+
+3. Make sure other ticket settings are being respected.
+
+Ticket flow should work. Has been tested but still.
+
+1. Check for overrides.
+
+2. Review tax and how it is calculated.  What stripe setting needs to be on?
+    maybe cache it for zip code?
+
+3. Make sure the ticket count is accurate. Check for reserved orders, abandoned orders.
+And run worker to reset counts.
+
+
+
+
+
+
+
+
+
+
+
