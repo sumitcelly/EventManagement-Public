@@ -5,7 +5,15 @@ export function AppPagination({totalItems, currentPage, onPageChange, itemsPerPa
 
   return (
     <div className="flex mb-4 ml-4 overflow-x-auto sm:justify-center">
-      <Pagination layout="table" currentPage={currentPage} itemsPerPage={itemsPerPage} totalItems={totalItems} onPageChange={onPageChange} />
+      <div className="[&_*]:text-primary-color [&_*]:dark:text-primary-color [&_span]:text-primary-color [&_span]:dark:text-primary-color">
+        <Pagination
+          layout="table"
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+          onPageChange={onPageChange}
+        />
+      </div>
     </div>
   );
 }

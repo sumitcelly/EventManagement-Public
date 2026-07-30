@@ -28,7 +28,11 @@ const memberSchema = yup.object({
   country: yup.string().required("Country is required").default("US"),
   aboutMe: yup.string().required("Organizer about me is required."),
   imagePreview: yup.string().nullable().default(null),
-  organizerPhone: yup.string().required("Phone"),
+  organizerPhone: yup
+    .string()
+    .required("Phone is required.")
+    .trim()
+    .matches(/^\+?1?[-.\s]?(\(?\d{3}\)?[-.\s]?){2}\d{4}$/, "Enter a valid US phone number."),
   organizerEmail: yup.string().email("Email is invalid").required("Email is required."),
   });
 

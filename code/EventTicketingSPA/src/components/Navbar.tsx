@@ -106,7 +106,7 @@ export function AppNavbar() {
   }
 
   return (
-    <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md">
+    <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md dark:bg-brand-neutral">
       <NavbarBrand href="/">
         <img src="/vite.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{import.meta.env.VITE_PLATFORM_Name}</span>
@@ -127,7 +127,6 @@ export function AppNavbar() {
                 <DropdownHeader>
                     <span className="block text-sm">{user?.email}</span>
                 </DropdownHeader>
-                {checkScannerAccess() && <DropdownItem href="/scannerdashboard">Scan Tickets</DropdownItem>}
                 <DropdownItem href='/myevents'>Find my tickets</DropdownItem>
                 <DropdownItem href='/organizermanager'>Organize an Event</DropdownItem>
                 <DropdownDivider />
@@ -168,13 +167,13 @@ export function AppNavbar() {
           <input type="text" id="search-navbar" 
           
           {...register("keyword")}
-            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
             placeholder="Keyword..."
             />
           <input type="text" id="location-navbar" 
           
           {...register("location")}
-            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
             placeholder="Location..."
             title="Enter city, state (e.g., Colorado Springs, CO) or just state (e.g., CO)"/>
           <button type="submit"  
@@ -232,6 +231,7 @@ export function AppNavbar() {
               arrowIcon={true}          
               label={`Organizer Menu`}>
                 <DropdownItem href="/dashboard" >Organize an event</DropdownItem>
+                {checkScannerAccess() && <DropdownItem href="/scannerdashboard">Scan Tickets</DropdownItem>}
                 <DropdownItem href="/organizermanager" >Organizer Info</DropdownItem>
                 <DropdownItem href="/emailcampaigns" >Email Campaigns</DropdownItem>
                 <DropdownItem href="/Organizer/SalesOrderReport" >Sales report</DropdownItem>

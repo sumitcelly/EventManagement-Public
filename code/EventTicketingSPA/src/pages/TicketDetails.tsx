@@ -209,7 +209,7 @@ export default function TicketDetails() {
           }
           
          <div className="ml-auto mb-4">
-            <AppPagination totalItems={ orderDetails?.ticketDetails?.length || data?.length} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
+            <AppPagination totalItems={ totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
          {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" &&
          (

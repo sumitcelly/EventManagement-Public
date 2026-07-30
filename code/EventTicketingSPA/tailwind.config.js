@@ -18,7 +18,7 @@ module.exports = {
           neutral: "#b6c690ff", // background for events page. same as "light"
           neutrallight:  "#20c4aeff", // darker gray for text
           panelbg:"#eaead7",
-          navbg:"rgb(3, 93, 109)"
+          navbg:"rgb(14, 196, 228)"
         },
         accent: {
           DEFAULT: "#F59E0B", // accent (amber-500)
