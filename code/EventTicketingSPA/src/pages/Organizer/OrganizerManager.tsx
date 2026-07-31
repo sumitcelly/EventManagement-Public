@@ -1,6 +1,6 @@
 
 import { TabItem, Tabs, TabsRef } from "flowbite-react";
-import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
+import { HiAdjustments, HiClipboardList, HiUserCircle, HiCreditCard,HiUser,HiLink} from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
 import TicketDashboard from "./TicketDashboad";
@@ -92,14 +92,14 @@ export function OrganizerManager() {
             className="max-w-2xl mx-auto "
             variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
           
-            <TabItem title="About Info" icon={HiUserCircle}>
+            <TabItem title="About Info" icon={HiUser}>
               <OrganizerAbout organizerId={organizerId} organizerInfo  ={data}/>
             </TabItem>
 
-            <TabItem   title="Connection Info" icon={HiUserCircle}  >
+            <TabItem   title="Connection Info" icon={HiLink}  >
               <OrganizerConnect organizerId={organizerId} organizerInfo={data}/>
             </TabItem>
-            <TabItem   title="Stripe Info" icon={HiUserCircle}  >
+            <TabItem   title="Stripe Info" icon={HiCreditCard}  >
               <OrganizerStripe organizerId={organizerId} organizerInfo={data}/>
             </TabItem>
           </Tabs>

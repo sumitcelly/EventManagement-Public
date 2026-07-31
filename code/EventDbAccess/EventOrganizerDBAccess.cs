@@ -361,6 +361,7 @@ namespace EventManagementDbAccess
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected >0)
                 {
+                    organizer.OrganizerId= (int)cmd.LastInsertedId;
                     _cache.AddOrUpdateCache<EventOrganizer>(organizer,cmd.LastInsertedId.ToString());
                 }
                 return rowsAffected > 0 ? Convert.ToInt32(cmd.LastInsertedId) : 0;
