@@ -102,8 +102,16 @@ export default function Dashboard() {
         <div className="flex flex-col min-h-full">
     
         <div className="max-w-md mx-auto mt-6">
-        <h2 className="text-xl font-semibold mb-4">Events you are planning</h2>
-        <div className="divide-y">
+        <div className="flex flex-row mt-4 mb-2">
+          <button
+                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`,{customerUrlName: customerData?.organizerEventBaseUrl});}}
+              >
+                New Event
+          </button> 
+        </div>
+        <h2 className="text-xl text-center text-primary-color font-semibold mb-4">Events you are planning</h2>
+        <div className="mb-2">
           {data && data.map((event:EventHeader) => (
             <div
               key={event.eventId}
@@ -137,15 +145,7 @@ export default function Dashboard() {
               </div>
         </div>))}
       </div>
-      
-      <div className="flex flex-row mt-4">
-          <button
-                className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-                onClick={()=>{ dispatch(resetEvent()); history.push(`/eventmanager`,{customerUrlName: customerData?.organizerEventBaseUrl});}}
-              >
-                New Event
-          </button> 
-        </div>
+    
     </div>
   <Footer/>
   </div>

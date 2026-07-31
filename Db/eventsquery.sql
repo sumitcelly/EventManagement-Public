@@ -1,6 +1,8 @@
 select * from logincodes order by createdat desc
 delete from eventorganizermembers where customerid=42
-delete from eventorganizer where customerid=42
+select *  from eventorganizer where customerid=1
+
+delete from eventuser where email like 'info@pol%'
 
 ALTER TABLE eventorganizermembers
 ADD InvitationToken char(36) NULL;

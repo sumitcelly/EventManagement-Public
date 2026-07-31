@@ -10,12 +10,12 @@ export function InfoModal({modalText,openModal,onClose}:{modalText:string, openM
         <ModalHeader />
         <ModalBody>
           <div className="text-center">
-            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+            <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-primary-color dark:text-primary-color" />
+            <h3 className="mb-5 text-lg font-normal text-primary-color dark:text-primary-color">
               {modalText}
             </h3>
             <div className="flex justify-center gap-4">
-              <Button color="red" onClick={() => onClose()}>
+              <Button color="light-green" onClick={() => onClose()}>
                Dismiss
               </Button>
               

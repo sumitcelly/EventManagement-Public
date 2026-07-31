@@ -19,6 +19,8 @@ Home Page:
 5. Search: make sure results are accurate. Mobile test
 
 
+
+
 After login:
 Event dashboard:
 1. You should not be able to edit an event in the past. Maybe later have it as past and upcoming
@@ -48,6 +50,9 @@ Order Report:
 
 Manage Teams
 1. Teams workflow.
+
+Scan:
+Make sure to scan and the code is valid for that event.
 
 Ticket Buyer.
 

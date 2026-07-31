@@ -446,7 +446,8 @@ namespace EventManagementDbAccess
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 {
-                    _cache.AddOrUpdateCache<EventOrganizer>(organizer, organizer.OrganizerId.ToString());
+                    _cache.RemoveCache<EventOrganizer>(organizer.OrganizerId.ToString());
+                    //_cache.AddOrUpdateCache<EventOrganizer>(organizer, organizer.OrganizerId.ToString());
                 }
                 return rowsAffected > 0;
             }
