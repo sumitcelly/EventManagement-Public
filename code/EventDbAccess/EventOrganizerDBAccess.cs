@@ -526,12 +526,13 @@ namespace EventManagementDbAccess
                 int rowsAffected = await cmd.ExecuteNonQueryAsync();
                 if (rowsAffected > 0)
                 { 
-                    EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
-                    if (evtOrg!=null)
-                    {
-                        evtOrg.StripeConnectStatus = stripeAccountStatus.ToString();
-                        await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
-                    }
+                    _cache.RemoveCache<EventOrganizer>(organizerId.ToString());
+                    // EventOrganizer? evtOrg = await _cache.GetOnlyAsync<EventOrganizer>(organizerId.ToString());
+                    // if (evtOrg!=null)
+                    // {
+                    //     evtOrg.StripeConnectStatus = stripeAccountStatus.ToString();
+                    //     await _cache.SetOnlyAsync<EventOrganizer>(organizerId.ToString(),evtOrg);
+                    // }
                 }
                 return rowsAffected > 0;
             }

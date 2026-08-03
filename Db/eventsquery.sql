@@ -1,6 +1,14 @@
 select * from logincodes order by createdat desc
-delete from eventorganizermembers where customerid=42
-select *  from eventorganizer where customerid=1
+
+delete from eventorganizer where customerid=56
+
+delete from eventuser where email like 'testowner@p%'
+
+select *  from eventorganizer where customerid=55
+
+update eventorganizer
+set StripeConnectStatus='LinkInitiated'
+where customerid=52
 
 delete from eventuser where email like 'info@po%'
 

@@ -8,7 +8,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import TeamList from "./TeamList";
 import MemberAdd from "./MemberAdd";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { OrganizerInfo } from "../../types/Organizer";
 import OrganizerAbout from "./OrganizerAbout";
 import OrganizerConnect from "./OrganizerConnect";
@@ -25,10 +25,19 @@ export function OrganizerManager() {
   const tabsRef = useRef<TabsRef>(null);
  // const location = useLocation();
   
-  const {mode} = useParams<{mode: string}>();
+  const {orgId,mode} = useParams<{orgId:string,mode: string}>();
   const user =  useAppSelector((state: RootState) => state.auth?.user);
+  const queryClient = useQueryClient();
   const role  = user?.role;
   const organizerId =  user?.customerId;
+
+
+  console.log('orgid and mode', orgId, mode);
+
+  if (mode  ==="stripe" && orgId != organizerId)
+  {
+    return (<h2>There was an issue linking your account with stripe.</h2>)
+  }
 
   //mode valid values are ticketlist,new,edit
   console.log('organizer id, customerId from auth',organizerId,role);
@@ -60,20 +69,21 @@ export function OrganizerManager() {
     }
     else if (mode ==="stripe")
     {
-     console.log("Stripe Connect mode")
+      console.log("Stripe Connect mode")
+      queryClient.invalidateQueries(['Organizer', organizerId]);
+      queryClient.invalidateQueries(['OrganizerInfo', organizerId]);
       tabsRef.current?.setActiveTab(2); 
     }
      else {
-     // setLocalActiveTab(0);
       console.log("organizer Info mode");
       tabsRef.current?.setActiveTab(0);
     }
   }, [organizerId,mode]);
 
-  // if (isLoading)
-  // {
-  //   return (<h2>Loading...</h2>)
-  // }
+  if (isLoading)
+  {
+    return (<h2>Loading...</h2>)
+  }
 
   return (  
     <IonPage>

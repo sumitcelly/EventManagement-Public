@@ -154,9 +154,11 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
 
             await uploadImage(response.data.accessToken,response.data.user.customerId);
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
-            toast.success("Congrats! You have successfully signed up as an organizer.");
-            setOpenModal(true);
-            dispatch(changeUserRole(response.data));        
+            toast.success("Congrats! You have successfully signed up as an organizer. Please complete Stripe Info for paid events.", { duration: 7000 });
+           
+          
+            dispatch(changeUserRole(response.data));  
+            setOpenModal(true);      
             
         }
         else
