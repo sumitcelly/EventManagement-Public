@@ -18,7 +18,7 @@ export interface EventHeader {
   duration?:number; //in hours
   isLive?:boolean;
   eventBannerUrl?:string;
-  organizerStripeAccountId?:string;
+  //organizerStripeAccountId?:string;
   eventUrlName?:string;
   ticketFeeMode?:TicketFeeMode;
   refundMode?:number;

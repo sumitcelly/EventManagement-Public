@@ -308,17 +308,13 @@ namespace CreateTicketApi.Controllers
                 _logger.LogError($"Unable to locate event orgnaizer details for {evt.EventOrganizerId}");
                 return StatusCode(500, "Unable to locate event organizer details");
             }
-            if (!string.IsNullOrWhiteSpace(organizer.StripeAccountId) &&
-                !string.Equals(evt.EventLocation, evtCurrent.EventLocation, StringComparison.OrdinalIgnoreCase))
+            //always creating location id to avoid caching bugs.
+            if (!string.IsNullOrWhiteSpace(organizer.StripeAccountId))
             {
                 evt.LocationId = await _stripeAccess.GetLocationIdForAddress(evt.EventName, evt.StreetAddress, evt.City,evt.State, 
                                             evt.ZipCode, organizer.StripeAccountId,evt.Country);
             }
-            else
-            {
-                evt.LocationId = evtCurrent.LocationId;
-            }
-                
+               
             bool result = await _EventDbAccess.UpdateEvent(evt);
             if (result)
                 return Ok();

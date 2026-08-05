@@ -1,14 +1,16 @@
 Running Bug List
 
-When showing tickets, the one of x in the paging control is blank. So one is blabk and x is blank.
+When showing tickets, the one of x in the paging control is blank. So one is blabk and x is blank. -- Done
 
+
+When a person becomes an organizer, the modal does not show up.
+
+In publish page, make sure for any paid ticket, the fee mode defaults to say "1"
+amnd "0" none is removed.
 
 Only General Category works when creating event ??
 
 Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
-Form validation not working on Organizer iNfo and  Organizer Urls page.
-
-Scan tickets should be under organizer menu.
 

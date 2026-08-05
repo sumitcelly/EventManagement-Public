@@ -5,7 +5,7 @@ import * as yup from "yup";
 import { useAppDispatch ,useAppSelector} from "../app/hook";
 import CartTotal from "../components/CartTotal"
 import { TicketFormValues, Ticket } from "../types/Tickets";
-import {  updatebuyer, updatetickets } from "../features/auth/cartSlice";
+import {  resetCart, updatebuyer, updatetickets } from "../features/auth/cartSlice";
 import { RootState } from "../app/store";
 import { useHistory, useLocation, useParams } from "react-router";
 import OrderSummary from "./OrderSummaryDefunct";
@@ -51,14 +51,14 @@ const schema = yup.object({
                 console.log('maxPerOrderOk',maxPerOrderOk);
               return maxPerOrderOk && totalAllowedOk;
             }
-          ),   
+          ),
         })
       ).required()
       .test(
           "at-least-one-ticket",
           "Please select at least one ticket",
           (items) => {
-          
+
             if (!items) return false;
             return items.some((t) => t.quantity && t.quantity > 0);
           }
@@ -67,7 +67,7 @@ const schema = yup.object({
 
 
 export default function BuyTickets() {
-  
+
   const location = useLocation();
   const history = useHistory();
   const dispatch = useAppDispatch();
@@ -78,15 +78,18 @@ export default function BuyTickets() {
   const [stripeSessionId,setStripeSessionId] = useState<string | null>(null);
 
   const ionRouter = useIonRouter();
-  const { id, simulationMode ,organizerId} = location.state as any || {};
+  const { id, simulationMode ,organizerId, feeMode} = location.state as any || {};
+ 
+  console.log('feemode received', feeMode);
+
   const [checkoutError,setcheckoutError] = useState([]);
   console.log('stripe session id in buy tickets',stripeSessionId);
-  
+
   const {
         data: ticketTypesList = [], // provide default empty array
         isLoading,
         error
-  } = 
+  } =
   useQuery(
     ['eventitemtype', id], // structured query key
     async () => {
@@ -111,7 +114,7 @@ export default function BuyTickets() {
         fullname: cart.fullname || user?.user?.name,
         email: cart.email || user?.user?.email,
         zipCode: cart.zipCode || '',
-        tickets: cart.tickets.length>0 ? cart.tickets : [] 
+        tickets: cart.tickets.length>0 ? cart.tickets : []
       },
         mode: "onChange",          // 👈 validates as user types or changes field
         reValidateMode: "onChange"
@@ -124,13 +127,13 @@ export default function BuyTickets() {
         fullname: user.user?.name || cart.fullname || '',
         email: user.user?.email || cart.email || '',
         zipCode: cart.zipCode || '',
-        tickets: cart.tickets?.length > 0 
-          ? cart.tickets 
-          : ticketTypesList.map((t: Ticket) => ({ 
-              eventItemTypeId: t.eventItemTypeId, 
-              name: t.name, 
-              quantity: 0, 
-              description: t.description, 
+        tickets: cart.tickets?.length > 0
+          ? cart.tickets
+          : ticketTypesList.map((t: Ticket) => ({
+              eventItemTypeId: t.eventItemTypeId,
+              name: t.name,
+              quantity: 0,
+              description: t.description,
               cost: t.cost ,
               maxPerOrder: t.maxPerOrder,
               totalAllowed: t.totalAllowed,
@@ -162,11 +165,11 @@ export default function BuyTickets() {
     //ionRouter.push(`/ordersummary/${id}`);
     await checkout(data);
   };
- 
+
   const paymentNeeded =  (tickets: TicketFormValues['tickets'] = []) =>
     tickets.some((t: any) => (Number(t?.quantity) || 0) > 0 && (Number(t?.cost) || 0) > 0);
-  
-  const checkout = async (formData:TicketFormValues) => {       
+
+  const checkout = async (formData:TicketFormValues) => {
     try
     {
       //todo:revisit this logic since stripesessionid seems to exist even if we come after timeout
@@ -190,7 +193,7 @@ export default function BuyTickets() {
       //   }
       // }
       const result = await axiosClient.post("/salesOrder", {
-        userId: user == null || user.user?.guest? 0: user.user?.id, 
+        userId: user == null || user.user?.guest? 0: user.user?.id,
         eventId: id,
         simulationMode: simulationMode,
         customerId: eventHeaderInfo.eventOrganizerId || organizerId || 0,
@@ -205,7 +208,7 @@ export default function BuyTickets() {
         headers: {
           'Content-Type': 'application/json',
           // Pass the email in the headers so the backend rate-limiter can see it instantly
-          'X-Buyer-Email': formData.email.trim().toLowerCase() 
+          'X-Buyer-Email': formData.email.trim().toLowerCase()
         }}
     );
       if (result.status !=200)
@@ -217,7 +220,7 @@ export default function BuyTickets() {
         if (result.data.accessToken)
         {
           console.log('guest login detected. Found token');
-          dispatch(loginAsGuest(result.data));     
+          dispatch(loginAsGuest(result.data));
         }
         const guestAlreadyExists = result.data?.guestAlreadyExists;
         console.log('guestAlreadyExists',guestAlreadyExists);
@@ -242,7 +245,7 @@ export default function BuyTickets() {
           }
           else
           {
-            if (!salesOrderData?.checkoutSessionSecret || !salesOrderData?.checkoutSessionId || 
+            if (!salesOrderData?.checkoutSessionSecret || !salesOrderData?.checkoutSessionId ||
               !salesOrderData?.checkoutSessionPublishableKey)
             {
               console.log('Unable to proceed to payment due to incomplete setup.');
@@ -282,7 +285,7 @@ return (
   (errors) => console.log("validation errors", errors)
 )}> */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {ticketTypesList.map((item: Ticket, index:number) => 
+      {ticketTypesList.map((item: Ticket, index:number) =>
       (
           <div  key={item.eventItemTypeId} className="flex flex-col">
             <div className="flex flex-row">
@@ -298,20 +301,20 @@ return (
                       min={0}
                       disabled={item.ticketsSold >= item.totalAllowed}
                     />
-                  </div>  
+                  </div>
             </div>
-            
+
             <div className="w-1/3 ml-auto text-right mr-3">
               {item.ticketsSold >=item.totalAllowed && (
                 <div className="text-red-500 text-sm ">
                     Sold Out!
                 </div>
               )}
-              {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0 
-                  && (item.totalAllowed - item.ticketsSold) <= 5 && (      
+              {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0
+                  && (item.totalAllowed - item.ticketsSold) <= 5 && (
                 <div className="text-red-500 text-sm ">
                     Very few left!
-                </div>                  
+                </div>
               )}
               {errors?.tickets?.[index]?.quantity?.message && (
                       <div className="text-red-500 text-sm ">
@@ -329,9 +332,9 @@ return (
         )}
 
         <div className="flex flex-row mt-4 space-x-8">
-  
+
   {/* Left Column: User Info & Zip */}
-  <div className="w-1/2 flex flex-col justify-start"> 
+  <div className="w-1/2 flex flex-col justify-start">
     {/* Full Name & Email (Conditional) */}
     {(user.user?.guest || user.user == null) && (
       <>
@@ -360,44 +363,44 @@ return (
       </div>
     )}
     <p className={paymentNeeded(watchedTickets)? "text-[11px] mt-3 max-w-sm mx-auto": "text-[11px] mt-12 max-w-sm mx-auto"}>
-        By clicking  {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}, 
+        By clicking  {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'},
         you explicitly agree to {import.meta.env.VITE_COMPANY_NAME}'s
-        
+
         {' '}<a href="/tos" className="underline hover:text-slate-600">Terms of Service</a>,
         {' '}<a href="/privacypolicy" className="underline hover:text-slate-600">Privacy Policy</a>,{' '}and our non-refundable
         {' '}<a href="/refundpolicy" className="underline hover:text-slate-600">Refund Policy</a> parameters.
-      
+
     </p>
 
   </div>
 
   {/* Right Column: Totals and Checkout */}
- 
-  <div className="flex-1 flex flex-col items-end justify-end"> 
+
+  <div className="flex-1 flex flex-col items-end justify-end">
     <div className="w-full text-right">
-      <CartTotal control={control} feeMode={eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
+      <CartTotal control={control} feeMode={ feeMode || eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
     </div>
 
     <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
       {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}
     </button>
-   
+
   </div>
-  
-   
+
+
 </div>
 
 
-            
 
-           
+
+
   </form>
-    
+
     </div>
-     <Footer/>  
+     <Footer/>
     </div>
     </IonContent>
-   
+
     </IonPage>
   );
 }

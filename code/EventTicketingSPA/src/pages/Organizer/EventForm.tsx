@@ -120,7 +120,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       duration: res.data.duration,
       eventLocation: res.data.eventLocation,
       isLive: res.data?.isLive || false,
-      eventOrganizerId: res.data.organizerId,
+      eventOrganizerId: res.data.eventOrganizerId,
       eventBannerUrl: res.data.eventBannerUrl,
       eventCategory: res.data.Category,
       ticketFeeMode: res.data.ticketFeeMode

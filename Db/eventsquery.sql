@@ -4,7 +4,10 @@ delete from eventorganizer where customerid=56
 
 delete from eventuser where email like 'testowner@p%'
 
-select *  from eventorganizer where customerid=55
+select StripeAccountId from eventorganizer where customerid=1
+select * from events where eventid=61
+
+select * from salesorder where OrderId=745
 
 update eventorganizer
 set StripeConnectStatus='LinkInitiated'

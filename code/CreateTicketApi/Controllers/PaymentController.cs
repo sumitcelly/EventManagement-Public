@@ -218,9 +218,9 @@ namespace CreateTicketApi.Controllers
         }
 
         [EnableRateLimiting("strict-ip-auth")]
-        [HttpGet("checkout-session-status/{sessionId}/{stripAcctId}")]
+        [HttpGet("checkout-session-status/{sessionId}/{organizerId}")]
       
-        public async Task<IActionResult> GetCheckoutSessionStatus(string sessionId, string stripAcctId)
+        public async Task<IActionResult> GetCheckoutSessionStatus(string sessionId, int organizerId)
         {
             //validate the  stripe session id belongs to the logged in user.
             //commenting all this out since the session id is secruity in itself
@@ -236,7 +236,18 @@ namespace CreateTicketApi.Controllers
             // {
             //     return Forbid("Invalid session id");
             // }
-            return Ok(await _stripeAccess.GetCheckOutSessionStatus(sessionId,stripAcctId));
+            EventOrganizer organizer = await _eventOrganizerDbAccess.GetOrganizerById(organizerId);
+            if (organizer == null)
+            {
+                _logger.LogCritical($"Unable to locate organizer for Id, {organizerId}");
+                return StatusCode(500, "Unable to find organizer");
+            }
+            if (string.IsNullOrWhiteSpace(organizer.StripeAccountId))
+            {
+                _logger.LogError($"Unable to locate organizer stripe id for organizer id, {organizerId}");
+                return StatusCode(500, "Unable to locate organizer stripe id");
+            }
+            return Ok(await _stripeAccess.GetCheckOutSessionStatus(sessionId,organizer.StripeAccountId));
         }
 
         //This controller method is not called currently.

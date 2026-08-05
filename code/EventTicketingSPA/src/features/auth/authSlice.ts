@@ -12,6 +12,8 @@ interface User {
   customerUrlName?:string;
   stripeConnectStatus?:string;
   guest:boolean;
+  //only populated if an organizer uses their dashboard.
+  stripeAcctId?:string;
 }
 
 interface AuthState {
@@ -137,6 +139,7 @@ const authSlice = createSlice({
        if (state.user) {
         state.user.customerUrlName = action.payload.customerUrlName;
         state.user.stripeConnectStatus = action.payload.stripeConnectStatus;
+        state.user.stripeAcctId = action.payload.stripeAcctId;
       }
     },   
     changeUserRole(state, action){

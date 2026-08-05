@@ -15,6 +15,7 @@ import AppNavbar from "../../components/Navbar";
 import { calculateForCustomerAbsorbsAllFees, calculateForOrganizerAbsorbsStripeFees } from "../../components/CartTotal";
 import { updateCustomerProfile } from "../../features/auth/authSlice";
 import { useDispatch } from "react-redux";
+import { resetCart } from "../../features/auth/cartSlice";
 
   
 export default function EventPublish({eventId,isActive}: {eventId?:string,isActive:boolean}) {
@@ -339,7 +340,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
             {/* Action Buttons Container */}
             <div className="flex flex-col sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 pt-2">
               <button 
-                onClick={() => {history.push(`/buytickets`,{id: eventId, simulationMode: true, organizerId: user?.customerId}); setIsModalOpen(false);}} 
+                onClick={() => {console.log('fee mode is',feeMode);dispatch(resetCart());history.push(`/buytickets`,{id: eventId, simulationMode: true, organizerId: user?.customerId, feeMode: Number(feeMode)}); setIsModalOpen(false);}} 
               
                 className="w-full sm:w-auto inline-flex justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-all"
               >

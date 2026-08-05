@@ -87,7 +87,9 @@ export default function Dashboard() {
     
   useEffect(()=>{
     if (customerData && customerData?.organizerEventBaseUrl)
-      dispatch(updateCustomerProfile({customerUrlName:customerData?.organizerEventBaseUrl,stripeConnectStatus: customerData?.stripeConnectStatus}));
+      dispatch(updateCustomerProfile({customerUrlName:customerData?.organizerEventBaseUrl,
+                                      stripeConnectStatus: customerData?.stripeConnectStatus,
+                                      stripeAcctId: customerData?.stripeAccountId}));
   },[customerData]);
 
 

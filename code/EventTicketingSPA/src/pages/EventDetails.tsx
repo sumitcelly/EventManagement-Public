@@ -60,13 +60,14 @@ export default function EventDetails() {
 
 // Fetch organizer details using a separate useQuery
 const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
-  eventDetails?.eventOrganizerId ? `organizer/details/${eventDetails.eventOrganizerId}` : '',
+   `organizer/details/${eventDetails?.eventOrganizerId}`,
   async () => {
-    const res = await axiosClient.get(`/eventorganizer/${eventDetails.eventOrganizerId}`);
+    const res = await axiosClient.get(`/eventorganizer/${eventDetails?.eventOrganizerId}`);
     console.log('Event organizer details', res?.data);
     return res.data;
   },
   {
+    cacheTime: 1000* 60* 60,
     staleTime: 1000 * 60 * 5,
     enabled: !!eventDetails?.eventOrganizerId // Only run if eventOrganizer exists
   }
@@ -80,7 +81,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       eventDate: new Date(eventDetails.eventDate+"Z"),
       eventLocation: eventDetails.eventLocation,
       eventOrganizerId: eventDetails.eventOrganizerId,
-      organizerStripeAccountId: organizerDetails?.stripeAccountId,
+     // organizerStripeAccountId: organizerDetails?.stripeAccountId,
       refundMode: eventDetails.refundMode,
       ticketFeeMode: eventDetails.ticketFeeMode
     }

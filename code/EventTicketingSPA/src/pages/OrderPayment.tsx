@@ -26,14 +26,13 @@ export default function OrderPayment() {
   const history = useHistory();
   const  cart = useAppSelector((state:RootState) => state.cart);
   const eventHeaderInfo = useAppSelector((state:RootState) => state.event);
-  const user = useAppSelector((state:RootState) =>state.auth);
-
-  const stripeAccountId = eventHeaderInfo.organizerStripeAccountId;
-  console.log(`stripe account id is ${stripeAccountId}`);
-
+ 
   const location = useLocation();
   const {salesOrderData,id, simulationMode} = location.state as any || {};
-  console.log('sales order',salesOrderData);
+  console.log('sales order, simulation mode',salesOrderData, simulationMode);
+
+  const organizerId =  eventHeaderInfo.eventOrganizerId;
+  console.log(`stripe account id is ${organizerId}`);
 
   const pkStripe =  salesOrderData?.checkoutSessionPublishableKey || import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "";
   const stripePromise = loadStripe(pkStripe);
@@ -46,14 +45,14 @@ export default function OrderPayment() {
   console.log('session id and orderid from url', sessionId, orderId);
 
   let underProcess =false
-  const getSessionStatus = async (sessionId:string, stripeAcctId:string) => 
+  const getSessionStatus = async (sessionId:string, organizerId:string) => 
   {
     try 
     {
       if (underProcess)
         return;
       underProcess = true;
-      const response = await axiosClient.get(`/payment/checkout-session-status/${sessionId}/${stripeAcctId}`);
+      const response = await axiosClient.get(`/payment/checkout-session-status/${sessionId}/${organizerId}`);
       console.log("Session status response:", response.data);
       const savedGuestExists = sessionStorage.getItem('stripe_checkout_guest_exists');
       const guestAlreadyExists = savedGuestExists && savedGuestExists !== "undefined"? JSON.parse(savedGuestExists) : false;
@@ -122,10 +121,10 @@ export default function OrderPayment() {
   }
 
   useEffect(() => {
-    if (sessionId && stripeAccountId) {
-      getSessionStatus(sessionId, stripeAccountId);
+    if (sessionId && organizerId) {
+      getSessionStatus(sessionId, String(organizerId));
     }
-  }, [sessionId, stripeAccountId]);
+  }, [sessionId, organizerId]);
 
   
   if (!salesOrderData || !salesOrderData.checkoutSessionSecret || !salesOrderData.checkoutSessionId) {
@@ -156,7 +155,7 @@ export default function OrderPayment() {
  
   const paymentRequired =cart.tickets.some((t) => t.cost && t.cost > 0);
 
-  if (paymentRequired && !stripeAccountId)
+  if (paymentRequired && !organizerId)
   {
     return (
       <IonPage>
