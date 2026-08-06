@@ -99,7 +99,43 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
     organizerUrlName?: string;
   };
 
-  
+  const updateEventSettingsForSimulation = async ({ eventId, refundMode, ticketFeeMode, organizerUrlName, eventUrlName}: PublishEventParams) => {
+    try {
+      if (data?.isLive) {
+        console.log("Event is already live, no need to update settings", eventId);
+        return false;
+      }
+
+      console.log("Updating event settings for simulation", eventId);
+
+      const res = await axiosClient.put(`/events/eventsettings/${eventId}`, {
+        organizerUrlName: organizerUrlName,
+        eventUrlName:eventUrlName,
+        isLive: false,
+        eventDate: eventData?.eventDate,
+        refundMode: Number(refundMode) || 0,
+        ticketFeeMode: Number(ticketFeeMode) || 0
+      }, {
+          headers: {
+          'Content-Type': 'application/json'}
+          });
+                
+      console.log("Event settings update for simulation API response:", res?.data);
+      if (res?.data) {
+        await queryClient.resetQueries({ queryKey: ["settings", eventId] });
+        console.log("✅ Success updating event settings for simulation", eventId);
+        return true;
+      } else {
+        console.warn("⚠️ There was an issue updating event settings for simulation", eventId);
+         toast.error("Event failed to update settings for simulation. Please try again!");
+        return false;
+      }
+    } catch (error) {
+      console.error("❌ Error updating event settings for simulation", error);
+      return false;
+    }
+  };
+
   const publishEvent = async ({ status, eventId ,refundMode, ticketFeeMode, organizerUrlName, eventUrlName}: PublishEventParams) => {
     try {
       console.log("Publishing event", eventId, "set live status to", status);
@@ -367,7 +403,13 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
             {/* Action Buttons Container */}
             <div className="flex flex-col sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 pt-2">
               <button 
-                onClick={() => {console.log('fee mode is',feeMode);dispatch(resetCart());history.push(`/buytickets`,{id: eventId, simulationMode: true, organizerId: user?.customerId, feeMode: Number(feeMode)}); setIsModalOpen(false);}} 
+                onClick={() => {
+                                console.log('fee mode is',feeMode);
+                                //update the settings in the UI that the user has selected but  has not yet published except the isLive status which will not be affected by this simulation. This is to ensure that the checkout simulation reflects the correct settings.
+                                updateEventSettingsForSimulation({ eventId: eventId, status: data?.isLive, refundMode:refundModeRef.current?.value, ticketFeeMode: feeMode, organizerUrlName: user?.customerUrlName, eventUrlName: data?.eventUrlName });
+                                dispatch(resetCart());
+                                history.push(`/buytickets`,{id: eventId, simulationMode: true, organizerId: user?.customerId, feeMode: Number(feeMode)}); 
+                                setIsModalOpen(false);}} 
               
                 className="w-full sm:w-auto inline-flex justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-all"
               >
@@ -391,13 +433,15 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
     
     {data && (
       <div className="flex flex-row mt-4">
-          <button
-                className="bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-                onClick={() => setIsModalOpen(true)}
-                disabled={mutation.isLoading}
-              >
-                Run Checkout Simulation
-          </button>
+          {paymentNeeded && (
+            <button
+                  className="bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={mutation.isLoading}
+                >
+                  Run Checkout Simulation
+            </button>
+          )}
           <div className="flex-grow"></div>
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
