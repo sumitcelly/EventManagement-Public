@@ -16,12 +16,14 @@ import { calculateForCustomerAbsorbsAllFees, calculateForOrganizerAbsorbsStripeF
 import { updateCustomerProfile } from "../../features/auth/authSlice";
 import { useDispatch } from "react-redux";
 import { resetCart } from "../../features/auth/cartSlice";
+import { useEventItemTypes } from "../../utils/EventItemTypesQuery";
 
   
 export default function EventPublish({eventId,isActive}: {eventId?:string,isActive:boolean}) {
   const history = useHistory();
   const dispatch = useDispatch();
   
+  const [paymentNeeded, setPaymentNeeded] = useState(false);
   const [fees, setFees]=useState("0");
   const [total, setTotal]=useState("0");
   const [stripeFees, setStripeFees]=useState("0");
@@ -30,12 +32,15 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const queryClient = useQueryClient();
+  const ticketDisplayModeRef = useRef<HTMLSelectElement>(null);
   const refundModeRef = useRef<HTMLSelectElement>(null);
   const isLiveRef = useRef<HTMLInputElement>(null);
   const user = useAppSelector((state: RootState) => state?.auth.user);
   console.log('customer url name', user?.customerUrlName);
   const eventData = useAppSelector((state: RootState) => state?.event);
   console.log ('event id in publish page', eventId);
+
+  const {eventItemTypeData,eventItemTypesLoading, eventItemTypesError} = useEventItemTypes(String(eventId));
 
   const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
     const res = await axiosClient.get(`/events/settings/${eventId}`);
@@ -64,20 +69,20 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
     }
   );
 
-     const { data:customerData, isLoading:isLoadingCustomer } = 
-      useQuery(['OrganizerInfo',user?.customerId], async () => {
-          console.log("Fetching organizer by customer id", user?.customerId);
-          const res = await axiosClient.get(`/EventOrganizer/${user?.customerId}`);
-          console.log('organizer Indo',res?.data, res?.status);
-    
-          return res?.data;
-        },
-        {
-          staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-          cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
-          enabled: !!user?.customerId && !user?.customerUrlName //  only run query if we have an id
-        }
-      );
+  const { data:customerData, isLoading:isLoadingCustomer } = 
+  useQuery(['OrganizerInfo',user?.customerId], async () => {
+      console.log("Fetching organizer by customer id", user?.customerId);
+      const res = await axiosClient.get(`/EventOrganizer/${user?.customerId}`);
+      console.log('organizer Indo',res?.data, res?.status);
+
+      return res?.data;
+    },
+    {
+      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
+      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      enabled: !!user?.customerId && !user?.customerUrlName //  only run query if we have an id
+    }
+  );
     
   useEffect(()=>{
     if (customerData && customerData?.organizerEventBaseUrl)
@@ -179,16 +184,32 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
     if (data && refundModeRef.current && isLiveRef.current)
     {
       refundModeRef.current.value = data.refundMode;
-      //ticketDisplayModeRef.current.value = data.ticketFeeMode;
       isLiveRef.current.checked = data.isLive;
       
     }
     setFeeMode(data?.ticketFeeMode);
-  },[data]);
+    
+  },[data,isActive]);
 
+  useEffect(()=>{
+    console.log('event item type data in publish page', eventItemTypeData);
+    if (eventItemTypeData && eventItemTypeData.length>0)
+    {
+      const paymentNeeded = eventItemTypeData.some((ticket: any) => ticket.cost > 0);
+      console.log('Payment needed for tickets:', paymentNeeded);
+      if (paymentNeeded && data?.ticketFeeMode === Number(0)) {
+        setFeeMode("1"); // Default to "Customer absorbs Stripe fees" if payment is needed and no fee mode is set
+      }
+      setPaymentNeeded(paymentNeeded);
+    }
+  },[eventItemTypeData, isActive, data]);
   
-  if (validateLoading || transLoading) return <p>Loading...</p>;
+  if (validateLoading || transLoading || eventItemTypesLoading) return <p>Loading...</p>;
  
+  if (eventItemTypesError) {
+    console.error("Error fetching event item types", eventItemTypesError);
+    return <p>Error loading data. Please try again later.</p>;
+  }
   return (  
      
     <div className="max-w-md mx-auto  text-center">
@@ -248,19 +269,24 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
           </div>
         
 
-         <label className="font-semibold mr-auto">Refund Mode</label>
-           <select ref={refundModeRef} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="0">No refunds allowed</option>
-              <option value="1">Customer initiates refunds</option>
+        {paymentNeeded && (
+          <>
+            <label className="font-semibold mr-auto">Refund Mode</label>
+            <select ref={refundModeRef} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="0">No refunds allowed</option>
+                <option value="1">Customer initiates refunds</option>
             </select>
+            </>
+          )}
+        
         </div>
-
+        
+        {paymentNeeded && (
          <div className="flex flex-col space-y-1 mt-4">
           <label className="block font-semibold mb-1 mr-auto">Fee Mode</label>
-           <select value={feeMode} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={handleModeChange} >
-              <option value="0">None(None required for free tickets)</option>
+           <select ref={ticketDisplayModeRef} value={feeMode} className="w-3/5 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" onChange={handleModeChange} >
               <option value="1">Customer absorbs Stripe fees</option>
-              <option value="2">Organizer absorbs Stripe fees</option>
+              <option value="2">Organizer absorbs Stripe fees</option>   
             </select>
 
             {feeMode !=="0" && (
@@ -299,6 +325,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
 
             )}
         </div>
+        )}
 
         {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">

@@ -12,6 +12,7 @@ import { Progress } from "flowbite-react";
 import toast, {  Toaster } from "react-hot-toast";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
+import { useEventItemTypes } from "../../utils/EventItemTypesQuery";
 // 
 
 
@@ -71,30 +72,8 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     }
 }
 
-  const { data, isLoading } = 
-  useQuery(['TicketsbyEvent',eventId], async () => {
-      console.log("Fetching tickets for event id:", eventId);
-      const res = await axiosClient.get(`/eventitemtype/all/${eventId}`);
-      if (res && res.data && res.data.length>0)
-      {
-        return res.data;
-      }
-      else
-      {
-        return [];
-      }
-     
-    },
-    {
-      staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+  const { eventItemTypeData: data, eventItemTypesLoading: isLoading } = useEventItemTypes(eventId);
 
-      // refetchOnMount: false,      // don’t always re-fetch on mount
-      // refetchOnWindowFocus: false,
-      // refetchOnReconnect: false,
-      enabled: !!eventId && isActive //  only run query if we have an id
-    }
-  );
 
   const calculateProgress =(sold:number,allowed:number)=>{
     return allowed ! >0 ? parseFloat(((sold / allowed) * 100).toFixed(2)):0;

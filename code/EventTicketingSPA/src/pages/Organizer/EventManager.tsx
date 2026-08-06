@@ -1,6 +1,6 @@
 
 import {  TabItem, Tabs, TabsRef } from "flowbite-react";
-import { HiAdjustments, HiClipboardList, HiUserCircle } from "react-icons/hi";
+import { HiAdjustments, HiClipboardList, HiOutlineLightningBolt, HiOutlineTicket, HiUserCircle, HiUserGroup } from "react-icons/hi";
 import { MdDashboard } from "react-icons/md";
 import EventForm from "./EventForm";
 import TicketDashboard from "./TicketDashboad";
@@ -27,11 +27,6 @@ export function EventManager() {
   const tabsRef = useRef<TabsRef>(null);
   const user = useAppSelector((state: RootState) => state.auth.user);
   const customerUrlName = user?.customerUrlName || "";
-  // const location = useLocation();
-  // const customerData:any = location.state || {};
-  // const {customerUrlName} = customerData;
-  
-
   const {eventId,mode,ticketId} = useParams<EventManagerParams>();
 
   //mode valid values are ticketlist,new,edit
@@ -73,21 +68,21 @@ export function EventManager() {
           <Tabs aria-label="Event Manager" 
             ref={tabsRef}
             className="max-w-2xl mx-auto "
-            variant="underline" onActiveTabChange={(tab) =>{   setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
+            variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
           
-            <TabItem title="Event Details" icon={HiUserCircle}>
+            <TabItem title="Event Details" icon={HiUserGroup}>
               <EventForm id={eventId}  organizerEventBaseUrl={customerUrlName} isActive={localActiveTab===0}/>
             </TabItem>
 
-            <TabItem  title="Ticket(s)" icon={MdDashboard} disabled={eventId == null}>
+            <TabItem  title="Ticket(s)" icon={HiOutlineTicket} disabled={eventId == null}>
               {
-                (mode === "ticketlist")
+                (mode === "ticketlist" || mode ==="" || !mode)
                 ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
                 :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
               }
             </TabItem>
 
-            <TabItem  title="Go Live!" icon={HiUserCircle} disabled={eventId ==null}>
+            <TabItem  title="Go Live!" icon={HiOutlineLightningBolt} disabled={eventId ==null}>
               <EventPublish eventId={eventId} isActive={localActiveTab===2}/>
             </TabItem>
           </Tabs>

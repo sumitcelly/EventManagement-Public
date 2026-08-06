@@ -248,16 +248,13 @@ export default function TicketBasics( {eventId,ticketId,mode}:
     }
     if (ticketDetails) {
       //update     
-       
         axiosClient.put(`/eventitemtype/${eventId}/${ticketDetails.eventItemTypeId}`, payload)
         .then(response => {
           toast.success("Ticket type updated!");
           console.log('Ticket updated successfully:', response.data);
           queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
           queryClient.invalidateQueries(['TicketDetails',eventId,ticketId]);
-          //queryClient.resetQueries({queryKey:[`tickets/details/${eventId}/${ticketId}`]});
-          //setTimeout(()=> navigate(`/eventmanager/${eventId}/ticketlist`),1500);
-          //navigate(`/organizer/eventtickets/${eventId}`);
+          setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
         })
         .catch(error => {
             toast.error("Ticket type updation failed!");

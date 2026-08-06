@@ -8,6 +8,10 @@ When a person becomes an organizer, the modal does not show up.
 In publish page, make sure for any paid ticket, the fee mode defaults to say "1"
 amnd "0" none is removed.
 
+When running simulation mode, the backend does not get the fee mode if it is not saved.
+
+navbar fields, i cannot see what i type but its there???
+
 Only General Category works when creating event ??
 
 Ticket page should have higher defaults and if error detected in hidden section,
