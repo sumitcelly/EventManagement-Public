@@ -16,7 +16,8 @@ const initialState: EventHeader = {
   duration:0,
   ticketFeeMode: 0,
   refundMode:0,
-  eventCategory:""
+  eventCategory:"",
+  ianaTimeZone:""
 };
 
 // Async login action

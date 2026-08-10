@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using EventUtils;
 using Microsoft.AspNetCore.RateLimiting;
+using GeoTimeZone;
 
 namespace CreateTicketApi.Controllers
 {
@@ -245,6 +246,13 @@ namespace CreateTicketApi.Controllers
             {
                 throw new ArgumentException("Invalid template name for send time calculation");
             }
+        }
+
+        [HttpGet("GetIanaTimeZone/{lat}/{lng}")]
+        public async Task<ActionResult<string>> GetIanaTimeZone(double lat, double lng)
+        {
+            var timezoneResult = TimeZoneLookup.GetTimeZone(lat, lng);
+            return Ok(timezoneResult.Result);
         }
 
         [HttpPost("{customerId}")]

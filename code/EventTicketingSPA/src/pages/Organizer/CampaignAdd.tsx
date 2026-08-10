@@ -10,7 +10,6 @@ import { useQuery, useQueryClient } from "react-query";
 import { Link, useHistory } from "react-router-dom";
 import { useLocation, useParams } from "react-router";
 import { useAppDispatch, useAppSelector } from "../../app/hook";
-import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import toast, { Toaster } from 'react-hot-toast';
 import { IonContent, IonHeader, IonPage } from "@ionic/react";

@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
-import { updateEvent } from "../../features/auth/eventSlice";
 import { RootState } from "../../app/store";
 import { TeamMember } from "../../types/Teams";
 import toast, { Toaster } from 'react-hot-toast';

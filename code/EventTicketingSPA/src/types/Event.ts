@@ -13,6 +13,7 @@ export interface EventHeader {
   eventId: number;
   eventName: string;
   eventDate: Date;
+  ianaTimeZone: string;
   eventLocation: string;
   eventOrganizerId:number;
   duration?:number; //in hours

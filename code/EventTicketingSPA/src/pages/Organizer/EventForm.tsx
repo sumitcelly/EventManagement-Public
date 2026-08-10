@@ -19,6 +19,13 @@ import axios from "axios";
 import { createUrlSlug, getFullUrlForEvent } from "../../utils/StringUtils";
 import { addHoursToDate } from "../../utils/DateUtils";
 import { TicketFeeMode } from "../../types/Event";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 import { richTextSchemaValidator, richTextSchemaValidatorWithoutrequired } from "../../utils/RichTextSchemaValidation";
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
@@ -123,7 +130,8 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       eventOrganizerId: res.data.eventOrganizerId,
       eventBannerUrl: res.data.eventBannerUrl,
       eventCategory: res.data.Category,
-      ticketFeeMode: res.data.ticketFeeMode
+      ticketFeeMode: res.data.ticketFeeMode,
+      ianaTimeZone: res.data.ianaTimeZone
      // eventUrlName: res.data.eventUrlName
     }
     //console.log("event date for basic info", eventBasicInfo.eventDate);
@@ -138,7 +146,16 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
   }
   );
 
-
+  const getEventDateWithTimezone = (utcDate:string, timezone:string):string=>{
+    if (!utcDate || !timezone) {
+      console.error("Missing parameters for getEventDateWithTimezone");
+      return utcDate; // Return the original date if parameters are missing
+    }
+    const pickerValue = dayjs.utc(utcDate).tz(timezone).format('YYYY-MM-DDTHH:mm');
+    console.log("Converted UTC date to local datetime-local value:", utcDate, "->", pickerValue, "using timezone:", timezone);
+    return pickerValue;
+  }
+ 
 
   const {
     control,
@@ -166,11 +183,13 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       eventDuration: eventDetails?.duration || 0,
       agenda: eventDetails?.agenda || null,
       headline: eventDetails?.eventHeadline || null,
-      eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toLocaleString('sv-SE').slice(0, 16) : "", // format for datetime-local input in local timezone
+      eventStartDate: eventDetails ? getEventDateWithTimezone(eventDetails.eventDate, eventDetails.ianaTimeZone) : "", // format for datetime-local input in local timezone
     },   
       mode: "onChange",          // 👈 validates as user types or changes field
       reValidateMode: "onChange"
   });
+
+
 
   const updateRedux = (data:any, eventId?:number)=>{
 
@@ -179,6 +198,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         eventName: data.eventName,
         eventHeadline: data.headline,
         eventDate: new Date(data.eventStartDate),
+        ianaTimeZone: data.ianaTimeZone,
         duration: data.duration,
         eventLocation: data.fullAddress,
         eventOrganizerId: data.organizerId,
@@ -189,11 +209,36 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       console.log("redux update with even data", eventBasicInfo);
   }
   const eventCache = useAppSelector((state: RootState) => state.event);
+  
+  const getUtcEventDate = async (localDate: string, lat: number, lng: number): Promise<string> => {
+    if (!localDate || !lat || !lng) {
+      console.error("Missing parameters for getUtcEventDate");
+      return localDate; // Return the original date if parameters are missing
+    }
+    try
+    {
+      const timezone = await axiosClient.get(`/events/GetIanaTimeZone/${lat}/${lng}`);
+      if (!timezone || timezone.status !== 200) {
+        console.error("Failed to fetch timezone for coordinates:", lat, lng);
+        return localDate; // Return the original date if timezone fetch fails
+      }
+       //const localDateObj = new Date(localDate);
+       const utcDate = dayjs.tz(localDate, timezone.data).utc().toISOString();
+       console.log("Converted local date to UTC:", localDate, "->", utcDate, "using timezone:", timezone.data);
+       return utcDate;
+    }
+    catch(error)
+    {
+      console.error("Error fetching timezone:", error);
+      return localDate; // Return the original date if there's an error 
+    }
+   
 
-  const onSubmit = (data: FormValues,errors:any) => {
+  }
+  const onSubmit = async (data: FormValues,errors:any) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors);
- 
+    const eventDateUtc = await getUtcEventDate(data.eventStartDate, data.lat || 0, data.lng || 0);
     const eventApi ={
       eventId: eventCache.eventId || 0,
       eventName: data.eventName,
@@ -202,7 +247,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       organizerUrlName : user?.customerUrlName,
       eventBannerUrl: eventDetails?.eventBannerUrl,
       eventHeadline: data.headline,
-      eventDate:new Date(data.eventStartDate).toISOString(),
+      eventDate: eventDateUtc,
       duration: data.eventDuration,
       eventLocation: data.fullAddress,
       category: data.eventCategory,
@@ -355,7 +400,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
         agenda: eventDetails?.eventAgenda || null,
         headline: eventDetails?.eventHeadline || null,
         eventCategory: eventDetails?.category || null,
-        eventStartDate: eventDetails ? new Date(eventDetails.eventDate).toLocaleString('sv-SE').slice(0, 16) : "", // format for datetime-local input in local timezone
+        eventStartDate: eventDetails ? getEventDateWithTimezone(eventDetails.eventDate, eventDetails.ianaTimeZone) : "", // format for datetime-local input in local timezone
       }
     );
     //setValue("description", eventDetails?.description || "");

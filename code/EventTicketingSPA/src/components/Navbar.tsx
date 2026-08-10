@@ -153,13 +153,7 @@ export function AppNavbar() {
           <span className="sr-only">Search</span>
       </button>
 
-      {/*hidden on small screens, visible on medium and larger*/}
-      {/* <form className="relative w-full md:ml-auto md:w-1/3"
-      onSubmit={handleSubmit(
-        //console.log("address", fullAddress),
-  (data) => console.log("submit fired!", data),
-  (errors) => console.log("validation errors", errors)
-)}> */ }
+     
     <form onSubmit={ handleSubmit(onSubmit)} className="relative w-full md:ml-auto md:w-1/3" >
       {/*desktop version*/}
       <div className="relative hidden md:block ml-auto">
@@ -167,13 +161,13 @@ export function AppNavbar() {
           <input type="text" id="search-navbar" 
           
           {...register("keyword")}
-            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
             placeholder="Keyword..."
             />
           <input type="text" id="location-navbar" 
           
           {...register("location")}
-            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
             placeholder="Location..."
             title="Enter city, state (e.g., Colorado Springs, CO) or just state (e.g., CO)"/>
           <button type="submit"  
@@ -197,7 +191,7 @@ export function AppNavbar() {
                   type="text"
                   {...register("keyword")}
                   id="search-navbar-mobile"
-                  className="w-full p-2 mb-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-2 mb-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                   placeholder="Keyword..."
                 />
                 <button              
@@ -215,7 +209,7 @@ export function AppNavbar() {
                 type="text"
                 {...register("location")}
                 id="location-navbar-mobile"
-                className="w-4/5 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-4/5 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 placeholder="Location..."
               />
               {errors?.keyword && <p>{errors.keyword.message}</p>}                  

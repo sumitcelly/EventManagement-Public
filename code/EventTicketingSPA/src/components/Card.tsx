@@ -12,13 +12,13 @@ export function EventCard({event}:
   return (
 
     <Card     
-      className="bg-brand-light max-w-xs  cursor-pointer hover:shadow-lg "
+      className="bg-brand-light max-w-xs  cursor-pointer hover:shadow-lg dark:bg-brand-neutral"
      
       //imgSrc={event.eventBannerUrl}
       onClick={() => history.push(`/eventDetails/${event.organizerUrlName}/${event.eventUrlName}`)}
     >
     
-        <div className="aspect-video overflow-hidden rounded-t-lg">
+        <div className="aspect-video overflow-hidden rounded-t-lg ">
           <img 
             className="object-cover object-top w-full" 
             src={event.eventBannerUrl} 

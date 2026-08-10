@@ -32,6 +32,7 @@
     "@tiptap/react": "^3.6.6",
     "@tiptap/starter-kit": "^3.6.6",
     "axios": "^1.11.0",
+    "dayjs": "^1.11.21",
     "dompurify": "^3.4.8",
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.17",

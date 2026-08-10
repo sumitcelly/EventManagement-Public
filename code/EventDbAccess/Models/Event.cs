@@ -2,8 +2,10 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using GeoTimeZone;
 using Org.BouncyCastle.Asn1.Mozilla;
 using Stripe;
+using TimeZoneConverter;
 namespace EventManagementDbAccess
 {
     public class EventHeader
@@ -12,8 +14,16 @@ namespace EventManagementDbAccess
         public required string EventName { get; set; }
 
         public DateTime EventDate { get; set; }
-        
-        
+
+       
+        public string IanaTimeZone
+        {
+            get => TimeZoneLookup.GetTimeZone((double)Latitude, (double)Longitude).Result;
+           
+            set { 
+                // This setter is intentionally left empty to allow deserialization without affecting the IanaTimeZone property.
+            }
+        }
         public string EventSummary { get; set; } = string.Empty;
 
         public string EventOrganizer { get; set; } = string.Empty;

@@ -14,6 +14,12 @@ import { IonContent, IonHeader, IonPage, useIonRouter } from "@ionic/react";
 import AppNavbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import DomPurify from "dompurify";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export default function EventDetails() {
 
@@ -79,6 +85,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
       eventId: eventDetails.eventId,
       eventName: eventDetails.eventName,
       eventDate: new Date(eventDetails.eventDate+"Z"),
+      ianaTimeZone: eventDetails.ianaTimeZone,
       eventLocation: eventDetails.eventLocation,
       eventOrganizerId: eventDetails.eventOrganizerId,
      // organizerStripeAccountId: organizerDetails?.stripeAccountId,
@@ -111,6 +118,21 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     console.error("Failed to copy: ", err);
   }
 };
+const getEventDateWithTimezone = (utcDate:string, timezone:string):string=>{
+    if (!utcDate || !timezone) {
+      console.error("Missing parameters for getEventDateWithTimezone");
+      return utcDate; // Return the original date if parameters are missing
+    }
+    const dateObj = new Date(utcDate);
+    const localizedString = dateObj.toLocaleDateString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short' // Optional: Adds "EDT" or "EST" so the user isn't confused
+    });
+    return localizedString;
+  }
+    
 
   return (
     <IonPage>
@@ -146,7 +168,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
 
       <div className="flex flex-row justify-center  italic font-body mt-4 font-extrabold">
         <div className="text-l font-headline text-primary-color">
-          {new Date(eventDetails.eventDate + 'Z').toLocaleString()} 
+          {getEventDateWithTimezone(eventDetails.eventDate+'Z', eventDetails.ianaTimeZone)} 
         </div>
 
         <div className="font-headline text-primary-color ml-auto w-1/2 hover:bg-gray-100  cursor-pointer"

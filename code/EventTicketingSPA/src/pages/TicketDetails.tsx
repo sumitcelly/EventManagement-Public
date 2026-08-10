@@ -207,12 +207,13 @@ export default function TicketDetails() {
             
             </SalesOrderTicket>
           }
-          
+        
          <div className="ml-auto mb-4">
             <AppPagination totalItems={ totalItems} currentPage={currentPage} onPageChange={onPageChange} itemsPerPage={1}></AppPagination>
          </div>
-         {(orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded" || 
-         (orderDetails?.salesOrderStatus || salesOrderStatus) === "OrderCompleted" &&
+         {(((orderDetails?.salesOrderStatus || salesOrderStatus) === "PaymentSucceeded") ||
+           ((orderDetails?.salesOrderStatus || salesOrderStatus) === "OrderCompleted"))
+            &&
          (
 
           <div className="flex ml-auto mt-4">
