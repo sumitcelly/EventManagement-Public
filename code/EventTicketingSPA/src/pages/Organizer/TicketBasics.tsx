@@ -59,6 +59,7 @@ const ticketSchema = (event: EventHeader)=>yup.object({
       }),
     tickevalidityStartDate: yup.string().required("Ticket validity start date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => {  
+        return true;
         console.log(value);
         //return true;
         if (!event || !event.eventDate) return false;
@@ -71,7 +72,7 @@ const ticketSchema = (event: EventHeader)=>yup.object({
       }),
     tickevalidityEndtDate: yup.string().required("Ticket validity end date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => { 
-      
+        return true;
          if (!event || !event.eventDate) return false;
       
 
@@ -479,7 +480,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
         </div>  
       </div>
       
-      <details>
+      <details hidden>
         <summary>Use this section to restrict tickets to a certain timeframe within an event.
         </summary>
         <div className="flex flex-row items-center justify-between">
@@ -528,7 +529,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
           </div>   
         </div>  
       </div>
-      </details>
+      </details> 
       
       </details>
 

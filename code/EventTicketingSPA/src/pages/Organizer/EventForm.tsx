@@ -30,7 +30,7 @@ import { richTextSchemaValidator, richTextSchemaValidatorWithoutrequired } from 
 const eventSchema = yup.object({
   eventName: yup.string().required("Event name is required"),
   eventUrlName: yup.string().required("Event Url name is reqired"),
-  headline: yup.string().nullable().default(null),
+  headline: yup.string().required("Headline is required"),
   eventStartDate: yup.string().required("Event date is required")
   .test("past-date", "Event start date cannot be in the past", (value) => {
   
@@ -75,7 +75,7 @@ type FormValues = {
   eventDuration: number;
   eventCategory: string; 
   description: string;
-  headline: string | null; // <-- allow undefined
+  headline: string; // <-- allow undefined
   tagList?: string[];
   agenda: string | null; // <-- allow undefined
   fullAddress: string;
@@ -182,7 +182,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
       description:  eventDetails?.description || "",
       eventDuration: eventDetails?.duration || 0,
       agenda: eventDetails?.agenda || null,
-      headline: eventDetails?.eventHeadline || null,
+      headline: eventDetails?.eventHeadline || "",
       eventStartDate: eventDetails ? getEventDateWithTimezone(eventDetails.eventDate, eventDetails.ianaTimeZone) : "", // format for datetime-local input in local timezone
     },   
       mode: "onChange",          // 👈 validates as user types or changes field
@@ -450,9 +450,9 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
           className="w-full border rounded p-2"
           placeholder="Enter event headline to attract attendees"
         />
-        {/* {errors.eventName && (
-          <p className="text-red-600 text-sm mt-1">{errors.eventName.message}</p>
-        )} */}
+        {errors.headline && (
+          <p className="text-red-600 text-sm mt-1">{errors.headline.message}</p>
+        )}
       </div>
       
       <FileUpload 
@@ -549,6 +549,13 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
             />
           )}
         />
+          <div className="min-h-[20px]">
+          {errors.fullAddress && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.fullAddress.message}
+            </p>
+          )}
+          </div>
       </div>
      
       
