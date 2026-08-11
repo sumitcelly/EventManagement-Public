@@ -92,7 +92,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
-                onClick={()=> history.push(`/eventmanager/${eventId}/publish`)}
+                onClick={()=> history.push(`/eventmanager`, { eventId: eventId, mode: 'publish' })}
               >
                 Go Live!
           </button> 
@@ -103,7 +103,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         {data && data.map((ticket:Ticket) => (
           <div
             key={ticket.eventItemTypeId}
-            onClick={() => history.push(`/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`)}
+            onClick={() => history.push(`/EventManager`, { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId })}
             className="border border-gray-200 rounded-lg mt-2 cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div className="flex flex-col items-center w-1/4 text-center">
@@ -130,8 +130,10 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
               <div onClick={(e)=>e.stopPropagation()}>
                 <ListMenu
                   linkData={{
-                    viewLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
-                    editLink: `/EventManager/${eventId}/edit/${ticket.eventItemTypeId}`,
+                    viewLink: `/EventManager`,
+                    viewData: { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId },
+                    editLink: `/EventManager`,
+                    editData: { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId },
                     delete:()=>eventId ? deleteTicket(eventId, ticket.eventItemTypeId) : undefined
                   }}
                 />
@@ -145,7 +147,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
               onClick={()=>{ 
-                history.push(`/eventmanager/${eventId}/new`);}}
+                history.push(`/eventmanager`, { eventId: eventId, mode: 'new' });}}
             >
               New Ticket
         </button> 

@@ -7,6 +7,7 @@ import { useState } from "react";
 export interface ListMenuData{
     viewLink:string,
     editLink:string,
+    viewData?:any,  
     editData?:any
     delete:()=>void,
     previewData?:()=>void
@@ -31,7 +32,7 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
           label={<HiOutlineDotsVertical className="text-xs cursor-pointer"/>}
         >
           {linkData.viewLink && (
-            <DropdownItem onClick={() => history.push(linkData.viewLink)}>
+            <DropdownItem onClick={() => history.push(linkData.viewLink, linkData?.viewData)}>
               Details
             </DropdownItem>
           )}

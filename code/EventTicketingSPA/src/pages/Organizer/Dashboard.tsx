@@ -138,9 +138,9 @@ export default function Dashboard() {
                   <ListMenu
                     linkData={{
                       viewLink: `/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`,
-                      editLink: `/EventManager/${event.eventId}`,
+                      editLink: `/EventManager`,
                       delete:()=>deleteEvent(event.eventId),
-                      editData: {customerUrlName: customerData?.organizerEventBaseUrl}
+                      editData: {eventId: event.eventId, mode:`edit`, customerUrlName: customerData?.organizerEventBaseUrl}
                     }}
                   />
                 </div>

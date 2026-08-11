@@ -7,7 +7,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 
 import axiosClient from "../../api/axiosClient";
 import { useQuery, useQueryClient } from "react-query";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Link } from "react-router-dom";
 
 import { useAppDispatch, useAppSelector } from "../../app/hook";
 import { updateEvent } from "../../features/auth/eventSlice";
@@ -254,7 +254,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
           console.log('Ticket updated successfully:', response.data);
           queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
           queryClient.invalidateQueries(['TicketDetails',eventId,ticketId]);
-          setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
+          setTimeout(()=> history.push(`/eventmanager`, { eventId: eventId, mode: 'ticketlist' }),1500);
         })
         .catch(error => {
             toast.error("Ticket type updation failed!");
@@ -267,13 +267,14 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       .then(response => {
         console.log('Ticket created successfully:', response.data);
         toast.success("Ticket Type created!");
-        queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
+        queryClient.invalidateQueries(['TicketsbyEvent', eventId],{exact: true,
+        refetchInactive: true,});
         //clearing this to force it to update settings so that if there were 0 tickets for the event to start with
         // the settings are refreshed and the user can go live.
         
         queryClient.invalidateQueries(['settings', eventId]);
        
-        setTimeout(()=> history.push(`/eventmanager/${eventId}/ticketlist`),1500);
+        setTimeout(()=> history.push(`/eventmanager`, { eventId: eventId, mode: 'ticketlist' }),1500);
       })
       .catch(error => {
          toast.error("Ticket Type creation failed!");
@@ -327,13 +328,13 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       className="max-w-2xl mx-auto p-3 space-y-2"
     > 
      {/* <Toaster position="top-right" /> */}
-      <a href={`/eventmanager/${eventId}/ticketlist`} className="mr-auto text-link-color" 
+      <Link to={`/eventmanager`} className="mr-auto text-link-color" 
         onClick={(e)=>{
           e.preventDefault();
-          history.push(`/eventmanager/${eventId}/ticketlist`);
+          history.push(`/eventmanager`, { eventId: eventId, mode: 'ticketlist' });
       }}>
           Back to Ticket list
-      </a>
+      </Link>
      
       <div className="flex flex-col">
         <label className="block font-semibold mb-1">Ticket Name</label>

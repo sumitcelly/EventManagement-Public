@@ -23,11 +23,11 @@ interface EventManagerParams {
 }
 
 export function EventManager() {
-  //const [customerName, setCustomerName] = useState("");
+  
   const tabsRef = useRef<TabsRef>(null);
   const user = useAppSelector((state: RootState) => state.auth.user);
   const customerUrlName = user?.customerUrlName || "";
-  const {eventId,mode,ticketId} = useParams<EventManagerParams>();
+  const {eventId,mode,ticketId} = useLocation().state as EventManagerParams || {};
 
   //mode valid values are ticketlist,new,edit
   console.log('event, ticket id ,mode from params',eventId,ticketId,mode);

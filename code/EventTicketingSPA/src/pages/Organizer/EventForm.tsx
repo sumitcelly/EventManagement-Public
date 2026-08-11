@@ -306,7 +306,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
           updateRedux(eventApi,response.data);
           //queryClient.resetQueries({queryKey:[`events/details/${response.data}`]});
           
-          setTimeout(() => history.push(`/EventManager/${response.data}/ticketlist`), 1500);
+          setTimeout(() => history.push(`/EventManager`, { eventId: response.data, mode: 'ticketlist' }), 1500);
         }
         else
         {

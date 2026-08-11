@@ -1,15 +1,15 @@
 Running Bug List
 
+"Cannot delete ticket type if tickets has been sold for that type."
+
 Thereis no duration on the events page. Event form when to when?
 
 Search results does not ahve start time.
 
-The date/time of an event is stored in the browser's timezone and not the event's actual location.
-So person in Colorado creating event in Indiana will store event in colorado time, not indiana time.
 
 When a person becomes an organizer, the modal does not show up.
 
-navbar fields, i cannot see what i type but its there???
+
 
 navbar search by state (full name) does not work.
 
@@ -19,6 +19,11 @@ Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
 --Done
+navbar fields, i cannot see what i type but its there???
+
+The date/time of an event is stored in the browser's timezone and not the event's actual location.
+So person in Colorado creating event in Indiana will store event in colorado time, not indiana time.
+
 When showing tickets, the one of x in the paging control is blank. So one is blabk and x is blank. -- Done
 
 In publish page, make sure for any paid ticket, the fee mode defaults to say "1"

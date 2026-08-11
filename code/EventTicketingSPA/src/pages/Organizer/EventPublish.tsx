@@ -40,8 +40,9 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
   const eventData = useAppSelector((state: RootState) => state?.event);
   console.log ('event id in publish page', eventId);
 
-  const {eventItemTypeData,eventItemTypesLoading, eventItemTypesError} = useEventItemTypes(String(eventId));
-
+  const {eventItemTypeData,eventItemTypesLoading, eventItemTypesError} = useEventItemTypes(eventId);
+  console.log('event item type data in publish page', eventItemTypeData, eventItemTypesLoading, eventItemTypesError);
+  
   const { data, isLoading:validateLoading } = useQuery(['settings',eventId], async () => {
     const res = await axiosClient.get(`/events/settings/${eventId}`);
     console.log('Event settings details from backend', res?.data);
@@ -229,6 +230,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
 
   useEffect(()=>{
     console.log('event item type data in publish page', eventItemTypeData);
+  
     if (eventItemTypeData && eventItemTypeData.length>0)
     {
       const paymentNeeded = eventItemTypeData.some((ticket: any) => ticket.cost > 0);
