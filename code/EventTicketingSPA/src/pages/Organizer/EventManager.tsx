@@ -76,7 +76,7 @@ export function EventManager() {
 
             <TabItem  title="Ticket(s)" icon={HiOutlineTicket} disabled={eventId == null}>
               {
-                (mode === "ticketlist" || mode ==="" || !mode)
+                (mode === "ticketlist" || mode ==="" || !mode || (!ticketId && mode !=="new"))
                 ?<TicketDashboard eventId={eventId} isActive={localActiveTab===1}/>
                 :<TicketBasics eventId={eventId} ticketId={ticketId} mode={mode}  key={mode === "new" ? crypto.randomUUID() : ticketId} />         
               }

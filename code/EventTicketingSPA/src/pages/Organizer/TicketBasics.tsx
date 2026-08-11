@@ -37,8 +37,15 @@ const ticketSchema = (event: EventHeader)=>yup.object({
     .test("past-date", "Either ticket sales date is in the past or after event has ended.", (value) => {  
            if (!event || !event.eventDate) return false;  
           //console.log("value",parseDateOnlyString(value),new Date(),parseDateOnlyString(value) >= new Date());
-          return  appendTime(value,true) >= new Date() 
-           &&  appendTime(value,true) <= new Date(event.eventDate);      
+          if (!event.isLive)
+          {
+            return  appendTime(value,true) >= new Date() 
+            &&  appendTime(value,true) <= new Date(event.eventDate); 
+          }
+          else
+          {
+            return  appendTime(value,true) <= new Date(event.eventDate);
+          }
       }),
     tickeSalesEndDate: yup.string().default(event?.eventDate? new Date(event.eventDate).toLocaleDateString(): (new Date()).toLocaleDateString())
                       .required("Ticket sales end date is required")
@@ -169,7 +176,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       name: "",
       cost: 0,
       maxPerOrder: 0,
-      totalAllowed: 1 ,
+      totalAllowed: 100 ,
       description: "",
       tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
       tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
@@ -198,7 +205,7 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       name: "",
       cost: 0,
       maxPerOrder: 0,
-      totalAllowed: 1 ,
+      totalAllowed: 100 ,
       description: "",
       tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
       tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
