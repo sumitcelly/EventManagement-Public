@@ -6,7 +6,6 @@ import { useAppSelector } from "../../app/hook";
 import { RootState } from "../../app/store";
 import { Ticket } from "../../types/Tickets";
 import  ListMenu  from "../../components/ListMenu";
-import { ListMenuData } from "../../components/ListMenu";
 import { useEffect, useState } from "react";
 import { TeamMember } from "../../types/Teams";
 
@@ -188,6 +187,7 @@ export default function CampaignList() {
                           editLink:!campaign.isDefault? `/ManageCampaign`: '',
                           delete:()=>deleteCampaign(Number(campaign.id)),
                           editData: campaign,
+                          deleteEnabled: !campaign.isDefault && campaign.status !== 'Completed',
                           previewData: campaign.isDefault ? () => { previewCampaign(campaign); } : undefined
                         }}
                       />

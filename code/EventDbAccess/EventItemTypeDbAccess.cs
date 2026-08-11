@@ -359,7 +359,7 @@ namespace EventManagementDbAccess
             catch (Exception ex)
             {
                _logger.LogError($"Error deleting EventItemType: {ex.Message}");
-                return ex.Message.Contains("foreign key constraint") ? "Cannot delete ticket type if tickets has been sold for that type." : "An error occured when deleting ticket type.";
+                return ex.Message.ToLower().Contains("foreign key") ? "Cannot delete ticket type if tickets has been sold for that type." : "An error occured when deleting ticket type.";
             }
         }
     }

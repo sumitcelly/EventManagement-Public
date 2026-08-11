@@ -13,6 +13,7 @@ import toast, {  Toaster } from "react-hot-toast";
 import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import { useEventItemTypes } from "../../utils/EventItemTypesQuery";
+import { AxiosError } from "axios";
 // 
 
 
@@ -41,21 +42,22 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
         {
         // 2. Make API call
          const response = await axiosClient.delete(`/eventitemtype/${eventId}/${eventItemTypeId}`);
+         console.log('response from delete ticket type', response);
          if (!response || response.status!=200)
          {
-            toast.error(response.data);
+            console.error('Failed to delete ticket type:', response);
+            toast.error(response.statusText || "Error deleting ticket type");
          }
          else
          {
-            toast.success("Deleted ticket type succefully");
-            
+            toast.success("Deleted ticket type succefully");         
          }
         }
-        catch(error)
-        {
-            toast.error("Error deleting ticket type");
-            console.log("error in catch", error);
-        }finally{
+        catch(error:AxiosError | any){
+            toast.error(error?.response?.data || "Error deleting ticket type");
+            console.log("error in catch", error?.response?.data || error.message);
+        }
+        finally{
           await queryClient.invalidateQueries(['TicketsbyEvent', eventId]);
         };
 
@@ -134,7 +136,8 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
                     viewData: { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId },
                     editLink: `/EventManager`,
                     editData: { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId },
-                    delete:()=>eventId ? deleteTicket(eventId, ticket.eventItemTypeId) : undefined
+                    delete:()=>eventId && ticket.ticketsSold === 0 ? deleteTicket(eventId, ticket.eventItemTypeId) : undefined,
+                    deleteEnabled: ticket.ticketsSold === 0,
                   }}
                 />
               </div>

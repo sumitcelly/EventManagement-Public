@@ -154,6 +154,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
                 linkData={{
                   viewLink: "",
                   editLink: `/teammanager`,
+                  deleteEnabled: true,
                   delete:()=>deleteUser(Number(member.userId)),
                   editData: {...member, organizerId:organizerId,mode:"edit"}
                 }}

@@ -15,6 +15,7 @@ import { IonContent, IonHeader, IonPage } from "@ionic/react";
 import AppNavbar from "../../components/Navbar";
 import { updateCustomerProfile } from "../../features/auth/authSlice";
 import Footer from "../../components/Footer";
+import { toast } from "react-hot-toast";
 // 
 
 
@@ -27,8 +28,13 @@ export default function Dashboard() {
   const event = useAppSelector((state: RootState) => state.event);
   const dispatch = useDispatch();
   
-  const deleteEvent = async (eventId: number) => {
+  const deleteEvent = async (eventId: number, isLive?: boolean) => {
   try {
+
+    if (isLive) {
+      toast.error("Cannot delete a live event. Please unpublish it first.",{duration: 4000});
+      return;
+    }
 
     console.log('Deleting event', eventId);
     // 1. Optimistically update UI
@@ -139,7 +145,8 @@ export default function Dashboard() {
                     linkData={{
                       viewLink: `/eventdetails/${customerData?.organizerEventBaseUrl}/${event.eventUrlName}`,
                       editLink: `/EventManager`,
-                      delete:()=>deleteEvent(event.eventId),
+                      delete:()=>deleteEvent(event.eventId,event.isLive),
+                      deleteEnabled:true,
                       editData: {eventId: event.eventId, mode:`edit`, customerUrlName: customerData?.organizerEventBaseUrl}
                     }}
                   />

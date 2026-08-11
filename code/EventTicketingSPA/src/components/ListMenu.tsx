@@ -10,6 +10,7 @@ export interface ListMenuData{
     viewData?:any,  
     editData?:any
     delete:()=>void,
+    deleteEnabled?:boolean,
     previewData?:()=>void
 }
 
@@ -22,6 +23,10 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
       console.log('Delete confirmed');
       setOpenModal(false);
   };
+
+  if (!linkData) {
+    return null; // or some fallback UI
+  }
 
   return (
     <>
@@ -47,9 +52,11 @@ export default function  ListMenu({linkData}:{linkData:ListMenuData}) {
               Preview
             </DropdownItem>
           )}
-          <DropdownItem onClick={() => setOpenModal(true)}>
-            Delete
-          </DropdownItem>
+          {linkData.deleteEnabled && (
+            <DropdownItem onClick={() => setOpenModal(true)}>
+              Delete
+            </DropdownItem>
+          )}
         </Dropdown>
       </div>
       {openModal && (

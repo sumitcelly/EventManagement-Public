@@ -82,12 +82,15 @@ namespace CreateTicketApi.Controllers
         [HttpDelete("{eventId}/{id}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "EventOwnedByCustomer")]
-        public async Task<string> Delete(int eventId, int id)
+        public async Task<IActionResult> Delete(int eventId, int id)
         {
             if ( eventId <= 0 || id <= 0)
-                return "Invalid event ID or item ID.";
-            return  await _eventItemTypeDbAccess.DeleteEventItemType(eventId,id);
-           
+                return BadRequest("Invalid event ID or item ID.");
+            var result = await _eventItemTypeDbAccess.DeleteEventItemType(eventId,id);
+            if (string.IsNullOrEmpty(result))
+                return Ok();
+            return StatusCode(500, "Failed to delete EventItemType with error message: " + result);
+        
         }
     }
 }
