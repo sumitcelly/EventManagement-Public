@@ -25,6 +25,7 @@ export interface EventSearchResult {
   eventBannerUrl: string;
   organizerUrlName:string;
   eventUrlName:string;
+  ianaTimeZone:string;
 }
 
 console.log("SearchEvents rendered");

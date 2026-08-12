@@ -17,6 +17,7 @@ import DomPurify from "dompurify";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import {  getEventDateWithTimezone, getEventEndTimeWithTimezone } from "../utils/DateUtils";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -118,21 +119,7 @@ const { data: organizerDetails, isLoading: isOrganizerLoading } = useQuery(
     console.error("Failed to copy: ", err);
   }
 };
-const getEventDateWithTimezone = (utcDate:string, timezone:string):string=>{
-    if (!utcDate || !timezone) {
-      console.error("Missing parameters for getEventDateWithTimezone");
-      return utcDate; // Return the original date if parameters are missing
-    }
-    const dateObj = new Date(utcDate);
-    const localizedString = dateObj.toLocaleDateString('en-US', {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short' // Optional: Adds "EDT" or "EST" so the user isn't confused
-    });
-    return localizedString;
-  }
-    
+
 
   return (
     <IonPage>
@@ -168,7 +155,7 @@ const getEventDateWithTimezone = (utcDate:string, timezone:string):string=>{
 
       <div className="flex flex-row justify-center  italic font-body mt-4 font-extrabold">
         <div className="text-l font-headline text-primary-color">
-          {getEventDateWithTimezone(eventDetails.eventDate+'Z', eventDetails.ianaTimeZone)} 
+          {getEventDateWithTimezone(eventDetails.eventDate+'Z', eventDetails.ianaTimeZone)} to {getEventEndTimeWithTimezone(eventDetails.eventDate+'Z', eventDetails.ianaTimeZone, eventDetails.duration)}
         </div>
 
         <div className="font-headline text-primary-color ml-auto w-1/2 hover:bg-gray-100  cursor-pointer"

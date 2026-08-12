@@ -28,6 +28,39 @@ export const  addHoursToDate=(date: Date, durationHours: number): Date =>{
     return newDate;
   }
 
+export const getEventDateWithTimezone = (utcDate:string, timezone:string):string=>{
+    if (!utcDate || !timezone) {
+      console.error("Missing parameters for getEventDateWithTimezone");
+      return utcDate; // Return the original date if parameters are missing
+    }
+    const dateObj = new Date(utcDate);
+    const localizedString = dateObj.toLocaleDateString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+     // timeZoneName: 'short' // Optional: Adds "EDT" or "EST" so the user isn't confused
+    });
+    return localizedString;
+  }
+
+  export const getEventEndTimeWithTimezone = (utcDate:string, timezone:string, duration:number):string=>{
+    if (!utcDate || !timezone) {
+      console.error("Missing parameters for getEventEndTimeWithTimezone");
+      return utcDate; // Return the original date if parameters are missing
+    }
+    const dateObj = new Date(utcDate);
+    const endDateObj = addHoursToDate(dateObj, duration);
+    const localizedString = endDateObj.toLocaleTimeString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short' // Optional: Adds "EDT" or "EST" so the user isn't confused
+    });
+    return localizedString;
+  }
+    
+
+
 export const  addDaysToDate=(date: Date, durationDays: number): Date =>{
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + durationDays);

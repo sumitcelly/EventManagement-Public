@@ -2,6 +2,7 @@ import { Card } from "flowbite-react";
 import { EventSearchResult } from "../pages/SearchEvents";
 import { useHistory } from "react-router-dom";
 import { useIonRouter } from "@ionic/react";
+import { getEventDateWithTimezone } from "../utils/DateUtils";
 
 
 export function EventCard({event}: 
@@ -32,8 +33,8 @@ export function EventCard({event}:
         {event.eventHeadline}   
         </div>
         <div className="flex flex-row mb-2 font-body text-sm">
-          <div  className="dark:text-gray-400 mr-4">
-              {event.eventDate && new Date(event.eventDate).toLocaleDateString()}
+          <div  className="mr-4">
+              {event.eventDate &&  getEventDateWithTimezone(event.eventDate+'Z', event.ianaTimeZone)}
           </div>
           <div >
               {event.eventLocation}

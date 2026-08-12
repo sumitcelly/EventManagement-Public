@@ -34,7 +34,7 @@ namespace EventManagementDbAccess
         await connection.OpenAsync();
         {
           _logger.LogInformation("Connection to database established successfully.");
-          string query = @" SELECT EventName,EventId,EventUrlName, RefundMode, TicketFeeDisplayMode, eventheadline,EventDescription,EventTags,EventOrganizer,
+          string query = @" SELECT EventName,EventId,EventUrlName, Latitude, Longitude, RefundMode, TicketFeeDisplayMode, eventheadline,EventDescription,EventTags,EventOrganizer,
                             EventDate,EventAddress,EventCategory,Free,EventSummary,EventBannerFileName,b.OrganizerEventBaseUrl,
                             MATCH(EventHeadline, EventDescription, EventTags,EventSummary,EventName) 
                             AGAINST (@keyword IN NATURAL LANGUAGE MODE) AS relevance
@@ -103,6 +103,8 @@ namespace EventManagementDbAccess
                 {
                   EventId = reader.GetInt32("EventId"),
                   EventName = reader.GetString("EventName"),
+                  Latitude = reader.IsDBNull(reader.GetOrdinal("Latitude")) ? 0m : reader.GetDecimal("Latitude"),
+                  Longitude = reader.IsDBNull(reader.GetOrdinal("Longitude")) ? 0m : reader.GetDecimal("Longitude"),
                   RefundMode = reader.IsDBNull(reader.GetOrdinal("RefundMode"))?0: (RefundMode)Enum.Parse(typeof(RefundMode), reader.GetString(reader.GetOrdinal("RefundMode"))),
                   TicketFeeMode = reader.IsDBNull(reader.GetOrdinal("TicketFeeDisplayMode"))?0: (TicketFeeMode)Enum.Parse(typeof(TicketFeeMode), reader.GetString(reader.GetOrdinal("TicketFeeDisplayMode"))),  
                   EventUrlName = reader.IsDBNull(reader.GetOrdinal("EventUrlName"))?

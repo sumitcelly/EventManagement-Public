@@ -2,6 +2,7 @@ import { useWatch,Control } from "react-hook-form";
 import { EventHeader  } from "../types/Event";
 import { useAppSelector } from "../app/hook";
 import { RootState } from "../app/store";
+import { getEventDateWithTimezone } from "../utils/DateUtils";
 
 export default function EventSummary({eventBasic}: {eventBasic?:EventHeader}) {
 
@@ -18,7 +19,7 @@ export default function EventSummary({eventBasic}: {eventBasic?:EventHeader}) {
             <div className="p-4 border rounded-lg shadow-md bg-brand-neutral text-center mb-4">
               <div className="text-xs font-bold mb-2">{event.eventName}</div>
               <div className="mb-1 flex justify-between space-x-4 p-2">
-                <span className="font-body">{new Date(event.eventDate).toLocaleString()}</span>
+                <span className="font-body">{getEventDateWithTimezone((new Date(event.eventDate)).toISOString(), event.ianaTimeZone)}</span>
                 <span className="font-body">{event.eventLocation} </span>
               </div>
             </div>
