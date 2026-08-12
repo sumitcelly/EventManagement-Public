@@ -352,9 +352,9 @@ namespace EventManagementDbAccess
         await conn.OpenAsync();
 
         var query = @"select a.*, b.OrganizationName, b.OrganizerEventBaseUrl from events a
-                    WHERE
-                    EventId = @eventId
-                    inner join eventorganizer b on b.CustomerId=a.eventorganizer";
+                      inner join eventorganizer b on b.CustomerId=a.eventorganizer
+                      WHERE
+                      EventId = @eventId";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventId", eventId);
