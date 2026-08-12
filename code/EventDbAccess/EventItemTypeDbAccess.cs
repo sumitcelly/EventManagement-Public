@@ -259,13 +259,8 @@ namespace EventManagementDbAccess
                         _logger.LogWarning($"{quantity} ticket is  not available for evenitemtype {itemType}.");
                         throw new Exception($"Not enough tickets available for {itemType}");
                     }
-
-                    bool cacheUpdated = await UpdateTicketSoldCountInCache(eventId, itemType, quantity);
-                    if (!cacheUpdated)
-                    {
-                        _logger.LogWarning("Ticket sold count updated in DB but cache update failed for event {EventId} and item type {EventItemTypeId}.", eventId, itemType);
-                        throw new InvalidOperationException($"Unable to update ticket sold count cache for {itemType}");
-                    }
+                    //Not updating cache here because the cache should already be updated by the calling method
+                    
                 }
                 return true;
             }

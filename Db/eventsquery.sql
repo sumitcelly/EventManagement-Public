@@ -6,7 +6,7 @@ delete from eventuser where email like 'testowner@p%'
 
 select StripeAccountId from eventorganizer where customerid=1
 select * from events where EventName='dfd'
-select * from salesorder where OrderId=745
+select * from salesorder where EventId=67
 
 update eventorganizer
 set StripeConnectStatus='LinkInitiated'
