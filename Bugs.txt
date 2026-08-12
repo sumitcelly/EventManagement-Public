@@ -1,6 +1,6 @@
 Running Bug List
 
-"Cannot delete ticket type if tickets has been sold for that type."
+
 
 Thereis no duration on the events page. Event form when to when?
 
@@ -19,6 +19,8 @@ Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
 
 --Done
+
+"Cannot delete ticket type if tickets has been sold for that type." -- Done
 navbar fields, i cannot see what i type but its there???
 
 The date/time of an event is stored in the browser's timezone and not the event's actual location.

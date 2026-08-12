@@ -1,3 +1,5 @@
+
+using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -10,9 +12,10 @@ public static class PdfGenerator
         QuestPDF.Settings.License = LicenseType.Community;    
     }
 
-    static public byte[] GenerateTicketsWithSkiaSharp(TicketPdfData pdfData, string platformName, string platformUrl)
+    static public byte[] GenerateTicketsWithSkiaSharp(TicketPdfData pdfData, string platformName, string platformUrl, ILogger logger)
     {
         if (pdfData == null) throw new ArgumentNullException(nameof(pdfData), "PDF data cannot be null.");
+        logger.LogInformation("Generating PDF for event: {0}, organizer: {1}, tickets count: {2}, orderholder: {3} , orderHolderEmail: {4}, eventDate: {5}, eventLocation: {6}", pdfData.EventName, pdfData.EventOrganizerName, pdfData.Tickets?.Count ?? 0, pdfData.OrderHolderName, pdfData.OrderHolderEmail, pdfData.EventDate, pdfData.EventLocation);
         if (string.IsNullOrEmpty(pdfData.EventOrganizerName) ||
             string.IsNullOrWhiteSpace(pdfData.EventDate) ||
             string.IsNullOrWhiteSpace(pdfData.EventName) ||

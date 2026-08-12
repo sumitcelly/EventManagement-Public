@@ -158,7 +158,7 @@ public class TicketController : ControllerBase
   
         TicketPdfData pdfData = PdfDataMapper.MapToTicketPdfData(eventDetails, eventTickets);
         pdfData.EventDate = eventDateTimeRange;
-        byte[] pdfBytes= PdfGenerator.GenerateTicketsWithSkiaSharp(pdfData, _configuration["EmailTemplateValues:platform_name"]??"TestEvents", _configuration["BaseFrontEndUrl"]??"");
+        byte[] pdfBytes= PdfGenerator.GenerateTicketsWithSkiaSharp(pdfData, _configuration["EmailTemplateValues:platform_name"]??"TestEvents", _configuration["BaseFrontEndUrl"]??"",_logger);
         _logger.LogInformation($"Generated ticket PDF data for sales order: {salesOrderCode}, event: {eventId}");
         bool uploadResult = false;
         using  (var stream = new MemoryStream(pdfBytes))

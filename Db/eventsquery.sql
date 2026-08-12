@@ -1,11 +1,11 @@
 select * from logincodes order by createdat desc
 
-delete from eventorganizer where customerid=56
+select * from eventorganizer where customerid=40
 
 delete from eventuser where email like 'testowner@p%'
 
 select StripeAccountId from eventorganizer where customerid=1
-select * from events where EventName='fgfg'
+select * from events where EventName='dfd'
 select * from salesorder where OrderId=745
 
 update eventorganizer

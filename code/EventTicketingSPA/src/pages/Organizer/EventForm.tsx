@@ -504,11 +504,11 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
           className="w-full border rounded p-2"
         >
           <option value="General Event">General Event</option>
-          <option value="Museum or Art Gallery">Museum or Art Gallery</option>
+          <option value="Cinemas (In person)">Cinemas (In person)</option>
+          <option value="Cultural Sites or Attractions">Cultural Sites or Attractions</option>
           <option value="Conference or Workshop">Conference or Workshop</option>
           <option value="Sporting Event">Sporting Event</option>
           <option value="Concert or Live Performance">Concert or Live Performance</option>
-          <option value="Nightclub or Bar Event">Nightclub or Bar Event</option>
         </select>
       </div>
       

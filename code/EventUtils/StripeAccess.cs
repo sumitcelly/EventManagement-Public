@@ -36,8 +36,8 @@ public class StripeAccess
     public static readonly Dictionary<string, string> EventCategoryTaxMapping = new Dictionary<string, string>
     {
         { "General Event", "txcd_50010001" },
-        { "Nightclub or Bar Event", "txcd_50013002" },
-        { "Museum or Art Gallery", "txcd_50011003" },
+        { "Cinemas (In person)", "txcd_50010004" },
+        { "Cultural Sites or Attractions", "txcd_50011001" },
         { "Conference or Workshop", "txcd_50013001" },
         { "Sporting Event", "txcd_50012001" },
         {"Concert or Live Performance", "txcd_50010003" }
