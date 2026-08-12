@@ -351,9 +351,10 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
-        var query = @"select * from events  
+        var query = @"select a.*, b.OrganizationName, b.OrganizerEventBaseUrl from events a
                     WHERE
-                    EventId = @eventId";
+                    EventId = @eventId
+                    inner join eventorganizer b on b.CustomerId=a.eventorganizer";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventId", eventId);
@@ -387,12 +388,12 @@ namespace EventManagementDbAccess
       {
         await conn.OpenAsync();
 
-        var query = @"select * from events
-                    inner join eventorganizer
-                    on eventorganizer.CustomerId = events.eventOrganizer
-                    and events.EventUrlName = @eventUrlName and
-                    eventorganizer.organizereventbaseurl=@customerUrlName
-                    where events.IsLive=1";
+        var query = @"select a.*, b.OrganizationName, b.OrganizerEventBaseUrl 
+                    from events a
+                    inner join eventorganizer b on b.CustomerId = a.eventOrganizer
+                    where a.EventUrlName = @eventUrlName and 
+                    b.OrganizerEventBaseUrl = @customerUrlName 
+                    and a.IsLive = 1";
 
         using var cmd = new MySqlCommand(query, conn);
         cmd.Parameters.AddWithValue("@eventUrlName", eventUrlName);
@@ -415,6 +416,8 @@ namespace EventManagementDbAccess
       {
         EventId = reader.GetInt32(reader.GetOrdinal("EventId")),
         IsLive = reader.GetBoolean(reader.GetOrdinal("IsLive")),
+        OrganizerUrlName = reader.IsDBNull(reader.GetOrdinal("OrganizerEventBaseUrl")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizerEventBaseUrl")),
+        EventOrganizer = reader.IsDBNull(reader.GetOrdinal("OrganizationName")) ? string.Empty : reader.GetString(reader.GetOrdinal("OrganizationName")),
         EventOrganizerId = reader.GetInt32(reader.GetOrdinal("EventOrganizer")),
         LocationId = reader.IsDBNull(reader.GetOrdinal("LocationId")) ? string.Empty : reader.GetString(reader.GetOrdinal("LocationId")),
         EventBannerUrl= reader.IsDBNull(reader.GetOrdinal("EventBannerFileName")) ? string.Empty : 
@@ -545,40 +548,11 @@ namespace EventManagementDbAccess
       {
         
         string key = CacheHelper.GetCacheKey<Event>(string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName));       
-        Event? tempEvent = await _cache.GetOnlyAsync<Event>(key);
-        if (tempEvent == null)
-        {
-          _logger.LogInformation($"Unable to get event by {string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName)}. Trying with eventid {eventId}");
-          key = CacheHelper.GetCacheKey<Event>(eventId.ToString());
-          tempEvent = await _cache.GetOnlyAsync<Event>(key);
-        }
-        if (tempEvent !=null)
-        {
-          tempEvent.IsLive = settings.IsLive;
-          tempEvent.RefundMode = settings.RefundMode;
-          tempEvent.TicketFeeMode = settings.TicketFeeMode;
-
-        //maybe update eventheader cache also or just remove that cache and sync it with event cache
-         key = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString()); 
-         await _cache.GetOnlyAsync<EventHeader>(key).ContinueWith(headerTask =>
-         {
-             if (headerTask.Result != null)
-             {
-                 EventHeader header = headerTask.Result;
-                 header.RefundMode = tempEvent.RefundMode;
-                 header.TicketFeeMode = tempEvent.TicketFeeMode;
-                 header.IsLive = settings.IsLive;
-                 _cache.AddOrUpdateCache(header, eventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));
-             }
-         });
-         _cache.AddOrUpdateCache(tempEvent, tempEvent.EventId.ToString(), TimeSpan.FromMinutes(base._cacheDurationInMinutes));  
-         _cache.AddOrUpdateCache(tempEvent, string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName),TimeSpan.FromMinutes(base._cacheDurationInMinutes));         
-        }
-        else
-        {
-          _logger.LogWarning($"Could not retrieve event either by eventId {0} or customer+eventname {1}", eventId,
-            string.Format("{0}_{1}",settings.OrganizerUrlName,settings.EventUrlName));
-        }
+        await _cache.RemoveAsyncHelper(key);
+        key = CacheHelper.GetCacheKey<Event>(eventId.ToString());
+        await _cache.RemoveAsyncHelper(key);
+        key = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString()); 
+        await _cache.RemoveAsyncHelper(key);
           
       }
       return rowsAffected > 0;

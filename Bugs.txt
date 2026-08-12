@@ -1,24 +1,21 @@
 Running Bug List
 
-
-
-Thereis no duration on the events page. Event form when to when?
+There is no duration on the events page. Event form when to when?
 
 Search results does not ahve start time.
 
-
 When a person becomes an organizer, the modal does not show up.
 
-
-
 navbar search by state (full name) does not work.
+
+At some point restrict the same organizer from having same event for name.
+
+--Done
 
 Only General Category works when creating event ??
 
 Ticket page should have higher defaults and if error detected in hidden section,
 expand it.
-
---Done
 
 "Cannot delete ticket type if tickets has been sold for that type." -- Done
 navbar fields, i cannot see what i type but its there???
