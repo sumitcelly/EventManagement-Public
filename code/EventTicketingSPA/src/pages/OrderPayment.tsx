@@ -61,7 +61,8 @@ export default function OrderPayment() {
 
       if (response.data =="paid")
       {
-        toast.success("Payment successful! Your order is confirmed.");
+        //blocking the toast message since we are redirecting to order confirmation page and showing the message there.
+        //toast.success("Payment successful! Your order is confirmed.",{duration: 5000});
         if (!guestAlreadyExists)
         {
           const salesData = await axiosClient.get(`/SalesOrder/SalesOrderPostPaymentDetails/${orderId}`);
