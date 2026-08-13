@@ -10,8 +10,8 @@ export type Ticket = {
   ticketsSold:number;
   //upper limit of tickets that can be sold for this ticket type
   totalAllowed:number;
-  tickeSalesStartDate?: Date;
-  ticketSalesEndDate?: Date;
+  salesStartDate: Date;
+  salesEndDate: Date;
   ticketValidFromDate?: Date;
   ticketValidToDate?: Date;
 };

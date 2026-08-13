@@ -37,6 +37,8 @@ const schema = yup.object({
         maxPerOrder:yup.number().optional(),
         ticketsSold:yup.number().required(),
         totalAllowed: yup.number().required(),
+        salesStartDate: yup.date().required(),
+        salesEndDate: yup.date().required(),
         quantity: yup.number()
           .min(0, "Quantity must be at least 0")
           .typeError("Quantity must be a number")
@@ -138,6 +140,8 @@ export default function BuyTickets() {
               maxPerOrder: t.maxPerOrder,
               totalAllowed: t.totalAllowed,
               ticketsSold: t.ticketsSold,
+              salesStartDate: t.salesStartDate,
+              salesEndDate: t.salesEndDate
             }))
         });
     }
@@ -168,6 +172,24 @@ export default function BuyTickets() {
 
   const paymentNeeded =  (tickets: TicketFormValues['tickets'] = []) =>
     tickets.some((t: any) => (Number(t?.quantity) || 0) > 0 && (Number(t?.cost) || 0) > 0);
+  
+  const ticketSaleDateValid = (saleStartDate?: string | Date, saleEndDate?: string | Date) => {
+    // Accept either ISO date strings or Date objects. Return false for invalid/missing values.
+    if (!saleStartDate || !saleEndDate) return false;
+
+    const start = saleStartDate instanceof Date ? new Date(saleStartDate.getTime()) : new Date(saleStartDate);
+    const end = saleEndDate instanceof Date ? new Date(saleEndDate.getTime()) : new Date(saleEndDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
+
+    // Treat start as beginning of day, end as end of day (inclusive)
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const now = Date.now();
+    return now >= start.getTime() && now <= end.getTime();
+  };
+  
 
   const checkout = async (formData:TicketFormValues) => {
     try
@@ -299,7 +321,7 @@ return (
                       {...register(`tickets.${index}.quantity`, { valueAsNumber: true })}
                       className="w-20 border rounded p-1"
                       min={0}
-                      disabled={item.ticketsSold >= item.totalAllowed}
+                      disabled={item.ticketsSold >= item.totalAllowed || !ticketSaleDateValid(item.salesStartDate, item.salesEndDate)}
                     />
                   </div>
             </div>
@@ -310,12 +332,22 @@ return (
                     Sold Out!
                 </div>
               )}
-              {item.quantity >0 && (item.totalAllowed - item.ticketsSold) >0
+              {item.totalAllowed - item.ticketsSold >0
                   && (item.totalAllowed - item.ticketsSold) <= 5 && (
                 <div className="text-red-500 text-sm ">
                     Very few left!
                 </div>
               )}
+              {
+                !ticketSaleDateValid(item.salesStartDate, item.salesEndDate) && (
+                  <div className="text-red-500 text-s">
+                      Ticket not available for sale at this time.
+                  </div>
+                )
+              }
+            </div>
+
+            <div className="w-1/3 ml-auto text-right mr-3"> 
               {errors?.tickets?.[index]?.quantity?.message && (
                       <div className="text-red-500 text-sm ">
                         {errors.tickets[index].quantity.message}

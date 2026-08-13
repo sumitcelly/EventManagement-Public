@@ -179,8 +179,8 @@ export default function TicketBasics( {eventId,ticketId,mode}:
       maxPerOrder: 0,
       totalAllowed: 100 ,
       description: "",
-      tickeSalesStartDate: new Date().toLocaleDateString('sv-SE').split('T')[0],
-      tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('sv-SE').split('T')[0] : new Date().toISOString().split('T')[0],
+      tickeSalesStartDate: new Date().toLocaleDateString('en-US').split('T')[0],
+      tickeSalesEndDate: eventBasics.eventDate ? new Date(eventBasics.eventDate).toLocaleDateString('en-US').split('T')[0] : new Date().toISOString().split('T')[0],
       tickevalidityStartDate: eventBasics.eventDate ? 
                              new Date(eventBasics.eventDate).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : 
                             '00:00',
