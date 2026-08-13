@@ -277,7 +277,7 @@ public class SalesOrderConductor
                          Quantity = item.Quantity,
                          Description =itemTypes?
                                         .FirstOrDefault(x => x.EventItemTypeId == item.EventTicketTypeId)?
-                                        .Description ?? "No description available"
+                                        .Name ?? "No description available"
                     });
                     
                 }

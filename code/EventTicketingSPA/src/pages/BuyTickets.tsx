@@ -279,7 +279,7 @@ export default function BuyTickets() {
             if (guestAlreadyExists)
               sessionStorage.setItem('stripe_checkout_guest_exists', JSON.stringify(guestAlreadyExists));
             console.log('Proceeding to payment with session id:',salesOrderData.checkoutSessionId);
-            history.push(`/orderpayment`, {salesOrderData:salesOrderData, id: id, simulationMode: simulationMode});
+            history.replace(`/orderpayment`, {salesOrderData:salesOrderData, id: id, simulationMode: simulationMode});
           }
         }
       }

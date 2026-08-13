@@ -315,9 +315,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "EventsApi_"; // Your "No. 2" prefix
+    //options.InstanceName = "EventsApi_"; // Your "No. 2" prefix
 
 });
+Console.WriteLine($"Redis connection: {builder.Configuration.GetConnectionString("Redis")}");
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()

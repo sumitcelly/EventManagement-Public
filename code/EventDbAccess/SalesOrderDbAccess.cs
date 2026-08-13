@@ -521,7 +521,7 @@ namespace EventManagementDbAccess
                 orderIds.ForEach(async orderId =>
                 {
                     _logger.LogInformation($"Returning tickets to pool for order id {orderId}");
-                    bool retVal = await ReturnTicketsToPool(SalesOrderStatus.Abandoned, 0,orderId);
+                    bool retVal = await ReturnTicketsToPool(SalesOrderStatus.Abandoned,orderId);
                     if (!retVal)
                     {
                         _logger.LogCritical($"Unable to return tickets to pool for session id {orderId}");
@@ -756,6 +756,7 @@ namespace EventManagementDbAccess
             {
                 _logger.LogInformation($"Returning {item.Value} tickets to pool for event {order.EventId} and item type {item.Key}");
                await _eventTypeAccess.UpdateEventItemTypesSoldCount(order.EventId, item.Key, -item.Value,connection, mySqlTransaction); 
+               await _eventTypeAccess.UpdateTicketSoldCountInCache(order.EventId, item.Key, -item.Value);
             }
             
             _logger.LogInformation($"Updating sales order status for order id {order.OrderId} to status {status}");

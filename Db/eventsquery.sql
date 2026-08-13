@@ -2,11 +2,15 @@ select * from logincodes order by createdat desc
 
 select * from eventorganizer where customerid=40
 
-delete from eventuser where email like 'testowner@p%'
+select *  from eventuser where email like 'test%'
 
 select StripeAccountId from eventorganizer where customerid=1
-select * from events where EventName='dfd'
+select * from events where EventName='new test 77'
 select * from salesorder where EventId=67
+
+select eventitemtype.TicketsSold, eventitemtype.* from eventitemtype where EventId=73;
+select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=73;
+select eventsalesitem.* from eventsalesitem where eventid = 73;
 
 update eventorganizer
 set StripeConnectStatus='LinkInitiated'

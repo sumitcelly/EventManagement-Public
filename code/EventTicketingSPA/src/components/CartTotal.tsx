@@ -114,10 +114,8 @@ export const calculateForCustomerAbsorbsAllFees = (
       const total = tickets.reduce((sum: number, t:Ticket) => sum + (t.quantity || 0) * t.cost, 0);
       console.log('cart total',total);
       const totalTickets = tickets.reduce((sum: number, t:Ticket) => sum + (t.cost>0 ? t.quantity : 0), 0);
-      const platformFees = parseFloat((total * Number(data?.platformFees)).toFixed(2));
-
-      console.log('total and plattform fees',total,platformFees);
-
+      console.log('total paid tickets',totalTickets);
+      
       let displayTotal="", displayFee="";
       if (feeMode === TicketFeeMode.CustomerAbsorbsAll)
       {

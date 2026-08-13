@@ -87,7 +87,7 @@ namespace EventManagementDbAccess
                 var data = await _cache.GetOnlyAsync<List<EventItemType>>(cacheKey);
                 if (data == null)
                 {
-                    _logger.LogWarning("No cached ticket list found for event {EventId}; skipping cache update.", eventId);
+                    _logger.LogInformation("No cached ticket list found for event {EventId}; skipping cache update.", eventId);
                     return false;
                 }
 
@@ -260,7 +260,12 @@ namespace EventManagementDbAccess
                         throw new Exception($"Not enough tickets available for {itemType}");
                     }
                     //Not updating cache here because the cache should already be updated by the calling method
-                    
+                    // bool cacheUpdated = await UpdateTicketSoldCountInCache(eventId, itemType, quantity);
+                    // if (!cacheUpdated)
+                    // {
+                    //     _logger.LogWarning("Ticket sold count updated in DB but cache update failed for event {EventId} and item type {EventItemTypeId}.", eventId, itemType);
+                    //     throw new InvalidOperationException($"Unable to update ticket sold count cache for {itemType}");
+                    // }
                 }
                 return true;
             }

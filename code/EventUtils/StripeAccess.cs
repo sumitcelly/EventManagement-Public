@@ -249,7 +249,7 @@ public class StripeAccess
 
         decimal totalAmount = lineItems.Sum(item => item.Price * item.Quantity);
         long percentageFee = (long)Math.Round(totalAmount * appFeePercentage * 100m, MidpointRounding.AwayFromZero);
-        long minimumFee = (long)Math.Round(lineItems.Sum(item => item.Quantity) * floorFees, MidpointRounding.AwayFromZero);
+        long minimumFee = (long)Math.Round(lineItems.Where(i=>i.Price>0).Sum(item => item.Quantity) * floorFees, MidpointRounding.AwayFromZero);
 
         long fee = Math.Max(percentageFee, minimumFee);
         _logger.LogInformation("application fees amount is {Fee} using fees percent {AppFeePercentage} and floor fee {FloorFees}.", fee, appFeePercentage, floorFees);

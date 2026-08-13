@@ -13,16 +13,17 @@ using Serilog.Events;
 IHostBuilder builder = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, config) =>
     {
-        if ( Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development") 
+        // Use the hosting environment provided by the Generic Host (works with DOTNET_ENVIRONMENT and ASPNETCORE_ENVIRONMENT)
+        if (context.HostingEnvironment.IsDevelopment())
         {
-            Console.WriteLine("Env is dev");
+            Console.WriteLine("Env is Development (hosting)");
             config.AddJsonFile("appsettings.Development.json", optional: true);
-               
         }
         //only add if you want docker compose to override the default valuesa
         config.AddEnvironmentVariables();
+        //Console.WriteLine($"Redis string is {context.Configuration.GetConnectionString("Redis")}");
 
-        if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!= "Development")
+        if (!context.HostingEnvironment.IsDevelopment())
         {
             config.AddSystemsManager(awsConfig =>
             {
@@ -60,14 +61,17 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = config.GetConnectionString("Redis");
+            Console.WriteLine($"Redis connection: {config.GetConnectionString("Redis")}");
+           //Console.WriteLine($"Db string is {config.GetConnectionString("Default")}");
+   
             //use same instance as api only if you want them 2 share the data.
             //todo: may have to revisit.
-            options.InstanceName = "EventsWorker_"; // Your "No. 2" prefix
+            //options.InstanceName = "EventsWorker_"; // Your "No. 2" prefix
 
         });
        // services.AddHostedService<EmailSchedulerService>();
         services.AddHostedService<OrderCleanupService>();
-        services.AddHostedService<EmailStatusUpdateService>();
+        //services.AddHostedService<EmailStatusUpdateService>();
        
     });
     Log.Logger = new LoggerConfiguration()
@@ -82,8 +86,8 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
     .CreateLogger();
     builder.UseSerilog();
 
-    Console.WriteLine("Env is  " + Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") + "");
+    var envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+    Console.WriteLine("Env is  " + envName);
   
-
-   builder.Build().Run();
+    builder.Build().Run();
    
