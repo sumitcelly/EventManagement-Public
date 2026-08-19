@@ -64,8 +64,8 @@ namespace CreateTicketApi.Controllers
                     //only send access token if this is a new guest user. 
                     // If the email already existed in the system, we don't want to send them a token.
                     // The order is created but needs to be accessed via their email.
-                    var _accessToken = !result.Item3? _tokenUtils.GenerateGuestJwtToken(result.Item1.UserId.ToString(),
-                                         UserRoles.Attendee.ToString()):null;
+                    var _accessToken = _tokenUtils.GenerateGuestJwtToken(result.Item1.UserId.ToString(),
+                                         UserRoles.Attendee.ToString());
                     CustomerSalesOrder returnOrder = result.Item1;
                     return Ok(new
                     {

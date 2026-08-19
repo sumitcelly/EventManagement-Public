@@ -5,12 +5,17 @@ select * from eventorganizer where customerid=40
 select *  from eventuser where email like 'test%'
 
 select StripeAccountId from eventorganizer where customerid=1
-select * from events where EventName='new test 77'
+select * from events where EventId=73
 select * from salesorder where EventId=67
 
 select eventitemtype.TicketsSold, eventitemtype.* from eventitemtype where EventId=73;
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=73;
-select eventsalesitem.* from eventsalesitem where eventid = 73;
+select eventsalesitem.* from eventsalesitem where eventid = 73  order by CreatedAt desc
+
+update eventitemtype
+set TicketsSold=0
+where EventItemTypeId=128
+/* and PricePaid=20 and TicketStatus='Live'*/
 
 update eventorganizer
 set StripeConnectStatus='LinkInitiated'

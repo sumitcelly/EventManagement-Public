@@ -49,7 +49,10 @@ import { FeaturesShowcase } from "./pages/Global/FeatureShowcase";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
+  const isGuest = useSelector((state :any) => state.auth?.user?.guest);
   const role = useSelector((state :any) => state.auth?.user?.role);
+
+  console.log('is guest, is auth',isGuest, isAuthenticated);
   //const dispatch = useAppDispatch();
   
   // useEffect(() => {
@@ -127,7 +130,7 @@ export default function App() {
            {
               if (isAuthenticated && checkBasicAdminAccess())
                 return <Dashboard />;
-              else if (isAuthenticated)
+              else if (isAuthenticated && !isGuest)
               {
                 const ref = new URLSearchParams(location.search).get('ref');
                 console.log('ref is ' + ref);

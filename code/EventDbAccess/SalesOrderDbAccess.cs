@@ -153,7 +153,7 @@ namespace EventManagementDbAccess
             }
 
             string cacheKey = CacheHelper.GetCacheKey<SalesOrder>(orderId.ToString());
-            SalesOrder? order = await _cache.GetOrSetAsync(cacheKey, () => GetSalesOrderByIdFromDb(orderId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            SalesOrder? order = await _cache.GetOrSetAsync(cacheKey, () => GetSalesOrderByIdFromDb(orderId), TimeSpan.FromMinutes(10), _logger);
             return order ?? throw new KeyNotFoundException($"Order with id {orderId} not found.");          
         }
 
@@ -729,6 +729,13 @@ namespace EventManagementDbAccess
         if (userId > 0 && order.UserId != userId)
             throw new Exception($"User {userId} is not authorized to update order {order.OrderId}");
 
+        if (order.SalesOrderStatus == SalesOrderStatus.Abandoned || 
+            order.SalesOrderStatus == SalesOrderStatus.Timedout)
+        {
+            _logger.LogInformation("Sales order has already been abandanoed or timed out. Aborting return tickets to pool");
+            return false;
+        }
+
         using var connection = new MySqlConnection(ConnectionString);   
         await connection.OpenAsync();
 
@@ -774,10 +781,12 @@ namespace EventManagementDbAccess
 
             int rowsAffected = await cmd.ExecuteNonQueryAsync();
   
-            if (rowsAffected > 0 && 
-                await UpdateTicketStatusForSalesOrder(status.ToString(), order.OrderId,
-                            order.SalesOrderCode ?? string.Empty, connection, mySqlTransaction))
+            if (rowsAffected > 0)
             {
+                //Removing from cache although we can update the cache too as i have done it many other places.
+                await _cache.RemoveAsyncHelper(CacheHelper.GetCacheKey<SalesOrder>(order.OrderId.ToString()));
+                await UpdateTicketStatusForSalesOrder(status.ToString(), order.OrderId,
+                            order.SalesOrderCode ?? string.Empty, connection, mySqlTransaction);
                 _logger.LogInformation($"Sales order status updated for order id {order.OrderId} to status {status} with rows affected {rowsAffected}");
                 await mySqlTransaction.CommitAsync();
                 return rowsAffected > 0;

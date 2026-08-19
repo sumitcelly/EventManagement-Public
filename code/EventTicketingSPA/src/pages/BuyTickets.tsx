@@ -250,10 +250,10 @@ export default function BuyTickets() {
         console.log(`Received 200 from order creation. checking error array...`);
         const salesOrderData = result.data?.salesOrderData;
         console.log('Sales order data isss:', salesOrderData);
-        if (salesOrderData?.SalesOrderItemsError && salesOrderData?.SalesOrderItemsError >0)
+        if (salesOrderData?.salesOrderItemsError && salesOrderData?.salesOrderItemsError.length >0)
         {
-          setcheckoutError(result.data?.SalesOrderItemsError);
-          console.log('Order creation returned errors:', result.data?.SalesOrderItemsError);
+          setcheckoutError(salesOrderData?.salesOrderItemsError);
+          console.log('Order creation returned errors:', salesOrderData?.salesOrderItemsError);
           toast.error("There were issues with some items in your order. Please review.");
           return;
         }
@@ -306,7 +306,7 @@ return (
   onSubmit,
   (errors) => console.log("validation errors", errors)
 )}> */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {ticketTypesList.map((item: Ticket, index:number) =>
       (
           <div  key={item.eventItemTypeId} className="flex flex-col">
@@ -314,7 +314,7 @@ return (
                 <div className="text-l text-secondary-color w-1/2 text-left"
                   dangerouslySetInnerHTML={{ __html: item.name + ': ' + DomPurify.sanitize(item.description) }}/>
                 <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
-                  <div className="text-l text-center text-secondary-color">
+                <div className="text-l text-center text-secondary-color w-1/3">
                     <input
                       key={item.eventItemTypeId}
                       type="number"
@@ -323,28 +323,27 @@ return (
                       min={0}
                       disabled={item.ticketsSold >= item.totalAllowed || !ticketSaleDateValid(item.salesStartDate, item.salesEndDate)}
                     />
+                       {item.totalAllowed - item.ticketsSold >0
+                        && (item.totalAllowed - item.ticketsSold) <= 5 && (
+                        <div className="text-red-500 text-sm">
+                            Very few left!
+                        </div>
+                        )}
+                         {item.ticketsSold >=item.totalAllowed && (
+                          <div className="text-red-500 text-sm ">
+                              Sold Out!
+                          </div>
+                          )}
+                        {!ticketSaleDateValid(item.salesStartDate, item.salesEndDate) && (
+                            <div className="text-red-500 text-sm">
+                                Ticket not available for sale at this time.
+                            </div>
+                          )}
                   </div>
             </div>
 
             <div className="w-1/3 ml-auto text-right mr-3">
-              {item.ticketsSold >=item.totalAllowed && (
-                <div className="text-red-500 text-sm ">
-                    Sold Out!
-                </div>
-              )}
-              {item.totalAllowed - item.ticketsSold >0
-                  && (item.totalAllowed - item.ticketsSold) <= 5 && (
-                <div className="text-red-500 text-sm ">
-                    Very few left!
-                </div>
-              )}
-              {
-                !ticketSaleDateValid(item.salesStartDate, item.salesEndDate) && (
-                  <div className="text-red-500 text-s">
-                      Ticket not available for sale at this time.
-                  </div>
-                )
-              }
+             
             </div>
 
             <div className="w-1/3 ml-auto text-right mr-3"> 
@@ -363,7 +362,7 @@ return (
           </p>
         )}
 
-        <div className="flex flex-row mt-4 space-x-8">
+  <div className="flex flex-row mt-4 space-x-8">
 
   {/* Left Column: User Info & Zip */}
   <div className="w-1/2 flex flex-col justify-start">
@@ -406,21 +405,26 @@ return (
 
   </div>
 
-  {/* Right Column: Totals and Checkout */}
+      {/* Right Column: Totals and Checkout */}
 
-  <div className="flex-1 flex flex-col items-end justify-end">
-    <div className="w-full text-right">
-      <CartTotal control={control} feeMode={ feeMode || eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
-    </div>
+      <div className="flex-1 flex flex-col items-end justify-end">
+        <div className="w-full text-right">
+          <CartTotal control={control} feeMode={ feeMode || eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
+        </div>
 
-    <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
-      {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}
-    </button>
+        <button type="submit" className="mt-6 bg-brand-dark text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold transition-colors">
+          {!paymentNeeded(watchedTickets) ? 'Confirm Order' : 'Proceed to payment'}
+        </button>
+        {checkoutError  && (
+          <ul className="text-error-color">
+            {checkoutError.map((e: any) => (
+              <li>{e.error}</li>
+            ))}
+          </ul>)}       
+      </div>
+
 
   </div>
-
-
-</div>
 
 
 

@@ -127,6 +127,59 @@ export default function OrderPayment() {
     }
   }, [sessionId, organizerId]);
 
+  useEffect(() => {
+    if (!salesOrderData?.checkoutSessionId) return;
+
+    const leaveCheckout = () => {
+      const shouldLeave = window.confirm(
+        "Your payment is still in progress. Are you sure you want to leave this page?"
+      );
+
+      if (!shouldLeave) {
+        window.history.pushState(null, "", window.location.href);
+        return false;
+      }
+
+      if (salesOrderData?.salesOrderId) {
+        axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.salesOrderId}/Timedout`)
+          .catch((error) => {
+            console.error("Error cancelling checkout session:", error);
+          })
+          .finally(() => {
+            history.replace(`/buytickets`, { id: id });
+          });
+      } else {
+        history.replace(`/buytickets`, { id: id });
+      }
+
+      return true;
+    };
+
+    const blockNavigation = history.block((location, action) => {
+      if (action !== "POP") {
+        return undefined;
+      }
+
+      if (!leaveCheckout()) {
+        return "Your payment is still in progress. Please complete it before leaving.";
+      }
+
+      return undefined;
+    });
+
+    const handleBrowserBack = () => {
+      leaveCheckout();
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBrowserBack);
+
+    return () => {
+      blockNavigation();
+      window.removeEventListener("popstate", handleBrowserBack);
+    };
+  }, [history, salesOrderData?.checkoutSessionId, salesOrderData?.salesOrderId, id]);
+
   
   if (!salesOrderData || !salesOrderData.checkoutSessionSecret || !salesOrderData.checkoutSessionId) {
     return (
@@ -253,11 +306,11 @@ export default function OrderPayment() {
             toast.error("Payment window has expired. Please try again.");
             axiosClient.post(`/SalesOrder/ReturnTickets/${salesOrderData.salesOrderId}/Timedout`)
             .then(() => {
-              history.replace(`/eventDetails/${eventHeaderInfo.eventId}`);
+              history.replace(`/buytickets`,{id: id});
             })
             .catch((error) => {
               console.error("Error cancelling checkout session:", error);
-              history.replace(`/buytickets`,{id: eventHeaderInfo.eventId});
+              history.replace(`/buytickets`,{id: id});
             });
           }
         }/>

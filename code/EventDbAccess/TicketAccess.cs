@@ -351,12 +351,17 @@ namespace EventManagementDbAccess
                     {
                         throw new InvalidOperationException($"Unable to update ticket sold count cache for {itemType.Value}");
                     }
+                    if (!await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction))
+                    {
+                        throw new InvalidOperationException($"Unable to update ticket sold count in database for {itemType.Value}");
+                    }
                 }
                 else
                 {
                     _logger.LogInformation("Simulation mode enabled. Not updating sold count in cache for eventId: {EventId}, itemType: {ItemType}, ticketsCount: {TicketsCount}", eventId.Value, itemType.Value, tickets.Count);
                 }
 
+                //Now generating the tickets.
                 sb.Append(@"INSERT INTO eventmanagement.eventsalesitem (EventId,UserId,
                     TicketStatus,TicketCode,SalesOrderId,EventItemTypeId,PricePaid,
                     CreatedAt,ModifiedAt) VALUES ");
@@ -394,19 +399,7 @@ namespace EventManagementDbAccess
                         throw new Exception("Unable to insert ticketrecord");
                     }
                 }
-
-                if (!simulationMode)
-                {
-                    if (!await _eventTypeAccess.UpdateEventItemTypesSoldCount(eventId.Value, itemType.Value, tickets.Count, mySqlConnection, transaction))
-                    {
-                        throw new InvalidOperationException($"Unable to update ticket sold count in database for {itemType.Value}");
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation("Simulation mode enabled. Not updating sold count in database for eventId: {EventId}, itemType: {ItemType}, ticketsCount: {TicketsCount}", eventId.Value, itemType.Value, tickets.Count);
-                }
-
+                
                 await transaction.CommitAsync();
                 return retVal;
             }

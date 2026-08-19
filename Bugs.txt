@@ -1,6 +1,10 @@
 Running Bug List
 
-Going back on payment page should result in tickets being returned to pool/
+Going back on payment page should result in tickets being returned to pool.
+
+If a user buys a ticket quantity greater than whats available on the server,
+the error returned is not correct. Open 2 browser and each select number of tickets where
+the total > available. Let one create order. The next one's fails but gives an odd error.
 
 When a person becomes an organizer, the modal does not show up.
 

@@ -307,7 +307,6 @@ namespace EventManagementDbAccess
                 cmd.Parameters.AddWithValue("@cost", item.Cost);
                 cmd.Parameters.AddWithValue("@addOn", item.AddOn);
                 cmd.Parameters.AddWithValue("@totalAllowed", item.TotalAllowed);
-                cmd.Parameters.AddWithValue("@ticketsSold", item.TicketsSold);
                 cmd.Parameters.AddWithValue("@maxPerOrder", item.MaxPerOrder);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", item.EventItemTypeId);
                 cmd.Parameters.AddWithValue("@salesStartDate", item.SalesStartDate);

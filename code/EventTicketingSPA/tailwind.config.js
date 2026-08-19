@@ -33,7 +33,8 @@ module.exports = {
         'secondary-color': '#6d3333ff', // Custom color named 'secondary-text'
         'tertiary-color': '#195b14ff', // Custom color named 'tertiary-text'
         'accent-color': '#FF5733', // Another custom color
-        'go-color':'#34a12aff'
+        'go-color':'#34a12aff',
+        'error-color':'rgb(179, 25, 25)'
       },
 
       // ✍️ Fonts
