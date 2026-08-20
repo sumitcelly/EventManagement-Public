@@ -5,12 +5,33 @@ select * from eventorganizer where customerid=40
 select *  from eventuser where email like 'test%'
 
 select StripeAccountId from eventorganizer where customerid=1
-select * from events where EventId=73
+select * from events where EventId=54
 select * from salesorder where EventId=67
 
 select eventitemtype.TicketsSold, eventitemtype.* from eventitemtype where EventId=73;
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=73;
 select eventsalesitem.* from eventsalesitem where eventid = 73  order by CreatedAt desc
+
+select * from emailcampaign  order by sendat desc, status desc
+select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=70 or eventid=64 or eventid=67;
+select * from emailrecipients;
+
+delete from emailrecipients where id>0
+
+
+select * from emailtransactionlog order by sentat desc
+update emailcampaign
+set Status='Pending'
+where id=59
+
+SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b 
+                                WHERE b.EventId = 70 and 
+                                b.UserId = a.UserId and (b.SalesOrderStatus = 9 or b.SalesOrderStatus=7)
+
+-- delete from emailcampaign where sendat <='2026-08-16 01:13:00'
+
+delete  from emailrecipients WHERE
+id >0
 
 update eventitemtype
 set TicketsSold=0

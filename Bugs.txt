@@ -1,10 +1,10 @@
 Running Bug List
 
-Going back on payment page should result in tickets being returned to pool.
+Email Campaign:
+Funny char next to time in email preview.
+Completed campaigns should have no menu or later
+we can add a way to see stats.
 
-If a user buys a ticket quantity greater than whats available on the server,
-the error returned is not correct. Open 2 browser and each select number of tickets where
-the total > available. Let one create order. The next one's fails but gives an odd error.
 
 When a person becomes an organizer, the modal does not show up.
 
@@ -14,7 +14,11 @@ At some point restrict the same organizer from having same event for name.
 
 --Done
 
+Going back on payment page should result in tickets being returned to pool.
 
+If a user buys a ticket quantity greater than whats available on the server,
+the error returned is not correct. Open 2 browser and each select number of tickets where
+the total > available. Let one create order. The next one's fails but gives an odd error.
 There is no duration on the events page. Event form when to when?
 
 Search results does not ahve start time.

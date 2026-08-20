@@ -14,6 +14,7 @@ using MySqlConnector;
 using Mysqlx.Crud;
 using Org.BouncyCastle.Crypto.Prng;
 using System.Collections.Generic;
+using Serilog.Context;
 
 namespace EmailSchedulerWorker.Services
 {
@@ -47,26 +48,29 @@ namespace EmailSchedulerWorker.Services
             _orderTimeoutMinutes = config.GetValue<int>("Worker:OrderTimeoutMinutes", 10);
             _orderAgeForTaxCollection = config.GetValue<int>("Worker:OrderAgeForTaxCollectionInHours",1);
              _logger.LogInformation($"Using order timeout  minutes of {_orderTimeoutMinutes}");
-
+       
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("OrderCleanup started.");
-
-            while (!stoppingToken.IsCancellationRequested)
+            using (LogContext.PushProperty("JobName", nameof(OrderCleanupService)))
             {
-                try
-                {
-                    await ProcessOrderCleanupAsync(stoppingToken);
-                    //await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in order cleanup service.");
-                }
+                _logger.LogInformation("OrderCleanup started.");
 
-                await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), stoppingToken);
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await ProcessOrderCleanupAsync(stoppingToken);
+                        //await ProcessTaxCollectionAsync(stoppingToken,_orderAgeForTaxCollection);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error in order cleanup service.");
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), stoppingToken);
+                }
             }
         }
 

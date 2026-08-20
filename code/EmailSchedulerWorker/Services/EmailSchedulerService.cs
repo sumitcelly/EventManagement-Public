@@ -14,6 +14,7 @@ using MySqlConnector;
 using Mysqlx.Crud;
 using Org.BouncyCastle.Crypto.Prng;
 using System.Collections.Generic;
+using Serilog.Context;
 
 namespace EmailSchedulerWorker.Services
 {
@@ -43,24 +44,29 @@ namespace EmailSchedulerWorker.Services
                 ?? throw new Exception("Missing MySQL connection string.");
            
             _pollIntervalSeconds = config.GetValue<int>("Worker:PollIntervalSeconds", 60);
+            logger.LogInformation("Starting email scheduler job");
+            
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("EmailSchedulerWorker started.");
-
-            while (!stoppingToken.IsCancellationRequested)
+            using (LogContext.PushProperty("JobName", nameof(EmailSchedulerService)))
             {
-                try
-                {
-                    await ProcessPendingEmailsAsync(stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in processing emails.");
-                }
+                _logger.LogInformation("EmailSchedulerWorker started.");
 
-                await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), stoppingToken);
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await ProcessPendingEmailsAsync(stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error in processing emails.");
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), stoppingToken);
+                }
             }
         }
 

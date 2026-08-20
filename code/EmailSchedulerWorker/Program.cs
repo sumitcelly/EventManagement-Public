@@ -69,21 +69,44 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
             //options.InstanceName = "EventsWorker_"; // Your "No. 2" prefix
 
         });
-       // services.AddHostedService<EmailSchedulerService>();
-        services.AddHostedService<OrderCleanupService>();
-        //services.AddHostedService<EmailStatusUpdateService>();
+        services.AddHostedService<EmailSchedulerService>();
+        //services.AddHostedService<OrderCleanupService>();
+        services.AddHostedService<EmailStatusUpdateService>();
        
     });
+    var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+    Directory.CreateDirectory(logDirectory);
+
     Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .MinimumLevel.Information()
-    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Hide internal MS logs below Warning
-    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning) // Hide WebHost logs
-    .MinimumLevel.Override("System", LogEventLevel.Warning)
-    .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "logs", "EventsWorker-.txt"), 
-    rollingInterval: RollingInterval.Day
-    )
-    .CreateLogger();
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("System", LogEventLevel.Warning)
+        .WriteTo.Logger(lc => lc
+            .Filter.ByIncludingOnly(logEvent =>
+                logEvent.Properties.TryGetValue("JobName", out var value) &&
+                value.ToString().Contains("EmailSchedulerService"))
+            .WriteTo.File(
+                Path.Combine(logDirectory, "EmailSchedulerService-.log"),
+                rollingInterval: RollingInterval.Day))
+        .WriteTo.Logger(lc => lc
+            .Filter.ByIncludingOnly(logEvent =>
+                logEvent.Properties.TryGetValue("JobName", out var value) &&
+                value.ToString().Contains("EmailStatusUpdateService"))
+            .WriteTo.File(
+                Path.Combine(logDirectory, "EmailStatusUpdateService-.log"),
+                rollingInterval: RollingInterval.Day))
+        .WriteTo.Logger(lc => lc
+            .Filter.ByIncludingOnly(logEvent =>
+                logEvent.Properties.TryGetValue("JobName", out var value) &&
+                value.ToString().Contains("OrderCleanupService"))
+            .WriteTo.File(
+                Path.Combine(logDirectory, "OrderCleanupService-.log"),
+                rollingInterval: RollingInterval.Day))
+        .CreateLogger();
+
     builder.UseSerilog();
 
     var envName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");

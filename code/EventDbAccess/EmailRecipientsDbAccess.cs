@@ -168,10 +168,11 @@ namespace EventManagementDbAccess
         {
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
-            // Select all email addresses for the event and filter by status for salesorder
+            // Select all email addresses for the event and filter by status for salesorder which are
+            //in ordercompleted or payment completed state.
             var selectQuery = @"SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b 
                                 WHERE b.EventId = @eventId and 
-                                b.UserId = a.UserId";
+                                b.UserId = a.UserId and (b.SalesOrderStatus = 9 or b.SalesOrderStatus=7)";
             using var selectCmd = new MySqlCommand(selectQuery, conn);
             selectCmd.Parameters.AddWithValue("@eventId", eventId);
             var orderUser = new List<OrderEmailDetails>();

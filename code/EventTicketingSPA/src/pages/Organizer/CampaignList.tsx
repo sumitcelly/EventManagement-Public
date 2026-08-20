@@ -114,8 +114,12 @@ export default function CampaignList() {
         });
         console.log('Preview result from backend', result.data);
         if (result && result.status === 200) {
-          console.log('Decoded preview content', atob(result.data));
-          setPreviewContent(atob(result.data));
+          const binary = atob(result.data);
+          const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+          const decoded = new TextDecoder("utf-8").decode(bytes);
+
+          console.log("Decoded preview content", decoded);
+          setPreviewContent(decoded);
           setIsPreviewModalOpen(true);
         }
       } 
@@ -146,12 +150,12 @@ export default function CampaignList() {
           </div>
           <div className="p-4 bg-white rounded-lg shadow">
             {/* Header Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-5 font-semibold text-gray-700 border-b pb-2 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_1fr_1fr_auto] gap-3 font-semibold text-gray-700 border-b pb-2 mb-2 items-center">
               <div>Event Name</div>
               <div>Campaign</div>
               <div>SendAt</div>
-              <div>Status</div>      
-              <div>Action</div>            
+              <div>Status</div>
+              <div className="text-right">Action</div>
             </div>
 
             {/* Member Rows */}
@@ -159,39 +163,27 @@ export default function CampaignList() {
               {data && data.map((campaign : any) => (
                 <div
                   key={campaign.id}
-                  className="grid grid-cols-1 sm:grid-cols-4 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
+                  className="grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_1fr_1fr_auto] gap-3 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
                 >
                   <div className="truncate pr-2" title={campaign.eventName}>{campaign.eventName}</div>
                   <div className="truncate pr-2" title={campaign.name}>{campaign.name}</div>
                   <div>{new Date(campaign.sendAt).toLocaleDateString()}</div>
-                  
-                  {/* <div>
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        member.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : member.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-gray-200 text-gray-700"
-                      }`}
-                    >
-                      {member.status}
-                    </span>
-                  </div> */}
-                  <div className="flex flex-row justify-between">
-                    <div>{campaign.status}</div>
-                    <div onClick={(e)=>e.stopPropagation()}>
-                      <ListMenu
-                        linkData={{
-                          viewLink: "",
-                          editLink:!campaign.isDefault? `/ManageCampaign`: '',
-                          delete:()=>deleteCampaign(Number(campaign.id)),
-                          editData: campaign,
-                          deleteEnabled: !campaign.isDefault && campaign.status !== 'Completed',
-                          previewData: campaign.isDefault ? () => { previewCampaign(campaign); } : undefined
-                        }}
-                      />
-                    </div>
+
+                  <div className="flex justify-end sm:justify-start">
+                    <span className="text-sm text-gray-700">{campaign.status}</span>
+                  </div>
+
+                  <div onClick={(e)=>e.stopPropagation()} className="flex justify-end">
+                    <ListMenu
+                      linkData={{
+                        viewLink: "",
+                        editLink:!campaign.isDefault && campaign.status != 'Completed'? `/ManageCampaign`: '',
+                        delete:()=>deleteCampaign(Number(campaign.id)),
+                        editData: campaign,
+                        deleteEnabled: !campaign.isDefault && campaign.status !== 'Completed',
+                        previewData: campaign.isDefault ? () => { previewCampaign(campaign); } : undefined
+                      }}
+                    />
                   </div>
                 </div>
       ))}
