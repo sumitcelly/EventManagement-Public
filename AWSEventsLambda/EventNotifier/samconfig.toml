@@ -4,6 +4,7 @@ version = 0.1
 
 [default.global.parameters]
 stack_name = "EventNotifier"
+region = "us-west-2"
 
 [default.build.parameters]
 cached = true
@@ -18,8 +19,9 @@ confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "EventNotifier"
 region = "us-west-2"
-profile = "SC"
+profile = "default"
 image_repositories = []
+disable_rollback = true
 
 [default.package.parameters]
 resolve_s3 = true

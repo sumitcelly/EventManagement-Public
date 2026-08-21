@@ -19,7 +19,7 @@ select * from emailrecipients;
 delete from emailrecipients where id>0
 
 
-select * from emailtransactionlog order by sentat desc
+select * from emailtransactionlog order by createdat desc
 update emailcampaign
 set Status='Pending'
 where id=59

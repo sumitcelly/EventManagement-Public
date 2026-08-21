@@ -25,7 +25,7 @@ public class Function
     /// <param name="context"></param>
     /// <returns></returns>
     /// 
-    public async Task<List<SQSBatchResponse.BatchItemFailure>> FunctionHandler(SQSEvent evnt, ILambdaContext context)
+    public async Task<SQSBatchResponse> FunctionHandler(SQSEvent evnt, ILambdaContext context)
     {
         List<SQSBatchResponse.BatchItemFailure> batchItemFailures = new List<SQSBatchResponse.BatchItemFailure>();
         NotificationSender.Init(context.Logger);
@@ -40,7 +40,7 @@ public class Function
                 batchItemFailures.Add(new SQSBatchResponse.BatchItemFailure() { ItemIdentifier = message.MessageId });
             }
         }
-        return batchItemFailures;    
+        return new SQSBatchResponse(batchItemFailures);    
     }
 
     /*
