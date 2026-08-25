@@ -966,13 +966,14 @@ namespace EventManagementDbAccess
                 if (limit >0)
                     query += " LIMIT @limit;";
                     
-                Console.WriteLine("Final Query: " + query);
+                _logger.LogInformation("Final Query: " + query);
+                _logger.LogInformation($"start and end date { startDate.ToDateTime(new TimeOnly(0, 0, 0))} { endDate.ToDateTime(new TimeOnly(0, 0, 0))}");
 
                 MySqlCommand cmd = new MySqlCommand(query, connection);
                 
                 cmd.Parameters.AddWithValue("@customerId", customerId);
                 cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(new TimeOnly(0, 0, 0)));
-                cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(new TimeOnly(0,0,0)));
+                cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(new TimeOnly(DateTime.UtcNow.Hour,DateTime.UtcNow.Minute,DateTime.UtcNow.Second)));
                 if (!string.IsNullOrEmpty(emailAddress))
                 {
                     cmd.Parameters.AddWithValue("@emailAddress", "%"+emailAddress+"%");
