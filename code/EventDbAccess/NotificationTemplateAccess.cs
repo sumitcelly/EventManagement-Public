@@ -112,12 +112,13 @@ namespace EventManagementDbAccess
                     return new (template.TemplateContent, template.Subject,true);
                 }
             }
+            _logger.LogInformation($"This {templateId} is not a default one. Now getting from non default templates");
             string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(templateId.ToString());
-            Tuple<string, string>? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
-            return new (templateData?.Item1 ?? string.Empty,templateData?.Item2 ?? string.Empty,false);
+            EmailTemplate? templateData = await _cache.GetOrSetAsync(cacheKey, () => GetTemplateByIdFromDb(templateId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+            return new (templateData?.TemplateContent ?? string.Empty,templateData?.Subject ?? string.Empty,false);
         }
 
-        public async Task<Tuple<string, string>> GetTemplateByIdFromDb(int templateId)
+        public async Task<EmailTemplate> GetTemplateByIdFromDb(int templateId)
         {
             if (templateId <= 0)
             {
@@ -126,31 +127,42 @@ namespace EventManagementDbAccess
 
             string templateContent = string.Empty;
             string subject = string.Empty;
-
+            _logger.LogInformation($"retrieving from db for template id {templateId}");
+            EmailTemplate template=null;
             try
             {
                 using (MySqlConnection connection = new(this.ConnectionString))
                 {
-                    string sql = @$"Select TemplateContent,Subject from eventmanagement.notificationtemplates where
+                    string sql = @$"Select TemplateName, TemplateDescription, TemplateContent,Subject from eventmanagement.notificationtemplates where
                                     Id={templateId}";
+                    _logger.LogInformation($"Running query {sql}");
+
                     await connection.OpenAsync();
                     MySqlCommand cmd = new MySqlCommand(sql, connection);
                     using DbDataReader reader = await cmd.ExecuteReaderAsync();
                     if (reader.RecordsAffected > 1)
                         throw new Exception("More than one record returned for template Id " + templateId);
-
+                    
                     while (await reader.ReadAsync())
                     {
-                        templateContent = reader.GetString(0);
-                        subject = reader.GetString(1);
+                        template = new EmailTemplate()
+                        {
+                            TemplateName = reader.GetString(0),
+                            TemplateDescription = reader.GetString(1),
+                            TemplateContent = reader.GetString(2),
+                            Subject = reader.GetString(3),
+                            Id = templateId
+                        };
+                   
                     }
+                    _logger.LogInformation("Retrieved successfully template content and subject {0} {1}",templateContent,subject);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving template with id {templateId} from database: {ex.Message}");
             }
-            return new Tuple<string, string>(templateContent, subject);
+            return  template;
         }
 
         public async Task<bool> DeleteTemplate(int id)
@@ -263,6 +275,7 @@ namespace EventManagementDbAccess
                 else
                 {
                     template.Id = Convert.ToInt16(cmd.LastInsertedId);
+                    template.TemplateContent=  Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(template.TemplateContent));
                     // Invalidate cache for this member
                     string cacheKey = CacheHelper.GetCacheKey<EmailTemplate>(cmd.LastInsertedId.ToString());
                     await _cache.SetOnlyAsync<EmailTemplate>(cacheKey, template);

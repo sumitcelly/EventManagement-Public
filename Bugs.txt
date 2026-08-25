@@ -1,9 +1,9 @@
 Running Bug List
 
+Must validate file metadata before  uploading it to s3.
+
 Email Campaign:
-Funny char next to time in email preview.
-Completed campaigns should have no menu or later
-we can add a way to see stats.
+
 
 
 When a person becomes an organizer, the modal does not show up.
@@ -13,6 +13,9 @@ navbar search by state (full name) does not work.
 At some point restrict the same organizer from having same event for name.
 
 --Done
+Funny char next to time in email preview.
+Completed campaigns should have no menu or later
+we can add a way to see stats.
 
 Going back on payment page should result in tickets being returned to pool.
 

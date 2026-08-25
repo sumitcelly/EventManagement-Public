@@ -19,13 +19,6 @@ Serilog.Debugging.SelfLog.Enable(msg => Console.WriteLine(msg));
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 var builder = WebApplication.CreateBuilder(args);
-// builder.Services.AddLogging(logging =>
-// {
-//     logging.ClearProviders();
-//     logging.AddConsole();
-//     logging.AddDebug();
-
-// });
 
 builder.Configuration["HostEnvironment:Name"] = builder.Environment.EnvironmentName;
 
@@ -333,24 +326,31 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 var app = builder.Build();
+
+// 1. Documentation & UI (Development Only)
+//if (app.Environment.IsDevelopment()) 
+{ 
+    app.UseSwagger(); 
+    app.UseSwaggerUI(); 
+}
+
+// 2. THE FIX: Initialize Routing immediately
+// This extracts the controller endpoint and its custom [Authorize] attributes
+app.UseRouting();
+
+// 3. Cross-Origin Resource Sharing
+// Placed after routing so it can honor any custom [EnableCors] flags on your controllers
 app.UseCors("AllowFrontend");
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-//if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Docker"))
-{
-   // app.UseHttpsRedirection();
-}
-
+// 4. Rate Limiting 
+// Placed before Auth to drop brute-force or spam traffic before hitting your heavy auth logic
 app.UseRateLimiter();
-app.UseAuthentication();
-app.UseAuthorization();
 
-app.MapControllers();
+// 5. Security Context (MUST be in this exact order)
+app.UseAuthentication(); // Who are you? (Parses the JWT token / Cookie)
+app.UseAuthorization();  // Are you allowed here? (Evaluates your custom controller policies)
+
+// 6. Execution
+app.MapControllers(); // Executes the matched controller action safely
 
 app.Run();

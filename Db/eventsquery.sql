@@ -12,11 +12,41 @@ select eventitemtype.TicketsSold, eventitemtype.* from eventitemtype where Event
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=73;
 select eventsalesitem.* from eventsalesitem where eventid = 73  order by CreatedAt desc
 
-select * from emailcampaign  order by sendat desc, status desc
+select * from emailcampaign  order by sendat desc
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=70 or eventid=64 or eventid=67;
-select * from emailrecipients;
+select * from emailrecipients order by LastAttemptedAt desc
+
+update emailcampaign
+set status ="Pending"
+where id=63
+
+select * from eventorganizer where OrganizationName='newone'
+select * from eventorganizermembers where customerid=52
+select * from eventuser where userid=111
+
+select * from notificationtemplates order by CreatedAt desc
 
 delete from emailrecipients where id>0
+
+select * from events where eventdate>=UTC_DATE and eventorganizer=40
+
+SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
+                                b.EventName, c.Email, c.FullName,
+                                COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
+                                Count(e.ticketid) AS OrderCount
+                                from SalesOrder a
+                                JOIN Events b ON a.EventId = b.EventId
+                                JOIN EventUser c ON a.UserId = c.UserId
+                                LEFT JOIN eventsalesitem e ON e.salesorderid = a.orderid
+                                LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
+                                WHERE 1=1 and a.customerId = 52 GROUP BY
+                        a.OrderId,
+                        a.SalesOrderCode,
+                        a.SalesOrderStatus,
+                        a.CreatedAt,
+                        b.EventName,
+                        c.Email,
+                        c.FullName 
 
 
 select * from emailtransactionlog order by createdat desc

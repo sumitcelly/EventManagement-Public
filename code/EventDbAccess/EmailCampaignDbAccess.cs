@@ -183,7 +183,7 @@ namespace EventManagementDbAccess
                         emailcampaign a
                         JOIN notificationtemplates b ON a.TemplateId = b.id
                         JOIN events c ON a.EventId = c.EventId
-                        WHERE a.eventid IN (SELECT eventid FROM events WHERE eventorganizer = @organizerId)
+                        WHERE a.eventid IN (SELECT eventid FROM events WHERE eventorganizer = @organizerId and eventdate >= UTC_DATE)
                         order by a.SendAt desc";
             using var cmd = new MySqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@organizerId", organizerId);
