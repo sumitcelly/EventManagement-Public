@@ -1,5 +1,6 @@
 import {
   Avatar,
+  Button,
   Dropdown,
   DropdownDivider,
   DropdownHeader,
@@ -50,7 +51,7 @@ const schema = yup
 export function AppNavbar() {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const role = user?.role || "";
-
+  console.log(`user role is ${role}`);
   //const ionRouter = useIonRouter();
   const dispatch = useAppDispatch();
   const [showSearch, setShowSearch] = useState(false);
@@ -107,7 +108,7 @@ export function AppNavbar() {
 
   return (
     <Navbar fluid rounded className="bg-brand-light m-1 mb-3 shadow-md dark:bg-brand-neutral">
-      <NavbarBrand href="/">
+      <NavbarBrand onClick={() => history.push("/")}>
         <img src="/vite.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">{import.meta.env.VITE_PLATFORM_Name}</span>
       </NavbarBrand>
@@ -119,16 +120,14 @@ export function AppNavbar() {
               arrowIcon={true}
               className="mr-1"
               // inline={true}
-              label={user.name || `Welcome`}
-                  // <Avatar alt="User settings"
-                  //     img="https://flowbite.com/docs/images/people/profile-picture-1.jpg" rounded />
-                  // }
-                >
+              label={user.name || `Welcome`}  
+              >
                 <DropdownHeader>
                     <span className="block text-sm">{user?.email}</span>
                 </DropdownHeader>
-                <DropdownItem href='/myevents'>Find my tickets</DropdownItem>
-                <DropdownItem href='/organizermanager'>Organize an Event</DropdownItem>
+                <DropdownItem onClick={() => history.push('/myevents')}>Find my tickets</DropdownItem>
+                <DropdownItem onClick={() => history.push('/dashboard')}>Organize an Event</DropdownItem>
+                {checkScannerAccess() && <DropdownItem onClick={() => history.push('/scannerdashboard')}>Scan Tickets</DropdownItem>}
                 <DropdownDivider />
                 <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>
             </Dropdown>
@@ -224,20 +223,24 @@ export function AppNavbar() {
              <Dropdown
               arrowIcon={true}          
               label={`Organizer Menu`}>
-                <DropdownItem href="/dashboard" >Organize an event</DropdownItem>
-                {checkScannerAccess() && <DropdownItem href="/scannerdashboard">Scan Tickets</DropdownItem>}
-                <DropdownItem href="/organizermanager" >Organizer Info</DropdownItem>
-                <DropdownItem href="/emailcampaigns" >Email Campaigns</DropdownItem>
-                <DropdownItem href="/Organizer/SalesOrderReport" >Sales report</DropdownItem>
-                <DropdownItem href="/teammanager" >Manage teams</DropdownItem>            
+                <DropdownItem onClick={() => history.push('/dashboard')} >Organize an event</DropdownItem>
+                {checkScannerAccess() && <DropdownItem onClick={() => history.push('/scannerdashboard')}>Scan Tickets</DropdownItem>}
+                <DropdownItem onClick={() => history.push('/organizermanager')} >Organizer Info</DropdownItem>
+                <DropdownItem onClick={() => history.push('/emailcampaigns')} >Email Campaigns</DropdownItem>
+                <DropdownItem onClick={() => history.push('/Organizer/SalesOrderReport')} >Sales report</DropdownItem>
+                <DropdownItem onClick={() => history.push('/teammanager')} >Manage teams</DropdownItem>            
             </Dropdown>
         )}
-  
+
+        {/* {checkScannerAccess() && !checkBasicAdminAccess() && 
+          <Button className="dark:text-white sm:ml-auto mr-auto"  href="/scannerdashboard">Scan Tickets
+         </Button>} */}
+     
         {(!isAuthenticated || user?.guest) &&(
           <>
-            <NavbarLink className="dark:text-primary-color" href="/login?ref=selltickets">Organize Events</NavbarLink>
-            <NavbarLink className="dark:text-primary-color" href="/auth/sendsecurecode/myevents">Find my tickets</NavbarLink>
-            <NavbarLink className="dark:text-primary-color" href="/auth/sendsecurecode/signup">Signup</NavbarLink>
+            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/login?ref=selltickets')}>Organize Events</NavbarLink>
+            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/myevents')}>Find my tickets</NavbarLink>
+            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/signup')}>Signup</NavbarLink>
           </>
         )}
       </NavbarCollapse>

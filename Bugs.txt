@@ -4,6 +4,8 @@ Must validate file metadata before  uploading it to s3.
 
 Email Campaign:
 
+Look at pessismistic locking for  event item types table.
+
 
 
 When a person becomes an organizer, the modal does not show up.

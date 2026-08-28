@@ -55,19 +55,8 @@ namespace EventManagementDbAccess
                     // Invalidate cache for this member
                     //todo: look into more efficient cache invalidation strategy if needed, currently we are invalidating the entire cache for members of this customer which might not be optimal if there are many members and frequent changes. We can consider caching individual members or using a more sophisticated caching strategy if performance becomes an issue.
                     string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(member.CustomerId.ToString());
-                    var orgMembers = await _cache.GetOnlyAsync<List<EventOrganizerMembers>>(cacheKey);
-                    if (orgMembers != null && orgMembers.Count > 0
-                        && !orgMembers.Exists(x => x.OrganizerMemberId == member.OrganizerMemberId))
-                    {
-                        member.OrganizerMemberId = (int)cmd.LastInsertedId;
-                        orgMembers.Add(member);
-                        await _cache.SetOnlyAsync<List<EventOrganizerMembers>>(cacheKey, orgMembers);
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Cache for customer id {member.CustomerId} is not set or empty, skipping cache update for new member addition.");
-                    }
-                    
+                    await _cache.RemoveAsyncHelper(cacheKey);
+                     
                     _logger.LogInformation($"Member with add  successfully to customer id {member.CustomerId}.");
                      return(Convert.ToInt16(cmd.LastInsertedId), cmd.Parameters["@InvitationToken"].Value.ToString() ?? "");
                 }

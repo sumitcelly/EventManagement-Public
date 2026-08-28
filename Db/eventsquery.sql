@@ -8,25 +8,34 @@ select StripeAccountId from eventorganizer where customerid=1
 select * from events where EventId=54
 select * from salesorder where EventId=67
 
+/*sales order queries */
 select eventitemtype.TicketsSold, eventitemtype.* from eventitemtype where EventId=73;
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=73;
 select eventsalesitem.* from eventsalesitem where eventid = 73  order by CreatedAt desc
 
-select * from emailcampaign  order by sendat desc
+/*emailcampaign queries*/
+select * from emailcampaign  where eventid=37 order by sendat desc
 select salesorder.SalesOrderStatus, salesorder.* from salesorder where EventId=70 or eventid=64 or eventid=67;
-select * from emailrecipients order by LastAttemptedAt desc
+select * from emailrecipients  where emailcampaignid=26 and recipientemail='eventattendee@polkadotsandcurry.com'
+select * from notificationtemplates order by CreatedAt desc
 
 update emailcampaign
 set status ="Pending"
 where id=63
 
+/* event organizer queries*/
 select * from eventorganizer where OrganizationName='newone'
-select * from eventorganizermembers where customerid=52
-select * from eventuser where userid=111
+select * from eventorganizermembers where userid=99
+select * from eventuser where email like 'eventattendee%'
 
-select * from notificationtemplates order by CreatedAt desc
+
+delete from eventorganizermembers where customerid=52
+
+
 
 delete from emailrecipients where id>0
+
+select * from salesorder where where eventid=37
 
 select * from events where eventdate>=UTC_DATE and eventorganizer=40
 
@@ -60,8 +69,7 @@ SELECT a.Email, a.FullName, b.OrderId FROM eventuser a, salesorder b
 
 -- delete from emailcampaign where sendat <='2026-08-16 01:13:00'
 
-delete  from emailrecipients WHERE
-id >0
+delete  from emailrecipients WHERE id >0
 
 update eventitemtype
 set TicketsSold=0
@@ -85,7 +93,7 @@ Select * from logincodes order by createdat desc
 
 select * from events where EventName like 'Drinks%'
 select * from eventitemtype where eventid=37
-select * 	from EVENTs where EventName like 'Drin%'
+select * 	from EVENTS where EventName like 'Drin%'
 select * 	from eventfeeoverrides where EventId=6
 
 update eventfeeoverrides

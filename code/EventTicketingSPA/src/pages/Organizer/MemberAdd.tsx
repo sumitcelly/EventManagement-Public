@@ -89,23 +89,34 @@ export default function MemberAdd({memberInfo, organizerId}: {memberInfo?: TeamM
     }
     else
     {
-      axiosClient.post(`/EventOrganizerMembers/${organizerId}`,orgAPi)
-      .then(response => {
-      console.log('Member created successfully:', response.data);
-      toast.success("Member created");
-      setServerStatus("Member created successfully.");
-      queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
-      setIsAdding(false);
-    
-      setTimeout(() => {
-        history.push(`/TeamManager`);
-      }, 2000);
-      })
-      .catch(error => {
+      try
+      {
+        const response = await axiosClient.post(`/EventOrganizerMembers/${organizerId}`,orgAPi)
+        if (response.status == 200)
+        {
+          console.log('Member created successfully:', response.data);
+          toast.success("Member created.");
+          setServerStatus("Member created successfully.");
+          queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
+          setIsAdding(false);
+        
+          setTimeout(() => {
+            history.push(`/TeamManager`);
+          }, 2000);
+        }
+        else
+        {
+          console.log(`Error in creating memeber ${response.data}`);
+          toast.error(response.data); 
+          setServerStatus("Error creating member");
+        }
+      }   
+      catch(error:any)
+      {
         console.error('Error creating/updating event:', error);
-        toast.error("Error creating member");
         setServerStatus("Error creating member");
-      });
+        toast.error(error?.response?.data || "Error creating member");        
+      };
     }
   }
 

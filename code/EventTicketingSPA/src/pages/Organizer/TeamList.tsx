@@ -21,6 +21,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
   console.log('event id from props and is active',organizerId, isActive);
 
   const queryClient = useQueryClient();
+  const user = useAppSelector((state: RootState) => state.auth.user);
 
   const deleteUser = async (userId:number) => 
   {
@@ -114,7 +115,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       </div>
     <div className="p-4 bg-white rounded-lg shadow">
     {/* Header Row */}
-    <div className="grid grid-cols-1 sm:grid-cols-4 font-semibold text-gray-700 border-b pb-2 mb-2">
+    <div className="grid grid-cols-1 sm:grid-cols-4 sm:text-center font-semibold text-gray-700 border-b pb-2 mb-2">
       <div>Email</div>
       <div>Name</div>
       <div>Status</div>
@@ -127,14 +128,14 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       {data && data.map((member) => (
         <div
           key={member.orgMemberId}
-          className="grid grid-cols-1 sm:grid-cols-4 items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
+          className="grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_1.5fr_auto] items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
         >
         
           <div className="truncate pr-2" title={member.email}>{member.email}</div>
           <div>{member.name}</div>
           <div>
             <span
-              className={`px-2 py-1 text-xs rounded-full ${
+              className={`px-2 py-1 text-xs rounded-full  ${
                 member.status === "Active"
                   ? "bg-green-100 text-green-700"
                   : member.status === "Pending"
@@ -146,10 +147,11 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
             </span>
           </div>
           <div className="flex flex-row justify-between">
-            <div>
-              {member.role}
+            <div className="">
+              {member.role} 
             </div>
-            <div onClick={(e)=>e.stopPropagation()}>
+            {member.email != user?.email && (
+            <div className="" onClick={(e)=>e.stopPropagation()}>
               <ListMenu
                 linkData={{
                   viewLink: "",
@@ -160,6 +162,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
                 }}
               />
             </div>
+            )}
           </div>
                 
           

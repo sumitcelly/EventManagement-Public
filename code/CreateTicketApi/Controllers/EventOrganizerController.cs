@@ -142,7 +142,7 @@ namespace CreateTicketApi.Controllers
             var options = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true, 
+                Secure = Request.IsHttps, // use secure only when request is over HTTPS; allows local HTTP development
                 //for cross site mobile access, need to set SameSiteMode.None and set Secure=true in production
                 SameSite = SameSiteMode.None,
                 Path = "/"

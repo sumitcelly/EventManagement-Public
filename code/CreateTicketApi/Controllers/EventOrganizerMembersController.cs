@@ -145,8 +145,14 @@ namespace CreateTicketApi.Controllers
                     else
                     {
                         _logger.LogInformation($"Retrived user id {user.UserId} for adding to organization {member.CustomerId} ");
+                        EventOrganizerMembers? memberList= await _dbAccess.GetContainingOrgByUserId(user.UserId);
+                        if (memberList!=null)
+                        {
+                            _logger.LogInformation($"The user with email {member.Email} already is connected to org with id {memberList.CustomerId}");
+                            return Conflict("Member with this email already connected to another organizer. Please use another email address.");
+                        }
                         member.UserId = user.UserId;
-                      
+                     
                     }
                 }
 
