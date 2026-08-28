@@ -75,7 +75,7 @@ public class StripeAccess
         StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
         WebhookSecret = configuration["Stripe:WebhookSecret"];
         _platformAcctId = configuration["Stripe:PlatformId"];
-        _baseUrl = configuration["BaseFrontEndUrl"]?? "http://localhost:5173";
+        _baseUrl = configuration["BaseFrontEndUrl"]?? "https://localhost:5173";
         if (string.IsNullOrEmpty(WebhookSecret))
         {
             throw new ArgumentException("Stripe webhook secret is not configured.");

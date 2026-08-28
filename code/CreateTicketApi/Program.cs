@@ -55,8 +55,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173", 
-                            "http://localhost:5173","http://localhost", 
+            policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173",
+                             "https://localhost:7118","https://127.0.0.1:7118",
+                            "http://localhost:5173","https://localhost:5173","http://localhost", 
                              "https://localhost","https://sc-dev-ticketspro.ngrok.io",
                             "https://dl27afdi0vyin.cloudfront.net") //Cloudfront
                   .AllowAnyHeader()

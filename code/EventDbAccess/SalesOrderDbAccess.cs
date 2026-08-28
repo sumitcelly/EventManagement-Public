@@ -877,7 +877,7 @@ namespace EventManagementDbAccess
                                                         string emailAddress, string name, int orderStatus,
                                                         string orderByColumn= "createat", bool isAscending =false,
                                                         string? cursor =null, int? orderIdCursor=null,
-                                                        int limit=10)
+                                                        int limit=20)
 
     {   
         if (customerId <= 0)
@@ -891,129 +891,126 @@ namespace EventManagementDbAccess
         using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
         {
             await connection.OpenAsync();
+            
+            _logger.LogInformation("Connection to database established successfully.");
+            string query = @" SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
+                            b.EventName, c.Email, c.FullName,
+                            COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
+                            Count(e.ticketid) AS OrderCount
+                            from SalesOrder a
+                            JOIN Events b ON a.EventId = b.EventId
+                            JOIN EventUser c ON a.UserId = c.UserId
+                            LEFT JOIN eventsalesitem e ON e.salesorderid = a.orderid
+                            LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
+                            WHERE 1=1 and a.customerId = @customerId ";
+
+            DateOnly dtTemp =  DateOnly.FromDateTime(DateTime.Now);
+            
+            //cannot get future orders
+            if (endDate >=  dtTemp || endDate == DateOnly.MinValue)
+                endDate= dtTemp;
+            if (startDate == DateOnly.MinValue)
             {
-                _logger.LogInformation("Connection to database established successfully.");
-                string query = @" SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
-                                b.EventName, c.Email, c.FullName,
-                                COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
-                                Count(e.ticketid) AS OrderCount
-                                from SalesOrder a
-                                JOIN Events b ON a.EventId = b.EventId
-                                JOIN EventUser c ON a.UserId = c.UserId
-                                LEFT JOIN eventsalesitem e ON e.salesorderid = a.orderid
-                                LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
-                                WHERE 1=1 and a.customerId = @customerId ";
+                //default to 30 days before
+                startDate = dtTemp.AddDays(-30);
+            }
+            DateTime startDateTime =  new(startDate,TimeOnly.MinValue);
+            DateTime endDateTime = new(dtTemp,TimeOnly.MaxValue);
 
-                DateOnly dtTemp =  DateOnly.FromDateTime(DateTime.Now);
-                
-                //cannot get future orders
-                if (endDate >  dtTemp || endDate == DateOnly.MinValue)
-                    endDate= dtTemp;
-                if (startDate == DateOnly.MinValue)
-                {
-                    //default to 30 days before
-                    startDate = dtTemp.AddDays(-30);
-                }
-               
-                query += " AND a.CreatedAt between @startDate and @endDate";
-                //the comparison means that some results maybe repeated.
-                //So if there are multiple events at the same exact date and time, then
-                //search results will show an overlap
-                DateTime cursorDateTime = DateTime.MinValue;
-                if (!string.IsNullOrWhiteSpace(cursor))
-                {              
-                    DateTime.TryParse(cursor, out cursorDateTime);
-                    if (cursorDateTime != DateTime.MinValue)
-                    {
-                         query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
-                                         : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
-
-                        // query += isAscending ? " AND (a.CreatedAt > @cursor)"
-                        //                  : " AND (a.CreatedAt < @cursor)";
-
-                    }
-                    
-                }
-                                            
-                if (!string.IsNullOrEmpty(emailAddress))
-                {
-                    query += " AND c.Email like @emailAddress";
-                }
-                if (!string.IsNullOrEmpty(name))
-                {
-                    query += " AND c.FullName like @fullname";
-                }
-                if (orderStatus >0)
-                {
-                    query += " AND a.SalesOrderStatus = @salesorderstatus";
-                }
-                if (eventId >0)
-                {
-                    query += " AND a.EventId = @eventId";
-                }
-                
-                query+=@" GROUP BY
-                        a.OrderId,
-                        a.SalesOrderCode,
-                        a.SalesOrderStatus,
-                        a.CreatedAt,
-                        b.EventName,
-                        c.Email,
-                        c.FullName";
-                string ASC = isAscending ? " ASC " : " DESC ";
-                query += @" ORDER BY a.CreatedAt " + ASC;
-
-                if (limit >0)
-                    query += " LIMIT @limit;";
-                    
-                _logger.LogInformation("Final Query: " + query);
-                _logger.LogInformation($"start and end date { startDate.ToDateTime(new TimeOnly(0, 0, 0))} { endDate.ToDateTime(new TimeOnly(0, 0, 0))}");
-
-                MySqlCommand cmd = new MySqlCommand(query, connection);
-                
-                cmd.Parameters.AddWithValue("@customerId", customerId);
-                cmd.Parameters.AddWithValue("@startDate", startDate.ToDateTime(new TimeOnly(0, 0, 0)));
-                cmd.Parameters.AddWithValue("@endDate", endDate.ToDateTime(new TimeOnly(DateTime.UtcNow.Hour,DateTime.UtcNow.Minute,DateTime.UtcNow.Second)));
-                if (!string.IsNullOrEmpty(emailAddress))
-                {
-                    cmd.Parameters.AddWithValue("@emailAddress", "%"+emailAddress+"%");
-                }
-                if (!string.IsNullOrEmpty(name))
-                {
-                    cmd.Parameters.AddWithValue("@fullname","%"+ name+"%");
-                }
-                if (orderStatus>0)
-                {
-                    cmd.Parameters.AddWithValue("@salesorderstatus", orderStatus);
-                }                
-                if (eventId > 0)
-                {
-                    cmd.Parameters.AddWithValue("@eventId", eventId);
-                }
-
-                cmd.Parameters.AddWithValue("@limit", limit);
+            query += " AND a.CreatedAt between @startDate and @endDate";
+            //the comparison means that some results maybe repeated.
+            //So if there are multiple events at the same exact date and time, then
+            //search results will show an overlap
+            DateTime cursorDateTime = DateTime.MinValue;
+            if (!string.IsNullOrWhiteSpace(cursor))
+            {              
+                DateTime.TryParse(cursor, out cursorDateTime);
                 if (cursorDateTime != DateTime.MinValue)
-                    cmd.Parameters.AddWithValue("@cursor", cursorDateTime);
-                if (orderIdCursor >0)
-                    cmd.Parameters.AddWithValue("@orderIdCursor", orderIdCursor);
-                
-                using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
-                    while (reader.Read())
+                        query += isAscending ? " AND (a.CreatedAt > @cursor  OR (a.CreatedAt = @cursor AND a.OrderId > @orderIdCursor))"
+                                        : " AND (a.CreatedAt < @cursor OR (a.CreatedAt = @cursor AND a.OrderId < @orderIdCursor))";
+                }
+                
+            }
+                                        
+            if (!string.IsNullOrEmpty(emailAddress))
+            {
+                query += " AND c.Email like @emailAddress";
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                query += " AND c.FullName like @fullname";
+            }
+            if (orderStatus >0)
+            {
+                query += " AND a.SalesOrderStatus = @salesorderstatus";
+            }
+            if (eventId >0)
+            {
+                query += " AND a.EventId = @eventId";
+            }
+            
+            query+=@" GROUP BY
+                    a.OrderId,
+                    a.SalesOrderCode,
+                    a.SalesOrderStatus,
+                    a.CreatedAt,
+                    b.EventName,
+                    c.Email,
+                    c.FullName";
+            string ASC = isAscending ? " ASC " : " DESC ";
+            query += @" ORDER BY a.CreatedAt " + ASC;
+
+            if (limit >0)
+                query += " LIMIT @limit;";
+                
+            _logger.LogInformation("Final Query: " + query);
+            _logger.LogInformation($"start and end date { startDateTime} { endDateTime}");
+
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+            
+            cmd.Parameters.AddWithValue("@customerId", customerId);
+            cmd.Parameters.AddWithValue("@startDate", startDateTime);
+            cmd.Parameters.AddWithValue("@endDate", endDateTime);
+            if (!string.IsNullOrEmpty(emailAddress))
+            {
+                cmd.Parameters.AddWithValue("@emailAddress", "%"+emailAddress+"%");
+            }
+            if (!string.IsNullOrEmpty(name))
+            {
+                cmd.Parameters.AddWithValue("@fullname","%"+ name+"%");
+            }
+            if (orderStatus>0)
+            {
+                cmd.Parameters.AddWithValue("@salesorderstatus", orderStatus);
+            }                
+            if (eventId > 0)
+            {
+                cmd.Parameters.AddWithValue("@eventId", eventId);
+            }
+
+            cmd.Parameters.AddWithValue("@limit", limit);
+            if (cursorDateTime != DateTime.MinValue)
+                cmd.Parameters.AddWithValue("@cursor", cursorDateTime);
+            if (orderIdCursor >0)
+                cmd.Parameters.AddWithValue("@orderIdCursor", orderIdCursor);
+            
+            using (MySqlDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    salesOrders.Add(new SalerOrderReportItems
                     {
-                        salesOrders.Add(new SalerOrderReportItems
-                        {
-                            OrderId = reader.GetInt32("OrderId"),
-                            SalesOrderStatus = int.TryParse(reader.GetString("SalesOrderStatus"), out int statusValue) ? ((SalesOrderStatus)statusValue).ToString() : SalesOrderStatus.InProgress
-                            .ToString(),
-                            OrderDate = reader.GetDateTime("CreatedAt"),
-                            EventName = reader.GetString("EventName"),
-                            FullName = reader.GetString("FullName"),
-                            EmailAddress = reader.GetString("Email"),
-                            OrderTotal = reader.GetInt32("OrderTotal"),
-                            OrderCount = reader.GetInt32("OrderCount")
-                        });
-                    }
+                        OrderId = reader.GetInt32("OrderId"),
+                        SalesOrderStatus = int.TryParse(reader.GetString("SalesOrderStatus"), out int statusValue) ? ((SalesOrderStatus)statusValue).ToString() : SalesOrderStatus.InProgress
+                        .ToString(),
+                        OrderDate = reader.GetDateTime("CreatedAt"),
+                        EventName = reader.GetString("EventName"),
+                        FullName = reader.GetString("FullName"),
+                        EmailAddress = reader.GetString("Email"),
+                        OrderTotal = reader.GetInt32("OrderTotal"),
+                        OrderCount = reader.GetInt32("OrderCount")
+                    });
                 }
             }
         }

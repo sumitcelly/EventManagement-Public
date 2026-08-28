@@ -213,7 +213,7 @@ namespace CreateTicketApi.Controllers
                                                         string emailAddress = "", string name = "", string orderStatus = "",
                                                         string orderByColumn = "createat", bool isAscending = false,
                                                         string? dateCursor = null, int? orderIdCursor = null,
-                                                        int limit = 10)
+                                                        int limit = 20)
         {
             if (customerId <= 0)
                 return BadRequest("Invalid customer id.");

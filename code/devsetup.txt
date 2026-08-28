@@ -1,0 +1,22 @@
+
+Both vite and api now run on https.
+
+Make sure to run the api server using
+dotnet run --launch-profile https
+and it now runs on port 7118
+
+
+Vite runs on https://localhost:5173
+
+Had to add the .net dev cert to dotnetdotnet 
+dev-certs https --trust
+
+For vite, look at vite.config.ts
+It uses certs in .cert directory under
+eventticketspa
+
+All this was done because the refresh token cookie was 
+not being honored either by chrome or safari depending on the branding_settings
+Secure = true (safari would logout on refresh)
+or Secure = REquest.IsHttps (chrome would logouton refresh)
+

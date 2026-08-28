@@ -17,7 +17,7 @@ import Footer from "../../components/Footer";
 
 // 
 
-const pageSize =10;
+const pageSize =20;
 const memberSchema = yup.object({
   startDate: yup.string().default(DateUtils.addDaysToDate(new Date(), -30).toISOString().split('T')[0]).required("Start date is required."),
   endDate: yup.string().default(new Date().toISOString().split('T')[0]).required("End date is required."),
