@@ -84,7 +84,7 @@ export default function CampaignAdd(){
      console.log("Fetching events for customer", customerId);
      try
      {
-      const res = await axiosClient.get(`/Events/ByCustomer/${customerId}`);
+      const res = await axiosClient.get(`/Events/ByCustomer/${customerId}/true`);
       if (res?.data && res.status===200)
       {
           console.log('events fetched from backend',res.data);

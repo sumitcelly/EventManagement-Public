@@ -78,12 +78,12 @@ namespace CreateTicketApi.Controllers
            
         }
 
-        [HttpGet("ByCustomer/{customerId}")]
+        [HttpGet("ByCustomer/{customerId}/{isLive?}/{includePastEvents?}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]
         [Authorize(Policy = "MatchingCustomer")]
-        public async Task<List<EventHeader>> GetEventsByCustomer(int customerId)
+        public async Task<List<EventHeader>> GetEventsByCustomer(int customerId,bool? isLive, bool? includePastEvents)
         {
-            var evtList = await _EventDbAccess.GetEventListByCustomerId(customerId);
+            var evtList = await _EventDbAccess.GetEventListByCustomerId(customerId,isLive,includePastEvents);
             _logger.LogInformation("Event received are {0}", JsonSerializer.Serialize(evtList));
             return evtList;
         }

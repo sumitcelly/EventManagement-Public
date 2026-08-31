@@ -5,7 +5,7 @@ select * from eventorganizer where customerid=40
 select *  from eventuser where email like 'test%'
 
 select StripeAccountId from eventorganizer where customerid=1
-select * from events where EventId=54
+	where EventId=54
 select * from salesorder where EventId=67
 
 /*sales order queries */
@@ -37,7 +37,17 @@ delete from emailrecipients where id>0
 
 select * from salesorder where where eventid=37
 
-select * from events where eventdate>=UTC_DATE and eventorganizer=40
+select * from events where eventname='tes new eventwe'
+	
+select a.EventId,a.EventName,a.EventUrlName,a.RefundMode,a.TicketFeeDisplayMode,
+                    a.EventHeadline,a.EventDate, a.EventBannerFileName,
+                    a.EventOrganizer,  a.EventSummary,a.Free,
+                    ifnull(a.EventAddress,'') as EventAddress,
+                    a.IsLive,a.Duration
+                    from events a
+                    WHERE a.EventOrganizer=57  and a.EventDate> UTC_DATE() - INTERVAL 6 MONTH
+                    and a.isLive = true order by a.EventDate DESC
+                
 
 SELECT a.OrderId, a.SalesOrderCode, a.SalesOrderStatus,a.CreatedAt,
                                 b.EventName, c.Email, c.FullName,

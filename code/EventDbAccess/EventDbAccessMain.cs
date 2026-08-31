@@ -235,7 +235,7 @@ namespace EventManagementDbAccess
 
     
     
-    public async Task<List<EventHeader>> GetEventListByCustomerId(int customerId)
+    public async Task<List<EventHeader>> GetEventListByCustomerId(int customerId,bool? isLive, bool? includePastEvents)
     {
       if (customerId <= 0)
         throw new ArgumentException("CustomerId must be greater than zero.", nameof(customerId));
@@ -251,11 +251,31 @@ namespace EventManagementDbAccess
                     ifnull(a.EventAddress,'') as EventAddress,
                     a.IsLive,a.Duration
                     from events a
-                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE()
-                    order by a.EventDate ASC";
+                    WHERE a.EventOrganizer= @customerId and a.EventDate>=@eventDate";
+        
+        if (isLive.HasValue)
+        {
+          query+=" and a.isLive = @isLive";      
+          _logger.LogInformation($"is live is {isLive}");
+        }
+        query +=" order by a.EventDate DESC";
+        _logger.LogInformation($"Query used is {query}");
 
-        using var cmd = new MySqlCommand(query, conn);
+        using var cmd = new MySqlCommand(query, conn);  
         cmd.Parameters.AddWithValue("@customerId", customerId);
+        //only including 6 months worth of events in past.
+        if (includePastEvents.HasValue && includePastEvents.Value)
+        {
+          cmd.Parameters.AddWithValue("@eventDate",DateTime.UtcNow.AddMonths(-6));
+        }
+        else
+        {
+          cmd.Parameters.AddWithValue("@eventDate",DateTime.UtcNow);
+        }
+        
+        if (isLive.HasValue)
+          cmd.Parameters.AddWithValue("@isLive", isLive.Value);
+
 
         List<EventHeader> events = new List<EventHeader>();
         using var reader = await cmd.ExecuteReaderAsync();

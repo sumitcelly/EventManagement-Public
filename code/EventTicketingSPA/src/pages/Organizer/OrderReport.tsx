@@ -48,13 +48,14 @@ export default function OrderReport() {
   const customerId = user.user?.customerId;
   const [recCount, setRecCount] = useState(0);
   const [filters, setFilters] = useState<FormValues | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(true);
 
   const { data:events, isLoading:isEventsLoading } = 
   useQuery(['EventsByCustomerId',customerId], async () => {
      console.log("Fetching events for customer", customerId);
      try
      {
-      const res = await axiosClient.get(`/Events/ByCustomer/${customerId}`);
+      const res = await axiosClient.get(`/Events/ByCustomer/${customerId}/true/true`);
       if (res?.data && res.status===200)
       {
           console.log('events fetched from backend',res.data);
@@ -197,226 +198,235 @@ export default function OrderReport() {
         <AppNavbar />
       </IonHeader>
       <IonContent>
-        <div className="flex flex-col  min-h-full">
-       
-          <form onSubmit={handleSubmit(onSubmit)}
-            className="max-w-4xl w-full mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral"
-          >  
-            <Toaster position="top-right" />
-            <div className="text-center text-xl font-bold text-accent-color mb-6">Order Report</div>
+        <div className="flex flex-col min-h-full bg-gray-50">
+          <div className="w-full max-w-[1600px] mx-auto px-3 py-3">
+            <div className="flex flex-col xl:flex-row xl:items-start gap-3">
+              <form onSubmit={handleSubmit(onSubmit)} className="w-full xl:max-w-[330px] xl:flex-shrink-0">
+                <Toaster position="top-right" />
+                <div className="p-3 border border-gray-300 rounded-md shadow-sm bg-brand-neutral">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="text-lg font-bold text-accent-color">Order Report</div>
+                    <button
+                      type="button"
+                      onClick={() => setFiltersOpen((prev) => !prev)}
+                      className="text-xs font-medium text-gray-700 border border-gray-300 rounded px-2 py-1 bg-gray-50 hover:bg-gray-100"
+                    >
+                      {filtersOpen ? "Hide" : "Show"}
+                    </button>
+                  </div>
 
-            {/* Date Row */}
-            <div className="flex flex-row gap-x-4 mb-4">
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">Start Date</label>
-                <input
-                  type="date"
-                  {...register("startDate")}
-                  className="w-full border rounded p-2"
-                />
-                <div className="min-h-[20px]">
-                  {errors.startDate && (
-                    <p className="text-red-600 text-sm mt-1">{errors.startDate.message}</p>
+                  {filtersOpen && (
+                    <>
+                      <div className="flex flex-col gap-2 mb-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">Start Date</label>
+                            <input
+                              type="date"
+                              {...register("startDate")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            />
+                            <div className="min-h-[18px]">
+                              {errors.startDate && (
+                                <p className="text-red-600 text-xs mt-1">{errors.startDate.message}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">End Date</label>
+                            <input
+                              type="date"
+                              {...register("endDate")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            />
+                            <div className="min-h-[18px]">
+                              {errors.endDate && (
+                                <p className="text-red-600 text-xs mt-1">{errors.endDate.message}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">Email</label>
+                            <input
+                              type="text"
+                              {...register("email")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            />
+                            <div className="min-h-[18px]"></div>
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">Name</label>
+                            <input
+                              type="text"
+                              {...register("fullname")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            />
+                            <div className="min-h-[18px]"></div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">Order Status</label>
+                            <select
+                              {...register("orderStatus")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            >
+                              <option value="">Any Status</option>
+                              <option value="InProgress">In Progress</option>
+                              <option value="Reserved">Reserved</option>
+                              <option value="Timedout">Timedout</option>
+                              <option value="Replaced">Replaced</option>
+                              <option value="Abandoned">Abandoned</option>
+                              <option value="PaymentSucceeded">Payment Succeeded</option>
+                              <option value="OrderCompleted">Order Completed</option>
+                              <option value="Refunded">Refunded</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-sm font-semibold">Event Name</label>
+                            <select
+                              {...register("eventName")}
+                              className="w-full border rounded p-1.5 text-sm"
+                            >
+                              <option value="">Select</option>
+                              {events?.map((event:any) => (
+                                <option key={event.eventId} value={event.eventId}>
+                                  {event.eventName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
+                        <div className="flex items-center text-sm">
+                          <label className="font-medium">Newest first</label>
+                          <input type="checkbox" id="includeDetails" className="ml-2 h-4 w-4" {...register("isDescending")}/>
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-2 flex-wrap">
+                          {recCount > 0 && (
+                            <Button
+                              className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-xs"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                if (filters)
+                                {
+                                  const queryParams = new URLSearchParams({
+                                    startDate: filters.startDate,
+                                    endDate: filters.endDate,
+                                    emailAddress: filters.email || '',
+                                    name: filters.fullname || '',
+                                    orderStatus: filters.orderStatus || '',
+                                    eventId: filters.eventName === '' ? '0' : filters.eventName,
+                                    isAscending: (!filters.isDescending).toString()
+                                  });
+                                  try {
+                                    const response = await axiosClient.get(
+                                      `/SalesOrder/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
+                                      { responseType: 'blob' }
+                                    );
+                                    console.log("Report downloaded successfully:", response);
+                                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                                    console.log("Generated download URL:", url);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.setAttribute('download', 'order-report.csv');
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.parentNode?.removeChild(link);
+                                  } catch (error) {
+                                    toast.error('Failed to download report');
+                                  }
+                                }
+                              }}
+                            >
+                              Download CSV
+                            </Button>
+                          )}
+
+                          <label className="text-sm font-semibold whitespace-nowrap">Total: {recCount}</label>
+                          <button
+                            type="submit"
+                            className="bg-brand-dark text-white px-3 py-2 rounded hover:bg-blue-700 text-sm"
+                          >
+                            Search
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {!filtersOpen && (
+                    <div className="flex items-center justify-between gap-2 text-sm text-gray-700">
+                      <span className="font-medium">Filters hidden</span>
+                      <span className="font-semibold">{recCount} total</span>
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">End Date</label>
-                <input
-                  type="date"
-                  {...register("endDate")}
-                  className="w-full border rounded p-2"
-                />
-                <div className="min-h-[20px]">
-                  {errors.endDate && (
-                    <p className="text-red-600 text-sm mt-1">{errors.endDate.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+              </form>
 
-            {/* Email/Name Row */}
-            <div className="flex flex-row gap-x-4 mb-4">
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">Email</label>
-                <input
-                  type="text"
-                  {...register("email")}
-                  className="w-full border rounded p-2"
-                />
-                  <div className="min-h-[20px]"></div>
-              </div>
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">Name</label>
-                <input
-                  type="text"
-                  {...register("fullname")}
-                  className="w-full border rounded p-2"
-                />
-              </div>
-                <div className="min-h-[20px]"> </div>
-            </div>
+              <div className="flex-1 min-w-0">
+                {orderPages && orderPages.pages.length > 0 && (
+                  <div className="w-full border border-gray-300 rounded-md shadow-sm bg-brand-neutral overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="table-auto w-full text-sm align-middle">
+                        <thead className="bg-gray-50 align-middle">
+                          <tr className="align-middle">
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Date</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Name</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Email</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Event</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Status</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Total</th>
+                            <th className="px-2 py-2 text-left align-middle font-semibold whitespace-nowrap">Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orderPages.pages.map((page, i) => (
+                            <React.Fragment key={i}>
+                              {console.log("Rendering page", i, page, page.orders)}
+                              {page.orders.map((row:any) => (
+                                <tr key={row.orderId} className="hover:bg-gray-100 border-b text-left align-middle">
+                                  <td className="px-2 py-2 align-middle whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
+                                  <td className="px-2 py-2 align-middle max-w-[10rem] truncate" title={row.fullName}>{row.fullName}</td>
+                                  <td className="px-2 py-2 align-middle max-w-[12rem] truncate" title={row.emailAddress}>{row.emailAddress}</td>
+                                  <td className="px-2 py-2 align-middle max-w-[16rem] whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
+                                  <td className="px-2 py-2 align-middle whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
+                                  <td className="px-2 py-2 align-middle whitespace-nowrap">${row.orderTotal.toFixed(2)}</td>
+                                  <td className="px-2 py-2 align-middle whitespace-nowrap">{row.orderCount}</td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-            {/* Order Status/Event Name Row */}
-            <div className="flex flex-row gap-x-4 mb-4">
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">Order Status</label>
-                <select
-                  {...register("orderStatus")}
-                  className="w-full border rounded p-2"
-                >
-                  <option value="">Any Status</option>
-                  <option value="InProgress">In Progress</option>
-                  <option value="Reserved">Reserved</option>
-                  <option value="Timedout">Timedout</option>
-                  <option value="Replaced">Replaced</option>
-                  <option value="Abandoned">Abandoned</option>
-                  <option value="PaymentSucceeded">Payment Succeeded</option>
-                  <option value="OrderCompleted">Order Completed</option>
-                  <option value="Refunded">Refunded</option>
-                </select>
-              </div>
-              <div className="flex flex-col w-1/2 space-y-1">
-                <label className="font-semibold">Event Name</label>
-                <select
-                  {...register("eventName")}
-                  className="w-full border rounded p-2">
-                  <option value="">{"Select an option"}</option>
-                  {events?.map((event:any) => (
-                    <option key={event.eventId} value={event.eventId}>
-                      {event.eventName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex mt-4 mb-4 justify-between items-center">
-              <div className="flex items-center mr-auto">
-                <label className="font-semibold self-center">Show latest orders on top</label>
-                <input type="checkbox" id="includeDetails" className="ml-2 mt-1" {...register("isDescending")}/>
-              </div>
-              {recCount > 0 && (
-                  <Button  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-4"
-                    onClick= {async (e)=>{
-                      e.preventDefault();
-                      
-                      // const url =`${API_BASE_URL}/DownloadOrderReport/${customerId}?${filters ? new URLSearchParams({
-                      // startDate: filters.startDate,
-                      // endDate: filters.endDate,
-                      // emailAddress: filters.email || '',
-                      // name: filters.fullname || '',
-                      // orderStatus: filters.orderStatus || '',
-                      // eventId: filters.eventName == ''? '0': filters.eventName,
-                      // isAscending: (!filters.isDescending).toString()
-                      // }).toString() : ""}`;
-                      // console.log("Downloading report from",url);
-                      
-                      // window.location.href = url;
-                      if (filters)
-                      {
-                        const queryParams = new URLSearchParams({
-                          startDate: filters.startDate,
-                          endDate: filters.endDate,
-                          emailAddress: filters.email || '',
-                          name: filters.fullname || '',
-                          orderStatus: filters.orderStatus || '',
-                          eventId: filters.eventName === '' ? '0' : filters.eventName,
-                          isAscending: (!filters.isDescending).toString()
-                        });
-                        try {
-                          const response = await axiosClient.get(
-                            `/SalesOrder/DownloadOrderReport/${customerId}?${queryParams.toString()}`,
-                            { responseType: 'blob' }
-                          );
-                          console.log("Report downloaded successfully:", response);
-                          const url = window.URL.createObjectURL(new Blob([response.data]));
-                          console.log("Generated download URL:", url);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.setAttribute('download', 'order-report.csv');
-                          document.body.appendChild(link);
-                          link.click();
-                          link.parentNode?.removeChild(link);
-                        } catch (error) {
-                          toast.error('Failed to download report');
-                        }
-
-                      }
-
-
-                    }
-                    }>
-                    Download CSV
-                  </Button>
-                // </a>
-              )}
-              
-
-              <label className="mr-4 font-semibold">Total Records: {recCount}</label>
-              <button
-                type="submit"
-                className="bg-brand-dark text-white text-brand-neutral px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Search
-              </button>      
-            </div>
-            {orderPages && orderPages.pages.length > 0 &&(
-                <div className="border-l-2 pl-2">
-                <table className="table-auto w-full mt-4">
-                  <thead>
-                    <tr>
-                      <th >Date</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Event</th>
-                      <th>Status</th>
-                      <th >Total</th>
-                      <th>Count</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderPages.pages.map((page, i) => (
-                    <React.Fragment key={i}>
-                      {console.log("Rendering page", i, page,page.orders)}
-                      {page.orders.map((row:any) => (
-                        <tr key={row.orderId} className="hover:bg-gray-100 border-b text-center">
-                          <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.orderDate}>{new Date(row.orderDate).toLocaleDateString()}</td>
-                          <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.fullName}>{row.fullName}</td>
-                        
-                          <td className="max-w-[8rem] truncate overflow-hidden whitespace-nowrap" title={row.emailAddress}>
-                          {row.emailAddress}
-                          </td>
-                          <td className="max-w-xs whitespace-normal break-words" title={row.eventName}>{row.eventName}</td>
-                          <td className="max-w-[4rem] truncate overflow-hidden whitespace-nowrap" title={row.salesOrderStatus}>{row.salesOrderStatus}</td>
-                      
-                          <td>
-                            ${row.orderTotal.toFixed(2)}
-                          </td>
-                          <td>{row.orderCount}</td>
-                        </tr>
-                        ))}
-                    </React.Fragment>
-                    ))}
-                  
-                  </tbody>
-                  </table>
-                  {hasNextPage && (
-                      <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                        {isFetchingNextPage ? 'Loading more...' : 'Load More'}
-                      </button>
+                    {hasNextPage && (
+                      <div className="p-3 border-t border-gray-200 bg-gray-50">
+                        <button
+                          onClick={() => fetchNextPage()}
+                          disabled={isFetchingNextPage}
+                          className="bg-brand-dark text-white px-3 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-60"
+                        >
+                          {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+                        </button>
+                      </div>
                     )}
-
-                </div>
-              )}
-            
-          </form>
-          <Footer/>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <Footer />
         </div>
-    </IonContent>
+      </IonContent>
     </IonPage>
-      
-   
   );
 }

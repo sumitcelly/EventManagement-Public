@@ -227,7 +227,9 @@ export function AppNavbar() {
                 {checkScannerAccess() && <DropdownItem onClick={() => history.push('/scannerdashboard')}>Scan Tickets</DropdownItem>}
                 <DropdownItem onClick={() => history.push('/organizermanager')} >Organizer Info</DropdownItem>
                 <DropdownItem onClick={() => history.push('/emailcampaigns')} >Email Campaigns</DropdownItem>
-                <DropdownItem onClick={() => history.push('/Organizer/SalesOrderReport')} >Sales report</DropdownItem>
+                <DropdownItem onClick={() => history.push('/Organizer/SalesOrderReport')} >Order Details report</DropdownItem>
+                <DropdownItem onClick={() => history.push('/Organizer/TicketSalesDashboard')} > Ticket Sales Dashboard</DropdownItem>
+
                 <DropdownItem onClick={() => history.push('/teammanager')} >Manage teams</DropdownItem>            
             </Dropdown>
         )}

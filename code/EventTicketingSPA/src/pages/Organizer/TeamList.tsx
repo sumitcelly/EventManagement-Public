@@ -100,7 +100,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
   return (
     <>
     {/* <Toaster position="top-right" /> */}
-    <div className="max-w-l mx-auto">
+    <div className="max-w-2xl mx-auto w-full">
    
       <h2 className="text-xl font-semibold mb-4 text-center">Build your team</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
@@ -113,29 +113,29 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
                 Add member
           </button> 
       </div>
-    <div className="p-4 bg-white rounded-lg shadow">
+    <div className="bg-white rounded-lg shadow">
     {/* Header Row */}
-    <div className="grid grid-cols-1 sm:grid-cols-4 sm:text-center font-semibold text-gray-700 border-b pb-2 mb-2">
+    <div className="grid grid-cols-1 sm:grid-cols-4 sm:text-center font-semibold text-gray-700 border-b mb-1">
       <div>Email</div>
       <div>Name</div>
       <div>Status</div>
-      <div>Role</div>
+      <div className="text-left">Role</div>
       
     </div>
 
     {/* Member Rows */}
-    <div className="space-y-2">
+    <div className="">
       {data && data.map((member) => (
         <div
           key={member.orgMemberId}
-          className="grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_1.5fr_auto] items-center text-gray-700 bg-gray-50 rounded-lg px-3 py-2 hover:bg-gray-100 transition"
+          className="bg-brand-neutral  border grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_2.4fr_2.4fr] sm:items-center sm:text-center text-gray-700  hover:bg-white transition"
         >
         
           <div className="truncate pr-2" title={member.email}>{member.email}</div>
-          <div>{member.name}</div>
+          <div >{member.name}</div>
           <div>
             <span
-              className={`px-2 py-1 text-xs rounded-full  ${
+              className={`px-2 py-1 text-xs rounded-full ${
                 member.status === "Active"
                   ? "bg-green-100 text-green-700"
                   : member.status === "Pending"
@@ -146,12 +146,12 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
               {member.status}
             </span>
           </div>
-          <div className="flex flex-row justify-between">
-            <div className="">
+          <div className="flex flex-row">
+            <div className="justify-start">
               {member.role} 
             </div>
             {member.email != user?.email && (
-            <div className="" onClick={(e)=>e.stopPropagation()}>
+            <div className="ml-auto" onClick={(e)=>e.stopPropagation()}>
               <ListMenu
                 linkData={{
                   viewLink: "",

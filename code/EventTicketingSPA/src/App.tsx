@@ -46,6 +46,7 @@ import { RefundPolicy } from "./pages/Global/RefundPolicy";
 import PrivacyPolicy from "./pages/Global/PrivacyPolicy";
 import TOS from "./pages/Global/Tos";
 import { FeaturesShowcase } from "./pages/Global/FeatureShowcase";
+import TicketSalesDashboard from "./pages/Organizer/TicketSalesDashboard";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -205,6 +206,10 @@ export default function App() {
         <Route path="/Organizer/SalesOrderReport"       
           render={() =>checkFullAdminAccess()?
           <OrderReport/>:<LoginPage/>}
+        />
+        <Route path="/Organizer/TicketSalesDashboard"       
+          render={() =>checkFullAdminAccess()?
+          <TicketSalesDashboard/>:<LoginPage/>}
         />
       
         <Route
