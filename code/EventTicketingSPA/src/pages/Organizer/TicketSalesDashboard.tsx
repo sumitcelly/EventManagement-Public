@@ -12,9 +12,10 @@ import { useEventItemTypes } from '../../utils/EventItemTypesQuery';
 
 // Endpoint A: GET /api/events/{id}/details
 interface EventDetailsDTO {
-  eventId: string;
+  eventId: number;
   eventName: string;
   ticketFeeMode: number;
+  eventDate: Date;
 }
 
 interface EventItemTypeData {
@@ -70,19 +71,38 @@ const fetchEventList = async (customerId: number) : Promise<EventDetailsDTO[]> =
   }
 }
 
-const fetchVelocity = async (eventId: string): Promise<EventVelocityDTO> => {
+const fetchVelocity = async (eventId: number | undefined): Promise<EventVelocityDTO> => {
   await MOCK_DELAY(1500); // Simulate slower analytics DB
-  return eventId === '1' 
+  return eventId === 1 
     ? { trend: [12, 15, 8, 22, 30, 45, 52], velocity24h: 52, velocity7dAvg: 26 }
     : { trend: [5, 4, 3, 4, 2, 1, 0], velocity24h: 0, velocity7dAvg: 3 };
 };
 
-const fetchCheckIns = async (eventId: string): Promise<EventCheckInDTO> => {
-  await MOCK_DELAY(2000); // Simulate slow on-site sync
-  return eventId === '1'
-    ? { checkedIn: 840, totalSold: 1200 }
-    : { checkedIn: 45, totalSold: 120 };
-};
+
+const fetchCheckIns = async (eventId: number | undefined): Promise<EventCheckInDTO> => {
+    // 2. Guard Clause: Don't hit the network if the ID is missing
+    if (!eventId) {
+        console.warn("fetchCheckIns called without a valid eventId.");
+        return { checkedIn: 0, totalSold: 0 };
+    }
+
+    try {
+        // 3. Inform Axios what type of data to expect from the server (<EventCheckInDTO>)
+        const res = await axiosClient.get<EventCheckInDTO>(`/Ticket/TicketStatusCounts/${eventId}`);
+        
+        if (res.status === 200 && res.data) {
+            console.log('Check-in data fetched from backend:', res.data);
+            return res.data;
+        }
+        return { checkedIn: 0, totalSold: 0 };
+    } catch(error) {
+        console.error("Error fetching check-in data:", error);
+        toast.error("Error loading check-in data");
+        return { checkedIn: 0, totalSold: 0 };
+    }
+}
+
+
 
 // --- 3. Reusable UI Components ---
 
@@ -130,11 +150,10 @@ const CheckInDonut = ({ current, total }: { current: number, total: number }) =>
 // --- 4. Main Dashboard Component ---
 
 export default function TicketSalesDashboard() {
-  const [selectedEventId, setSelectedEventId] = useState<any>(null);
-  const [selectedEventFeeMode, setSelectedEventFeeMode] = useState<any>(null);
+  const [selectedEventData, setSelectedEventData] = useState<EventDetailsDTO | null>(null);
 
   const user = useAppSelector((state) => state.auth.user);
-  const { eventItemTypeData, eventItemTypesLoading: detailsQueryFetching } = useEventItemTypes(selectedEventId);
+  const { eventItemTypeData, eventItemTypesLoading: detailsQueryFetching } = useEventItemTypes(selectedEventData?.eventId);
   console.log(`Data for event item type is ${eventItemTypeData}`);
 
   const detailsQueryData: EventItemTypeData[] = Array.isArray(eventItemTypeData)
@@ -142,35 +161,58 @@ export default function TicketSalesDashboard() {
   : [];
   console.log("eventItemTypeData:", detailsQueryData);
   console.log("isArray:", Array.isArray(eventItemTypeData));
-  console.log(`fee mode is ${selectedEventFeeMode}`);
+  console.log(`selected event date is ${selectedEventData?.eventDate}`);
 
   
   console.log(`customer id is ${user?.customerId}`);
   // --- React Query Hooks (Parallel Fetching) ---
-  console.log(`selected event id is ${selectedEventId}`);
+  console.log(`selected event id is ${selectedEventData?.eventId}`);
+
   const eventListQuery = useQuery(
     ['event-list', user?.customerId],
     async () => fetchEventList(Number(user?.customerId)),
-  {
-    enabled:!!user?.customerId,
-    staleTime: 1000 * 60 * 60,
-    cacheTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false
-    
-  },
-);
+    {
+      enabled: !!user?.customerId,
+      staleTime: 1000 * 60 * 5,
+      cacheTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   // 2. Velocity Data
-  const velocityQuery = useQuery({
-    queryKey: ['event-velocity', selectedEventId],
-    queryFn: () => fetchVelocity(selectedEventId),
-  });
+  const velocityQuery = useQuery(
+    ['event-velocity', selectedEventData?.eventId],
+    () => fetchVelocity(selectedEventData?.eventId),
+    {
+      enabled: !!selectedEventData?.eventId,
+      staleTime: 1000 * 60 * 5,
+      cacheTime: 1000 * 60 * 5,
+    }
+  );
 
   // 3. Check-in Data
-  const checkInQuery = useQuery({
-    queryKey: ['event-checkins', selectedEventId],
-    queryFn: () => fetchCheckIns(selectedEventId),
-  });
+    const selectedDate = selectedEventData?.eventDate ? new Date(selectedEventData.eventDate) : null;
+
+    const checkInQuery = useQuery(
+      ['event-checkins', selectedEventData?.eventId],
+      () => fetchCheckIns(selectedEventData?.eventId),
+      {
+        enabled: !!selectedEventData?.eventId && !!selectedDate && selectedDate <= new Date(),
+        staleTime: 1000 * 60 * 5,
+        cacheTime: 1000 * 60 * 5,
+      }
+    );
+  
+  useEffect(() => {
+    if (!eventListQuery.data?.length) return;
+
+    setSelectedEventData((prev) => {
+      if (prev && eventListQuery.data.some(e => e.eventId === prev.eventId)) {
+        return prev;
+      }
+      return eventListQuery.data[0];
+    });
+  }, [eventListQuery.data]);
 
   const calculateStripeCharges = (totalRevenue: number, totalTickets: number)=>{
     console.log(`total revener ${totalRevenue} and total tickets ${totalTickets}`);
@@ -181,24 +223,21 @@ export default function TicketSalesDashboard() {
   const financialSummary = React.useMemo(() => {
     if (!detailsQueryData.length) return null;
     console.log(`details in memory are ${detailsQueryData[0]}`);
-    const totalPaidTickets = detailsQueryData.filter(i=>i.cost>0).reduce((acc, t) => acc + (t.ticketsSold), 0);
+    const totalPaidTickets = detailsQueryData.filter(i => i.cost > 0).reduce((acc, t) => acc + (t.ticketsSold), 0);
     const totalGross = detailsQueryData.reduce((acc, t) => acc + (t.ticketsSold * t.cost), 0);
-    const stripeFees = selectedEventFeeMode == 2? calculateStripeCharges(totalGross,totalPaidTickets) :0;
+    const stripeFees = selectedEventData?.ticketFeeMode === 2 ? calculateStripeCharges(totalGross, totalPaidTickets) : 0;
     return { gross: totalGross, net: (totalGross - stripeFees).toFixed(2), fees: stripeFees };
-  }, [detailsQueryData]);
+  }, [detailsQueryData, selectedEventData?.ticketFeeMode]);
 
-  if (eventListQuery.isLoading)
-  {
-    return <LoadingSection/>
+  if (!user?.customerId) {
+    return <LoadingSection />;
+  }
+  if (eventListQuery.isLoading) {
+    return <LoadingSection />;
   }
 
-  useEffect(()=>{
-    if (eventListQuery.data && eventListQuery?.data?.length>0)
-    {
-      setSelectedEventId(eventListQuery.data[0].eventId);
-      setSelectedEventFeeMode(eventListQuery.data[0].ticketFeeMode);
-    }
-  },[eventListQuery.isLoading]);
+  
+
 
   return (
      <IonPage>
@@ -221,19 +260,21 @@ export default function TicketSalesDashboard() {
             </div>
             
             <select 
-              value={selectedEventId}
-              onChange={(e:any) => {setSelectedEventId(e.target.value);
-                  const data = eventListQuery.data?.filter(d=>d.eventId == e.target.value);
-                  if (data)
+              value={selectedEventData?.eventId}
+              onChange={(e:any) => {
+                  const data = eventListQuery.data?.filter(d=>d.eventId === Number(e.target.value));
+                  if (data && data.length > 0)
                   {
-                    setSelectedEventFeeMode(data[0].ticketFeeMode);
+                    setSelectedEventData(data[0] as EventDetailsDTO);
+                    // console.log(`selected event now is ${data[0].eventDate}`);
+                    // console.log(`selected event details:`, data[0]);
                   }
               }}
               className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-64 p-2.5 shadow-sm"
             >
               {eventListQuery.data?.map( e=> (
               <>
-                <option value={(e.eventId)}>{e.eventName}</option>
+                <option  key={e.eventId} value={(e.eventId)}>{e.eventName}</option>
               </>
               ))}
             </select>
@@ -251,10 +292,10 @@ export default function TicketSalesDashboard() {
                   <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Net Revenue</p>
                     <h2 className="text-3xl font-bold text-slate-900 mt-2">
-                      ${financialSummary?.net.toLocaleString()}
+                      ${financialSummary ? Number(financialSummary.net).toLocaleString() : '0'}
                     </h2>
                     <div className="flex gap-2 mt-2 text-xs text-slate-400 font-medium">
-                      <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">Gross: ${financialSummary?.gross.toLocaleString()}</span>
+                      <span className="bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">Gross: ${financialSummary ? Number(financialSummary.gross).toLocaleString() : '0'}</span>
                     </div>
                   </div>
                   <div className="p-2 bg-slate-50 rounded-lg text-slate-400">
@@ -273,17 +314,17 @@ export default function TicketSalesDashboard() {
                   <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Velocity (24h)</p>
                     <div className="flex items-baseline gap-2 mt-2">
-                      <h2 className="text-3xl font-bold text-slate-900">{velocityQuery.data?.velocity24h}</h2>
+                      <h2 className="text-3xl font-bold text-slate-900">{velocityQuery.data?.velocity24h ?? 0}</h2>
                       <span className="text-xs text-slate-500 font-medium">tickets</span>
                     </div>
-                    <p className={`text-xs mt-1 font-bold ${velocityQuery.data!.velocity24h >= velocityQuery.data!.velocity7dAvg ? 'text-emerald-600' : 'text-amber-500'}`}>
-                      {velocityQuery.data!.velocity24h >= velocityQuery.data!.velocity7dAvg ? '↑ Trending Up' : '↓ Cooling Off'}
+                    <p className={`text-xs mt-1 font-bold ${((velocityQuery.data?.velocity24h ?? 0) >= (velocityQuery.data?.velocity7dAvg ?? 0)) ? 'text-emerald-600' : 'text-amber-500'}`}>
+                      {((velocityQuery.data?.velocity24h ?? 0) >= (velocityQuery.data?.velocity7dAvg ?? 0)) ? '↑ Trending Up' : '↓ Cooling Off'}
                     </p>
                   </div>
                   <div className="h-12 w-24">
                     <Sparkline 
-                      data={velocityQuery.data!.trend} 
-                      color={velocityQuery.data!.velocity24h >= velocityQuery.data!.velocity7dAvg ? 'stroke-emerald-500' : 'stroke-amber-500'} 
+                      data={velocityQuery.data?.trend ?? [0, 0, 0, 0, 0, 0, 0]} 
+                      color={((velocityQuery.data?.velocity24h ?? 0) >= (velocityQuery.data?.velocity7dAvg ?? 0)) ? 'stroke-emerald-500' : 'stroke-amber-500'} 
                     />
                   </div>
                 </div>
@@ -299,14 +340,14 @@ export default function TicketSalesDashboard() {
                   <div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Real-time Check-ins</p>
                     <div className="flex items-baseline gap-2 mt-2">
-                      <h2 className="text-3xl font-bold text-slate-900">{checkInQuery.data?.checkedIn}</h2>
-                      <span className="text-xs text-slate-500 font-medium">/ {checkInQuery.data?.totalSold}</span>
+                      <h2 className="text-3xl font-bold text-slate-900">{checkInQuery.data?.checkedIn ?? 0}</h2>
+                      <span className="text-xs text-slate-500 font-medium">/ {checkInQuery.data?.totalSold ?? 0}</span>
                     </div>
                     <p className="text-xs text-blue-600 mt-1 font-medium cursor-pointer hover:underline">
                       View Guest List →
                     </p>
                   </div>
-                  <CheckInDonut current={checkInQuery.data!.checkedIn} total={checkInQuery.data!.totalSold} />
+                  <CheckInDonut current={checkInQuery.data?.checkedIn ?? 0} total={checkInQuery.data?.totalSold ?? 0} />
                 </div>
               </div>
             )}

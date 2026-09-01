@@ -120,6 +120,35 @@ namespace EventManagementDbAccess
             }
             return result;
         }
+
+        public async Task<List<TicketStatusCount>> GetTicketStatusCounts(int eventId)
+        {
+            if (eventId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+            var statusCounts = new List<TicketStatusCount>();
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"SELECT ticketstatus as TicketStatus, count(*) as StatusCount FROM eventsalesitem 
+                          WHERE EventId = @eventId and (ticketstatus='Live' or ticketstatus='Scanned') and ticketcode not like 'TESTTICKET%' 
+                          GROUP BY ticketstatus";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (!reader.IsDBNull(reader.GetOrdinal("TicketStatus")))
+                {
+                    statusCounts.Add(new TicketStatusCount 
+                    { 
+                        TicketStatus = reader.GetString(reader.GetOrdinal("TicketStatus")), 
+                        StatusCount = reader.GetInt32(reader.GetOrdinal("StatusCount")) 
+                    });
+                }
+            }
+            return statusCounts;
+        }
         
         public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId)
         {

@@ -238,7 +238,7 @@ namespace CreateTicketApi.Controllers
         [HttpGet("DownloadOrderReport/{customerId}")]
         [Authorize(Policy="FullAdminMinimum")]  
         [Authorize(Policy="MatchingCustomer")] 
-         [EnableRateLimiting("reports")]
+        [EnableRateLimiting("reports")]
         public  async Task<ActionResult> DownloadOrderReport(int customerId, int eventId, DateOnly startDate, DateOnly endDate,
                                                         string emailAddress = "", string name = "", 
                                                         string orderStatus = "",

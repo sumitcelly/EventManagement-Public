@@ -62,6 +62,22 @@ public class TicketController : ControllerBase
         return Ok(ticketList);
     }
 
+    [HttpGet("TicketStatusCounts/{eventId}")]
+    [EnableRateLimiting("strict-ip-auth")]
+    [Authorize(Policy="FullAdminMinimum")]  
+    [Authorize(Policy="EventOwnedByCustomer")] 
+    public async Task<IActionResult> GetTicketStatusCounts(int eventId)
+    {
+        if (eventId <= 0)
+            return BadRequest("EventId is invalid.");
+        var statusCounts = await _ticketContext.GetTicketStatusCounts(eventId);
+        if (statusCounts == null || statusCounts.Count == 0)
+            return NotFound();
+        return Ok(new { checkedIn = statusCounts.FirstOrDefault(x => x.TicketStatus == TicketStatus.Scanned.ToString())?.StatusCount ?? 0, 
+                        totalSold = statusCounts.Where(s=>s.TicketStatus== TicketStatus.Live.ToString() ||
+                                    s.TicketStatus == TicketStatus.Scanned.ToString())?.
+                                    Sum(x => x.StatusCount) });
+    }
 
      [HttpGet]
      [Route("GetPdfUrlFromEmailLink/{encryptedOrderId}")]

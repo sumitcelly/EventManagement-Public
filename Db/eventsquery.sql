@@ -37,7 +37,14 @@ delete from emailrecipients where id>0
 
 select * from salesorder where where eventid=37
 
-select * from events where eventname='tes new eventwe'
+select * from events where eventid=33
+select * from eventsalesitem where eventid=35 and ticketstatus='Live'
+
+	select count(*) as statuscount, ticketstatus from eventsalesitem
+	where eventid=35 and 
+	(ticketstatus='Live' or ticketstatus='Scanned')
+	and ticketcode not like 'TESTTICKET%'
+	group by ticketstatus
 	
 select a.EventId,a.EventName,a.EventUrlName,a.RefundMode,a.TicketFeeDisplayMode,
                     a.EventHeadline,a.EventDate, a.EventBannerFileName,
