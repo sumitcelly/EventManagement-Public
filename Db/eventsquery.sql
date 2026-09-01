@@ -41,7 +41,7 @@ select * from events where eventid=33
 select * from eventsalesitem where eventid=35 and ticketstatus='Live'
 
 	select count(*) as statuscount, ticketstatus from eventsalesitem
-	where eventid=35 and 
+	where eventid=33 and 
 	(ticketstatus='Live' or ticketstatus='Scanned')
 	and ticketcode not like 'TESTTICKET%'
 	group by ticketstatus

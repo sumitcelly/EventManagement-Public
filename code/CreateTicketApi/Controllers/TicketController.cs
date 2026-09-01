@@ -72,7 +72,7 @@ public class TicketController : ControllerBase
             return BadRequest("EventId is invalid.");
         var statusCounts = await _ticketContext.GetTicketStatusCounts(eventId);
         if (statusCounts == null || statusCounts.Count == 0)
-            return NotFound();
+            return Ok(new { checkedIn = 0, totalSold = 0 });
         return Ok(new { checkedIn = statusCounts.FirstOrDefault(x => x.TicketStatus == TicketStatus.Scanned.ToString())?.StatusCount ?? 0, 
                         totalSold = statusCounts.Where(s=>s.TicketStatus== TicketStatus.Live.ToString() ||
                                     s.TicketStatus == TicketStatus.Scanned.ToString())?.
