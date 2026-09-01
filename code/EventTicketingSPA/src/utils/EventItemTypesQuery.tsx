@@ -15,7 +15,7 @@ export function useEventItemTypes(eventId:number|string|undefined) {
     ["TicketsbyEvent", eventId],
     () => fetchEventItemTypes(eventId),
     {
-      staleTime: 1000 * 60 * 60,
+      staleTime: 1000 * 60 * 60,  
       cacheTime: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
       refetchOnMount: true,
