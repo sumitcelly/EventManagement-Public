@@ -121,6 +121,51 @@ namespace EventManagementDbAccess
             return result;
         }
 
+        public async Task<int> Get24HourTicketSales(int eventId)
+        {
+            if (eventId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+            int ticketsSold = 0;
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"SELECT COUNT(*) as TicketsSold FROM eventsalesitem 
+                          WHERE EventId = @eventId and CreatedAt >= NOW() - INTERVAL 24 HOUR";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            ticketsSold = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            return ticketsSold;
+        }
+        public async Task<List<TicketDaySales>> GetTicketDaySales(int eventId)
+        {
+            if (eventId <= 0)
+            {
+                throw new ArgumentException("EventId must be greater than zero.", nameof(eventId));
+            }
+            var daySales = new List<TicketDaySales>();
+            using var conn = new MySqlConnection(this.ConnectionString);
+            await conn.OpenAsync();
+            var query = @"SELECT DATE(CreatedAt) as SalesDate, COUNT(*) as TicketsSold FROM eventsalesitem 
+                          WHERE EventId = @eventId and CreatedAt >= CURRENT_DATE - INTERVAL 6 DAY 
+                          GROUP BY DATE(CreatedAt)
+                          ORDER BY SalesDate ASC";
+            using var cmd = new MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@eventId", eventId);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (!reader.IsDBNull(reader.GetOrdinal("SalesDate")))
+                {
+                    daySales.Add(new TicketDaySales 
+                    { 
+                        SalesDate = reader.GetDateTime(reader.GetOrdinal("SalesDate")), 
+                        TicketsSold = reader.GetInt32(reader.GetOrdinal("TicketsSold"))
+                    });
+                }
+            }
+            return daySales;
+        }
         public async Task<List<TicketStatusCount>> GetTicketStatusCounts(int eventId)
         {
             if (eventId <= 0)
@@ -149,7 +194,7 @@ namespace EventManagementDbAccess
             }
             return statusCounts;
         }
-        
+
         public async Task<EventSalesItem> GetEventTicketByQRCodeFromDb(string code, int eventId)
         {
             if (string.IsNullOrEmpty(code))

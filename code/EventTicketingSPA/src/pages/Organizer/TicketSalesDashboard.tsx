@@ -72,10 +72,23 @@ const fetchEventList = async (customerId: number) : Promise<EventDetailsDTO[]> =
 }
 
 const fetchVelocity = async (eventId: number | undefined): Promise<EventVelocityDTO> => {
-  await MOCK_DELAY(1500); // Simulate slower analytics DB
-  return eventId === 1 
-    ? { trend: [12, 15, 8, 22, 30, 45, 52], velocity24h: 52, velocity7dAvg: 26 }
-    : { trend: [5, 4, 3, 4, 2, 1, 0], velocity24h: 0, velocity7dAvg: 3 };
+  if (!eventId) {
+    console.warn("fetchVelocity called without a valid eventId.");
+    return { trend: [0,0,0,0,0,0,0], velocity24h: 0, velocity7dAvg: 0 };
+  }
+
+  try {
+    const res = await axiosClient.get<EventVelocityDTO>(`/Ticket/TicketVelocity/${eventId}`);
+    if (res.status === 200 && res.data) {
+      console.log('Velocity data fetched from backend:', res.data);
+      return res.data;
+    }
+    return { trend: [0,0,0,0,0,0,0], velocity24h: 0, velocity7dAvg: 0 };
+  } catch(error) {
+    console.error("Error fetching velocity data:", error);
+    toast.error("Error loading velocity data");
+    return { trend: [0,0,0,0,0,0,0], velocity24h: 0, velocity7dAvg: 0 };
+  } 
 };
 
 
@@ -318,7 +331,7 @@ export default function TicketSalesDashboard() {
                       <span className="text-xs text-slate-500 font-medium">tickets</span>
                     </div>
                     <p className={`text-xs mt-1 font-bold ${((velocityQuery.data?.velocity24h ?? 0) >= (velocityQuery.data?.velocity7dAvg ?? 0)) ? 'text-emerald-600' : 'text-amber-500'}`}>
-                      {((velocityQuery.data?.velocity24h ?? 0) >= (velocityQuery.data?.velocity7dAvg ?? 0)) ? '↑ Trending Up' : '↓ Cooling Off'}
+                      {((velocityQuery.data?.velocity24h ?? 0) > (velocityQuery.data?.velocity7dAvg ?? 0)) ? '↑ Trending Up' : '↓ Cooling Off'}
                     </p>
                   </div>
                   <div className="h-12 w-24">
@@ -343,9 +356,9 @@ export default function TicketSalesDashboard() {
                       <h2 className="text-3xl font-bold text-slate-900">{checkInQuery.data?.checkedIn ?? 0}</h2>
                       <span className="text-xs text-slate-500 font-medium">/ {checkInQuery.data?.totalSold ?? 0}</span>
                     </div>
-                    <p className="text-xs text-blue-600 mt-1 font-medium cursor-pointer hover:underline">
+                    {/* <p className="text-xs text-blue-600 mt-1 font-medium cursor-pointer hover:underline">
                       View Guest List →
-                    </p>
+                    </p> */}
                   </div>
                   <CheckInDonut current={checkInQuery.data?.checkedIn ?? 0} total={checkInQuery.data?.totalSold ?? 0} />
                 </div>

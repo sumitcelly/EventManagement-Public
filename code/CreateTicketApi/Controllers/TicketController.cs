@@ -79,6 +79,28 @@ public class TicketController : ControllerBase
                                     Sum(x => x.StatusCount) });
     }
 
+    [HttpGet("TicketVelocity/{eventId}")]
+    [EnableRateLimiting("strict-ip-auth")]
+    [Authorize(Policy="FullAdminMinimum")]  
+    [Authorize(Policy="EventOwnedByCustomer")] 
+    public async Task<IActionResult> GetSalesVelocity(int eventId)
+    {
+        if (eventId <= 0)
+            return BadRequest("EventId is invalid.");
+        int ticketsSold24h = await _ticketContext.Get24HourTicketSales(eventId);
+        List<TicketDaySales> sevenDaySales = await _ticketContext.GetTicketDaySales(eventId);
+        var trend = new int[7];
+        for (int i = 0; i < 7; i++)
+        {
+            var targetDate = DateTime.Today.AddDays(-6 + i); // Start 6 days ago, move forward
+            
+            // Find matching record or use 0
+            var match = sevenDaySales.FirstOrDefault(r => r.SalesDate.Date == targetDate);
+            trend[i] = match?.TicketsSold ?? 0;
+        }
+        return Ok(new { trend,velocity7dAvg = trend.Average(), velocity24h=ticketsSold24h });
+    }
+
      [HttpGet]
      [Route("GetPdfUrlFromEmailLink/{encryptedOrderId}")]
      [EnableRateLimiting("strict-ip-auth")]

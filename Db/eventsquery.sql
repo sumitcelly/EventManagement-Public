@@ -46,6 +46,21 @@ select * from eventsalesitem where eventid=35 and ticketstatus='Live'
 	and ticketcode not like 'TESTTICKET%'
 	group by ticketstatus
 	
+SELECT 
+    DATE(CreatedAt) as SaleDate, 
+    COUNT(*) as DailyCount
+FROM eventsalesitem
+WHERE EventId = 52  AND CreatedAt >= CURRENT_DATE - INTERVAL 6 DAY
+GROUP BY DATE(CreatedAt)
+ORDER BY SaleDate ASC;
+
+SELECT COUNT(*) as SoldLast24H
+FROM eventsalesitem
+WHERE EventId = 52
+  AND CreatedAt >= NOW() - INTERVAL 24 HOUR;
+
+
+	
 select a.EventId,a.EventName,a.EventUrlName,a.RefundMode,a.TicketFeeDisplayMode,
                     a.EventHeadline,a.EventDate, a.EventBannerFileName,
                     a.EventOrganizer,  a.EventSummary,a.Free,
