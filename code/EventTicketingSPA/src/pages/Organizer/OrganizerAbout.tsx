@@ -142,11 +142,11 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
       try
       {
         const response = await axiosClient.post('/eventorganizer',apiData);
-        if (response.status == 200)
+        if (response && response.status == 200)
         {
             console.log('Organizer created successfully:', response.data);
            
-            if (!response.data)
+            if (!response.data || !response.data.user)
             {
               toast.error('Invalid return after creating organizer');
               return;
@@ -158,6 +158,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
            
           
             dispatch(changeUserRole(response.data));  
+            console.log('Response from creating organizer:', response.data);
             setOpenModal(true);      
             
         }

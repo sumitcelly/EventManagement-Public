@@ -243,9 +243,9 @@ export function AppNavbar() {
      
         {(!isAuthenticated || user?.guest) &&(
           <>
-            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/login?ref=selltickets')}>Organize Events</NavbarLink>
-            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/myevents')}>Find my tickets</NavbarLink>
-            <NavbarLink className="dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/signup')}>Signup</NavbarLink>
+            <NavbarLink className="cursor-pointer dark:text-primary-color" onClick={() => history.push('/login?ref=selltickets')}>Organize Events</NavbarLink>
+            <NavbarLink className="cursor-pointer dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/myevents')}>Find my tickets</NavbarLink>
+            <NavbarLink className="cursor-pointer dark:text-primary-color" onClick={() => history.push('/auth/sendsecurecode/signup')}>Signup</NavbarLink>
           </>
         )}
       </NavbarCollapse>
