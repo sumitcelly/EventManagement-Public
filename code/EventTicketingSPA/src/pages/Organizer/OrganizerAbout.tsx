@@ -151,15 +151,27 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
               toast.error('Invalid return after creating organizer');
               return;
             }
-
+            
             await uploadImage(response.data.accessToken,response.data.user.customerId);
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
-            toast.success("Congrats! You have successfully signed up as an organizer. Please complete Stripe Info for paid events.", { duration: 7000 });
-           
+            
+            toast.success("Organizer created successfully! Please complete your Stripe setup to accept paid events.", {
+              duration: 7000,
+              style: {
+                background: '#0f172a',
+                color: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                fontWeight: 600,
+                boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
+              },
+              icon: '🎉',
+              position: 'top-center',
+            });
           
             dispatch(changeUserRole(response.data));  
             console.log('Response from creating organizer:', response.data);
-            setOpenModal(true);      
+            setOpenModal(true);
             
         }
         else
@@ -421,7 +433,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
                     modalText="Congrats! You have signed up as an owner. Please complete the information in the other sections. 
                               Connect your account to Stripe if you want to host paid events." 
                     openModal={openModal}
-                    onClose={() =>  setOpenModal(false)}
+                    onClose={() => setOpenModal(false)}
                 />
         )}
             
