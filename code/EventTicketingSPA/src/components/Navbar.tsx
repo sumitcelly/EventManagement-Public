@@ -126,9 +126,10 @@ export function AppNavbar() {
                     <span className="block text-sm">{user?.email}</span>
                 </DropdownHeader>
                 <DropdownItem onClick={() => history.push('/myevents')}>Find my tickets</DropdownItem>
-                >) : (
-                ) : (
-                <DropdownItem onClick={() => history.push('/organizermanager')}>Organize an Event</DropdownItem>
+                <DropdownItem onClick={() => history.push(checkBasicAdminAccess() ? '/dashboard' : '/organizermanager')}>
+                  Organize an Event
+                </DropdownItem>
+                
                 {checkScannerAccess() && <DropdownItem onClick={() => history.push('/scannerdashboard')}>Scan Tickets</DropdownItem>}
                 <DropdownDivider />
                 <DropdownItem onClick={handleLogout}>Sign out</DropdownItem>

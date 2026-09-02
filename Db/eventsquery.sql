@@ -1,9 +1,13 @@
 select * from logincodes order by createdat desc
 
-select * from eventorganizer where customerid=40
+select * from eventorganizer where OrganizationName='dfd';
 
-select *  from eventuser where email like 'test%'
+delete from eventorganizermembers where customerid=63;
+delete from eventorganizer where customerid=63
 
+delete from eventuser where Email='dfddf@dfddfd.com'
+
+select *  from eventuser order by CreatedAt desc
 select StripeAccountId from eventorganizer where customerid=1
 	where EventId=54
 select * from salesorder where EventId=67
