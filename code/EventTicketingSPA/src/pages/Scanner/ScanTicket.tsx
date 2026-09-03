@@ -23,8 +23,22 @@ export default function ScanTicket() {
   const [cameraStarted, setCameraStarted] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const browserReaderRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scanSessionIdRef = useRef(0);
+  const isScannerActiveRef = useRef(false);
 
   const stopWebScanner = () => {
+    isScannerActiveRef.current = false;
+    scanSessionIdRef.current += 1;
+    setIsScanning(false);
+
+    const browserReader = browserReaderRef.current as BrowserMultiFormatReader & {
+      stopContinuousDecode?: () => void;
+      stopAsyncDecode?: () => void;
+    } | null;
+
+    browserReader?.stopContinuousDecode?.();
+    browserReader?.stopAsyncDecode?.();
+
     if (videoRef.current) {
       const stream = videoRef.current.srcObject as MediaStream | null;
       stream?.getTracks().forEach((track) => track.stop());
@@ -34,6 +48,7 @@ export default function ScanTicket() {
     browserReaderRef.current = null;
     setWebScanning(false);
     setCameraStarted(false);
+    setStopScan(true);
   };
 
   const handleValidatedCode = async (code: string) => {
@@ -71,6 +86,8 @@ export default function ScanTicket() {
   const startScan = async () => {
     setIsScanning(true);
     setScanResult(null);
+    isScannerActiveRef.current = true;
+    const sessionId = ++scanSessionIdRef.current;
 
     try {
       if (Capacitor.isNativePlatform()) {
@@ -107,15 +124,29 @@ export default function ScanTicket() {
         setCameraStarted(true);
 
         browserReader.decodeFromVideoDevice(undefined, videoRef.current, async (result, error) => {
+          if (!isScannerActiveRef.current || sessionId !== scanSessionIdRef.current) {
+            return;
+          }
+
           if (result) {
             stopWebScanner();
             console.log(`Code from scanner is ${result.getText()}`)
             await handleValidatedCode(result.getText());
             setIsScanning(false);
+            setStopScan(false);
+            setTimeout(() => {
+              void startScan();
+            }, 1200);
             return;
           }
 
-          if (error && !(error instanceof Error && error.name === "NotFoundException")) {
+          const isNoCodeFound =
+            error &&
+            typeof error === "object" &&
+            "name" in error &&
+            (error as { name?: string }).name === "NotFoundException";
+
+          if (!isNoCodeFound) {
             console.warn("Web scan warning:", error);
           }
         });
@@ -176,18 +207,33 @@ export default function ScanTicket() {
 
               <button
                 onClick={async () => {
-                  if (stopScan) {
-                    setStopScan(false);
-                    await startScan();
+                  if (Capacitor.isNativePlatform()) {
+                    if (stopScan) {
+                      setStopScan(false);
+                      await startScan();
+                      return;
+                    }
+
+                    stopWebScanner();
+                    setStopScan(true);
                     return;
                   }
 
-                  stopWebScanner();
-                  setStopScan(true);
+                  if (cameraStarted || webScanning || isScanning) {
+                    stopWebScanner();
+                    setStopScan(true);
+                    return;
+                  }
+
+                  setStopScan(false);
+                  await startScan();
+                  
                 }}
                 className="bg-blue-600 text-center text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
               >
-                {stopScan ? "Start Scan" : "Stop Scan"}
+                {Capacitor.isNativePlatform()
+                  ? stopScan ? "Start Scan" : "Stop Scan"
+                  : cameraStarted || webScanning || isScanning ? "Stop Scan" : "Start Camera Scan"}
               </button>
 
               {!Capacitor.isNativePlatform() && (
@@ -199,16 +245,10 @@ export default function ScanTicket() {
                     playsInline
                     muted
                   />
-                  {!cameraStarted && (
-                    <button
-                      type="button"
-                      onClick={startScan}
-                      className="w-full rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-                    >
-                      Start Camera Scan
-                    </button>
+                      {webScanning && <div className="mb-2 mt-2 text-xs text-slate-500">Point your camera at the QR code</div>}
+                  {!webScanning && !cameraStarted && !isScanning && (
+                    <div className="mb-2 mt-2 text-xs text-slate-500">Camera ready. Tap Start Camera Scan when you are ready.</div>
                   )}
-                  {webScanning && <div className="mb-2 mt-2 text-xs text-slate-500">Point your camera at the QR code</div>}
 
                   <div className="mt-3 flex gap-2">
                     <input

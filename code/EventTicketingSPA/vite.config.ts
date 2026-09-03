@@ -22,6 +22,9 @@ const API_TARGET = process.env.VITE_API_BASE_URL || 'http://localhost:5220'
 export default defineConfig({
   plugins: [react()],
   server: {
+    
+    //Use to run this ass https server
+    //https: httpsOption,
     host: true, // Same as running --host
     allowedHosts: ['.ngrok-free.app'],  // Allows the Cloudflare URL to connect
 

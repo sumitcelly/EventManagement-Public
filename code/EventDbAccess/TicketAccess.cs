@@ -55,23 +55,34 @@ namespace EventManagementDbAccess
                 _logger.LogInformation($"Unable to retrieve information for event {eventId} when validating ticket");
                 return "Error validating ticket due to unable event information";
             }
-            if (eventBasics.EventDate.Date != DateTime.UtcNow.Date)
-            {
-                _logger.LogInformation($"Ticket validation failed for event {eventId} because the event date is not today.");
-                return "Ticket validation failed because the event date is not today.";
-            }
-            
+
+            // if (eventBasics.EventDate.Date != DateTime.UtcNow.Date)
+            // {
+            //     _logger.LogInformation($"Ticket validation failed for event {eventId} because the event date is not today.");
+            //     return "Ticket validation failed because the event date is not today.";
+            // }
+
             bool retVal = false;
             try
             {
                 EventSalesItem item = await GetEventTicketByQRCode(code, eventId);
-                if (item == null)
+                if (item == null || string.IsNullOrWhiteSpace(item?.TicketCode))
                 {
-                    return "Ticket not found";
+                    _logger.LogWarning($"Ticket with code {code} not found for event {eventId}.");
+                    return "Ticket not found for this event";
+                }
+                else
+                {
+                    _logger.LogInformation($"Ticket with code {code} found for event {item.EventId} with details  {item.TicketCode}");
+                }
+                
+                if (item.TicketStatus == TicketStatus.Scanned.ToString())
+                {
+                    return $"Ticket is already scanned.";
                 }
                 if (item.TicketStatus != TicketStatus.Live.ToString())
                 {
-                    return $"Unable to proceed since ticket is in {item.TicketStatus}";
+                    return $"Ticket is not in live status.";
                 }
 
                 using (MySqlConnection connection = new MySqlConnection(this.ConnectionString))
@@ -100,7 +111,7 @@ namespace EventManagementDbAccess
             {
                 Console.WriteLine(ex.Message);
             }
-            return retVal?"Successful":"Failed";
+            return retVal?"Success":"Failure";
         }
 
         public async Task<EventSalesItem> GetEventTicketByQRCode(string code, int eventId)
@@ -248,10 +259,14 @@ namespace EventManagementDbAccess
                     {
                         if (reader == null || !reader.HasRows)
                         {
-                            throw new KeyNotFoundException($"Ticket with code {code} not found.");
+                           _logger.LogWarning($"Ticket with code {code} not found for event {eventId}.");
+                           return ticket;
                         }
                         if (reader.RecordsAffected > 1)
-                            throw new Exception("More than one record returned for ticket code" + code);
+                        {
+                            _logger.LogWarning($"Multiple tickets found with code {code} for event {eventId}.");
+                            return ticket;
+                        }
 
                         while (await reader.ReadAsync())
                         {

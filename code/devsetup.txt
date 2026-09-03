@@ -20,3 +20,26 @@ not being honored either by chrome or safari depending on the branding_settings
 Secure = true (safari would logout on refresh)
 or Secure = REquest.IsHttps (chrome would logouton refresh)
 
+09/03/26
+I removed https from both vite and the api.
+It may have not been needed but i was trying to get the site to work on mobile using ngrok.
+
+Anyway, to get it to run with ngrok,
+start one tunnel for vite and one for api.
+
+ngrok http 5220 ---for the api
+Use the url generated in VITE_API_BASE_URL in .env.local
+
+ngrok http 5173 -- for vite
+Use the url generated here to add to Program.cs in api server for the cors policy.
+Also had to change vite.config.ts file. 
+Turned off https option here as well,
+, addded allowed hosts for ngrok,
+ and hosts:true as well.
+Also package.json has scripts  "dev": "vite --host"
+
+
+
+
+
+

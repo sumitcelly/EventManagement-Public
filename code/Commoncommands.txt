@@ -11,6 +11,11 @@ Get-Content .\EventsWorker-20260505.txt  -Wait -Tail 20
 	
   $Env:AWS_PROFILE = 'SC'
 
+//ngrok tunnels
+
+ngrok http 5173
+ngrok http 5220 
+
   //list porfile
   aws configure list-profiles
   
