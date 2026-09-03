@@ -1,5 +1,7 @@
 Running Bug List
 
+1. S3 different paths for prod and dev.
+2. search by name of event as well as state full name.
 
 
 Email Campaign:

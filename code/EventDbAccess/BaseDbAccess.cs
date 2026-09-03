@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
     {
         protected readonly string? ConnectionString;
         protected readonly ILogger<BaseDbAccess> _logger;
-        protected readonly double _cacheDurationInMinutes = 60;
+        protected readonly double _cacheDurationInMinutes = 10;
         protected readonly IDistributedCache _cache;
         public BaseDbAccess(IConfiguration config, ILogger<BaseDbAccess> logger, IDistributedCache cache = null)
         {

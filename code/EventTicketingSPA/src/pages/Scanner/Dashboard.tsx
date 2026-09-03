@@ -21,8 +21,7 @@ export default function ScannerDashboard() {
   console.log('can scan tickets', validRole);
 
   const customerId = user.user?.customerId;
- 
- 
+
   const event = useAppSelector((state: RootState) => state.event);
   const { data, isLoading } = 
   useQuery(['EventsForScanner',customerId], async () => {
@@ -38,7 +37,7 @@ export default function ScannerDashboard() {
     },
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      cacheTime: 1000 * 60 * 5, // Cache persists for 30 minutes
       refetchOnMount: false,      // don’t always re-fetch on mount
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
@@ -46,8 +45,6 @@ export default function ScannerDashboard() {
     }
   );
 
-
-    const ionRouter = useIonRouter();
 
   if (isLoading) return <p>Loading...</p>;
 
@@ -71,7 +68,7 @@ export default function ScannerDashboard() {
                   {data && data.map((event:EventHeader) => (
                     <div
                         key={event.eventId}
-                        onClick={() => ionRouter.push(`/scanticket/${event.eventId}?eventName=${event.eventName}`)}
+                        onClick={() => history.push(`/scanticket/${event.eventId}?eventName=${event.eventName}`)}
                         className="border border-gray-200 rounded-lg  cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
                       >
                       

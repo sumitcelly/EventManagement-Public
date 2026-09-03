@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -31,6 +31,7 @@
     "@tiptap/pm": "^3.6.6",
     "@tiptap/react": "^3.6.6",
     "@tiptap/starter-kit": "^3.6.6",
+    "@zxing/browser": "^0.2.1",
     "axios": "^1.11.0",
     "dayjs": "^1.11.21",
     "dompurify": "^3.4.8",

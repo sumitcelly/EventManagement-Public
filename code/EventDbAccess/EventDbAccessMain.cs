@@ -11,11 +11,13 @@ using System.Text.RegularExpressions;
 using System.Data.Common;
 using ZstdSharp;
 using System.Diagnostics.Tracing;
+using System.Reflection.Metadata;
 
 namespace EventManagementDbAccess
 {
   public class EventDbAccess :BaseDbAccess
   {
+    private readonly int eventHeaderCacheTime =60;
     public EventDbAccess(IConfiguration configuration, ILogger<EventDbAccess> logger, IDistributedCache cache) :base(configuration, logger, cache)
     {
       
@@ -137,7 +139,7 @@ namespace EventManagementDbAccess
 
       //Maybe we need to get this from the event cache. too many caches here. (eventheaderbyid, eventbyname, eventbyid)
       string cacheKey = CacheHelper.GetCacheKey<EventHeader>(eventId.ToString());
-      EventHeader? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventHeaderByIdFromDb(eventId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
+      EventHeader? cachedEvent = await _cache.GetOrSetAsync(cacheKey, () => GetEventHeaderByIdFromDb(eventId), TimeSpan.FromMinutes(eventHeaderCacheTime), _logger);
       return cachedEvent ?? throw new KeyNotFoundException($"Event with ID {eventId} not found.") ;
     }
 
@@ -322,7 +324,7 @@ namespace EventManagementDbAccess
                     a.EventOrganizer,  a.EventSummary,a.Free,
                     ifnull(a.EventAddress,'') as EventAddress
                     from events a
-                    WHERE a.EventOrganizer= @customerId and a.EventDate>=CURDATE() and a.IsLive=1
+                    WHERE a.EventOrganizer= @customerId and a.EventDate>=UTC_DATE() and a.IsLive=1
                     order by a.EventDate ASC";
 
         using var cmd = new MySqlCommand(query, conn);

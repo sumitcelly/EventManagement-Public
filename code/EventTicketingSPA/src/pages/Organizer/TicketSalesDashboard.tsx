@@ -7,6 +7,7 @@ import { IonPage, IonHeader, IonContent } from "@ionic/react";
 import AppNavbar from '../../components/Navbar';
 import { useEditor } from '@tiptap/react';
 import { useEventItemTypes } from '../../utils/EventItemTypesQuery';
+import Footer from '../../components/Footer';
 
 // --- 1. Split DTO Interfaces (Mirroring your 3 .NET Controllers) ---
 
@@ -429,7 +430,9 @@ export default function TicketSalesDashboard() {
               </table>
             )}
           </div>
+        
     </div>
+       <Footer/>
     </IonContent>
     </IonPage>
   );

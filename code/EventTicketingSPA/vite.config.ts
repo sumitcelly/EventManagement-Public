@@ -17,13 +17,19 @@ if (fs.existsSync(certFile) && fs.existsSync(keyFile)) {
 }
 
 // Default API https target — ensure this matches your dotnet launchSettings HTTPS URL
-const API_TARGET = process.env.VITE_API_BASE_URL || 'https://localhost:7118'
+const API_TARGET = process.env.VITE_API_BASE_URL || 'http://localhost:5220'
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    https: httpsOption,
+    host: true, // Same as running --host
+    allowedHosts: ['.ngrok-free.app'],  // Allows the Cloudflare URL to connect
+
+    
     port: 5173,
+    // hmr: {
+    //   clientPort: 443, 
+    // },
     proxy: {
       // Proxy API calls to the backend so cookies are first-party in dev
       '/api': {

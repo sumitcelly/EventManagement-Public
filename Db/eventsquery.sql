@@ -42,7 +42,9 @@ delete from emailrecipients where id>0
 select * from salesorder where where eventid=37
 
 select * from events where eventid=33
-select * from eventsalesitem where eventid=35 and ticketstatus='Live'
+select * from eventsalesitem where eventid=52 and ticketstatus='Live'
+
+select * from eventuser where userid=19
 
 	select count(*) as statuscount, ticketstatus from eventsalesitem
 	where eventid=33 and 
