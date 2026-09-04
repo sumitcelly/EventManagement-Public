@@ -8,6 +8,9 @@ Running Bug List
     unless i open a new tab. Be on tha dashboard. let iphone timeout
     come back and login. the dashboard has no events to scan unless you
     open another tab.
+    Make sure to look at the commit
+    "clear react queries on logout". It calls queryclient.ts 
+    to remove react query data.
     b) home page footer cutoff
     c) 
 

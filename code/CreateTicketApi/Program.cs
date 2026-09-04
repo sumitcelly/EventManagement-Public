@@ -60,7 +60,7 @@ builder.Services.AddCors(options =>
                             "http://localhost:5173","https://localhost:5173","http://localhost", 
                              "https://localhost","https://sc-dev-ticketspro.ngrok.io",
                             "https://dl27afdi0vyin.cloudfront.net",
-                            "https://d324-2601-281-cf80-4c60-c70-af05-bb96-7939.ngrok-free.app") //Cloudfront
+                            "https://enquiry-radios-simple-earl.trycloudflare.com") //Cloudfront
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies

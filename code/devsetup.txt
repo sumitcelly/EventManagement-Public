@@ -38,6 +38,9 @@ Turned off https option here as well,
  and hosts:true as well.
 Also package.json has scripts  "dev": "vite --host"
 
+cloudflared tunnel --url http://localhost:5173
+
+cloudflared tunnel --url http://localhost:5220
 
 
 

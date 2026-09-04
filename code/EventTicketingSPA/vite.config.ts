@@ -26,7 +26,7 @@ export default defineConfig({
     //Use to run this ass https server
     //https: httpsOption,
     host: true, // Same as running --host
-    allowedHosts: ['.ngrok-free.app'],  // Allows the Cloudflare URL to connect
+    allowedHosts: ['.trycloudflare.com'],  // Allows the Cloudflare URL to connect
 
     
     port: 5173,
