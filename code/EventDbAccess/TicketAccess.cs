@@ -73,7 +73,7 @@ namespace EventManagementDbAccess
                 }
                 else
                 {
-                    _logger.LogInformation($"Ticket with code {code} found for event {item.EventId} with details  {item.TicketCode}");
+                    _logger.LogInformation($"Ticket with code {code} found with details  {item.TicketCode}");
                 }
                 
                 if (item.TicketStatus == TicketStatus.Scanned.ToString())

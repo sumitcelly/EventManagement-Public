@@ -28,15 +28,14 @@ set status ="Pending"
 where id=63
 
 /* event organizer queries*/
-select * from eventorganizer where customerid=1
+select * from eventorganizer where customerid=57
 
-select * from eventorganizermembers where userid=19
-select * from eventuser where email like 'newuser1%'
+select * from eventorganizermembers where customerid=57
+select * from eventuser where userid=116
 
-select * from events where eventid=7
+select * from events where  eventname like 'new%'
 
-
-delete from eventorganizermembers where customerid=52
+delete from eventorganizermembers where customerid=57
 
 select * from eventsalesitem where ticketcode='Z4WTD7N1'
 
@@ -48,8 +47,8 @@ delete from emailrecipients where id>0
 
 select * from salesorder where where eventid=37
 
-select * from events where eventid=33
-select * from eventsalesitem where eventid=52 and ticketstatus='Live'
+select * from events where eventid=37
+select * from eventsalesitem where eventid=37 and ticketstatus='Live'
 
 select * from eventuser where userid=19
 
