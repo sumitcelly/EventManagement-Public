@@ -4,6 +4,12 @@ Running Bug List
 2. search by name of event as well as state full name.
 3. Check on team member invite expiry and way to send event.
 4. Mobile testing with ngrok and Ui issues.
+    a) Sometimes dashboard are empty like events to scan dashboard
+    unless i open a new tab. Be on tha dashboard. let iphone timeout
+    come back and login. the dashboard has no events to scan unless you
+    open another tab.
+    b) home page footer cutoff
+    c) 
 
 
 Email Campaign:

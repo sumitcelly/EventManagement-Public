@@ -241,6 +241,37 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured."))),
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                Console.WriteLine($"[JWT] Authorization header: {authHeader}");
+
+                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var token = authHeader["Bearer ".Length..].Trim();
+                    Console.WriteLine($"[JWT] Bearer token: {token}");
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var claims = context.Principal?.Claims
+                    .Select(c => $"{c.Type}={c.Value}")
+                    .ToList();
+                Console.WriteLine($"[JWT] Validated claims: {string.Join(" | ", claims ?? new List<string>())}");
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"[JWT] Authentication failed: {context.Exception}");
+                return Task.CompletedTask;
+            }
+        };
     });
     
 

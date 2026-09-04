@@ -1,6 +1,7 @@
 import axios from "axios";
 import { refreshAccessToken, getAccessToken, logout } from "../features/auth/authSlice";
 import { store } from "../app/store";
+import { clearAuthQueryCache } from "../queryClient";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -37,7 +38,8 @@ axiosClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosClient(originalRequest);
       } else {
-        // Refresh failed → logout
+        // Refresh failed → logout and clear all cached data
+        clearAuthQueryCache();
         store.dispatch(logout());
       }
     }

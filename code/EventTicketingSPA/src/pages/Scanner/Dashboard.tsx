@@ -38,9 +38,9 @@ export default function ScannerDashboard() {
     {
       staleTime: 1000 * 60 * 5,  // Data stays fresh for 5 minutes
       cacheTime: 1000 * 60 * 5, // Cache persists for 30 minutes
-      refetchOnMount: false,      // don’t always re-fetch on mount
+      refetchOnMount: true,      // don’t always re-fetch on mount
       refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+      refetchOnReconnect: true,
       enabled: !!customerId //  only run query if we have an id
     }
   );

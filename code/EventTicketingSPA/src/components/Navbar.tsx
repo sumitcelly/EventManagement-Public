@@ -22,6 +22,7 @@ import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import axiosClient from "../api/axiosClient";
 import { useHistory } from "react-router";
+import { clearAuthQueryCache } from "../queryClient";
 
 interface SearchFormInputs {
   keyword: string ;
@@ -64,6 +65,7 @@ export function AppNavbar() {
       {},
       { withCredentials: true }
     );
+    clearAuthQueryCache();
     dispatch(logout());
     history.replace("/login");
   }
