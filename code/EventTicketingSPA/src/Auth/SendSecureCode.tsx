@@ -103,7 +103,7 @@ export default function SendSecureCode() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Username */}
         <div>
-          <label className="block text-sm font-medium">Please enter the email used with our site</label>
+          <label className="block text-sm font-medium">{returnUrl==='signup'?'Please enter an email address':'Please enter the email used with our site'}</label>
           <input
             type="email"
             {...register("email")}

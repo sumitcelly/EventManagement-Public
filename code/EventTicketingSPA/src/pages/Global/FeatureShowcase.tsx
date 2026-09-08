@@ -204,9 +204,10 @@ export function FeaturesShowcase() {
         </div>
 
       </div>
+      <Footer/>
     </div>
     </IonContent>
-      <Footer/>
+      
     </IonPage>
     
   );

@@ -144,6 +144,7 @@ export default function TicketDetails() {
       const salesOrderIdToUse = orderDetails?.salesOrderId || salesOrderId;
       let res =null;
       
+      const newTab = window.open('about:blank', '_blank');
       if (encryptedOrderId)
         res= await axiosClient.get(`/Ticket/GetPdfUrlFromEmailLink/${encryptedOrderId}`);
       else
@@ -151,10 +152,12 @@ export default function TicketDetails() {
       
       console.log('PDF download response', res);
 
-      if (res && res.data) {
+      if (res && res.data && newTab) {
         // Open the pre-signed URL in a new tab to trigger the download
-        window.open(res.data, '_blank');
+        //window.open(res.data, '_blank');
+         newTab.location.href = res.data;
       } else {
+        newTab?.close();
         toast.error('Error generating PDF. Please try again later.');
         console.error('Invalid response for PDF download', res);
       }
@@ -193,10 +196,10 @@ export default function TicketDetails() {
         <IonHeader>
           <AppNavbar />
         </IonHeader>
-        <IonContent>
+        <IonContent className="">
           <Toaster position="top-right" />
-         <div className="flex flex-col  min-h-full">
-          <div className="max-w-md mx-auto">
+         <div className="flex flex-col min-h-full">
+          <div className="max-w-md mx-auto  px-4 sm:px-6">
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       
         
           {ticketData && ticketData.length > 0 && <SalesOrderTicket eventBasic={eventDetails} 
@@ -298,10 +301,13 @@ export default function TicketDetails() {
             </div>
           )}  
         </div>      
-        <Footer/> 
+         <Footer/>
+         
+        
     </div>
     
     </IonContent>
+   
     </IonPage>
   );
 }

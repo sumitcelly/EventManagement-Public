@@ -11,6 +11,7 @@ import AppNavbar from "../components/Navbar";
 import { useHistory } from "react-router";
 import Footer from "../components/Footer";
 import { useCompanyDetails } from "../utils/CompanyQuery";
+import { Link } from "react-router-dom";
 
 interface LoginFormInputs {
   email: string;
@@ -46,48 +47,56 @@ export default function Login() {
       <IonHeader>
         <AppNavbar />
       </IonHeader>
-    <IonContent className="">
-    <div className="flex flex-col min-h-full">
-    <div className="w-full max-w-sm mx-auto mt-10 p-6 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-
-      {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Username */}
-        <div>
-          <label className="block text-sm font-medium">Email</label>
-          <input
-            type="text"
-            {...register("email")}
-            className="mt-1 block w-full border rounded px-3 py-2"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm">{errors.email.message}</p>
-          )}
+      <IonContent className="">
+      <div className="flex flex-col min-h-full">
+      <div className="w-full max-w-sm mx-auto mt-10 p-6 bg-white shadow rounded">
+        
+        <div className="flex flex-row">
+          <h1 className="text-2xl font-bold mb-4">Login</h1>    
+          <Link to="#" className="text-xl text-blue-600 hover:underline ml-auto"
+                  onClick={(e) => {e.preventDefault(); 
+                        history.push(`/auth/sendsecurecode/signup`);                   
+                      }}>
+            Signup
+          </Link>
         </div>
+        
+        {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
 
-        {/* Password */}
-        <div>
-          <label className="block text-sm font-medium">Password</label>
-          <input
-            type="password"
-            {...register("password")}
-            className="mt-1 block w-full border rounded px-3 py-2"
-          />
-          {errors.password && (
-            <p className="text-red-500 text-sm">{errors.password.message}</p>
-          )}
-        </div>
-        <div className="flex flex-col">
-          <div className="flex flex-row items-center justify-between">
-            <a href="#" className="text-sm text-blue-600 hover:underline"
-              onClick={(e) => {e.preventDefault(); 
-                      history.push(`/auth/sendsecurecode/resetpassword?email=`+getValues('email')); 
-                      
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Username */}
+          <div>
+            <label className="block text-sm font-medium">Email</label>
+            <input
+              type="text"
+              {...register("email")}
+              className="mt-1 block w-full border rounded px-3 py-2"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block text-sm font-medium">Password</label>
+            <input
+              type="password"
+              {...register("password")}
+              className="mt-1 block w-full border rounded px-3 py-2"
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm">{errors.password.message}</p>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-row items-center justify-between">
+              <Link to="#" className="text-sm text-blue-600 hover:underline"
+                onClick={(e) => {e.preventDefault(); 
+                      history.push(`/auth/sendsecurecode/resetpassword?email=`+getValues('email'));                   
                     }}
               >Forgot Password?
-              </a>
+              </Link>
               <button
                 type="submit"
                 disabled={status === "loading"}
@@ -97,27 +106,27 @@ export default function Login() {
               </button>
             </div>
             <div className="text-center text-[11px] mt-4 max-w-xs mx-auto text-slate-400">
-                By logging in, you reaffirm your ongoing agreement to {import.meta.env.VITE_COMPANY_NAME}'s{' '}
-                <a href="/tos" className="text-indigo-600 underline hover:text-indigo-500">
-                  Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="/privacypolicy" className="text-indigo-600 underline hover:text-indigo-500">
-                  Privacy Policy
-                </a>.
+                  By logging in, you reaffirm your ongoing agreement to {import.meta.env.VITE_COMPANY_NAME}'s{' '}
+                  <a href="/tos" className="text-indigo-600 underline hover:text-indigo-500">
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacypolicy" className="text-indigo-600 underline hover:text-indigo-500">
+                    Privacy Policy
+                  </a>.
+                </div>
               </div>
+              {status == "failed" && (
+              <div className="ml-auto text-sm text-secondary-color">
+              Login failed. Please check your credentials.
             </div>
-        {status == "failed" && (
-          <div className="ml-auto text-sm text-secondary-color">
-            Login failed. Please check your credentials.
-          </div>
-        )}
-      </form>
-    </div>
-      <Footer/>
-    </div>
+          )}
+        </form>
+      </div>
+        <Footer/>
+      </div>
 
-    </IonContent>
+      </IonContent>
    
     </IonPage>
   );

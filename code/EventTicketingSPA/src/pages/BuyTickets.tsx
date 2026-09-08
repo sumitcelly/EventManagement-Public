@@ -299,7 +299,7 @@ return (
     <div className="flex flex-col min-h-full">
       {/* <Toaster position="top-right" /> */}
       <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
-        <div className="text-3xl font-bold mb-8 text-primary-color text-center">Ticket Types</div>
+        <div className="text-3xl font-bold mb-8 text-primary-color text-center">Select your tickets</div>
           <EventSummary/>
           {simulationMode ? <SimulationInfo /> : null}
         {/* <form onSubmit={handleSubmit(

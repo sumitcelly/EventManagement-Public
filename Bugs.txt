@@ -10,9 +10,9 @@ Running Bug List
     open another tab.
     Make sure to look at the commit
     "clear react queries on logout". It calls queryclient.ts 
-    to remove react query data.
-    b) home page footer cutoff
-    c) 
+    to remove react query data. -- done
+    b) home page footer cutoff -- done
+    c) input type number does not work on mobile
 
 
 Email Campaign:

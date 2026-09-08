@@ -60,7 +60,7 @@ builder.Services.AddCors(options =>
                             "http://localhost:5173","https://localhost:5173","http://localhost", 
                              "https://localhost","https://sc-dev-ticketspro.ngrok.io",
                             "https://dl27afdi0vyin.cloudfront.net",
-                            "https://enquiry-radios-simple-earl.trycloudflare.com") //Cloudfront
+                            "https://discrimination-manager-wisdom-equipped.trycloudflare.com") //Cloudfront
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies
@@ -242,36 +242,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SymmetricKey"] ?? throw new ArgumentException("JWT symmetric key is not configured."))),
         };
 
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-                Console.WriteLine($"[JWT] Authorization header: {authHeader}");
+        // options.Events = new JwtBearerEvents
+        // {
+        //     OnMessageReceived = context =>
+        //     {
+        //         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        //         Console.WriteLine($"[JWT] Authorization header: {authHeader}");
 
-                if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    var token = authHeader["Bearer ".Length..].Trim();
-                    Console.WriteLine($"[JWT] Bearer token: {token}");
-                    context.Token = token;
-                }
+        //         if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        //         {
+        //             var token = authHeader["Bearer ".Length..].Trim();
+        //             Console.WriteLine($"[JWT] Bearer token: {token}");
+        //             context.Token = token;
+        //         }
 
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                var claims = context.Principal?.Claims
-                    .Select(c => $"{c.Type}={c.Value}")
-                    .ToList();
-                Console.WriteLine($"[JWT] Validated claims: {string.Join(" | ", claims ?? new List<string>())}");
-                return Task.CompletedTask;
-            },
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine($"[JWT] Authentication failed: {context.Exception}");
-                return Task.CompletedTask;
-            }
-        };
+        //         return Task.CompletedTask;
+        //     },
+        //     OnTokenValidated = context =>
+        //     {
+        //         var claims = context.Principal?.Claims
+        //             .Select(c => $"{c.Type}={c.Value}")
+        //             .ToList();
+        //         Console.WriteLine($"[JWT] Validated claims: {string.Join(" | ", claims ?? new List<string>())}");
+        //         return Task.CompletedTask;
+        //     },
+        //     OnAuthenticationFailed = context =>
+        //     {
+        //         Console.WriteLine($"[JWT] Authentication failed: {context.Exception}");
+        //         return Task.CompletedTask;
+        //     }
+        // };
     });
     
 
