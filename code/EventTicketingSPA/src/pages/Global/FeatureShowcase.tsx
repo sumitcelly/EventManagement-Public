@@ -38,11 +38,11 @@ export function FeaturesShowcase() {
       title: "Direct Stripe Integration",
       description: "Connect your existing personal or business Stripe account natively. View your complete real-time Stripe connection status and configuration metrics right inside your dashboard."
     },
-    {
-      icon: "🎟️",
-      title: "Timed-Entry Ticketing",
-      description: "Control venue crowd flow flawlessly. Schedule exact entry time-slots and cap capacity limits per window to eliminate gate bottlenecks."
-    },
+    // {
+    //   icon: "🎟️",
+    //   title: "Timed-Entry Ticketing",
+    //   description: "Control venue crowd flow flawlessly. Schedule exact entry time-slots and cap capacity limits per window to eliminate gate bottlenecks."
+    // },
     {
       icon: "↩️",
       title: "Flexible Refund Toggles",
@@ -204,8 +204,9 @@ export function FeaturesShowcase() {
         </div>
 
       </div>
-      <Footer/>
+     
     </div>
+     <Footer/>
     </IonContent>
       
     </IonPage>

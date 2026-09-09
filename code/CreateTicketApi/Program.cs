@@ -24,7 +24,7 @@ builder.Configuration["HostEnvironment:Name"] = builder.Environment.EnvironmentN
 
 if (builder.Environment.IsDevelopment())
 {
-    Console.WriteLine("Env is  dev");
+    Console.WriteLine($"Env is  {builder.Environment.EnvironmentName}");
     // You can force a specific local profile for dev only
     //Environment.SetEnvironmentVariable("AWS_PROFILE", "SC");
 }

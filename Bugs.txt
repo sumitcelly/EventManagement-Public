@@ -13,6 +13,8 @@ Running Bug List
     to remove react query data. -- done
     b) home page footer cutoff -- done
     c) input type number does not work on mobile
+5. Organizer base url must lead to something. Right now its just base
+for the event.
 
 
 Email Campaign:

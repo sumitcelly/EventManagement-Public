@@ -31,6 +31,13 @@ axiosClient.interceptors.response.use(
 
     // If 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // const requestUrl = originalRequest?.url ?? "";
+      // const isAuthEndpoint = /\/user\/(login|refresh|logout|VerifyEmailCode)|\/api\/auth\//.test(requestUrl);
+
+      // if (isAuthEndpoint) {
+      //   return Promise.reject(error);
+      // }
+
       originalRequest._retry = true;
 
       const newToken = await refreshAccessToken();

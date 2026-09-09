@@ -32,7 +32,8 @@ type FormValues = {
 };
 
 export default function OrganizerConnect({organizerInfo, organizerId}: {organizerInfo?: OrganizerInfo, organizerId?:string}) {
-  
+  const [apiStatus,setApiStatus] = useState<string | null>(null);
+   
   const {
     control,
     handleSubmit,
@@ -78,12 +79,13 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
       .then(response => {
       console.log('Organizer updated successfully:', response.data);
       toast.success("Organizer info saved");
+      setApiStatus("Organizer info saved successfully");
       queryClient.invalidateQueries(['Organizer',organizerId]);
       })
       .catch(error => {
         console.error('Error creating/updating organizer:', error);
         toast.error("Error saving organizer info");
-      
+        setApiStatus("Error saving organizer info");
       });
     }
   }
@@ -114,7 +116,12 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
 
     <div className="flex flex-col">
     
-      
+      {apiStatus && !apiStatus.startsWith("Error") && (
+        <div className="text-lg text-center text-green-600 mb-2">{apiStatus}</div>
+      )}
+      {apiStatus && apiStatus.startsWith("Error") && (
+        <div className="text-lg text-center text-red-600 mb-2">{apiStatus}</div>
+      )}
       <div className="space-y-1">
         <label className="font-semibold mb-1">Organizer Website</label>
         <input

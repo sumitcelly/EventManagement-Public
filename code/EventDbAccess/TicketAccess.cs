@@ -55,12 +55,15 @@ namespace EventManagementDbAccess
                 _logger.LogInformation($"Unable to retrieve information for event {eventId} when validating ticket");
                 return "Error validating ticket due to unable event information";
             }
-
-            // if (eventBasics.EventDate.Date != DateTime.UtcNow.Date)
-            // {
-            //     _logger.LogInformation($"Ticket validation failed for event {eventId} because the event date is not today.");
-            //     return "Ticket validation failed because the event date is not today.";
-            // }
+            
+            //for test allow scanning events which are not for today as well.
+            if (_configuration["HostEnvironment:Name"] == "Production" && 
+                    eventBasics.EventDate.Date != DateTime.UtcNow.Date)
+            {
+                _logger.LogInformation($"Ticket validation failed for event {eventId} because the event date is not today.");
+                return "Ticket validation failed because the event date is not today.";
+            }
+            
 
             bool retVal = false;
             try

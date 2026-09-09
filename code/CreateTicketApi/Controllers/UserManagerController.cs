@@ -127,11 +127,16 @@ namespace CreateTicketApi.Controllers
             var refreshToken = Request.Cookies["refreshToken"];
           
             if (string.IsNullOrEmpty(refreshToken) )
+            {
+                _logger.LogWarning("Refresh token is null or empty.");
                 return Unauthorized();
-
+            }
 
             if (!await _tokenUtils.ValidateJwtToken(refreshToken))
+            {
+                _logger.LogWarning("Invalid refresh token.");
                 return Unauthorized("Invalid refresh token.");
+            }
 
             //var userId = RefreshTokens[refreshToken];
             var claims = _tokenUtils.GetClaimsFromToken(refreshToken);

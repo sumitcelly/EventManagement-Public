@@ -20,17 +20,20 @@ namespace CreateTicketApi.Controllers
         private readonly EventOrganizerMembersDbAccess _organizerMembersDbAccess;
         private readonly UserDbAccess _userDbAccess;
         private readonly JwtUtils _tokenUtils;
+       private readonly IConfiguration _configuration;
 
         public EventOrganizerController(ILogger<EventOrganizerController> logger, 
                                     EventOrganizerDBAccess organizerDbAccess,
                                     EventOrganizerMembersDbAccess organizerMemberDbAccess,
                                     JwtUtils jwtUtils,
-                                    UserDbAccess userDbAccess)
+                                    UserDbAccess userDbAccess,
+                                    IConfiguration configuration)
         {
             _logger = logger;
             _organizerDbAccess = organizerDbAccess;
             _organizerMembersDbAccess = organizerMemberDbAccess;
             _tokenUtils = jwtUtils;
+            _configuration = configuration;
             _userDbAccess = userDbAccess;
         }
 
@@ -114,9 +117,21 @@ namespace CreateTicketApi.Controllers
                     _logger.LogInformation($"Added user {userId} as owner of org {customerId}");
                     
                     var refreshToken = Request.Cookies["refreshToken"];
+                  
                     if (string.IsNullOrWhiteSpace(refreshToken) || !await _tokenUtils.ValidateJwtToken(refreshToken))
-                        return Unauthorized("Invalid refresh token.");
-                    await _tokenUtils.RevokeTokenInCache(refreshToken);
+                    {
+                        _logger.LogInformation($"invalid refresh token in env: {refreshToken} {_configuration["HostEnvironment:Name"]}");
+                        //in dev since we are testing with 2 different tunnels(domains)
+                        //one for api and and for web, there is no cookie being sent by
+                        //the browser on iphone. 
+                        //Hence this always fails and logs the user out.
+                        if (_configuration["HostEnvironment:Name"] == "Production")
+                            return Unauthorized("Invalid refresh token.");
+                    }
+                    else
+                    {
+                        await _tokenUtils.RevokeTokenInCache(refreshToken);
+                    }
 
                     var newRefreshToken = await _tokenUtils.GenerateRefreshToken(userId.ToString(), UserRoles.Owner.ToString(), customerId);      
                     SetSecureCookie("refreshToken", newRefreshToken);

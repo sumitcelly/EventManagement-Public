@@ -129,6 +129,10 @@ const authSlice = createSlice({
     logout(state) {
       state.user = null;
       state.isAuthenticated = false;
+      state.status = "idle";
+      state.error = null;
+      accessToken = null;
+      sessionStorage.removeItem('temp_auth_token');
     },
     resetError(state){
       state.error = null;

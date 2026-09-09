@@ -170,6 +170,7 @@ namespace CreateTicketApi.Controllers
         [Authorize(Policy = "MatchingCustomer")]
         public async Task<IActionResult> GetPresignedUrl(int customerId, FileUploadRequest request)
         {
+            _logger.LogInformation($"Generating presigned URL for file: {request.FileName}, customer ID: {customerId}, purpose: {request.Purpose}");
             if (string.IsNullOrWhiteSpace(request.FileName) || customerId <=0 )
                 return BadRequest("File, customerName are required.");
           
@@ -177,8 +178,9 @@ namespace CreateTicketApi.Controllers
                 return BadRequest("A valid file purpose is required.");
             try
             {
-           
+                _logger.LogInformation($"Attempting to generate presigned URL for file: {request.FileName}, customer ID: {customerId}, purpose: {request.Purpose}");
                 var url = await _s3Uploader.GetPreSignedUrlForUpload(request.FileName, customerId, purpose, request.ContentType,request.EventId);
+                _logger.LogInformation($"Generated presigned URL for file: {request.FileName}, customer ID: {customerId}, purpose: {request.Purpose}");
                 return Ok(new { url });
             }
             catch (Exception ex)
