@@ -97,6 +97,24 @@ export default function SignupForm()  {
           {/* NAME FIELD */}
           
           <div>
+             <input 
+                id="hidden-username"
+                type="email" // 👈 Using type="email" helps managers index it accurately
+                name="username"
+                value={email} // 👈 Your logged-in user context email
+                autoComplete="username"
+                readOnly
+                 style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: '0',
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  border: '0',
+                }}
+              />
             <label className="block text-sm font-medium">Name</label>
             <input
               type="text"

@@ -99,7 +99,7 @@ export function OrganizerManager() {
           )}
           <Tabs aria-label="Organizer Manager" 
             ref={tabsRef}
-            className="max-w-2xl mx-auto "
+            className="max-w-2xl mx-auto p-2"
             variant="underline" onActiveTabChange={(tab) =>{setLocalActiveTab(tab);console.log("active tab change called",tab);}}>
           
             <TabItem title="About Info" icon={HiUser}>

@@ -162,7 +162,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
             const uploadResult = await uploadImage(response.data.accessToken,response.data.user.customerId);
            
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
-    
+            setApiStatus("Organizer created successfully!");
             // toast.success("Organizer created successfully! Please complete your Stripe setup to accept paid events.", {
             //   duration: 7000,
             //   style: {
@@ -178,7 +178,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
             // });
            
             dispatch(changeUserRole(response.data)); 
-          
+            
             console.log('Response from creating organizer:', response.data);
             setOpenModal(true);
         }

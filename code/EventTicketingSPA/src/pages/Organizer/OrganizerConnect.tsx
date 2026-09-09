@@ -17,10 +17,10 @@ import { OrganizerInfo } from "../../types/Organizer";
 import { urlValidationSchema } from "../../utils/RichTextSchemaValidation";
 
 const memberSchema = yup.object({
-  organizerWebsite:  urlValidationSchema.nullable().default(null),
-  organizerInstagram: urlValidationSchema.nullable().default(null),
-  organizerFacebook: urlValidationSchema.nullable().default(null),
-  organizerX: urlValidationSchema.nullable().default(null),
+  organizerWebsite:  urlValidationSchema.lowercase().nullable().default(null),
+  organizerInstagram: urlValidationSchema.lowercase().nullable().default(null),
+  organizerFacebook: urlValidationSchema.lowercase().nullable().default(null),
+  organizerX: urlValidationSchema.lowercase().nullable().default(null),
  
   });
 
