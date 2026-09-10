@@ -57,10 +57,10 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://10.0.2.2:5173", "https://10.0.2.2:5173",
                              "https://localhost:7118","https://127.0.0.1:7118",
-                            "http://localhost:5173","https://localhost:5173","http://localhost", 
+                            "http://localhost:5173","http://localhost:4173","https://localhost:5173","http://localhost", 
                              "https://localhost","https://sc-dev-ticketspro.ngrok.io",
                             "https://dl27afdi0vyin.cloudfront.net",
-                            "https://discrimination-manager-wisdom-equipped.trycloudflare.com") //Cloudfront
+                            "https://fastest-actors-parish-tracker.trycloudflare.com") //Cloudfront
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies
