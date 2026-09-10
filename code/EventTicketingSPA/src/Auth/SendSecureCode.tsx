@@ -18,8 +18,16 @@ interface SecureCodeFormInputs {
 }
 
 // Yup schema
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 const schema = yup.object({
-  email: yup.string().required("Email is required").email("Invalid email format")
+  email: yup
+    .string()
+    .trim()                  // 🧼 Removes accidental leading/trailing spaces
+    .lowercase()             // 🧼 Converts everything to lowercase automatically
+    .required("Email is required")
+    .email("Invalid email format") 
+    .matches(emailRegex, "Invalid email format") // 🔒 Catches missing TLDs like "user@gmail"
 });
 
 export default function SendSecureCode() {

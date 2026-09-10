@@ -163,6 +163,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
            
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
             setApiStatus("Organizer created successfully!");
+            alert("Organizer created successfully!");
             // toast.success("Organizer created successfully! Please complete your Stripe setup to accept paid events.", {
             //   duration: 7000,
             //   style: {
