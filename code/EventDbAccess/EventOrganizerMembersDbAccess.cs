@@ -131,7 +131,7 @@ namespace EventManagementDbAccess
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error retrieving member: {ex.Message}");
+                _logger.LogError($"Error retrieving member: {ex.Message}");
                 throw;
             }
         }
@@ -145,6 +145,37 @@ namespace EventManagementDbAccess
             string cacheKey = CacheHelper.GetCacheKey<List<EventOrganizerMembers>>(customerId.ToString());
             List<EventOrganizerMembers>? orgMembers = await _cache.GetOrSetAsync(cacheKey, () => GetMembersByCustomerIdFromDb(customerId), TimeSpan.FromMinutes(base._cacheDurationInMinutes), _logger);
             return orgMembers ?? throw new KeyNotFoundException($"Event with ID {customerId} not found.");
+        }
+
+        public async Task<string> GenerateNewInvitationToken(int customerId, int memberId)
+        {
+            if (memberId <= 0 || customerId <= 0)
+                throw new ArgumentException("MemberId and CustomerId must be greater than zero.", nameof(memberId));
+
+            try
+            {
+                using var connection = new MySqlConnection(ConnectionString);
+                await connection.OpenAsync();
+
+                string query = @"UPDATE eventorganizermembers SET InvitationToken = @token,
+                                    IsActive=false
+                                    WHERE OrganizerMemberId = @memberId";
+                
+                string guid = Guid.NewGuid().ToString();
+                using var cmd = new MySqlCommand(query, connection);
+                cmd.Parameters.AddWithValue("@token", guid);
+                cmd.Parameters.AddWithValue("@memberId", memberId);
+
+                await cmd.ExecuteNonQueryAsync();
+                _logger.LogInformation($"Generated new invitation token for member ID: {memberId}");
+               
+                return guid;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error generating invitation token: {ex.Message}");
+                return string.Empty;
+            }
         }
 
         public async Task<List<EventOrganizerMembers>> GetMembersByCustomerIdFromDb(int customerId)

@@ -57,7 +57,18 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
     // On error, refetch to restore correct state
         await queryClient.invalidateQueries(['TeamByOrganizer', organizerId]);
     }
-}
+  }
+
+  const resendInvitation = async (memberId: number) => {
+    try {
+      const response = await axiosClient.post(`/EventOrganizerMembers/ResendInvitation/${organizerId}/${memberId}`);
+      console.log('Resend invitation successful:', response.data);
+      toast.success("Invitation resent successfully.");
+    } catch (error: any) {
+      console.error('Error resending invitation:', error);
+      toast.error(error?.response?.data || "Error resending invitation.");
+    }
+  };
 
   const { data, isLoading } = 
   useQuery(['TeamByOrganizer',organizerId], async () => {
@@ -93,7 +104,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
     }
   );
 
-
+  
 
   if (isLoading) return <p>Loading...</p>;
 
@@ -115,7 +126,7 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
       </div>
     <div className="bg-white rounded-lg shadow">
     {/* Header Row */}
-    <div className="grid grid-cols-1 sm:grid-cols-4 sm:text-center font-semibold text-gray-700 border-b mb-1">
+    <div className="m-2 grid grid-cols-1 sm:grid-cols-4 sm:text-center font-semibold text-gray-700 border-b mb-1">
       <div>Email</div>
       <div>Name</div>
       <div>Status</div>
@@ -124,16 +135,16 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
     </div>
 
     {/* Member Rows */}
-    <div className="">
+    <div className="sm:m-0 m-2">
       {data && data.map((member) => (
         <div
           key={member.orgMemberId}
-          className="bg-brand-neutral  border grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_2.4fr_2.4fr] sm:items-center sm:text-center text-gray-700  hover:bg-white transition"
+          className=" bg-brand-neutral  border grid grid-cols-1 sm:grid-cols-[2.4fr_2.4fr_2.4fr_2.4fr] sm:items-center sm:text-center text-gray-700  hover:bg-white transition"
         >
         
           <div className="truncate pr-2" title={member.email}>{member.email}</div>
           <div >{member.name}</div>
-          <div>
+          <div className="flex flex-col m-2">
             <span
               className={`px-2 py-1 text-xs rounded-full ${
                 member.status === "Active"
@@ -145,23 +156,31 @@ export default function TeamList({organizerId,isActive}: {organizerId?: string, 
             >
               {member.status}
             </span>
+            {member.status !== "Active" && (
+              <div
+                className="text-blue-500 hover:text-blue-700 cursor-pointer "
+                onClick={() => resendInvitation(member.orgMemberId)}
+              >
+                Invite again
+              </div>
+            )}
           </div>
           <div className="flex flex-row">
             <div className="justify-start">
-              {member.role} 
+              {member.role}
             </div>
             {member.email != user?.email && (
-            <div className="ml-auto" onClick={(e)=>e.stopPropagation()}>
-              <ListMenu
-                linkData={{
-                  viewLink: "",
-                  editLink: `/teammanager`,
-                  deleteEnabled: true,
-                  delete:()=>deleteUser(Number(member.userId)),
-                  editData: {...member, organizerId:organizerId,mode:"edit"}
-                }}
-              />
-            </div>
+              <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+                <ListMenu
+                  linkData={{
+                    viewLink: "",
+                    editLink: `/teammanager`,
+                    deleteEnabled: true,
+                    delete: () => deleteUser(Number(member.userId)),
+                    editData: { ...member, organizerId: organizerId, mode: "edit" }
+                  }}
+                />
+              </div>
             )}
           </div>
                 

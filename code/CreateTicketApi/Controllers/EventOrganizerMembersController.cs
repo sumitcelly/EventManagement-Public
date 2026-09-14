@@ -106,7 +106,31 @@ namespace CreateTicketApi.Controllers
             
         }
       
-            
+        [HttpPost("ResendInvitation/{customerId}/{memberId}")]
+        [Authorize(Policy = "RestrictedAdminMinimum")]
+        [Authorize(Policy = "MatchingCustomer")]
+        public async Task<IActionResult> ResendInvitation(int customerId, int memberId)
+        {
+            if (customerId <= 0 || memberId <= 0)
+                return BadRequest("Invalid customer or member ID.");
+
+            string result = await _dbAccess.GenerateNewInvitationToken(customerId, memberId);
+            if (!string.IsNullOrEmpty(result))
+            {
+                EventOrganizerMembers? member = await _dbAccess.GetMemberById(memberId, customerId);
+                if (member == null)
+                    return NotFound("Member not found.");
+                member.InvitationToken = result;
+                string inviterName = User.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "A team member";
+                await _emailUtils.SendMemberInvitationEmail(customerId,inviterName, member);
+    
+                return Ok("Invitation email sent successfully.");
+            }
+            else
+            {
+                return StatusCode(500, "Error regenerating invitation token.");
+            }
+        }
 
         [HttpPost("{customerId}")]
         [Authorize(Policy = "RestrictedAdminMinimum")]

@@ -60,7 +60,7 @@ builder.Services.AddCors(options =>
                             "http://localhost:5173","http://localhost:4173","https://localhost:5173","http://localhost", 
                              "https://localhost","https://sc-dev-ticketspro.ngrok.io",
                             "https://dl27afdi0vyin.cloudfront.net",
-                            "https://fastest-actors-parish-tracker.trycloudflare.com") //Cloudfront
+                            "https://accuracy-device-studied-fired.trycloudflare.com") //Cloudfront
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials(); // needed if sending cookies
