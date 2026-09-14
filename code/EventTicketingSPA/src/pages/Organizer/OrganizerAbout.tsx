@@ -126,7 +126,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
           await uploadImage();
           queryClient.invalidateQueries(['Organizer',organizerId]);
           toast.success("Organizer info saved");
-          setApiStatus("Organizer info saved successfully.")
+          setApiStatus("Organizer info saved successfully.");
         }
         else
         {
@@ -164,19 +164,19 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
             queryClient.invalidateQueries(['Organizer',response.data.user.customerId]);
             setApiStatus("Organizer created successfully!");
             alert("Organizer created successfully!");
-            // toast.success("Organizer created successfully! Please complete your Stripe setup to accept paid events.", {
-            //   duration: 7000,
-            //   style: {
-            //     background: '#0f172a',
-            //     color: '#f8fafc',
-            //     borderRadius: '12px',
-            //     padding: '16px 20px',
-            //     fontWeight: 600,
-            //     boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
-            //   },
-            //   icon: '🎉',
-            //   position: 'top-center',
-            // });
+            toast.success("Organizer created successfully! Please complete your Stripe setup to accept paid events.", {
+              duration: 7000,
+              style: {
+                background: '#0f172a',
+                color: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px 20px',
+                fontWeight: 600,
+                boxShadow: '0 12px 30px rgba(15, 23, 42, 0.25)',
+              },
+              icon: '🎉',
+              position: 'top-center',
+            });
            
             dispatch(changeUserRole(response.data)); 
             
@@ -329,6 +329,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
      >   
+    <Toaster position="top-center" />
 
     <div className="flex flex-col">
       {apiStatus && apiStatus.startsWith("Error") && (

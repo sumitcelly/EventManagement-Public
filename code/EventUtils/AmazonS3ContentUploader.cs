@@ -39,6 +39,14 @@ public class AmazonS3ContentUploader
         {
             throw new ArgumentException("S3 bucket name is not configured.");
         }
+        if (configuration["HostEnvironment:Name"] == "Production")
+        {
+            BucketName = configuration["S3:Production:BucketName"] ?? "prodcustomereventcontent";
+        }
+        else
+        {
+            BucketName = configuration["S3:Development:BucketName"] ?? "customereventcontent";
+        }
        
     }
     
