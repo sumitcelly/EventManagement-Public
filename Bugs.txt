@@ -1,9 +1,20 @@
 Running Bug List
 
-1. S3 different paths for prod and dev.
+
 2. search by name of event as well as state full name.
-3. Check on team member invite expiry and way to send event.
+
 4. Mobile testing with ngrok and Ui issues.
+   
+    a) input type number does not work on mobile
+    b)  new event screens a bit cuttoff
+    
+5. Organizer base url must lead to something. Right now its just base
+for the event.
+
+
+Email Campaign:
+
+ Mobile testing with ngrok and Ui issues.
     a) Sometimes dashboard are empty like events to scan dashboard
     unless i open a new tab. Be on tha dashboard. let iphone timeout
     come back and login. the dashboard has no events to scan unless you
@@ -12,12 +23,10 @@ Running Bug List
     "clear react queries on logout". It calls queryclient.ts 
     to remove react query data. -- done
     b) home page footer cutoff -- done
-    c) input type number does not work on mobile
-5. Organizer base url must lead to something. Right now its just base
-for the event.
 
+S3 different paths for prod and dev.
 
-Email Campaign:
+Check on team member invite expiry and way to send event. -- done
 
 Look at pessismistic locking for  event item types table.
 

@@ -81,7 +81,7 @@ export default function MyEvents() {
                 <p className="text-font-heading text-primary-color text-lg">
                   {new Date(event.eventDate).toLocaleDateString()} · {event.eventLocation}
                 </p>
-                <p className="text-sm text-font-body mt-1">{event.eventHeadline}</p>
+                <p className="text-sm text-accent-color  smt-1">{event.eventHeadline}</p>
               </div>
               {/*Do  not use <a> </a> tag. since that creates a full load and react query's keys get reset}*/}
               {/* <IonRouterLink
@@ -111,7 +111,7 @@ export default function MyEvents() {
               >
                 View tickets
               </div>
-              <p className="mt-1 ml-auto text-center text-xxs">{event.salesOrderCode}</p>
+              <p className="mt-1 ml-auto text-center text-xxs text-tertiary-color">{event.salesOrderCode}</p>
               </div>
             
               
