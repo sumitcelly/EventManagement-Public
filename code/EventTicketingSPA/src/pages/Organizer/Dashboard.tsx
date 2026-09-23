@@ -107,7 +107,7 @@ export default function Dashboard() {
           <AppNavbar />
       </IonHeader>
       <IonContent>
-        <div className="flex flex-col min-h-full">
+        <div className="flex flex-col min-h-full m-4">
     
         <div className="max-w-md mx-auto mt-6">
         <div className="flex flex-row mt-4 mb-2">

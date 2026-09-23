@@ -106,7 +106,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
           <div
             key={ticket.eventItemTypeId}
             onClick={() => history.push(`/EventManager`, { eventId: eventId, mode:`edit`, ticketId: ticket.eventItemTypeId })}
-            className="border border-gray-200 rounded-lg mt-2 cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
+            className="border border-gray-200 rounded-lg m-4 cursor-pointer p-4 flex items-center justify-between hover:bg-gray-50"
           >
             <div className="flex flex-col items-center w-1/4 text-center">
                 <div className="font-heading text-accent-color">{ticket.name}</div>
@@ -146,7 +146,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
       
   ))}
   </div>
-    <div className="flex flex-row mt-4">
+    <div className="flex flex-row m-4">
         <button
               className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
               onClick={()=>{ 

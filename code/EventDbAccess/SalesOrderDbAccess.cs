@@ -338,7 +338,7 @@ namespace EventManagementDbAccess
                                 b.EventHeadline,b.EventDate, b.EventOrganizer, b.EventAddress,
                                 b.EventSummary,b.Free,b.EventUrlName, c.OrganizerEventBaseUrl
                                 from salesorder a
-                                inner join Events b on a.EventId = b.EventId
+                                inner join events b on a.EventId = b.EventId
                                 inner join eventorganizer c on c.CustomerId = a.CustomerId and
                                 a.UserId=@userId and b.eventDate>UTC_DATE() order by a.CreatedAt desc";
 
@@ -897,9 +897,9 @@ namespace EventManagementDbAccess
                             b.EventName, c.Email, c.FullName,
                             COALESCE(SUM(e.pricepaid), 0) AS OrderTotal,
                             Count(e.ticketid) AS OrderCount
-                            from SalesOrder a
-                            JOIN Events b ON a.EventId = b.EventId
-                            JOIN EventUser c ON a.UserId = c.UserId
+                            from salesorder a
+                            JOIN events b ON a.EventId = b.EventId
+                            JOIN eventuser c ON a.UserId = c.UserId
                             LEFT JOIN eventsalesitem e ON e.salesorderid = a.orderid
                             LEFT JOIN eventitemtype d ON d.eventitemtypeid = e.eventitemtypeid
                             WHERE 1=1 and a.customerId = @customerId ";

@@ -83,8 +83,15 @@ aws ec2 stop-instances --instance-ids i-0f881f2b840a913d1
 //stripe cli
 stripe listen --forward-to http://localhost:5220/api/payment/stripewebhook
 
+//create new cloudfront origin after ec2 restart. use new public dns
+.\updatecfdistribution.ps1  -NewEc2Dns "ec2-44-244-249-74.us-west-2.compute.amazonaws.com"
+
 //deploy UI
 aws s3 sync dist/ s3://ticketevents-code-975050117852-us-west-2-an      
+
+//invalidate the cache in cloudfront
+aws cloudfront create-invalidation --distribution-id ERB1FHGKI5VJE --paths "/*"
+
 
 //ssh login
 ssh -i ~/.ssh/eventmgtmlogin.pem  ec2-user@35.91.6.76
@@ -100,18 +107,23 @@ ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.15
 //Also the .pem file is in there as well.
 ssh -i ~/.ssh/eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@35.91.6.76
 
+ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@44.244.249.74
 //open mysql with aws connection (already created)
 
 //deploy api and worker
 
 //first get token (note the profile). On desktop
-aws ecr get-login-password --region us-west-2 --profile SC | docker login --username AWS --password-stdin 975050117852.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 975050117852.dkr.ecr.us-west-2.amazonaws.com
 //on ec2
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 975050117852.dkr.ecr.us-west-2.amazonaws.com
 
 //build the container(s)
 docker compose build
 docker compose build create-ticket-api
+
+
+//use this for prod
+docker compose -f docker-compose-prod.yml  build create-ticket-api
 
 //push them
 docker compose push

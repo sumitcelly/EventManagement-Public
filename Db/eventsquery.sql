@@ -2,6 +2,8 @@ select * from logincodes order by createdat desc
 	select * from eventmanagement.
 select * from eventorganizer where OrganizationName='dfd';
 
+select * from events where eventorganizer=40
+
 select * from eventsalesitem
 select * from eventorganizermembers where customerid=72;
 delete from eventorganizer where customerid=72

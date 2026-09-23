@@ -249,7 +249,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
      
     <div className="max-w-md mx-auto  text-center">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
-      <div className="flex flex-col">
+      <div className="flex flex-col m-4">
          {/* <Toaster position="top-right" /> */}
          <label className="block font-semibold italic font-accent text-accent-color">Your event is in {data?.isLive?'Live':'Draft'} status</label>
          {data && !data.isLive?(
@@ -431,7 +431,7 @@ export default function EventPublish({eventId,isActive}: {eventId?:string,isActi
       </div>
     
     {data && (
-      <div className="flex flex-row mt-4">
+      <div className="flex flex-row m-4">
           {paymentNeeded && (
             <button
                   className="bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"

@@ -31,7 +31,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = @"INSERT INTO eventItemType 
+                string query = @"INSERT INTO eventitemtype 
                     (Name, Description, Cost, EventId, TotalAllowed, MaxPerOrder, SalesStartDate,SalesEndDate,
                     TicketValidityStart, TicketValidityEnd, AddOn, CreatedAt) 
                     VALUES (@name, @description, @cost, @eventId, @totalAllowed, @maxPerOrder,
@@ -142,7 +142,7 @@ namespace EventManagementDbAccess
                 using var connection = new MySqlConnection(ConnectionString);
                 await connection.OpenAsync();
 
-                string query = "SELECT * FROM eventItemType WHERE EventItemTypeId = @eventItemTypeId";
+                string query = "SELECT * FROM eventitemtype WHERE EventItemTypeId = @eventItemTypeId";
                 using var cmd = new MySqlCommand(query, connection);
                 cmd.Parameters.AddWithValue("@eventItemTypeId", eventItemTypeId);
 
@@ -240,7 +240,7 @@ namespace EventManagementDbAccess
             try
             {
 
-                string query = @"update eventmanagement.eventitemtype 
+                string query = @"update eventitemtype 
                         set ticketssold=ticketssold+@quantity,
                         ModifiedAt=@modifiedAt
                         where ticketssold+@quantity <= totalallowed and
