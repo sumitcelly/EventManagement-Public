@@ -3,6 +3,7 @@ version: '3.8'
 services:
   # Web API Service
   create-ticket-api:
+    platform: linux/amd64
     image: 975050117852.dkr.ecr.us-west-2.amazonaws.com/eventmgmt:create-ticket-api
     build:
       context: .
@@ -19,6 +20,7 @@ services:
 
   # Background Service (Worker)
   worker-service:
+    platform: linux/amd64
     image: 975050117852.dkr.ecr.us-west-2.amazonaws.com/eventmgmt:email-scheduler-worker
     build:
       context: .

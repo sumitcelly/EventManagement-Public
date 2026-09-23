@@ -55,6 +55,9 @@ docker compose up -d --build
 //build specific container (name is the name in compose file)
 docker compose up -d --build create-ticket-api
 
+//to check api running, http://ec2publicip/swagger
+//also ec2 only allows my ip for swagger 5220. Make sure that is correct in SG
+
 //start all containers in ec2-user@44
 docker compose -f docker-compose.prod.yml up -d
 //start specific
@@ -90,7 +93,11 @@ ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.15
 
 //connecting to db
 //first create a ssh tunnel via ec2 to mysql (mysql is off the internet and only accessible to ec2)
-
+//The ip at the end is the public  ip of the ec2 instace. it resets each time you start it.
+//also make sure to go the ec2 security group that the rds instance uses and change the ip to myip.
+//it does not reset automatically when you move around for somer reason.
+//there is a screenshot in the deployment folder that shows how to connect to AWS.
+//Also the .pem file is in there as well.
 ssh -i ~/.ssh/eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@35.91.6.76
 
 //open mysql with aws connection (already created)

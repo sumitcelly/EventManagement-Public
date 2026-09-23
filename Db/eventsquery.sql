@@ -1,5 +1,5 @@
 select * from logincodes order by createdat desc
-
+	select * from eventmanagement.
 select * from eventorganizer where OrganizationName='dfd';
 
 select * from eventsalesitem
