@@ -85,6 +85,8 @@ namespace EventManagementDbAccess
 
             try
             {
+                //todo: not sure if this is the right thing to do.
+                //shows up in redis keys Int32:564
                 string cacheKey = CacheHelper.GetCacheKey<int>(orderId.ToString());
                 if (string.IsNullOrEmpty(cacheKey))
                 {

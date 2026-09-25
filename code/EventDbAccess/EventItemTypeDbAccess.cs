@@ -292,7 +292,7 @@ namespace EventManagementDbAccess
                     AddOn = @addOn,
 
                     TotalAllowed = @totalAllowed,
-                    TicketsSold = @ticketsSold,
+                    
                     MaxPerOrder = @maxPerOrder,
                     SalesStartDate = @salesStartDate,
                     SalesEndDate = @salesEndDate,

@@ -94,7 +94,7 @@ aws cloudfront create-invalidation --distribution-id ERB1FHGKI5VJE --paths "/*"
 
 
 //ssh login
-ssh -i ~/.ssh/eventmgtmlogin.pem  ec2-user@35.91.6.76
+ssh -i ~/.ssh/eventmgtmlogin.pem  ec2-user@44.244.249.74
 
 ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.155   
 
@@ -141,6 +141,8 @@ docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
 
 //live stream logs
 docker compose -f docker-compose.prod.yml logs --tail 50 -f create-ticket-api
+
+docker compose -f docker-compose.prod.yml logs --tail 50 -f worker-service
 
 //check for errors
 docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api | grep -i error

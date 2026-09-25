@@ -888,7 +888,8 @@ public class StripeRefundHandler
                 bool.TryParse(simMode, out isSim);
             }
             if (_configuration["HostEnvironment:Name"] == "Production"
-             && !stripeEvent.Livemode && !isSim)
+                && !stripeEvent.Livemode && !isSim && 
+                _configuration["Stripe:AllowTestModeInProd"] == "false")
             {
                 // High-alert condition: Stripe says this is FAKE sandbox money, 
                 // but your internal metadata flag thinks it's a real purchase order!

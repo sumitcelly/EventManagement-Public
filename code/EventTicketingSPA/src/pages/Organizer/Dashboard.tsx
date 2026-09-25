@@ -153,11 +153,13 @@ export default function Dashboard() {
                 </div>
               </div>
         </div>))}
+       
       </div>
     
     </div>
-  <Footer/>
+  
   </div>
+   <Footer/>
   </IonContent>
   </IonPage>
   );

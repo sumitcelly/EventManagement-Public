@@ -2,7 +2,28 @@ select * from logincodes order by createdat desc
 	select * from eventmanagement.
 select * from eventorganizer where OrganizationName='dfd';
 
-select * from events where eventorganizer=40
+select * from events where eventid=52
+
+select * from emailrecipients where emailcampaignid=74
+
+select * from eventuser where email like 'sumit%'
+
+select * from eventsalesitem where ticketid=564
+
+update eventuser
+set fullname='sumit celly'
+where userid=1
+
+CREATE TABLE `eventfeeoverrides` (
+  `EventId` int NOT NULL,
+  `CustomPercentage` decimal(5,4) NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ModifiedAt` datetime DEFAULT CURRENT_TIMESTAMP,
+  `Id` int NOT NULL,
+  `CustomFloor` decimal(5,2) DEFAULT NULL,
+  PRIMARY KEY (`EventId`),
+  CONSTRAINT `eventfeeoverrides_ibfk_1` FOREIGN KEY (`EventId`) REFERENCES `events` (`EventId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 select * from eventsalesitem
 select * from eventorganizermembers where customerid=72;
