@@ -26,7 +26,8 @@ const schema = yup.object({
 export default function ValidateSecureCode() {
 
   const dispatch = useAppDispatch();
-  const { status, error, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { status, error, isAuthenticated ,user} = useAppSelector((state) => state.auth);
+  const isGuest = user?.guest || false;
 
   const [apiStatus,setApiStatus] = useState("");
   const [codeStatus,setcodeStatus]=useState<"idle"|"loading"|"error">("idle");
@@ -84,7 +85,7 @@ export default function ValidateSecureCode() {
   }
   useEffect(() => {
     // Generate the initial secure code when the component mounts
-    if (isAuthenticated)
+    if (isAuthenticated && !isGuest)
     {
       console.log("login succeeded - navigating to returnUrl:", returnUrl);
       if (returnUrl === "signup")

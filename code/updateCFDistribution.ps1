@@ -51,6 +51,10 @@ if ($Config.Origins.Items) {
 # STEP 3: CREATE NEW ORIGIN & BEHAVIOR
 # ==========================================
 
+# ==========================================
+# STEP 3: CREATE NEW ORIGIN & BEHAVIOR
+# ==========================================
+
 Write-Host "✨ Constructing new origin and behavior templates..." -ForegroundColor Green
 
 # Create the new Origin object matching AWS CLI specifications
@@ -60,7 +64,7 @@ $NewOrigin = [PSCustomObject]@{
     OriginPath          = ""
     CustomHeaders       = @{ Quantity = 0; Items = @() }
     CustomOriginConfig  = [PSCustomObject]@{
-        HTTPPort               = 5220
+        HTTPPort               = 5220  # Matches your .NET Host Port
         HTTPSPort              = 443
         OriginProtocolPolicy   = "http-only" 
         OriginSslProtocols     = @{ Quantity = 3; Items = @("TLSv1", "TLSv1.1", "TLSv1.2") }
@@ -87,22 +91,22 @@ $NewBehavior = [PSCustomObject]@{
     LambdaFunctionAssociations = @{ Quantity = 0; Items = @() }
     FieldLevelEncryptionId = ""
     CachePolicyId          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" 
-    OriginRequestPolicyId  = "b689b0a8-53d0-40ab-baf2-68738e2966ac" 
+    OriginRequestPolicyId  = "216adef6-5c7f-47e4-b989-5492eafa07d3" 
 }
 
 # --- SAFELY APPEND ORIGIN ---
-# If Origins.Items doesn't exist (distribution is empty), create it
-if (-not (Get-Member -InputObject $Config.Origins -Name "Items")) {
-    Add-Member -InputObject $Config.Origins -MemberType NoteProperty -Name "Items" -Value @($NewOrigin)
+if (-not (Get-Member -InputObject $Config.Origins -Name "Items") -or $null -eq $Config.Origins.Items) {
+    # Force property initialization as a concrete collection array
+    $Config.Origins | Add-Member -MemberType NoteProperty -Name "Items" -Value @($NewOrigin) -Force
 } else {
     $Config.Origins.Items = @($Config.Origins.Items) + $NewOrigin
 }
 $Config.Origins.Quantity = @($Config.Origins.Items).Count
 
 # --- SAFELY APPEND BEHAVIOR ---
-# If CacheBehaviors.Items doesn't exist, create it
-if (-not (Get-Member -InputObject $Config.CacheBehaviors -Name "Items")) {
-    Add-Member -InputObject $Config.CacheBehaviors -MemberType NoteProperty -Name "Items" -Value @($NewBehavior)
+if (-not (Get-Member -InputObject $Config.CacheBehaviors -Name "Items") -or $null -eq $Config.CacheBehaviors.Items) {
+    # Force property initialization as a concrete collection array
+    $Config.CacheBehaviors | Add-Member -MemberType NoteProperty -Name "Items" -Value @($NewBehavior) -Force
 } else {
     $Config.CacheBehaviors.Items = @($Config.CacheBehaviors.Items) + $NewBehavior
 }

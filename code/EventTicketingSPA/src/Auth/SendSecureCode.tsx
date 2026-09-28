@@ -71,7 +71,7 @@ export default function SendSecureCode() {
             url+="/true";
         }
         const res = await axiosClient.get(url);
-        console.log("API response for generate email code:", res?.data);
+        console.log("API response for generate email code:", res);
         dispatch(resetError());
         //Should always get 200 regardless of whether user is found or not.
         //  Only if it's other error we show generic failure message.
