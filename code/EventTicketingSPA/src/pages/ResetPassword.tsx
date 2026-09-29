@@ -53,7 +53,8 @@ export default function ResetPassword()  {
     axiosClient.put(`/user/${email}`,  { 
       email: email,
       password: passwordState.password,
-      userId: userId
+      userId: userId,
+      name: user.name
     },
     { headers: {
         'Content-Type': 'application/json'}
