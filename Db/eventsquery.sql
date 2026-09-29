@@ -6,7 +6,7 @@ select * from events where eventid=52
 
 select * from emailrecipients where emailcampaignid=74
 
-select * from eventuser where email like 'new%'
+select * from eventuser where email like 'new4%'
 
 select * from eventsalesitem where ticketid=564
 

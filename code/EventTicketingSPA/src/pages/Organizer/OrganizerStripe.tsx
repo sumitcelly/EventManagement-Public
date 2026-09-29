@@ -25,20 +25,22 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
     },
     {
         staleTime: 1000 * 60 * 5,
+        cacheTime: 1000 * 60 * 5,
         enabled: !!stripeAcctId
     }
     );
 
     const { data:liveStripeTaxStatus, isLoading:isTaxLoading } =
-    useQuery(['gettaxStatus',organizerId], async () => {
+    useQuery(['gettaxStatus', stripeAcctId], async () => {
         const res = await axiosClient.get(`/payment/gettaxstatus/${stripeAcctId}`);
         console.log('stripe tax status from backend', res?.data);
-        
         return res.data;
     },
     {
-    staleTime: 1000 * 60 * 5,
-    enabled: !!stripeAcctId
+        staleTime: 1000 * 60 * 5,
+        cacheTime: 1000 * 60 * 5,
+        // only run tax status lookup after we have the stripe account status
+        enabled: !!stripeAcctId && !!liveStripeStatus
     }
     );
     
@@ -47,9 +49,9 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
     try
     {
         toast.loading("Redirecting to stripe for account creation...");
-        const res = await axiosClient.post(`/payment/create-account/${organizerId}`, { headers: {
-        'Content-Type': 'application/json'}
-    });
+                const res = await axiosClient.post(`/payment/create-account/${organizerId}`, null, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
         if (res.status == 200 && res.data)
         {
             linkStripeAccount(res.data);
@@ -90,7 +92,15 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
 
   
 
-  if (isLoading) return <p>Loading...</p>;
+// 1. Block rendering if EITHER query is actively pulling network data
+if (isLoading || isTaxLoading) {
+    return <p>Loading Stripe integrations...</p>;
+}
+
+// 2. Block rendering if data hasn't arrived or initialized in memory yet
+if (!liveStripeStatus && stripeAcctId) {
+    return <p>Initializing data structures...</p>;
+}
   
   return (  
      
@@ -99,7 +109,7 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
       <div className="flex flex-col items-center">
          {/* <Toaster position="top-right" /> */}
          {/**We have nothing with stripe*/}
-         {(!stripeAcctId || !liveStripeStatus.connected) &&(
+         {(!stripeAcctId || !liveStripeStatus?.connected) &&(
             <div className="flex items-center">
                 <button 
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
@@ -111,29 +121,29 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
          )}
          
          {/*We have stripe id. Lets check if something is pending */}
-         {(stripeAcctId && liveStripeStatus.connected)  && (
+         {(stripeAcctId && liveStripeStatus?.connected)  && (
             <>
             <div className="font-semibold text-secondary-color">Stripe Integration Checklist for <i>{stripeAcctId}</i></div>
             
             <div className="flex flex-col mt-2">
                 <div className="font-semibold text-secondary-color">
-                    <span>{!liveStripeStatus.requirementsPending ? "✅" : "❌"} Requirements Collected</span>
+                    <span>{!liveStripeStatus?.requirementsPending ? "✅" : "❌"} Requirements Collected</span>
                 </div>
 
                 <div className="font-semibold text-secondary-color mt-2">
                     <span>{liveStripeStatus.chargesEnabled ? "✅" : "❌"} Charges Enabled</span>
-                    {!liveStripeStatus.chargesEnabled && <p className="error">Stripe is still verifying your business details.</p>}
+                    {!liveStripeStatus?.chargesEnabled && <p className="error">Stripe is still verifying your business details.</p>}
                 </div>
 
                 <div className="font-semibold text-secondary-color mt-2">
-                    <span>{liveStripeStatus.payoutsEnabled ? "✅" : "❌"} Bank Account Verified for Payouts</span>
+                    <span>{liveStripeStatus?.payoutsEnabled ? "✅" : "❌"} Bank Account Verified for Payouts</span>
                 </div>
             </div>
             
-           {!liveStripeStatus.chargesEnabled || 
-            !liveStripeStatus.payoutsEnabled || 
-            !liveStripeStatus.detailsSubmitted ||
-            liveStripeStatus.requirementsPending
+           {!liveStripeStatus?.chargesEnabled || 
+            !liveStripeStatus?.payoutsEnabled || 
+            !liveStripeStatus?.detailsSubmitted ||
+            liveStripeStatus?.requirementsPending
             ? (
                 <button 
                     className="bg-brand-dark text-white text-xs mt-2  text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"

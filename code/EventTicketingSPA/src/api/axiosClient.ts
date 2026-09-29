@@ -40,7 +40,16 @@ axiosClient.interceptors.response.use(
 
       originalRequest._retry = true;
 
-      const newToken = await refreshAccessToken();
+      // Serialize refresh calls so only one refresh runs at a time.
+      // Other requests awaiting refresh will reuse the same promise.
+      if (!(axiosClient as any)._refreshPromise) {
+        (axiosClient as any)._refreshPromise = refreshAccessToken().then((t) => {
+          (axiosClient as any)._refreshPromise = null;
+          return t;
+        });
+      }
+
+      const newToken = await (axiosClient as any)._refreshPromise;
       if (newToken) {
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosClient(originalRequest);

@@ -69,11 +69,11 @@ export default function SignupForm()  {
         'Content-Type': 'application/json'}
     }).then(response => {
       console.log("Signup successful:", response.data);
-      toast.success("Signup successful! You can now log in.");
+      toast.success("Signup successful! You can now log in.", {duration: 3000});
       ionRouter.push("/myevents");
     }).catch(error => {
       console.error("Signup error:", error);
-      toast.error("Signup failed. Please try again.");     
+      toast.error("Signup failed. Please try again.", {duration: 3000});     
     });
 
    

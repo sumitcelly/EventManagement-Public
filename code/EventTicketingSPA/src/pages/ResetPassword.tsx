@@ -59,11 +59,11 @@ export default function ResetPassword()  {
         'Content-Type': 'application/json'}
     }).then(response => {
       console.log("Reset password successful:", response.data);
-      toast.success("Reset successful! Logging you in.");
+      toast.success("Reset successful! Logging you in.",{duration: 3000});
       history.push("/myevents");
     }).catch(error => {
       console.error("Signup error:", error);
-      toast.error("Reset failed. Please try again.");     
+      toast.error("Reset failed. Please try again.",{duration: 3000});     
     });
    
   };
