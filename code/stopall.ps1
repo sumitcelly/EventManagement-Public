@@ -13,8 +13,8 @@ Write-Host "  INITIATING SECURITY SHUTDOWN FOR AWS DEVELOPMENT HOSTS  " -Foregro
 Write-Host "--------------------------------------------------------" -ForegroundColor Cyan
 
 # 2. STOP THE EC2 COMPUTE CONTAINER INSTANCE
-Write-Host "[1/2] Signaling EC2 Instance [$EC2_INSTANCE] to halt..." -ForegroundColor Yellow
-aws ec2 stop-instances --instance-ids $EC2_INSTANCE --profile $AWS_PROFILE --region $AWS_REGION --output text
+#Write-Host "[1/2] Signaling EC2 Instance [$EC2_INSTANCE] to halt..." -ForegroundColor Yellow
+#aws ec2 stop-instances --instance-ids $EC2_INSTANCE --profile $AWS_PROFILE --region $AWS_REGION --output text
 
 # 3. STOP THE MANAGED RDS MYSQL INSTANCE
 Write-Host "[2/2] Signaling RDS MySQL Database [$RDS_INSTANCE] to power down..." -ForegroundColor Yellow

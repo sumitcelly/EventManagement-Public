@@ -4,8 +4,7 @@ select * from eventorganizer where OrganizationName='dfd';
 
 select * from events where eventid=52
 
-select * from emailrecipients where emailcampaignid=74
-
+select * from emailcampaign order by CreatedAt desc
 select * from eventuser where email like 'new8%'
 
 select * from eventsalesitem where ticketid=564
