@@ -60,3 +60,6 @@ code/CreateTicketApi/CreateTicketApi.csproj.lscache
 code/EmailSchedulerWorker/EmailSchedulerWorker.csproj.lscache
 code/EventDbAccess/EventDbAccess.csproj.lscache
 code/EventUtils/EventUtils.csproj.lscache
+code/CreateTicketApi/appsettings.Development.json
+code/CreateTicketApi/appsettings.Production.json
+code/EmailSchedulerWorker/appsettings.Development.json
