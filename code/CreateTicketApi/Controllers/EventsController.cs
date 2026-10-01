@@ -197,26 +197,33 @@ namespace CreateTicketApi.Controllers
                     {
                         _logger.LogInformation($"No campaigns exist for event id {eventId}. Going live for first time probably.");
                         List<EmailTemplate> templates=  await _notificationTemplateAccess.GetDefaultTemplates();
-                        templates?.ForEach(async template =>
+                        foreach (var template in templates)
                         {
                             if (template.TemplateName ==  NotificationTemplateAccess.EventReminder2DayTemplateName ||
                                  template.TemplateName == NotificationTemplateAccess.EventReminder7DayTemplateName)
                             {
-                                EmailCampaign campaign = new EmailCampaign
+                                DateTime sendAtDate = GetSendAtDate(template.TemplateName, status.EventDate);
+                                if (sendAtDate == DateTime.MinValue)
+                                {
+                                    _logger.LogInformation($"Send at date time for {template.TemplateName} for event id {eventId} is in the past. Not creating campaign.");
+                                    continue;
+                                }
+                                    
+                                EmailCampaign campaign = new()
                                 {
                                     Name = $"{template.TemplateName}_{status.EventUrlName}",
                                     Description = template.TemplateDescription,
                                     EventId = eventId,
                                     TemplateId = template.Id,
                                     Status = "Pending",
-                                    SendAt = GetSendAtTime(template.TemplateName, status.EventDate),}
-                                ;
-                                if (await _emailCampaignDbAccess.CreateEmailCampaign(campaign) >0)
+                                    SendAt = sendAtDate,
+                                };
+                                if (_emailCampaignDbAccess.CreateEmailCampaign(campaign).Result >0)
                                     _logger.LogInformation($"Created email campaign {campaign.Name} for event id {eventId} based on template {template.TemplateName}");
                                 else
                                     _logger.LogError($"Failed to create email campaign {campaign.Name} for event id {eventId} based on template {template.TemplateName}");
                             }
-                        });       
+                        }       
                     }
                     else
                     {
@@ -232,19 +239,21 @@ namespace CreateTicketApi.Controllers
             }
         }
 
-        private DateTime GetSendAtTime(string templateName, DateTime eventStartDate)
+        private DateTime GetSendAtDate(string templateName, DateTime eventStartDate)
         {
-            if (templateName == NotificationTemplateAccess.EventReminder7DayTemplateName)
+            if (templateName == NotificationTemplateAccess.EventReminder7DayTemplateName && 
+                eventStartDate.Date.AddDays(-7) >= DateTime.UtcNow.Date)
             {
-                return eventStartDate.AddDays(-7);
+                return eventStartDate.AddDays(-7).Date;
             }
-            else if (templateName == NotificationTemplateAccess.EventReminder2DayTemplateName)
+            else if (templateName == NotificationTemplateAccess.EventReminder2DayTemplateName && 
+                eventStartDate.Date.AddDays(-2) >= DateTime.UtcNow.Date)
             {
-                return eventStartDate.AddDays(-2);
+                return eventStartDate.AddDays(-2).Date;
             }
             else
             {
-                throw new ArgumentException("Invalid template name for send time calculation");
+                return DateTime.MinValue;
             }
         }
 

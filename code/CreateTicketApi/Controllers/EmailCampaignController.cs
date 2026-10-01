@@ -261,7 +261,8 @@ namespace CreateTicketApi.Controllers
                            EventId = emailCampaign.EventId,
                            Name = emailCampaign.EmailCampaignName,
                            Description =emailCampaign.Description,
-                           SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddMinutes(1):emailCampaign.SendAt,
+                           //This will send at midnight utc for the specific date. So willbe earlier than the actual time zone in US.
+                           SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddSeconds(30):emailCampaign.SendAt.Date,
                            Status ="Pending",
                            TemplateId = templateId,
                            EventName = emailCampaign.EventName,
@@ -324,7 +325,7 @@ namespace CreateTicketApi.Controllers
                                 Id =  campaignId,
                                 Name = emailCampaign.EmailCampaignName,
                                 Description = emailCampaign.Description,
-                                SendAt = emailCampaign.SendNow? DateTime.UtcNow : emailCampaign.SendAt,
+                                SendAt = emailCampaign.SendNow? DateTime.UtcNow.AddSeconds(30) : emailCampaign.SendAt.Date,
                                 TemplateId = templateId,
                                 Status ="Pending",
                                 EventId = emailCampaign.EventId,
