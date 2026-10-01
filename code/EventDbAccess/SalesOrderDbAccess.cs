@@ -310,8 +310,8 @@ namespace EventManagementDbAccess
                     TotalFees = order.TotalFees,
                     SalesTax = order.SalesTax,
                     SalesOrderCode = order.SalesOrderCode?? string.Empty,
-                    Paid = order.SalesOrderStatus == SalesOrderStatus.PaymentSucceeded,
-                    QrImage = !string.IsNullOrEmpty(order.SalesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(order.SalesOrderCode)) : string.Empty
+                    Paid = order.SalesOrderStatus == SalesOrderStatus.PaymentSucceeded
+                    //QrImage = !string.IsNullOrEmpty(order.SalesOrderCode) ? System.Convert.ToBase64String(QRCodeUtils.GetQRCodes(order.SalesOrderCode)) : string.Empty
                 };
                
                 return paymentStatus;

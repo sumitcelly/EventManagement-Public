@@ -79,7 +79,6 @@ export default function OrderConfirmation() {
               ...prevData,
               paymentPending: false,
               salesOrderCode: data.salesOrderCode,
-              salesOrderQrCodeImage: data.qrImage,
               salesOrderTotal: data.salesOrderTotal,
               platformFees: data.platformFees,
               totalFees: data.totalFees,
@@ -183,9 +182,9 @@ export default function OrderConfirmation() {
                           </div>
                         </div>
                       )}          
-                      <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
+                      {/* <SalesOrderTicket eventBasic={event} tickets={cartTickets} errorTicketList={[]} 
                             salesOrderCode={salesOrderData.salesOrderCode || ""} 
-                            qrBase64String={salesOrderData.salesOrderQrCodeImage}/>
+                            qrBase64String={salesOrderData.salesOrderQrCodeImage}/> */}
                       <div className="text-center mb-4 mt-2">
                         You will receive an email confirmation to <span className="font-bold"> {user.user?.email || cart.email}</span> shortly with your e-tickets.
                       </div>
