@@ -717,7 +717,8 @@ public class StripeRefundHandler
         catch (Exception ex)
         {
             _logger.LogError($"Error calculating tax: {ex.Message}");
-            return 0;
+            //return the actual cost at least.
+            return ticketCost + platformFees;
         }
 
     }

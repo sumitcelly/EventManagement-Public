@@ -84,23 +84,28 @@ aws ec2 stop-instances --instance-ids i-0f881f2b840a913d1
 stripe listen --forward-to http://localhost:5220/api/payment/stripewebhook
 
 //create new cloudfront origin after ec2 restart. use new public dns
-.\updatecfdistribution.ps1  -NewEc2Dns "ec2-44-244-249-74.us-west-2.compute.amazonaws.com"
+.\updatecfdistribution.ps1  -NewEc2Dns "ec2-44-250-56-194.us-west-2.compute.amazonaws.com"
 
-//deploy UI
+------DEPLOY UI--------------
 aws s3 sync dist/ s3://ticketevents-code-975050117852-us-west-2-an      
 
 //invalidate the cache in cloudfront
 aws cloudfront create-invalidation --distribution-id ERB1FHGKI5VJE --paths "/*"
 
+----SSH LOGIN---------------------
 
-//ssh login
-ssh -i ~/.ssh/eventmgtmlogin.pem  ec2-user@44.244.249.74
+//must be in deployment folder
 
-//ssh login
-ssh -i ./eventmgtmlogin.pem  ec2-user@54.188.225.150
+///in case you get permissions error
+chmod 400 ./eventmgtmlogin.pem
 
-ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.155   
+//ssh login to ec2
+ssh -i ./eventmgtmlogin.pem  ec2-user@44.250.56.194
 
+//ssh to db
+ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@44.250.56.194
+
+//ssh to db
 //connecting to db
 //first create a ssh tunnel via ec2 to mysql (mysql is off the internet and only accessible to ec2)
 //The ip at the end is the public  ip of the ec2 instace. it resets each time you start it.
@@ -108,11 +113,11 @@ ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@54.187.60.15
 //it does not reset automatically when you move around for somer reason.
 //there is a screenshot in the deployment folder that shows how to connect to AWS.
 //Also the .pem file is in there as well.
-ssh -i ~/.ssh/eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@35.91.6.76
+ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@44.250.56.194
 
-ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@44.244.249.74
+
 //open mysql with aws connection (already created)
-
+-----------DEPLOY-------------------------
 //deploy api and worker
 
 //first get token (note the profile). On desktop
@@ -144,9 +149,9 @@ docker compose -f docker-compose.prod.yml up -d --force-recreate
 docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api
 
 //live stream logs
-docker compose -f docker-compose.prod.yml logs --tail 50 -f create-ticket-api
+docker compose -f docker-compose.prod.yml logs --tail 50 -f create-ticket-api 
 
-docker compose -f docker-compose.prod.yml logs --tail 50 -f worker-service
+docker compose -f docker-compose.prod.yml logs --tail 50 -f worker-service | grep -i error
 
 //check for errors
 docker compose -f docker-compose.prod.yml logs --tail 50 create-ticket-api | grep -i error

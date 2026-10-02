@@ -70,11 +70,16 @@ IHostBuilder builder = Host.CreateDefaultBuilder(args)
 
         });
         services.AddHostedService<EmailSchedulerService>();
-        //services.AddHostedService<OrderCleanupService>();
-        services.AddHostedService<EmailStatusUpdateService>();
-       
+        services.AddHostedService<OrderCleanupService>();
+        //todo: we need to setup a dev specific queue otherwise, this will pull email sent updates from the prod queue and try to update 
+        //the local db.
+        //only add this for production for now.
+        if (!context.HostingEnvironment.IsDevelopment())
+        {
+            services.AddHostedService<EmailStatusUpdateService>();
+        }
     });
-    var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+    var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
     Directory.CreateDirectory(logDirectory);
 
     Log.Logger = new LoggerConfiguration()

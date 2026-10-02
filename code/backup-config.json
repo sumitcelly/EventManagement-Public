@@ -9,7 +9,7 @@
     "Items": [
       {
         "Id": "EC2-API-Origin",
-        "DomainName": "ec2-44-244-249-74.us-west-2.compute.amazonaws.com",
+        "DomainName": "ec2-54-188-225-150.us-west-2.compute.amazonaws.com",
         "OriginPath": "",
         "CustomHeaders": {
           "Quantity": 0
@@ -19,17 +19,15 @@
           "HTTPSPort": 443,
           "OriginProtocolPolicy": "http-only",
           "OriginSslProtocols": {
-            "Quantity": 4,
+            "Quantity": 3,
             "Items": [
-              "SSLv3",
               "TLSv1",
               "TLSv1.1",
               "TLSv1.2"
             ]
           },
           "OriginReadTimeout": 30,
-          "OriginKeepaliveTimeout": 5,
-          "IpAddressType": "ipv4"
+          "OriginKeepaliveTimeout": 5
         },
         "ConnectionAttempts": 3,
         "ConnectionTimeout": 10,

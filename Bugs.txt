@@ -1,6 +1,13 @@
 Running Bug List
+1. this toast wont go away
+Signup successful! You can now log in.
+3. When click on stripeconnect, no tosts come up to tell about redirection.
+4. no toast when create a new event or update.
+5.hide go live button when no tickets on ticket dashboard.
+6. Ticket sales end date must be after start date for same day sales start and end date
+7. On stripe connect page, let organizer know that not being enabled for tax is a warning and can sell tickets anyway.
 
-
+Features
 2. search by name of event as well as state full name.
 
 4. Mobile testing with ngrok and Ui issues.
