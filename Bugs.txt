@@ -6,6 +6,8 @@ Signup successful! You can now log in.
 5.hide go live button when no tickets on ticket dashboard.
 6. Ticket sales end date must be after start date for same day sales start and end date
 7. On stripe connect page, let organizer know that not being enabled for tax is a warning and can sell tickets anyway.
+8. Deploying docker container on prod causes the site to use dev config for some reason until, i update an 
+    image and then it works fine.
 
 Features
 2. search by name of event as well as state full name.

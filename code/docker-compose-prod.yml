@@ -13,7 +13,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     volumes:
-      - ./logs/worker:/app/logs
+      - ./logs/api:/app/logs
     depends_on:
       - redis-cache
     restart: always
@@ -27,6 +27,8 @@ services:
       dockerfile: EmailSchedulerWorker/Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+    volumes:
+      - ./logs/worker:/app/logs
     depends_on:
       - redis-cache
     restart: always
