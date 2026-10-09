@@ -53,9 +53,9 @@ const ticketSchema = (event: EventHeader)=>yup.object({
         if (!event || !event.eventDate) return false;
         return  appendTime(value) <= new Date(event.eventDate);      
       })
-    .test("end-after-start", "Ticket sales end date must be after start date", function(value) {
+    .test("end-after-start", "Ticket sales end date cannot be before start date", function(value) {
         const { tickeSalesStartDate } = this.parent;
-        return new Date(value) > new Date(tickeSalesStartDate);
+        return new Date(value) >= new Date(tickeSalesStartDate);
       }),
     tickevalidityStartDate: yup.string().required("Ticket validity start date is required")
     .test("past-date", "Tickets must be valid during the course of the event.", (value) => {  

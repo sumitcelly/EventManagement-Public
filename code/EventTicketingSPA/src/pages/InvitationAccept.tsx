@@ -94,7 +94,7 @@ export default function InviatationAccept()  {
         console.log("Set password successful:", result.data);
         toast.success("Password set successfully! Logging you in.");
         dispatch(loginNewMember(result.data));    
-        history.push("/dashboard");
+        history.push("/scannerdashboard");
       }
       else
       {

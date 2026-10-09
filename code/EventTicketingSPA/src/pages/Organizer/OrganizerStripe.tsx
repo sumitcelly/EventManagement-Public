@@ -174,7 +174,7 @@ export default function OrganizerStripe({organizerInfo, organizerId}: {organizer
           {liveStripeTaxStatus && liveStripeTaxStatus == "pending" &&(
             <>
              <div className="font-semibold text-secondary-color mt-2">
-                    <span>{"❌"} Tax Status: Pending</span>
+                    <span>{ "⚠️" } Tax Status: Pending. You can still sell tickets but your tax calculations on each sale may be inaccurate.</span>
             </div>
             <div className="font-semibold text-secondary-color mt-2">Please update your tax information by 
                 visiting  https://dashboard.stripe.com/tax/setup.</div>

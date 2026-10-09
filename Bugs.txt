@@ -11,7 +11,7 @@ Signup successful! You can now log in.
 9. Header on mobile is odd after login.
 10. Sales dashboard. velocity shows all tickets sold even those abandoned or timed out.
 11. Toast not seen when creating a a new member for a team. Toast is biggest problem.
-12. After accpeting invite for team memnber, the screen says "password set successfully, logging you in".
+12. After accepting invite for team memnber, the screen says "password set successfully, logging you in".
     The toast stays and login screen is presented
      although the user is logged in because the dropdown shows the username.
 

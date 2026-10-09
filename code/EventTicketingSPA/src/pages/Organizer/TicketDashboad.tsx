@@ -90,7 +90,7 @@ export default function TicketDashboard({eventId,isActive}: {eventId?: string, i
     {/* <Toaster position="top-right" /> */}
       <h2 className="text-xl font-semibold mb-4 text-center">Tickets for your events</h2>
       {/*does not work for som reason. the useeffect on evenmanager is not triggered*/}
-      {event && !event.isLive && (
+      {event && !event.isLive &&  data && data.length > 0 && (
         <div className="flex flex-row mt-4">
           <button
                 className="ml-auto bg-brand-dark text-white text-brand-neutral px-2 py-2 rounded hover:bg-blue-700"
