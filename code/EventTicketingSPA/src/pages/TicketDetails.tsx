@@ -197,7 +197,7 @@ export default function TicketDetails() {
           <AppNavbar />
         </IonHeader>
         <IonContent className="">
-          <Toaster position="top-right" />
+          {/* <Toaster position="top-right" /> */}
          <div className="flex flex-col min-h-full">
           <div className="max-w-md mx-auto  px-4 sm:px-6">
           <div className="text-2xl font-bold font-heading mb-4 text-primary-color text-center">Your tickets</div>       

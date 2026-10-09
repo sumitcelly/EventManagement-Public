@@ -252,7 +252,7 @@ export default function CampaignAdd(){
       <form onSubmit={handleSubmit(onSubmit)}
         className="max-w-md mx-auto mt-4 p-3"
       >  
-      <Toaster position="top-right" />
+      {/* <Toaster position="top-right" /> */}
       <div className="flex flex-col">
          <div
               onClick={(e) => {

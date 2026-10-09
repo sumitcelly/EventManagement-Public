@@ -47,51 +47,52 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
   });
 
    const queryClient = useQueryClient();
-   const onSubmit = (data: FormValues,errors:any) => {
+   const onSubmit = async (data: FormValues) => {
     console.log("✅ Submitted data:", data);
     console.log("❌ Validation errors:", errors); 
     
-    if (!organizerInfo)
+    if (!organizerInfo) {
+      console.warn("No organizerInfo available for save");
+      toast.error("Organizer info is not available to save.");
       return;
+    }
 
-   
-
-    const apiData={
-        organizerId:organizerInfo.organizerId || 0,
-        organizerName: organizerInfo.organizerName,
-        organizationName: organizerInfo.organizationName,
-        organizerWebsite: data.organizerWebsite,
-        organizerEventBaseUrl: organizerInfo.organizerEventBaseUrl ,
-        organizerDescription: organizerInfo.organizerDescription,
-        organizerAboutMe: organizerInfo.organizerAboutMe,
-        organizerInstagram: data.organizerInstagram ,
-        organizerImageUrl: organizerInfo.organizerImageUrl ,
-        organizerFacebook: data.organizerFacebook,
-        organizerX: data.organizerX,
-        organizerCountry: organizerInfo.organizerCountry,
-        organizerEmail: organizerInfo.organizerEmail,
-        organizerPhone: organizerInfo.organizerPhone,
+    const apiData = {
+      organizerId: organizerInfo.organizerId || 0,
+      organizerName: organizerInfo.organizerName,
+      organizationName: organizerInfo.organizationName,
+      organizerWebsite: data.organizerWebsite,
+      organizerEventBaseUrl: organizerInfo.organizerEventBaseUrl,
+      organizerDescription: organizerInfo.organizerDescription,
+      organizerAboutMe: organizerInfo.organizerAboutMe,
+      organizerInstagram: data.organizerInstagram,
+      organizerImageUrl: organizerInfo.organizerImageUrl,
+      organizerFacebook: data.organizerFacebook,
+      organizerX: data.organizerX,
+      organizerCountry: organizerInfo.organizerCountry,
+      organizerEmail: organizerInfo.organizerEmail,
+      organizerPhone: organizerInfo.organizerPhone,
     };
 
-    if (organizerInfo.organizerId)
-    {
-      axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`,apiData)
-      .then(response => {
-      console.log('Organizer updated successfully:', response.data);
-      toast.success("Organizer info saved");
-      setApiStatus("Organizer info saved successfully");
-      queryClient.invalidateQueries(['Organizer',organizerId]);
-      })
-      .catch(error => {
+    if (organizerInfo.organizerId) {
+      try {
+        const response = await axiosClient.put(`/eventorganizer/${organizerInfo.organizerId}`, apiData);
+        console.log('Organizer updated successfully:', response.data);
+        toast.success("Organizer info saved",{duration: 3000});
+        setApiStatus("Organizer info saved successfully");
+        queryClient.invalidateQueries(['Organizer', organizerId]);
+      } catch (error) {
         console.error('Error creating/updating organizer:', error);
         toast.error("Error saving organizer info");
         setApiStatus("Error saving organizer info");
-      });
+      }
     }
   }
 
    useEffect(() => {
     console.log('MemberInfo changed:', organizerInfo);
+
+    //toast.success("Organizer info loaded",{duration: 3000});
     if (organizerInfo) {
       const values = {
         organizerWebsite: organizerInfo.organizerWebsite || '',
@@ -107,15 +108,12 @@ export default function OrganizerConnect({organizerInfo, organizerId}: {organize
   return (
 
     <>
-     {/* <Toaster position="top-right"  containerStyle={{
-    zIndex: 99999, // Ensure it's higher than Flowbite's default tab/modal layers
-  }} /> */}
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
     >  
-
-    <div className="flex flex-col">
     
+    <div className="flex flex-col">
+     
       {apiStatus && !apiStatus.startsWith("Error") && (
         <div className="text-lg text-center text-green-600 mb-2">{apiStatus}</div>
       )}

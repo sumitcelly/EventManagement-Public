@@ -12,9 +12,7 @@ import { useEffect, useState } from "react";
   
 export default function OrganizerStripe({organizerInfo, organizerId}: {organizerInfo?: OrganizerInfo, organizerId?:string}) {
 
-const stripeAcctId = organizerInfo?.stripeAccountId;
-//const [stripeTaxStatus,setStripeTaxStatus] = useState("");
-
+    const stripeAcctId = organizerInfo?.stripeAccountId;
     console.log(`stripe acctid ${stripeAcctId} and organizerId ${organizerId}`);
 
     const { data:liveStripeStatus, isLoading } = useQuery(['validateStripeStatus',organizerId], 
@@ -48,10 +46,10 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
   const createStripeAccount = async()=>{
     try
     {
-        toast.loading("Redirecting to stripe for account creation...");
-                const res = await axiosClient.post(`/payment/create-account/${organizerId}`, null, {
-                    headers: { 'Content-Type': 'application/json' }
-                });
+        toast.loading("Redirecting to stripe for account creation...", { duration: 3000 });
+        const res = await axiosClient.post(`/payment/create-account/${organizerId}`, null, {
+            headers: { 'Content-Type': 'application/json' }
+        });
         if (res.status == 200 && res.data)
         {
             linkStripeAccount(res.data);
@@ -72,7 +70,7 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
   const linkStripeAccount = async(stripeId:string | undefined) =>{
     try
     {
-        toast.loading("Redirecting to stripe for account linking...");
+        toast.loading("Redirecting to stripe for account linking...", { duration: 3000 });
         const res = await axiosClient.post(`/payment/initiate-account-link/${organizerId}`,stripeId,
         {
              headers: {
@@ -92,22 +90,22 @@ const stripeAcctId = organizerInfo?.stripeAccountId;
 
   
 
-// 1. Block rendering if EITHER query is actively pulling network data
-if (isLoading || isTaxLoading) {
-    return <p>Loading Stripe integrations...</p>;
-}
+    // 1. Block rendering if EITHER query is actively pulling network data
+    if (isLoading || isTaxLoading) {
+        return <p>Loading Stripe integrations...</p>;
+    }
 
-// 2. Block rendering if data hasn't arrived or initialized in memory yet
-if (!liveStripeStatus && stripeAcctId) {
-    return <p>Initializing data structures...</p>;
-}
+    // 2. Block rendering if data hasn't arrived or initialized in memory yet
+    if (!liveStripeStatus && stripeAcctId) {
+        return <p>Initializing data structures...</p>;
+    }
   
   return (  
      
     <div className="max-w-md mx-auto">
       {/* <h2 className="text-2xl font-semibold mb-4 text-accent-color font-accent">Go Live!</h2> */}
       <div className="flex flex-col items-center">
-         {/* <Toaster position="top-right" /> */}
+         {/* <Toaster position="top-center" /> */}
          {/**We have nothing with stripe*/}
          {(!stripeAcctId || !liveStripeStatus?.connected) &&(
             <div className="flex items-center">

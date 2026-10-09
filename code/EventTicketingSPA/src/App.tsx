@@ -47,6 +47,7 @@ import PrivacyPolicy from "./pages/Global/PrivacyPolicy";
 import TOS from "./pages/Global/Tos";
 import { FeaturesShowcase } from "./pages/Global/FeatureShowcase";
 import TicketSalesDashboard from "./pages/Organizer/TicketSalesDashboard";
+import { createPortal } from "react-dom";
 
 export default function App() {
   const isAuthenticated = useSelector((state :any) => state.auth.isAuthenticated);
@@ -97,7 +98,16 @@ export default function App() {
   //setupIonicReact();
   return (
     <IonReactRouter>
-      <Toaster position="top-center" containerStyle={{ zIndex: 99999 }}  />
+      {/* <Toaster position="top-center" containerStyle={{ zIndex: 99999 }}
+        /> */}
+        {createPortal(
+        <Toaster 
+          containerStyle={{
+            zIndex: 99999, // Ensure it sits on top of Flowbite tabs/modals
+          }}
+        />,
+        document.body
+      )}
       {/**causes lots of issues in web navigation, ionrouteroutlet. But maybe needed for capacitor/mobile */}
       {/* <IonRouterOutlet> */}
         {/* No idea why adding it at beginning works. If put at end, then I always see Myevents page for 

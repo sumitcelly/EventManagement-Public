@@ -137,7 +137,7 @@ export default function CampaignList() {
         <IonContent>
         <div className="flex flex-col min-h-full">
           <div className="max-w-3xl w-full mx-auto p-3 border border-gray-300 rounded-lg shadow-lg bg-brand-neutral">
-          <Toaster position="top-right" />
+          {/* <Toaster position="top-right" /> */}
           <h2 className="text-xl font-semibold mb-4 text-center">Email Campaigns</h2>
       
           <div className="flex flex-row mt-4">

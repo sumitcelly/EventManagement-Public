@@ -194,12 +194,12 @@ export default function ScanTicket() {
       </IonHeader>
       <IonContent>
         <div className="flex flex-col min-h-full">
-          <Toaster
+          {/* <Toaster
             containerStyle={{
               top: "calc(16px + env(safe-area-inset-top))",
               bottom: "calc(16px + env(safe-area-inset-bottom))",
             }}
-          />
+          /> */}
 
           <div className="max-w-md mx-auto mt-6 w-full px-4">
             <div className="flex flex-col items-center justify-between gap-4">

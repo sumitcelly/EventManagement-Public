@@ -1,4 +1,5 @@
 import React, { use, useState } from "react";
+import { useHistory } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import PasswordFields, { PasswordStatus } from "../components/PasswordFields";
 import axios from "axios";
@@ -17,6 +18,7 @@ interface FormValues {
 
 export default function SignupForm()  {
   const ionRouter = useIonRouter();
+  const history = useHistory();
   const user =  useAppSelector((state) => state.auth.user);
   if (!user || !user.id) {
     return (
@@ -52,31 +54,35 @@ export default function SignupForm()  {
     errors: []
   });
 
-  const onSubmit: SubmitHandler<FormValues> = (data) => {
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
     if (!passwordState.valid) {
       alert("Fix password errors first.");
       return;
     }
     console.log("✅ Submitted data:", data);
 
-    axiosClient.put(`/user/${email}`,  { 
-      name: data.name,
-      email: email,
-      userId: user.id,
-      password: passwordState.password
-    },
-    { headers: {
-        'Content-Type': 'application/json'}
-    }).then(response => {
+    try {
+      const response = await axiosClient.put(
+        `/user/${email}`,
+        {
+          name: data.name,
+          email: email,
+          userId: user.id,
+          password: passwordState.password
+        },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
       console.log("Signup successful:", response.data);
-      toast.success("Signup successful! You can now log in.", {duration: 3000});
-      ionRouter.push("/myevents");
-    }).catch(error => {
+      toast.success("Signup successful! You can now log in.", { duration: 3000 });
+      history.push("/myevents");
+    } catch (error) {
       console.error("Signup error:", error);
-      toast.error("Signup failed. Please try again.", {duration: 3000});     
-    });
-
-   
+      toast.error("Signup failed. Please try again.", { duration: 3000 });
+    }
   };
 
   return (
@@ -87,7 +93,7 @@ export default function SignupForm()  {
       <IonContent>
         <div className="flex flex-col  min-h-full"> 
       <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-          <Toaster position="top-right" />
+         
           <h1 className="text-2xl font-bold mb-4 text-center">Create Account</h1>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           

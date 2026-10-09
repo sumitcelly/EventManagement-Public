@@ -329,7 +329,7 @@ export default function OrganizerAbout({organizerId,organizerInfo}: {organizerId
     <form onSubmit={handleSubmit(onSubmit)}
       className="max-w-md mx-auto mt-4 p-3"
      >   
-    <Toaster position="top-center" />
+    {/* <Toaster position="top-center" /> */}
 
     <div className="flex flex-col">
       {apiStatus && apiStatus.startsWith("Error") && (
