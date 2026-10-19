@@ -82,7 +82,7 @@ public static class PdfGenerator
                             });
 
                             // Embed your native Linux SkiaSharp generated graphic here
-                            row.ConstantItem(120).AlignMiddle().Image(Convert.FromBase64String(ticket.TicketQrCodeImage));
+                            row.ConstantItem(360).AlignMiddle().Image(Convert.FromBase64String(ticket.TicketQrCodeImage));
                         });
 
                         // One ticket page restriction rule
