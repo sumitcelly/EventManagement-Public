@@ -100,10 +100,10 @@ aws cloudfront create-invalidation --distribution-id ERB1FHGKI5VJE --paths "/*"
 chmod 400 ./eventmgtmlogin.pem
 
 //ssh login to ec2
-ssh -i ./eventmgtmlogin.pem  ec2-user@44.250.56.194
+ssh -i ./eventmgtmlogin.pem  ec2-user@35.91.176.144
 
 //ssh to db
-ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@44.250.56.194
+ssh -i ./eventmgtmlogin.pem -N -L 3307:eventmgmtdb.cfi244u8y8fv.us-west-2.rds.amazonaws.com:3306 ec2-user@35.91.176.144
 
 //ssh to db
 //connecting to db
@@ -127,7 +127,7 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 
 //build the container(s)
 docker compose build
- docker compose -f docker-compose-prod.yml build
+docker compose -f docker-compose-prod.yml build
 docker compose build create-ticket-api
 
 

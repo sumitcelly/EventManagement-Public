@@ -1,4 +1,7 @@
 Running Bug List
+--Deleting an event shows it on dashboard even though event is gone
+and search does not show it. Its in cache still.
+
 1. this toast wont go away
 Signup successful! You can now log in.
 3. When click on stripeconnect, no tosts come up to tell about redirection.

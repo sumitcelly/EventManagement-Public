@@ -108,7 +108,7 @@ export default function SearchEvents() {
     <IonPage>
       <IonHeader><AppNavbar/></IonHeader>
       <IonContent>
-        <div className="flex flex-col min-h-full">
+        <div className="flex flex-col min-h-full m-4">
           <div>
           <h4 className="text-xl font-bold m-2 flex justify-center">Events you maybe interested in</h4>
           <div className="grid grid-cols-1 m-6 sm:grid-cols-2 md:grid-cols-5 gap-3 justify-items-center">

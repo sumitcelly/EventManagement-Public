@@ -134,7 +134,7 @@ export default function InviatationAccept()  {
     <IonContent>
       <div className="flex flex-col  min-h-full">
         <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow rounded">
-            <Toaster position="top-right" />
+            {/* <Toaster position="top-right" /> */}
             <h1 className="text-2xl font-bold mb-4 text-center">Set Password</h1>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             

@@ -64,7 +64,7 @@ export default function ScannerDashboard() {
             ):(
               <>
                 <h2 className="text-xl font-semibold mb-4 text-center">Select event to scan</h2>
-                <div className="divide-y">
+                <div className="divide-y mb-2">
                   {data && data.map((event:EventHeader) => (
                     <div
                         key={event.eventId}

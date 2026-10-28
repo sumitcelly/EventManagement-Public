@@ -180,7 +180,7 @@ namespace EventManagementDbAccess
             using var conn = new MySqlConnection(this.ConnectionString);
             await conn.OpenAsync();
             var query = @"SELECT DATE(CreatedAt) as SalesDate, COUNT(*) as TicketsSold FROM eventsalesitem 
-                          and (ticketstatus = 'Scanned' or ticketstatus = 'Live')
+                          where (ticketstatus = 'Scanned' or ticketstatus = 'Live')
                           and CreatedAt >= CURRENT_DATE - INTERVAL 6 DAY 
                           GROUP BY DATE(CreatedAt)
                           ORDER BY SalesDate ASC";
