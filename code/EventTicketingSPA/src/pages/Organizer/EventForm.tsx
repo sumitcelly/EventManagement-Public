@@ -532,6 +532,7 @@ export default function EventForm({id,organizerEventBaseUrl, isActive}: {id?: st
           render={({ field }) => (
             <MapboxAddressField
               value={field.value}
+              onAddressChange={field.onChange}
               onSelect={(data: AddressData) => {
                 field.onChange(data.fullAddress);
                 

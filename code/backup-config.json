@@ -9,7 +9,7 @@
     "Items": [
       {
         "Id": "EC2-API-Origin",
-        "DomainName": "ec2-44-250-56-194.us-west-2.compute.amazonaws.com",
+        "DomainName": "ec2-35-91-176-144.us-west-2.compute.amazonaws.com",
         "OriginPath": "",
         "CustomHeaders": {
           "Quantity": 0

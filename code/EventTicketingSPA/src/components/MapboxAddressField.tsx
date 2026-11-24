@@ -1,8 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { AddressAutofill } from "@mapbox/search-js-react";
 
+type RetrieveResponse = Parameters<
+  NonNullable<React.ComponentProps<typeof AddressAutofill>["onRetrieve"]>
+>[0];
+
 type Props = {
   onSelect: (data: AddressData) => void;
+  onAddressChange: (value: string) => void;
 
   value?: string;
 };
@@ -19,133 +24,123 @@ export type AddressData = {
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-// ✅ TypeScript sometimes doesn't infer this JSX component correctly
 const AddressAutofillFixed = AddressAutofill as unknown as React.FC<any>;
 
-export default function MapboxAddressField({ onSelect,  value }: Props) {
+export default function MapboxAddressField({ onSelect, onAddressChange, value }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastProcessedValue = useRef<string>("");
+  const pendingLookup = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lookupController = useRef<AbortController | undefined>(undefined);
+  const lastSelectedValue = useRef("");
   
-  //this maybe a hack here. Without this for sure, the  full address does not get set.
-  //Only the street address gets set. Not sure why.
   useEffect(() => {
     if (inputRef.current && inputRef.current.value !== value) {
       inputRef.current.value = value || "";
-      lastProcessedValue.current = value || "";
     }
   }, [value]);
 
+  const resolveAddress = async (query: string) => {
+    if (!query.trim() || query.trim() === lastSelectedValue.current) return;
 
-  const handleRetrieve = (res: any) => {
-    
-    console.log('inside handle retrieve',res);
+    lookupController.current?.abort();
+    const controller = new AbortController();
+    lookupController.current = controller;
+
+    try {
+      const params = new URLSearchParams({
+        access_token: MAPBOX_TOKEN,
+        types: "address",
+        country: "us",
+        limit: "1",
+      });
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?${params}`,
+        { signal: controller.signal }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Mapbox geocoding failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const feature = data.features?.[0];
+      if (!feature || controller.signal.aborted) return;
+
+      const context: Array<{ id: string; text: string; short_code?: string }> = feature.context || [];
+      const region = context.find((item) => item.id.startsWith("region."));
+      const coords = feature.geometry?.coordinates;
+      const addressData: AddressData = {
+        fullAddress: feature.place_name || query,
+        street: feature.address && feature.text
+          ? `${feature.address} ${feature.text}`
+          : feature.address || feature.text || query,
+        city: context.find((item) => item.id.startsWith("place."))?.text || "",
+        state: region?.short_code ? region.short_code.split("-").pop() : region?.text || "",
+        zip: context.find((item) => item.id.startsWith("postcode."))?.text || "",
+        lat: coords?.[1],
+        lng: coords?.[0],
+      };
+
+      lastSelectedValue.current = query;
+      onSelect(addressData);
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error("Error geocoding completed address:", error);
+      }
+    }
+  };
+
+  const handleRetrieve = (res: RetrieveResponse) => {
+    clearTimeout(pendingLookup.current);
+    lookupController.current?.abort();
     const feature = res.features?.[0];
     if (!feature) return;
     
-    const ctx = feature.properties;
+    const properties = feature.properties;
+    const context: Array<{ id: string; text: string }> = properties.context || [];
     const coords = feature.geometry?.coordinates;
-    console.log("Address selected:", feature);
+    const city = context.find((item) => item.id.startsWith("place."))?.text;
+    const state = context.find((item) => item.id.startsWith("region."))?.text;
+    const zip = context.find((item) => item.id.startsWith("postcode."))?.text;
     const addressData: AddressData = {
-      fullAddress: ctx?.place_name || "",
-      street: ctx?.address_line1 || "",
-      city: ctx?.place || ctx?.city || "",
-      state: ctx?.region_code || "",
-      zip: ctx?.postcode || "",
+      fullAddress: properties.full_address || properties.place_name || "",
+      street: properties.address_line1 || properties.address || properties.feature_name || "",
+      city: properties.address_level2 || city || "",
+      state: properties.address_level1 || state || "",
+      zip: properties.postcode || zip || "",
       lat: coords?.[1],
       lng: coords?.[0],
     };
 
-    //onSelect(addressData);
-    setTimeout(() => onSelect(addressData), 0);
-    lastProcessedValue.current = addressData.fullAddress;
-    
-    console.log("Address data:", addressData);
+    lastSelectedValue.current = addressData.fullAddress;
+    onSelect(addressData);
+    setTimeout(() => {
+      if (inputRef.current && addressData.fullAddress) {
+        inputRef.current.value = addressData.fullAddress;
+        onAddressChange(addressData.fullAddress);
+      }
+    }, 0);
   };
 
-  // Handle browser autocomplete selection (Google Maps in Chrome)
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    
-    // Only trigger if value actually changed and is not empty
-    if (newValue && newValue !== lastProcessedValue.current) {
-      console.log("Browser autocomplete detected:", newValue);
-      lastProcessedValue.current = newValue;
-      
-      // Use Mapbox Geocoding API to get structured address data
-      try {
-        const encodedAddress = encodeURIComponent(newValue);
-        const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedAddress}.json?access_token=${MAPBOX_TOKEN}&types=address&limit=1`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Full Mapbox response:", data);
-          const feature = data.features?.[0];
-          
-          if (feature) {
-            console.log("Selected feature:", feature);
-            const coords = feature.geometry?.coordinates;
-            
-            // Extract address components from context array
-            const context = feature.context || [];
-            let city = "";
-            let state = "";
-            let zip = "";
-            
-            // Parse context array to get city, state, zip
-            for (const item of context) {
-              if (item.id.startsWith("place.")) {
-                city = item.text;
-              } else if (item.id.startsWith("region.")) {
-                // Safely extract state code - handle both "US-CO" and standalone codes
-                state = item.short_code ? item.short_code.split('-').pop() : item.text;
-              } else if (item.id.startsWith("postcode.")) {
-                zip = item.text;
-              }
-            }
-            
-            // Build street address safely - use both address number and street name if available
-            let street = "";
-            if (feature.address && feature.text) {
-              street = `${feature.address} ${feature.text}`;
-            } else {
-              street = feature.address || feature.text || "";
-            }
-            
-            const addressData: AddressData = {
-              fullAddress: feature.place_name || "",
-              street: street,
-              city: city,
-              state: state,
-              zip: zip,
-              lat: coords?.[1],
-              lng: coords?.[0],
-            };
-            
-            console.log("Parsed address data:", addressData);
-            setTimeout(() => onSelect(addressData), 0);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Error geocoding browser autocomplete address:", error);
-      }
-      
-      // Fallback if geocoding fails
-      const addressData: AddressData = {
-        fullAddress: newValue,
-        street: newValue,
-      };
-      
-      setTimeout(() => onSelect(addressData), 0);
+  const scheduleAddressLookup = (query: string) => {
+    clearTimeout(pendingLookup.current);
+    pendingLookup.current = setTimeout(() => {
+      void resolveAddress(query);
+    }, 150);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.currentTarget.value;
+    onAddressChange(query);
+
+    const inputEvent = event.nativeEvent as InputEvent;
+    if (inputEvent.inputType === "insertReplacementText" || inputEvent.inputType === "insertFromPaste") {
+      scheduleAddressLookup(query);
     }
   };
 
   return (
     <AddressAutofillFixed accessToken={MAPBOX_TOKEN} 
-      //onClick={(e:any)=>{e.stopPropagation();}}
-     onRetrieve= {handleRetrieve} options={{ types: "address" }}
+      onRetrieve={handleRetrieve} options={{ country: "us" }}
       >
       <input
        ref={inputRef}
@@ -156,6 +151,7 @@ export default function MapboxAddressField({ onSelect,  value }: Props) {
         className="border rounded w-full p-2"
         defaultValue={value}
         onChange={handleInputChange}
+        onBlur={(event) => scheduleAddressLookup(event.currentTarget.value)}
         
       />
     </AddressAutofillFixed>

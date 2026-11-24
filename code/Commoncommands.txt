@@ -138,7 +138,7 @@ docker compose -f docker-compose-prod.yml  build create-ticket-api
 docker compose push
 
 //now ssh into ec2 and recreate containers from ECR
-ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@34.220.71.253 
+ssh -i C:\Users\scelly_securevideo\.ssh\eventmgtmlogin.pem ec2-user@35.89.231.239 
 
 docker compose -f docker-compose.prod.yml pull
   

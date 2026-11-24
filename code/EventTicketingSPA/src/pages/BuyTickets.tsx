@@ -296,10 +296,10 @@ return (
       <AppNavbar />
     </IonHeader>
     <IonContent className="">
-    <div className="flex flex-col min-h-full">
+    <div className="flex min-h-full min-w-0 flex-col">
       {/* <Toaster position="top-right" /> */}
-      <div className="flex flex-col  max-w-xl mx-auto p-4  justify-center">
-        <div className="text-3xl font-bold mb-8 text-primary-color text-center">Select your tickets</div>
+      <div className="mx-auto flex w-full min-w-0 max-w-xl flex-col justify-center p-4">
+        <div className="mb-8 text-center text-3xl font-bold text-primary-color">Select your tickets</div>
           <EventSummary/>
           {simulationMode ? <SimulationInfo /> : null}
         {/* <form onSubmit={handleSubmit(
@@ -309,12 +309,12 @@ return (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {ticketTypesList.map((item: Ticket, index:number) =>
       (
-          <div  key={item.eventItemTypeId} className="flex flex-col">
-            <div className="flex flex-row">
-                <div className="text-l text-secondary-color w-1/2 text-left"
+          <div key={item.eventItemTypeId} className="flex min-w-0 flex-col">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_4rem_5rem] items-start gap-3">
+                <div className="min-w-0 break-words text-l text-secondary-color text-left [overflow-wrap:anywhere]"
                   dangerouslySetInnerHTML={{ __html: item.name + ': ' + DomPurify.sanitize(item.description) }}/>
-                <div className="text-xl text-center text-secondary-color  w-1/3">{item.cost === 0 ? <span className="text-green-500 font-bold">Free</span> : `$${item.cost}`}</div>
-                <div className="text-l text-center text-secondary-color w-1/3">
+                <div className="text-center text-xl text-secondary-color">{item.cost === 0 ? <span className="font-bold text-green-500">Free</span> : `$${item.cost}`}</div>
+                <div className="text-center text-l text-secondary-color">
                     <input
                       key={item.eventItemTypeId}
                       type="number"
@@ -362,10 +362,10 @@ return (
           </p>
         )}
 
-  <div className="flex flex-row mt-4 space-x-8">
+  <div className="mt-4 grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
 
   {/* Left Column: User Info & Zip */}
-  <div className="w-1/2 flex flex-col justify-start">
+  <div className="flex min-w-0 flex-col justify-start">
     {/* Full Name & Email (Conditional) */}
     {(user.user?.guest || user.user == null) && (
       <>
@@ -407,7 +407,7 @@ return (
 
       {/* Right Column: Totals and Checkout */}
 
-      <div className="flex-1 flex flex-col items-end justify-end">
+      <div className="flex min-w-0 flex-col items-end justify-end">
         <div className="w-full text-right">
           <CartTotal control={control} feeMode={ feeMode || eventHeaderInfo.ticketFeeMode || 0} eventId={id}/>
         </div>
